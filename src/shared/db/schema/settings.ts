@@ -1,0 +1,34 @@
+import { pgTable, serial, text, numeric, integer, boolean, timestamp, check } from 'drizzle-orm/pg-core'
+import { sql } from 'drizzle-orm'
+
+export const settings = pgTable('settings', {
+  id: serial('id').primaryKey(),
+  gymName: text('gym_name').notNull().default('Mi Gimnasio'),
+  gymAddress: text('gym_address').default(''),
+  gymPhone: text('gym_phone').default(''),
+  gymEmail: text('gym_email').default(''),
+  taxRate: numeric('tax_rate', { precision: 5, scale: 2 }).default('0.00'),
+  currencySymbol: text('currency_symbol').default('$'),
+  currencyCode: text('currency_code').default('ARS'),
+  decimalPlaces: integer('decimal_places').default(2),
+  lowStockThreshold: integer('low_stock_threshold').default(5),
+  membershipReminderDays: integer('membership_reminder_days').default(7),
+  checkInWindowMinutes: integer('check_in_window_minutes').default(60),
+  enableAutoRenew: boolean('enable_auto_renew').default(false),
+  logoBase64: text('logo_base64'),
+  backupEnabled: boolean('backup_enabled').default(false),
+  backupFrequency: text('backup_frequency').default('weekly'),
+  openingTime: text('opening_time').default('08:00'),
+  closingTime: text('closing_time').default('22:00'),
+  mondayOpen: boolean('monday_open').default(true),
+  tuesdayOpen: boolean('tuesday_open').default(true),
+  wednesdayOpen: boolean('wednesday_open').default(true),
+  thursdayOpen: boolean('thursday_open').default(true),
+  fridayOpen: boolean('friday_open').default(true),
+  saturdayOpen: boolean('saturday_open').default(false),
+  sundayOpen: boolean('sunday_open').default(false),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => [
+  check('settings_single_row', sql`${table.id} = 1`),
+])

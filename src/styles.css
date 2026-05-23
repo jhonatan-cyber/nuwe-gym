@@ -1,0 +1,155 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+@import 'tailwindcss';
+@plugin '@tailwindcss/typography';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --background: #F2F2F2;
+  --foreground: #030303;
+  --card: #FFFFFF;
+  --card-foreground: #1B1B1B;
+  --popover: #FFFFFF;
+  --popover-foreground: #1B1B1B;
+  --primary: #030303;
+  --primary-foreground: #FFFFFF;
+  --secondary: #DADADA;
+  --secondary-foreground: #323232;
+  --muted: #DADADA;
+  --muted-foreground: #929292;
+  --accent: #DADADA;
+  --accent-foreground: #1B1B1B;
+  --destructive: #DC2626;
+  --destructive-foreground: #FFFFFF;
+  --border: #DADADA;
+  --input: #DADADA;
+  --ring: #C2C2C2;
+  --radius: 0.5rem;
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #030303;
+  --sidebar-primary: #030303;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #DADADA;
+  --sidebar-accent-foreground: #1B1B1B;
+  --sidebar-border: #DADADA;
+  --sidebar-ring: #C2C2C2;
+}
+
+.dark {
+  --background: #030303;
+  --foreground: #F2F2F2;
+  --card: #1B1B1B;
+  --card-foreground: #F2F2F2;
+  --popover: #1B1B1B;
+  --popover-foreground: #F2F2F2;
+  --primary: #F2F2F2;
+  --primary-foreground: #030303;
+  --secondary: #323232;
+  --secondary-foreground: #F2F2F2;
+  --muted: #323232;
+  --muted-foreground: #929292;
+  --accent: #323232;
+  --accent-foreground: #F2F2F2;
+  --destructive: #7F1D1D;
+  --destructive-foreground: #FEF2F2;
+  --border: #4A4A4A;
+  --input: #4A4A4A;
+  --ring: #626262;
+  --sidebar: #1B1B1B;
+  --sidebar-foreground: #F2F2F2;
+  --sidebar-primary: #F2F2F2;
+  --sidebar-primary-foreground: #030303;
+  --sidebar-accent: #323232;
+  --sidebar-accent-foreground: #F2F2F2;
+  --sidebar-border: #4A4A4A;
+  --sidebar-ring: #626262;
+}
+
+@theme inline {
+  --font-sans: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+
+  --color-gray-100: #F2F2F2;
+  --color-gray-200: #DADADA;
+  --color-gray-300: #C2C2C2;
+  --color-gray-400: #AAAAAA;
+  --color-gray-500: #929292;
+  --color-gray-600: #7A7A7A;
+  --color-gray-700: #626262;
+  --color-gray-800: #4A4A4A;
+  --color-gray-900: #323232;
+  --color-gray-950: #1B1B1B;
+  --color-gray-1000: #030303;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+html,
+body,
+#app {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background-color: var(--background);
+  color: var(--foreground);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: var(--foreground);
+  text-decoration-color: var(--muted-foreground);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+}

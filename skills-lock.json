@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "skills": {
+    "find-skills": {
+      "source": "vercel-labs/skills",
+      "sourceType": "github",
+      "skillPath": "skills/find-skills/SKILL.md",
+      "computedHash": "9e1c8b3103f92fa8092568a44fe64858de7c5c9dc65ce4bea8f168080e889cfd"
+    },
+    "react-query": {
+      "source": "mindrally/skills",
+      "sourceType": "github",
+      "skillPath": "react-query/SKILL.md",
+      "computedHash": "d10965586d687a14aea531f058f5e4d811f35ed8df92a235cb347d8960021a89"
+    },
+    "tailwind-v4-shadcn": {
+      "source": "secondsky/claude-skills",
+      "sourceType": "github",
+      "skillPath": "plugins/tailwind-v4-shadcn/skills/tailwind-v4-shadcn/SKILL.md",
+      "computedHash": "4eb905e229fce4220feecbc03b93c957a0b027a7200777c73f3925137d6c1c59"
+    },
+    "tanstack-start": {
+      "source": "tanstack-skills/tanstack-skills",
+      "sourceType": "github",
+      "skillPath": "plugins/tanstack-start/skills/tanstack-start/SKILL.md",
+      "computedHash": "31690f8eb3a24feb093bfd14d673f0519078cdcd297f79fc2bbb584b4daa4db1"
+    },
+    "tech-drizzle": {
+      "source": "ravnhq/ai-toolkit",
+      "sourceType": "github",
+      "skillPath": ".claude-plugin/plugins/tech-drizzle/skills/tech-drizzle/SKILL.md",
+      "computedHash": "19c2ce7314dc50c57c995d5f6e6ebf71e41a6bc3b3e6cfb8f62337dca5bbe5f3"
+    },
+    "typescript-best-practices": {
+      "source": "0xbigboss/claude-code",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/typescript-best-practices/SKILL.md",
+      "computedHash": "b73b69197553b711e02839015e6abca717eb2305e90de3cc86403c92d92b00d9"
+    },
+    "vertical-slice-architecture": {
+      "source": "mryll/skills",
+      "sourceType": "github",
+      "skillPath": "skills/vertical-slice-architecture/SKILL.md",
+      "computedHash": "2bed74daeb11a1e1785ca2f6da95d1223eba6c54754a2ae317cd6284761e9d1e"
+    }
+  }
+}
