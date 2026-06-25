@@ -36,21 +36,30 @@ describe('Check-In Business Rules', () => {
   it('should DENY_EXPIRED check-in when subscription is expired', async () => {
     const member = await createMember()
     const plan = await createPlan()
-    await createSubscription(member.id, plan.id, { status: 'EXPIRED', endDate: new Date('2020-01-01') })
+    await createSubscription(member.id, plan.id, {
+      status: 'EXPIRED',
+      endDate: new Date('2020-01-01'),
+    })
 
-    const checkIn = await createCheckIn(member.id, { resultStatus: 'DENIED_EXPIRED' })
+    const checkIn = await createCheckIn(member.id, {
+      resultStatus: 'DENIED_EXPIRED',
+    })
     expect(checkIn.resultStatus).toBe('DENIED_EXPIRED')
   })
 
   it('should DENY_INACTIVE check-in when member status is INACTIVE', async () => {
     const member = await createMember({ status: 'INACTIVE' })
-    const checkIn = await createCheckIn(member.id, { resultStatus: 'DENIED_INACTIVE' })
+    const checkIn = await createCheckIn(member.id, {
+      resultStatus: 'DENIED_INACTIVE',
+    })
     expect(checkIn.resultStatus).toBe('DENIED_INACTIVE')
   })
 
   it('should DENY_SUSPENDED check-in when member status is SUSPENDED', async () => {
     const member = await createMember({ status: 'SUSPENDED' })
-    const checkIn = await createCheckIn(member.id, { resultStatus: 'DENIED_SUSPENDED' })
+    const checkIn = await createCheckIn(member.id, {
+      resultStatus: 'DENIED_SUSPENDED',
+    })
     expect(checkIn.resultStatus).toBe('DENIED_SUSPENDED')
   })
 })
@@ -94,23 +103,33 @@ describe('FK Constraint Violations', () => {
 describe('FK RESTRICT Deletes', () => {
   it('should block deleting a sale with existing saleItems (FK RESTRICT)', async () => {
     const p = await createProduct({ stockCurrent: 10 })
-    const sale = await createSale([{ productId: p.id, quantity: 1, unitPrice: '100' }])
+    const sale = await createSale([
+      { productId: p.id, quantity: 1, unitPrice: '100' },
+    ])
 
-    await expect(db.delete(sales).where(eq(sales.id, sale.id))).rejects.toThrow()
+    await expect(
+      db.delete(sales).where(eq(sales.id, sale.id)),
+    ).rejects.toThrow()
   })
 
   it('should block deleting a purchase with existing purchaseItems (FK RESTRICT)', async () => {
     const p = await createProduct({ stockCurrent: 10 })
-    const purchase = await createPurchase([{ productId: p.id, quantity: 5, unitCost: '50' }])
+    const purchase = await createPurchase([
+      { productId: p.id, quantity: 5, unitCost: '50' },
+    ])
 
-    await expect(db.delete(purchases).where(eq(purchases.id, purchase.id))).rejects.toThrow()
+    await expect(
+      db.delete(purchases).where(eq(purchases.id, purchase.id)),
+    ).rejects.toThrow()
   })
 })
 
 describe('Unique Constraints', () => {
   it('should reject duplicate SKU', async () => {
     await createProduct({ sku: 'DUPESKU01', name: 'First' })
-    await expect(createProduct({ sku: 'DUPESKU01', name: 'Second' })).rejects.toThrow()
+    await expect(
+      createProduct({ sku: 'DUPESKU01', name: 'Second' }),
+    ).rejects.toThrow()
   })
 })
 
@@ -160,7 +179,7 @@ describe('Cash Register Business Rules', () => {
       WHERE cash_session_id = ${session.id}`,
     )
 
-    const row = result.rows![0] as any
+    const row = result.rows[0] as any
     const expectedClosing =
       Number('1000.00') + Number(row.total_income) - Number(row.total_expense)
     expect(expectedClosing).toBe(1300)

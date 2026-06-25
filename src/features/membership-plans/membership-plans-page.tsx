@@ -2,7 +2,11 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus, Edit2, CheckCircle2, XCircle } from 'lucide-react'
 import { toast } from 'sonner'
-import { getPlans, createPlan, updatePlan } from '#/features/membership-plans/server.ts'
+import {
+  getPlans,
+  createPlan,
+  updatePlan,
+} from '#/features/membership-plans/server.ts'
 import { formatCurrency } from '#/shared/lib/formatters.ts'
 
 import { Button } from '#/shared/components/ui/button'
@@ -22,7 +26,6 @@ import {
 } from '#/shared/components/ui/dialog'
 import { Badge } from '#/shared/components/ui/badge'
 
-
 interface MembershipPlansPageProps {
   userRole: string
 }
@@ -32,7 +35,9 @@ export function MembershipPlansPage({ userRole }: MembershipPlansPageProps) {
   const isReadOnly = userRole === 'TRAINER'
 
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [editingPlan, setEditingPlan] = useState<typeof plans[number] | null>(null)
+  const [editingPlan, setEditingPlan] = useState<(typeof plans)[number] | null>(
+    null,
+  )
 
   const [formData, setFormData] = useState({
     name: '',
@@ -67,7 +72,7 @@ export function MembershipPlansPage({ userRole }: MembershipPlansPageProps) {
     onError: () => toast.error('Error al actualizar el plan'),
   })
 
-  const handleOpenModal = (plan?: typeof plans[number]) => {
+  const handleOpenModal = (plan?: (typeof plans)[number]) => {
     if (plan) {
       setEditingPlan(plan)
       setFormData({
@@ -96,7 +101,9 @@ export function MembershipPlansPage({ userRole }: MembershipPlansPageProps) {
       updateMutation.mutate({ data: { ...formData, id: editingPlan.id } })
     } else {
       const { name, description, durationDays, price } = formData
-      createMutation.mutate({ data: { name, description, durationDays, price } })
+      createMutation.mutate({
+        data: { name, description, durationDays, price },
+      })
     }
   }
 
@@ -105,38 +112,85 @@ export function MembershipPlansPage({ userRole }: MembershipPlansPageProps) {
       <PageHeader
         title="Planes de Membresía"
         description="Administrá los tipos de planes y tarifas del gimnasio."
-        action={!isReadOnly && <Button onClick={() => handleOpenModal()}><Plus className="mr-2 size-4" /> Nuevo Plan</Button>}
+        action={
+          !isReadOnly && (
+            <Button onClick={() => handleOpenModal()}>
+              <Plus className="mr-2 size-4" /> Nuevo Plan
+            </Button>
+          )
+        }
       />
 
       <DataTable
         columns={[
-          { key: 'name', label: 'Nombre', render: (plan: typeof plans[number]) => (
-            <div>
-              <span className="font-medium">{plan.name}</span>
-              {plan.description && <p className="text-xs text-muted-foreground">{plan.description}</p>}
-            </div>
-          )},
-          { key: 'duration', label: 'Duración (Días)', render: (plan: typeof plans[number]) => `${plan.durationDays} días` },
-          { key: 'price', label: 'Precio', render: (plan: typeof plans[number]) => <span className="font-medium">{formatCurrency(plan.price)}</span> },
-          { key: 'status', label: 'Estado', render: (plan: typeof plans[number]) => (
-            <Badge variant={plan.isActive ? 'default' : 'secondary'} className="gap-1">
-              {plan.isActive ? <CheckCircle2 className="size-3" /> : <XCircle className="size-3" />}
-              {plan.isActive ? 'Activo' : 'Inactivo'}
-            </Badge>
-          )},
-          ...(!isReadOnly ? [{
-            key: 'actions' as string, label: 'Acciones', className: 'text-right' as string, render: (plan: typeof plans[number]) => (
-              <Button variant="ghost" size="icon" onClick={() => handleOpenModal(plan)}>
-                <Edit2 className="size-4" />
-              </Button>
+          {
+            key: 'name',
+            label: 'Nombre',
+            render: (plan: (typeof plans)[number]) => (
+              <div>
+                <span className="font-medium">{plan.name}</span>
+                {plan.description && (
+                  <p className="text-xs text-muted-foreground">
+                    {plan.description}
+                  </p>
+                )}
+              </div>
             ),
-          }] : []),
+          },
+          {
+            key: 'duration',
+            label: 'Duración (Días)',
+            render: (plan: (typeof plans)[number]) =>
+              `${plan.durationDays} días`,
+          },
+          {
+            key: 'price',
+            label: 'Precio',
+            render: (plan: (typeof plans)[number]) => (
+              <span className="font-medium">{formatCurrency(plan.price)}</span>
+            ),
+          },
+          {
+            key: 'status',
+            label: 'Estado',
+            render: (plan: (typeof plans)[number]) => (
+              <Badge
+                variant={plan.isActive ? 'default' : 'secondary'}
+                className="gap-1"
+              >
+                {plan.isActive ? (
+                  <CheckCircle2 className="size-3" />
+                ) : (
+                  <XCircle className="size-3" />
+                )}
+                {plan.isActive ? 'Activo' : 'Inactivo'}
+              </Badge>
+            ),
+          },
+          ...(!isReadOnly
+            ? [
+                {
+                  key: 'actions' as string,
+                  label: 'Acciones',
+                  className: 'text-right' as string,
+                  render: (plan: (typeof plans)[number]) => (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleOpenModal(plan)}
+                    >
+                      <Edit2 className="size-4" />
+                    </Button>
+                  ),
+                },
+              ]
+            : []),
         ]}
         data={plans}
         isLoading={isLoading}
         loadingMessage="Cargando planes..."
         emptyMessage="No hay planes registrados."
-        keyExtractor={(plan: typeof plans[number]) => plan.id}
+        keyExtractor={(plan: (typeof plans)[number]) => plan.id}
       />
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>

@@ -12,16 +12,16 @@ Use the `columns` option to fetch only needed fields. Avoid returning entire row
 
 ```typescript
 // Bad - fetches all columns
-const users = await db.query.users.findMany();
+const users = await db.query.users.findMany()
 // Returns: id, email, name, passwordHash, resetToken, ...
 
 // Bad - no column restriction on relations
 const orders = await db.query.orders.findMany({
   with: {
     customer: true, // All customer columns
-    items: true,    // All item columns
+    items: true, // All item columns
   },
-});
+})
 ```
 
 **Correct (explicit columns):**
@@ -35,7 +35,7 @@ const users = await db.query.users.findMany({
     name: true,
     // passwordHash: false (implicit)
   },
-});
+})
 
 // Good - columns on relations too
 const orders = await db.query.orders.findMany({
@@ -59,10 +59,11 @@ const orders = await db.query.orders.findMany({
       },
     },
   },
-});
+})
 ```
 
 **Why it matters:**
+
 - Reduces bandwidth and memory usage
 - Prevents accidentally exposing sensitive fields
 - Clearer about what data is actually used

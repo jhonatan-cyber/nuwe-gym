@@ -1,7 +1,7 @@
 import { config } from 'dotenv'
 import pg from 'pg'
-import { writeFileSync } from 'fs'
-import { resolve } from 'path'
+import { writeFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 
 config({ path: ['.env.local', '.env'] })
 
@@ -23,7 +23,7 @@ try {
   console.log('Dropped gym_test')
   await pool.query('CREATE DATABASE gym_test')
   console.log('Created gym_test')
-  
+
   writeFileSync(envPath, `DATABASE_URL=${testUrl}\n`, 'utf-8')
   console.log('Wrote .env.test')
   console.log('DB URL:', testUrl.replace(/\/\/.*@/, '//***:***@'))

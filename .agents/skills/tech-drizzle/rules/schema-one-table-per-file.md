@@ -44,25 +44,32 @@ export const users = pgTable('users', {
   email: varchar('email', { length: 255 }).notNull().unique(),
   name: varchar('name', { length: 100 }),
   createdAt: timestamp('created_at').notNull().defaultNow(),
-});
+})
 
-export type User = typeof users.$inferSelect;
-export type NewUser = typeof users.$inferInsert;
+export type User = typeof users.$inferSelect
+export type NewUser = typeof users.$inferInsert
 ```
 
 ```typescript
 // schema/relations.ts - ALL relations together
 export const usersRelations = relations(users, ({ many }) => ({
   organizations: many(userOrganizations),
-}));
+}))
 
-export const organizationsRelations = relations(organizations, ({ one, many }) => ({
-  owner: one(users, { fields: [organizations.ownerId], references: [users.id] }),
-  members: many(userOrganizations),
-}));
+export const organizationsRelations = relations(
+  organizations,
+  ({ one, many }) => ({
+    owner: one(users, {
+      fields: [organizations.ownerId],
+      references: [users.id],
+    }),
+    members: many(userOrganizations),
+  }),
+)
 ```
 
 **Why it matters:**
+
 - Easier to find and edit table definitions
 - Relations in one file prevents circular imports
 - Smaller files are faster to navigate

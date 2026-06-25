@@ -1,30 +1,36 @@
 import { createServerFn } from '@tanstack/react-start'
 import { db } from '#/shared/db/index.ts'
 import { users } from '#/shared/db/schema/auth.ts'
-import { trainerProfiles, trainerAssignments, trainerAvailability } from '#/shared/db/schema/trainers.ts'
+import {
+  trainerProfiles,
+  trainerAssignments,
+  trainerAvailability,
+} from '#/shared/db/schema/trainers.ts'
 import { eq, desc, and } from 'drizzle-orm'
 import { requireRole } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { z } from 'zod'
 
-export const getTrainers = createServerFn({ method: 'GET' }).handler(async () => {
-  await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
-  const trainers = await db.query.trainerProfiles.findMany({
-    with: {
-      user: true,
-      assignments: {
-        where: eq(trainerAssignments.isActive, true),
-        with: { member: true },
+export const getTrainers = createServerFn({ method: 'GET' }).handler(
+  async () => {
+    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
+    const trainers = await db.query.trainerProfiles.findMany({
+      with: {
+        user: true,
+        assignments: {
+          where: eq(trainerAssignments.isActive, true),
+          with: { member: true },
+        },
       },
-    },
-    orderBy: [desc(trainerProfiles.createdAt)],
-  })
-  return trainers.map((t) => ({
-    ...t,
-    memberCount: t.assignments.length,
-  }))
-})
+      orderBy: [desc(trainerProfiles.createdAt)],
+    })
+    return trainers.map((t) => ({
+      ...t,
+      memberCount: t.assignments.length,
+    }))
+  },
+)
 
 export const getTrainer = createServerFn({ method: 'GET' })
   .inputValidator((data: unknown) => z.object({ id: z.number() }).parse(data))
@@ -188,7 +194,9 @@ export const setAvailability = createServerFn({ method: 'POST' })
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
 
-    await db.delete(trainerAvailability).where(eq(trainerAvailability.trainerId, data.trainerId))
+    await db
+      .delete(trainerAvailability)
+      .where(eq(trainerAvailability.trainerId, data.trainerId))
 
     if (data.slots.length > 0) {
       await db.insert(trainerAvailability).values(
@@ -214,47 +222,53 @@ export const setAvailability = createServerFn({ method: 'POST' })
     })
   })
 
-export const getMyMembers = createServerFn({ method: 'GET' }).handler(async () => {
-  const session = await requireRole({ data: { roles: ['TRAINER'] } })
+export const getMyMembers = createServerFn({ method: 'GET' }).handler(
+  async () => {
+    const session = await requireRole({ data: { roles: ['TRAINER'] } })
 
-  const profile = await db.query.trainerProfiles.findFirst({
-    where: eq(trainerProfiles.userId, session.user.id),
-  })
-  if (!profile) return []
+    const profile = await db.query.trainerProfiles.findFirst({
+      where: eq(trainerProfiles.userId, session.user.id),
+    })
+    if (!profile) return []
 
-  const assignments = await db.query.trainerAssignments.findMany({
-    where: and(
-      eq(trainerAssignments.trainerId, profile.id),
-      eq(trainerAssignments.isActive, true),
-    ),
-    with: { member: true },
-  })
+    const assignments = await db.query.trainerAssignments.findMany({
+      where: and(
+        eq(trainerAssignments.trainerId, profile.id),
+        eq(trainerAssignments.isActive, true),
+      ),
+      with: { member: true },
+    })
 
-  return assignments.map((a) => a.member)
-})
+    return assignments.map((a) => a.member)
+  },
+)
 
-export const getTrainerDashboard = createServerFn({ method: 'GET' }).handler(async () => {
-  const session = await requireRole({ data: { roles: ['TRAINER'] } })
+export const getTrainerDashboard = createServerFn({ method: 'GET' }).handler(
+  async () => {
+    const session = await requireRole({ data: { roles: ['TRAINER'] } })
 
-  const profile = await db.query.trainerProfiles.findFirst({
-    where: eq(trainerProfiles.userId, session.user.id),
-    with: {
-      assignments: {
-        where: eq(trainerAssignments.isActive, true),
-        with: { member: true },
+    const profile = await db.query.trainerProfiles.findFirst({
+      where: eq(trainerProfiles.userId, session.user.id),
+      with: {
+        assignments: {
+          where: eq(trainerAssignments.isActive, true),
+          with: { member: true },
+        },
       },
-    },
-  })
+    })
 
-  return {
-    memberCount: profile?.assignments.length ?? 0,
-    assignedMembers: profile?.assignments.map((a) => a.member) ?? [],
-  }
-})
+    return {
+      memberCount: profile?.assignments.length ?? 0,
+      assignedMembers: profile?.assignments.map((a) => a.member) ?? [],
+    }
+  },
+)
 
-export const getTrainerUsers = createServerFn({ method: 'GET' }).handler(async () => {
-  await requireRole({ data: { roles: ['ADMIN'] } })
-  return await db.query.users.findMany({
-    where: eq(users.role, 'TRAINER'),
-  })
-})
+export const getTrainerUsers = createServerFn({ method: 'GET' }).handler(
+  async () => {
+    await requireRole({ data: { roles: ['ADMIN'] } })
+    return await db.query.users.findMany({
+      where: eq(users.role, 'TRAINER'),
+    })
+  },
+)

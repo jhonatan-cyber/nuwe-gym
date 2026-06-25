@@ -1,8 +1,21 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Package, Plus, Edit, ArrowUpDown, Search, AlertTriangle } from 'lucide-react'
+import {
+  Package,
+  Plus,
+  Edit,
+  ArrowUpDown,
+  Search,
+  AlertTriangle,
+} from 'lucide-react'
 import { toast } from 'sonner'
-import { getProducts, getCategories, createProduct, updateProduct, adjustStock } from '#/features/products/server.ts'
+import {
+  getProducts,
+  getCategories,
+  createProduct,
+  updateProduct,
+  adjustStock,
+} from '#/features/products/server.ts'
 import { Button } from '#/shared/components/ui/button'
 import { LoadingButton } from '#/shared/components/ui/loading-button'
 import { Input } from '#/shared/components/ui/input'
@@ -18,7 +31,6 @@ import {
   DialogTitle,
   DialogFooter,
 } from '#/shared/components/ui/dialog'
-
 
 export function ProductsPage() {
   const queryClient = useQueryClient()
@@ -43,7 +55,9 @@ export function ProductsPage() {
   const [imageUrl, setImageUrl] = useState('')
 
   const [adjustQty, setAdjustQty] = useState('1')
-  const [adjustType, setAdjustType] = useState<'MANUAL_ADJUSTMENT' | 'LOSS' | 'RETURN'>('MANUAL_ADJUSTMENT')
+  const [adjustType, setAdjustType] = useState<
+    'MANUAL_ADJUSTMENT' | 'LOSS' | 'RETURN'
+  >('MANUAL_ADJUSTMENT')
   const [adjustNotes, setAdjustNotes] = useState('')
 
   const { data: categories = [] } = useQuery({
@@ -62,7 +76,9 @@ export function ProductsPage() {
       }),
   })
 
-  const [selectedProduct, setSelectedProduct] = useState<typeof productsList[number] | null>(null)
+  const [selectedProduct, setSelectedProduct] = useState<
+    (typeof productsList)[number] | null
+  >(null)
 
   const createMutation = useMutation({
     mutationFn: createProduct,
@@ -109,7 +125,7 @@ export function ProductsPage() {
     setIsProductModalOpen(true)
   }
 
-  const openEditModal = (prod: typeof productsList[number]) => {
+  const openEditModal = (prod: (typeof productsList)[number]) => {
     setSelectedProduct(prod)
     setSku(prod.sku)
     setBarcode(prod.barcode || '')
@@ -129,7 +145,7 @@ export function ProductsPage() {
     setSelectedProduct(null)
   }
 
-  const openAdjustModal = (prod: typeof productsList[number]) => {
+  const openAdjustModal = (prod: (typeof productsList)[number]) => {
     setSelectedProduct(prod)
     setAdjustQty('1')
     setAdjustType('MANUAL_ADJUSTMENT')
@@ -193,7 +209,13 @@ export function ProductsPage() {
         title="Productos / Inventario"
         description="Gestioná el stock de bebidas, suplementos y accesorios del buffet."
         icon={<Package className="size-8 text-primary" />}
-        action={isAdmin && <Button onClick={openCreateModal}><Plus className="size-4" /> Nuevo Producto</Button>}
+        action={
+          isAdmin && (
+            <Button onClick={openCreateModal}>
+              <Plus className="size-4" /> Nuevo Producto
+            </Button>
+          )
+        }
       />
 
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
@@ -212,7 +234,7 @@ export function ProductsPage() {
           className="w-full md:w-56 h-10 px-3 border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring"
         >
           <option value="">Todas las categorías</option>
-          {categories.map((cat: typeof categories[number]) => (
+          {categories.map((cat: (typeof categories)[number]) => (
             <option key={cat.id} value={cat.id}>
               {cat.name}
             </option>
@@ -222,48 +244,100 @@ export function ProductsPage() {
 
       <DataTable
         columns={[
-          { key: 'sku', label: 'SKU', render: (prod: typeof productsList[number]) => <span className="font-mono text-xs">{prod.sku}</span> },
-          { key: 'product', label: 'Producto', render: (prod: typeof productsList[number]) => (
-            <div className="flex flex-col">
-              <span className="font-medium">{prod.name}</span>
-              {prod.barcode && <span className="text-xs text-muted-foreground">Código: {prod.barcode}</span>}
-            </div>
-          )},
-          { key: 'category', label: 'Categoría', render: (prod: typeof productsList[number]) => prod.category?.name || 'Sin Categoría' },
-          { key: 'purchasePrice', label: 'Precio Compra', render: (prod: typeof productsList[number]) => `$${prod.purchasePrice}` },
-          { key: 'salePrice', label: 'Precio Venta', render: (prod: typeof productsList[number]) => <span className="font-semibold text-primary">${prod.salePrice}</span> },
-          { key: 'stock', label: 'Stock Actual', render: (prod: typeof productsList[number]) => {
-            const isLowStock = prod.stockCurrent <= prod.stockMinimum
-            return (
-              <div className="flex items-center gap-2">
-                <span className="font-semibold">{prod.stockCurrent}</span>
-                {isLowStock && (
-                  <Badge variant="destructive" className="flex gap-1 py-0.5 px-1 bg-amber-500/10 text-amber-600 hover:bg-amber-500/10 border-none">
-                    <AlertTriangle className="size-3" />
-                    Mín: {prod.stockMinimum}
-                  </Badge>
+          {
+            key: 'sku',
+            label: 'SKU',
+            render: (prod: (typeof productsList)[number]) => (
+              <span className="font-mono text-xs">{prod.sku}</span>
+            ),
+          },
+          {
+            key: 'product',
+            label: 'Producto',
+            render: (prod: (typeof productsList)[number]) => (
+              <div className="flex flex-col">
+                <span className="font-medium">{prod.name}</span>
+                {prod.barcode && (
+                  <span className="text-xs text-muted-foreground">
+                    Código: {prod.barcode}
+                  </span>
                 )}
               </div>
-            )
-          }},
-          { key: 'actions', label: 'Acciones', className: 'text-right', render: (prod: typeof productsList[number]) => (
-            <div className="flex justify-end gap-2">
-              <Button size="icon" variant="outline" title="Ajustar Stock" onClick={() => openAdjustModal(prod)}>
-                <ArrowUpDown className="size-4" />
-              </Button>
-              {isAdmin && (
-                <Button size="icon" variant="ghost" onClick={() => openEditModal(prod)}>
-                  <Edit className="size-4" />
+            ),
+          },
+          {
+            key: 'category',
+            label: 'Categoría',
+            render: (prod: (typeof productsList)[number]) => prod.category.name,
+          },
+          {
+            key: 'purchasePrice',
+            label: 'Precio Compra',
+            render: (prod: (typeof productsList)[number]) =>
+              `$${prod.purchasePrice}`,
+          },
+          {
+            key: 'salePrice',
+            label: 'Precio Venta',
+            render: (prod: (typeof productsList)[number]) => (
+              <span className="font-semibold text-primary">
+                ${prod.salePrice}
+              </span>
+            ),
+          },
+          {
+            key: 'stock',
+            label: 'Stock Actual',
+            render: (prod: (typeof productsList)[number]) => {
+              const isLowStock = prod.stockCurrent <= prod.stockMinimum
+              return (
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold">{prod.stockCurrent}</span>
+                  {isLowStock && (
+                    <Badge
+                      variant="destructive"
+                      className="flex gap-1 py-0.5 px-1 bg-amber-500/10 text-amber-600 hover:bg-amber-500/10 border-none"
+                    >
+                      <AlertTriangle className="size-3" />
+                      Mín: {prod.stockMinimum}
+                    </Badge>
+                  )}
+                </div>
+              )
+            },
+          },
+          {
+            key: 'actions',
+            label: 'Acciones',
+            className: 'text-right',
+            render: (prod: (typeof productsList)[number]) => (
+              <div className="flex justify-end gap-2">
+                <Button
+                  size="icon"
+                  variant="outline"
+                  title="Ajustar Stock"
+                  onClick={() => openAdjustModal(prod)}
+                >
+                  <ArrowUpDown className="size-4" />
                 </Button>
-              )}
-            </div>
-          )},
+                {isAdmin && (
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => openEditModal(prod)}
+                  >
+                    <Edit className="size-4" />
+                  </Button>
+                )}
+              </div>
+            ),
+          },
         ]}
         data={productsList}
         isLoading={isLoading}
         loadingMessage="Cargando productos..."
         emptyMessage="No se encontraron productos."
-        keyExtractor={(prod: typeof productsList[number]) => prod.id}
+        keyExtractor={(prod: (typeof productsList)[number]) => prod.id}
       />
 
       <Dialog open={isProductModalOpen} onOpenChange={setIsProductModalOpen}>
@@ -277,65 +351,129 @@ export function ProductsPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
                 <label className="text-sm font-medium">SKU *</label>
-                <Input value={sku} onChange={(e) => setSku(e.target.value)} required />
+                <Input
+                  value={sku}
+                  onChange={(e) => setSku(e.target.value)}
+                  required
+                />
               </div>
               <div className="space-y-1">
                 <label className="text-sm font-medium">Código de barras</label>
-                <Input placeholder="Escanear o ingresar" value={barcode} onChange={(e) => setBarcode(e.target.value)} />
+                <Input
+                  placeholder="Escanear o ingresar"
+                  value={barcode}
+                  onChange={(e) => setBarcode(e.target.value)}
+                />
               </div>
             </div>
             <div className="space-y-1">
               <label className="text-sm font-medium">Nombre *</label>
-              <Input placeholder="Nombre del producto" value={name} onChange={(e) => setName(e.target.value)} required />
+              <Input
+                placeholder="Nombre del producto"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+              />
             </div>
             <div className="space-y-1">
               <label className="text-sm font-medium">Categoría *</label>
-              <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className="w-full h-10 px-3 border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring" required>
-                <option value="" disabled>Seleccione categoría...</option>
-                {categories.map((cat: typeof categories[number]) => (
-                  <option key={cat.id} value={cat.id}>{cat.name}</option>
+              <select
+                value={categoryId}
+                onChange={(e) => setCategoryId(e.target.value)}
+                className="w-full h-10 px-3 border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                required
+              >
+                <option value="" disabled>
+                  Seleccione categoría...
+                </option>
+                {categories.map((cat: (typeof categories)[number]) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </option>
                 ))}
               </select>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
                 <label className="text-sm font-medium">Precio Compra *</label>
-                <Input type="number" step="0.01" value={purchasePrice} onChange={(e) => setPurchasePrice(e.target.value)} required />
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={purchasePrice}
+                  onChange={(e) => setPurchasePrice(e.target.value)}
+                  required
+                />
               </div>
               <div className="space-y-1">
                 <label className="text-sm font-medium">Precio Venta *</label>
-                <Input type="number" step="0.01" value={salePrice} onChange={(e) => setSalePrice(e.target.value)} required />
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={salePrice}
+                  onChange={(e) => setSalePrice(e.target.value)}
+                  required
+                />
               </div>
             </div>
             {!selectedProduct && (
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-sm font-medium">Stock Inicial</label>
-                  <Input type="number" value={stockCurrent} onChange={(e) => setStockCurrent(e.target.value)} />
+                  <Input
+                    type="number"
+                    value={stockCurrent}
+                    onChange={(e) => setStockCurrent(e.target.value)}
+                  />
                 </div>
                 <div className="space-y-1">
                   <label className="text-sm font-medium">Stock Mínimo</label>
-                  <Input type="number" value={stockMinimum} onChange={(e) => setStockMinimum(e.target.value)} />
+                  <Input
+                    type="number"
+                    value={stockMinimum}
+                    onChange={(e) => setStockMinimum(e.target.value)}
+                  />
                 </div>
               </div>
             )}
             {selectedProduct && (
               <div className="space-y-1">
                 <label className="text-sm font-medium">Stock Mínimo</label>
-                <Input type="number" value={stockMinimum} onChange={(e) => setStockMinimum(e.target.value)} />
+                <Input
+                  type="number"
+                  value={stockMinimum}
+                  onChange={(e) => setStockMinimum(e.target.value)}
+                />
               </div>
             )}
             <div className="space-y-1">
               <label className="text-sm font-medium">URL de Imagen</label>
-              <Input placeholder="http://..." value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} />
+              <Input
+                placeholder="http://..."
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+              />
             </div>
             <div className="space-y-1">
               <label className="text-sm font-medium">Descripción</label>
-              <Textarea placeholder="Breve descripción del producto..." value={description} onChange={(e) => setDescription(e.target.value)} rows={2} />
+              <Textarea
+                placeholder="Breve descripción del producto..."
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={2}
+              />
             </div>
             <DialogFooter className="pt-4">
-              <Button type="button" variant="outline" onClick={closeProductModal}>Cancelar</Button>
-              <LoadingButton type="submit" isLoading={createMutation.isPending || updateMutation.isPending}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={closeProductModal}
+              >
+                Cancelar
+              </Button>
+              <LoadingButton
+                type="submit"
+                isLoading={createMutation.isPending || updateMutation.isPending}
+              >
                 {selectedProduct ? 'Guardar Cambios' : 'Crear Producto'}
               </LoadingButton>
             </DialogFooter>
@@ -352,11 +490,26 @@ export function ProductsPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
                 <label className="text-sm font-medium">Cantidad</label>
-                <Input type="number" min="1" value={adjustQty} onChange={(e) => setAdjustQty(e.target.value)} required />
+                <Input
+                  type="number"
+                  min="1"
+                  value={adjustQty}
+                  onChange={(e) => setAdjustQty(e.target.value)}
+                  required
+                />
               </div>
               <div className="space-y-1">
                 <label className="text-sm font-medium">Tipo de Ajuste</label>
-                <select value={adjustType}                 onChange={(e) => setAdjustType(e.target.value as 'MANUAL_ADJUSTMENT' | 'LOSS' | 'RETURN')} className="w-full h-10 px-3 border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring" required>
+                <select
+                  value={adjustType}
+                  onChange={(e) =>
+                    setAdjustType(
+                      e.target.value as 'MANUAL_ADJUSTMENT' | 'LOSS' | 'RETURN',
+                    )
+                  }
+                  className="w-full h-10 px-3 border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                  required
+                >
                   <option value="MANUAL_ADJUSTMENT">Entrada Manual</option>
                   <option value="LOSS">Salida / Pérdida</option>
                   <option value="RETURN">Devolución</option>
@@ -364,12 +517,28 @@ export function ProductsPage() {
               </div>
             </div>
             <div className="space-y-1">
-              <label className="text-sm font-medium">Notas / Justificación *</label>
-              <Textarea placeholder="Ej. Rotura, conteo mensual, vencimiento..." value={adjustNotes} onChange={(e) => setAdjustNotes(e.target.value)} required rows={3} />
+              <label className="text-sm font-medium">
+                Notas / Justificación *
+              </label>
+              <Textarea
+                placeholder="Ej. Rotura, conteo mensual, vencimiento..."
+                value={adjustNotes}
+                onChange={(e) => setAdjustNotes(e.target.value)}
+                required
+                rows={3}
+              />
             </div>
             <DialogFooter className="pt-4">
-              <Button type="button" variant="outline" onClick={closeAdjustModal}>Cancelar</Button>
-              <LoadingButton type="submit" isLoading={adjustMutation.isPending}>Registrar Ajuste</LoadingButton>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={closeAdjustModal}
+              >
+                Cancelar
+              </Button>
+              <LoadingButton type="submit" isLoading={adjustMutation.isPending}>
+                Registrar Ajuste
+              </LoadingButton>
             </DialogFooter>
           </form>
         </DialogContent>

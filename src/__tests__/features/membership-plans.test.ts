@@ -44,8 +44,18 @@ describe('Membership Plans', () => {
   })
 
   it('should get active plans only', async () => {
-    await createPlan({ name: 'Plan Activo', isActive: true, durationDays: 30, price: '10000.00' })
-    await createPlan({ name: 'Plan Inactivo', isActive: false, durationDays: 30, price: '10000.00' })
+    await createPlan({
+      name: 'Plan Activo',
+      isActive: true,
+      durationDays: 30,
+      price: '10000.00',
+    })
+    await createPlan({
+      name: 'Plan Inactivo',
+      isActive: false,
+      durationDays: 30,
+      price: '10000.00',
+    })
 
     const activePlans = await db.query.membershipPlans.findMany({
       where: eq(membershipPlans.isActive, true),

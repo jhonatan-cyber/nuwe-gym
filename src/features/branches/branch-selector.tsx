@@ -29,9 +29,10 @@ export function BranchSelector() {
     queryFn: () => getUserBranches(),
   })
 
-  const currentBranch = branches.find((b) => b.id === currentBranchId)
-    ?? branches.find((b) => b.isDefault)
-    ?? branches[0]
+  const currentBranch =
+    branches.find((b) => b.id === currentBranchId) ??
+    branches.find((b) => b.isDefault) ??
+    branches[0]
 
   const handleSwitch = (branchId: number) => {
     localStorage.setItem(BRANCH_STORAGE_KEY, String(branchId))
@@ -40,7 +41,7 @@ export function BranchSelector() {
 
   if (!mounted || branches.length <= 1) return null
 
-  const displayName = currentBranch?.name ?? 'Sucursal'
+  const displayName = currentBranch.name
 
   return (
     <DropdownMenu>
@@ -59,8 +60,8 @@ export function BranchSelector() {
             className="flex items-center justify-between"
           >
             <span>{branch.name}</span>
-            {branch.id === currentBranch?.id && (
-              <span className="text-primary font-bold ml-2">✓</span>
+            {branch.id === currentBranch.id && (
+              <span className="text-primary font-bold ml-2">✔️</span>
             )}
           </DropdownMenuItem>
         ))}

@@ -16,8 +16,11 @@ const result = await db
   .select()
   .from(users)
   .leftJoin(userOrganizations, eq(users.id, userOrganizations.userId))
-  .leftJoin(organizations, eq(userOrganizations.organizationId, organizations.id))
-  .where(eq(users.id, userId));
+  .leftJoin(
+    organizations,
+    eq(userOrganizations.organizationId, organizations.id),
+  )
+  .where(eq(users.id, userId))
 
 // Returns flat rows, needs manual shaping
 ```
@@ -35,7 +38,7 @@ const user = await db.query.users.findFirst({
       },
     },
   },
-});
+})
 
 // Returns properly nested object:
 // { id, name, organizations: [{ organization: { name } }] }
@@ -43,14 +46,15 @@ const user = await db.query.users.findFirst({
 
 **When to use each:**
 
-| Use Case | API |
-|----------|-----|
-| Read with relations | `db.query` (relational) |
+| Use Case                  | API                         |
+| ------------------------- | --------------------------- |
+| Read with relations       | `db.query` (relational)     |
 | Aggregations (COUNT, SUM) | `db.select` (query builder) |
-| Complex JOINs, CTEs | `db.select` or raw SQL |
-| Simple CRUD | Either works |
+| Complex JOINs, CTEs       | `db.select` or raw SQL      |
+| Simple CRUD               | Either works                |
 
 **Why it matters:**
+
 - Relational queries are more readable
 - Auto-generated JOINs are optimized
 - Type-safe nested results

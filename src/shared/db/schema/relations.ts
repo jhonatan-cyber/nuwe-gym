@@ -13,10 +13,15 @@ import { sales, saleItems } from './sales.ts'
 import { inventoryMovements } from './inventory.ts'
 import { cashRegisterSessions, cashMovements } from './cash-register.ts'
 import { classes, classSchedules, classBookings } from './classes.ts'
-import { trainerProfiles, trainerAssignments, trainerAvailability } from './trainers.ts'
+import {
+  trainerProfiles,
+  trainerAssignments,
+  trainerAvailability,
+} from './trainers.ts'
 import { membershipFreezes } from './membership-freezes.ts'
 import { auditLogs } from './audit-logs.ts'
 import { branches, userBranches } from './branches.ts'
+import { packages, packageItems } from './packages.ts'
 
 // Auth relations
 export const usersRelations = relations(users, ({ many }) => ({
@@ -210,47 +215,53 @@ export const classSchedulesRelations = relations(
   }),
 )
 
-export const classBookingsRelations = relations(
-  classBookings,
+export const classBookingsRelations = relations(classBookings, ({ one }) => ({
+  schedule: one(classSchedules, {
+    fields: [classBookings.classScheduleId],
+    references: [classSchedules.id],
+  }),
+  member: one(members, {
+    fields: [classBookings.memberId],
+    references: [members.id],
+  }),
+}))
+
+// Trainer relations
+export const trainerProfilesRelations = relations(
+  trainerProfiles,
+  ({ one, many }) => ({
+    user: one(users, {
+      fields: [trainerProfiles.userId],
+      references: [users.id],
+    }),
+    assignments: many(trainerAssignments),
+    availability: many(trainerAvailability),
+  }),
+)
+
+export const trainerAssignmentsRelations = relations(
+  trainerAssignments,
   ({ one }) => ({
-    schedule: one(classSchedules, {
-      fields: [classBookings.classScheduleId],
-      references: [classSchedules.id],
+    trainer: one(trainerProfiles, {
+      fields: [trainerAssignments.trainerId],
+      references: [trainerProfiles.id],
     }),
     member: one(members, {
-      fields: [classBookings.memberId],
+      fields: [trainerAssignments.memberId],
       references: [members.id],
     }),
   }),
 )
 
-// Trainer relations
-export const trainerProfilesRelations = relations(trainerProfiles, ({ one, many }) => ({
-  user: one(users, {
-    fields: [trainerProfiles.userId],
-    references: [users.id],
+export const trainerAvailabilityRelations = relations(
+  trainerAvailability,
+  ({ one }) => ({
+    trainer: one(trainerProfiles, {
+      fields: [trainerAvailability.trainerId],
+      references: [trainerProfiles.id],
+    }),
   }),
-  assignments: many(trainerAssignments),
-  availability: many(trainerAvailability),
-}))
-
-export const trainerAssignmentsRelations = relations(trainerAssignments, ({ one }) => ({
-  trainer: one(trainerProfiles, {
-    fields: [trainerAssignments.trainerId],
-    references: [trainerProfiles.id],
-  }),
-  member: one(members, {
-    fields: [trainerAssignments.memberId],
-    references: [members.id],
-  }),
-}))
-
-export const trainerAvailabilityRelations = relations(trainerAvailability, ({ one }) => ({
-  trainer: one(trainerProfiles, {
-    fields: [trainerAvailability.trainerId],
-    references: [trainerProfiles.id],
-  }),
-}))
+)
 
 // Audit log relations
 export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
@@ -282,5 +293,20 @@ export const branchesRelations = relations(branches, ({ many }) => ({
 
 export const userBranchesRelations = relations(userBranches, ({ one }) => ({
   user: one(users, { fields: [userBranches.userId], references: [users.id] }),
-  branch: one(branches, { fields: [userBranches.branchId], references: [branches.id] }),
+  branch: one(branches, {
+    fields: [userBranches.branchId],
+    references: [branches.id],
+  }),
+}))
+
+// Package relations
+export const packagesRelations = relations(packages, ({ many }) => ({
+  items: many(packageItems),
+}))
+
+export const packageItemsRelations = relations(packageItems, ({ one }) => ({
+  package: one(packages, {
+    fields: [packageItems.packageId],
+    references: [packages.id],
+  }),
 }))

@@ -93,12 +93,8 @@
           "name": "account_user_id_user_id_fk",
           "tableFrom": "account",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -168,12 +164,8 @@
           "name": "session_user_id_user_id_fk",
           "tableFrom": "session",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -183,9 +175,7 @@
         "session_token_unique": {
           "name": "session_token_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "token"
-          ]
+          "columns": ["token"]
         }
       },
       "policies": {},
@@ -254,9 +244,7 @@
         "user_email_unique": {
           "name": "user_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},
@@ -381,12 +369,8 @@
           "name": "cash_movements_cash_session_id_cash_register_sessions_id_fk",
           "tableFrom": "cash_movements",
           "tableTo": "cash_register_sessions",
-          "columnsFrom": [
-            "cash_session_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["cash_session_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -477,12 +461,8 @@
           "name": "cash_register_sessions_opened_by_user_id_user_id_fk",
           "tableFrom": "cash_register_sessions",
           "tableTo": "user",
-          "columnsFrom": [
-            "opened_by_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["opened_by_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -490,12 +470,8 @@
           "name": "cash_register_sessions_closed_by_user_id_user_id_fk",
           "tableFrom": "cash_register_sessions",
           "tableTo": "user",
-          "columnsFrom": [
-            "closed_by_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["closed_by_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -601,12 +577,8 @@
           "name": "check_ins_member_id_members_id_fk",
           "tableFrom": "check_ins",
           "tableTo": "members",
-          "columnsFrom": [
-            "member_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["member_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -614,12 +586,8 @@
           "name": "check_ins_registered_by_user_id_user_id_fk",
           "tableFrom": "check_ins",
           "tableTo": "user",
-          "columnsFrom": [
-            "registered_by_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["registered_by_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -965,12 +933,8 @@
           "name": "subscriptions_member_id_members_id_fk",
           "tableFrom": "subscriptions",
           "tableTo": "members",
-          "columnsFrom": [
-            "member_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["member_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -978,12 +942,8 @@
           "name": "subscriptions_plan_id_membership_plans_id_fk",
           "tableFrom": "subscriptions",
           "tableTo": "membership_plans",
-          "columnsFrom": [
-            "plan_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["plan_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1159,12 +1119,8 @@
           "name": "membership_payments_member_id_members_id_fk",
           "tableFrom": "membership_payments",
           "tableTo": "members",
-          "columnsFrom": [
-            "member_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["member_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1172,12 +1128,8 @@
           "name": "membership_payments_subscription_id_subscriptions_id_fk",
           "tableFrom": "membership_payments",
           "tableTo": "subscriptions",
-          "columnsFrom": [
-            "subscription_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["subscription_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1185,12 +1137,8 @@
           "name": "membership_payments_created_by_user_id_user_id_fk",
           "tableFrom": "membership_payments",
           "tableTo": "user",
-          "columnsFrom": [
-            "created_by_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["created_by_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1386,12 +1334,8 @@
           "name": "products_category_id_product_categories_id_fk",
           "tableFrom": "products",
           "tableTo": "product_categories",
-          "columnsFrom": [
-            "category_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["category_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1519,12 +1463,8 @@
           "name": "purchase_items_purchase_id_purchases_id_fk",
           "tableFrom": "purchase_items",
           "tableTo": "purchases",
-          "columnsFrom": [
-            "purchase_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["purchase_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1532,12 +1472,8 @@
           "name": "purchase_items_product_id_products_id_fk",
           "tableFrom": "purchase_items",
           "tableTo": "products",
-          "columnsFrom": [
-            "product_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["product_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1615,12 +1551,8 @@
           "name": "purchases_supplier_id_suppliers_id_fk",
           "tableFrom": "purchases",
           "tableTo": "suppliers",
-          "columnsFrom": [
-            "supplier_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["supplier_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1628,12 +1560,8 @@
           "name": "purchases_created_by_user_id_user_id_fk",
           "tableFrom": "purchases",
           "tableTo": "user",
-          "columnsFrom": [
-            "created_by_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["created_by_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1691,12 +1619,8 @@
           "name": "sale_items_sale_id_sales_id_fk",
           "tableFrom": "sale_items",
           "tableTo": "sales",
-          "columnsFrom": [
-            "sale_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["sale_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1704,12 +1628,8 @@
           "name": "sale_items_product_id_products_id_fk",
           "tableFrom": "sale_items",
           "tableTo": "products",
-          "columnsFrom": [
-            "product_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["product_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1891,12 +1811,8 @@
           "name": "sales_member_id_members_id_fk",
           "tableFrom": "sales",
           "tableTo": "members",
-          "columnsFrom": [
-            "member_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["member_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1904,12 +1820,8 @@
           "name": "sales_user_id_user_id_fk",
           "tableFrom": "sales",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2045,12 +1957,8 @@
           "name": "inventory_movements_product_id_products_id_fk",
           "tableFrom": "inventory_movements",
           "tableTo": "products",
-          "columnsFrom": [
-            "product_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["product_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -2058,12 +1966,8 @@
           "name": "inventory_movements_created_by_user_id_user_id_fk",
           "tableFrom": "inventory_movements",
           "tableTo": "user",
-          "columnsFrom": [
-            "created_by_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["created_by_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2265,28 +2169,17 @@
     "public.cash_movement_type": {
       "name": "cash_movement_type",
       "schema": "public",
-      "values": [
-        "INCOME",
-        "EXPENSE"
-      ]
+      "values": ["INCOME", "EXPENSE"]
     },
     "public.cash_session_status": {
       "name": "cash_session_status",
       "schema": "public",
-      "values": [
-        "OPEN",
-        "CLOSED"
-      ]
+      "values": ["OPEN", "CLOSED"]
     },
     "public.cash_source_type": {
       "name": "cash_source_type",
       "schema": "public",
-      "values": [
-        "MEMBERSHIP_PAYMENT",
-        "SALE",
-        "MANUAL",
-        "OTHER"
-      ]
+      "values": ["MEMBERSHIP_PAYMENT", "SALE", "MANUAL", "OTHER"]
     },
     "public.check_in_result": {
       "name": "check_in_result",
@@ -2301,58 +2194,32 @@
     "public.inventory_movement_type": {
       "name": "inventory_movement_type",
       "schema": "public",
-      "values": [
-        "PURCHASE",
-        "SALE",
-        "MANUAL_ADJUSTMENT",
-        "RETURN",
-        "LOSS"
-      ]
+      "values": ["PURCHASE", "SALE", "MANUAL_ADJUSTMENT", "RETURN", "LOSS"]
     },
     "public.member_status": {
       "name": "member_status",
       "schema": "public",
-      "values": [
-        "ACTIVE",
-        "INACTIVE",
-        "SUSPENDED"
-      ]
+      "values": ["ACTIVE", "INACTIVE", "SUSPENDED"]
     },
     "public.payment_method": {
       "name": "payment_method",
       "schema": "public",
-      "values": [
-        "CASH",
-        "QR",
-        "TRANSFER",
-        "CARD"
-      ]
+      "values": ["CASH", "QR", "TRANSFER", "CARD"]
     },
     "public.sale_status": {
       "name": "sale_status",
       "schema": "public",
-      "values": [
-        "COMPLETED",
-        "CANCELED"
-      ]
+      "values": ["COMPLETED", "CANCELED"]
     },
     "public.subscription_status": {
       "name": "subscription_status",
       "schema": "public",
-      "values": [
-        "ACTIVE",
-        "EXPIRED",
-        "CANCELED"
-      ]
+      "values": ["ACTIVE", "EXPIRED", "CANCELED"]
     },
     "public.user_role": {
       "name": "user_role",
       "schema": "public",
-      "values": [
-        "ADMIN",
-        "RECEPTIONIST",
-        "TRAINER"
-      ]
+      "values": ["ADMIN", "RECEPTIONIST", "TRAINER"]
     }
   },
   "schemas": {},

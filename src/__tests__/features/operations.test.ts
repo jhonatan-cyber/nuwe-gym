@@ -3,7 +3,10 @@ import { db } from '#/shared/db/index.ts'
 import { products } from '#/shared/db/schema/products.ts'
 import { sales, saleItems } from '#/shared/db/schema/sales.ts'
 import { inventoryMovements } from '#/shared/db/schema/inventory.ts'
-import { cashRegisterSessions, cashMovements } from '#/shared/db/schema/cash-register.ts'
+import {
+  cashRegisterSessions,
+  cashMovements,
+} from '#/shared/db/schema/cash-register.ts'
 import { eq, desc, ilike, sql } from 'drizzle-orm'
 import {
   createProduct,
@@ -20,7 +23,10 @@ beforeAll(async () => {
 
 describe('Products', () => {
   it('should create a product and verify it exists', async () => {
-    const product = await createProduct({ name: 'Whey Protein', salePrice: '2500.00' })
+    const product = await createProduct({
+      name: 'Whey Protein',
+      salePrice: '2500.00',
+    })
     const found = await db.query.products.findFirst({
       where: eq(products.id, product.id),
     })
@@ -86,7 +92,7 @@ describe('Products', () => {
     const found = all.find((p) => p.name === 'Producto Relacionado')
     expect(found).toBeDefined()
     expect(found!.category).toBeDefined()
-    expect(found!.category!.name).toBe('Suplementos')
+    expect(found!.category.name).toBe('Suplementos')
   })
 })
 
@@ -174,7 +180,10 @@ describe('Inventory', () => {
 
   it('should get movements for a specific product', async () => {
     const p = await createProduct()
-    await createInventoryMovement(p.id, { movementType: 'PURCHASE', quantity: 10 })
+    await createInventoryMovement(p.id, {
+      movementType: 'PURCHASE',
+      quantity: 10,
+    })
     await createInventoryMovement(p.id, { movementType: 'SALE', quantity: -3 })
 
     const movements = await db.query.inventoryMovements.findMany({
@@ -248,7 +257,9 @@ describe('Cash Register', () => {
     })
     expect(movements).toHaveLength(2)
     expect(movements.filter((m) => m.movementType === 'INCOME')).toHaveLength(1)
-    expect(movements.filter((m) => m.movementType === 'EXPENSE')).toHaveLength(1)
+    expect(movements.filter((m) => m.movementType === 'EXPENSE')).toHaveLength(
+      1,
+    )
   })
 
   it('should close a cash session', async () => {

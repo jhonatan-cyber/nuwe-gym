@@ -12,7 +12,9 @@ import { z } from 'zod'
 export const generateMemberQR = createServerFn({ method: 'POST' })
   .inputValidator((data) => z.object({ memberId: z.number() }).parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    const session = await requireRole({
+      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
+    })
 
     const member = await db.query.members.findFirst({
       where: eq(members.id, data.memberId),
@@ -23,7 +25,10 @@ export const generateMemberQR = createServerFn({ method: 'POST' })
 
     const qrCode = crypto.randomUUID()
 
-    await db.update(members).set({ qrCode }).where(eq(members.id, data.memberId))
+    await db
+      .update(members)
+      .set({ qrCode })
+      .where(eq(members.id, data.memberId))
 
     createAuditLog({
       ...getAuditContext(session),
@@ -50,7 +55,9 @@ export const getMemberQRCode = createServerFn({ method: 'GET' })
   })
 
 export const getMembersWithQR = createServerFn({ method: 'GET' })
-  .inputValidator((data) => z.object({ search: z.string().optional() }).parse(data))
+  .inputValidator((data) =>
+    z.object({ search: z.string().optional() }).parse(data),
+  )
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
 
@@ -65,7 +72,7 @@ export const getMembersWithQR = createServerFn({ method: 'GET' })
 
     return await db.query.members.findMany({
       where: whereClause,
-      orderBy: (members) => [members.fullName],
+      orderBy: (m) => [m.fullName],
       columns: {
         id: true,
         fullName: true,

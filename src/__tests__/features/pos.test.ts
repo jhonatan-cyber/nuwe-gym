@@ -7,8 +7,8 @@ import {
   createProduct,
   createSale,
   cleanDatabase,
+  TEST_USER_ID,
 } from '../factories.ts'
-import { TEST_USER_ID } from '../factories.ts'
 
 beforeAll(async () => {
   await cleanDatabase()
@@ -54,7 +54,7 @@ describe('POS — Sales', () => {
 
     expect(result).toBeDefined()
     expect(result!.items).toHaveLength(1)
-    expect(result!.items[0]!.product.name).toBe('Linked Product')
+    expect(result!.items[0].product.name).toBe('Linked Product')
   })
 
   it('should filter sales by payment method', async () => {
@@ -140,9 +140,9 @@ describe('POS — Sales', () => {
     })
 
     expect(items).toHaveLength(1)
-    expect(Number(items[0]!.subtotal)).toBe(10000)
-    expect(Number(items[0]!.unitPrice)).toBe(2500)
-    expect(items[0]!.quantity).toBe(4)
+    expect(Number(items[0].subtotal)).toBe(10000)
+    expect(Number(items[0].unitPrice)).toBe(2500)
+    expect(items[0].quantity).toBe(4)
   })
 
   it('should list recent sales ordered by date', async () => {
@@ -161,7 +161,7 @@ describe('POS — Sales', () => {
 
     expect(recentSales.length).toBeGreaterThanOrEqual(3)
     for (let i = 1; i < recentSales.length; i++) {
-      expect(recentSales[i - 1]!.soldAt >= recentSales[i]!.soldAt).toBe(true)
+      expect(recentSales[i - 1].soldAt >= recentSales[i].soldAt).toBe(true)
     }
   })
 })

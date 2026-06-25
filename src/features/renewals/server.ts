@@ -3,7 +3,10 @@ import { db } from '#/shared/db/index.ts'
 import { subscriptions } from '#/shared/db/schema/subscriptions.ts'
 import { membershipPlans } from '#/shared/db/schema/membership-plans.ts'
 import { membershipPayments } from '#/shared/db/schema/membership-payments.ts'
-import { cashRegisterSessions, cashMovements } from '#/shared/db/schema/cash-register.ts'
+import {
+  cashRegisterSessions,
+  cashMovements,
+} from '#/shared/db/schema/cash-register.ts'
 import { members } from '#/shared/db/schema/members.ts'
 import { settings } from '#/shared/db/schema/settings.ts'
 import { eq, and, gte, lte, desc } from 'drizzle-orm'
@@ -13,7 +16,9 @@ import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { z } from 'zod'
 
 export const getExpiringSubscriptions = createServerFn({ method: 'GET' })
-  .inputValidator((data: unknown) => z.object({ days: z.number().optional().default(7) }).parse(data))
+  .inputValidator((data: unknown) =>
+    z.object({ days: z.number().optional().default(7) }).parse(data),
+  )
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
 
@@ -35,20 +40,20 @@ export const getExpiringSubscriptions = createServerFn({ method: 'GET' })
     })
   })
 
-export const getExpiredSubscriptions = createServerFn({ method: 'GET' }).handler(
-  async () => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+export const getExpiredSubscriptions = createServerFn({
+  method: 'GET',
+}).handler(async () => {
+  await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
 
-    return await db.query.subscriptions.findMany({
-      where: eq(subscriptions.status, 'EXPIRED'),
-      orderBy: [desc(subscriptions.endDate)],
-      with: {
-        member: true,
-        plan: true,
-      },
-    })
-  },
-)
+  return await db.query.subscriptions.findMany({
+    where: eq(subscriptions.status, 'EXPIRED'),
+    orderBy: [desc(subscriptions.endDate)],
+    with: {
+      member: true,
+      plan: true,
+    },
+  })
+})
 
 const renewSubscriptionSchema = z.object({
   memberId: z.number(),
@@ -63,7 +68,9 @@ export type RenewSubscriptionData = z.infer<typeof renewSubscriptionSchema>
 export const renewSubscription = createServerFn({ method: 'POST' })
   .inputValidator((data) => renewSubscriptionSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    const session = await requireRole({
+      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
+    })
     const userId = session.user.id
 
     const subscription = await db.transaction(async (tx) => {
@@ -87,7 +94,7 @@ export const renewSubscription = createServerFn({ method: 'POST' })
       const endDate = new Date()
       endDate.setDate(endDate.getDate() + plan.durationDays)
 
-      const [subscription] = await tx
+      const [newSubscription] = await tx
         .insert(subscriptions)
         .values({
           memberId: data.memberId,
@@ -102,7 +109,7 @@ export const renewSubscription = createServerFn({ method: 'POST' })
       const [payment] = await tx
         .insert(membershipPayments)
         .values({
-          subscriptionId: subscription.id,
+          subscriptionId: newSubscription.id,
           memberId: data.memberId,
           amount: data.amount,
           paymentMethod: data.paymentMethod,
@@ -125,10 +132,10 @@ export const renewSubscription = createServerFn({ method: 'POST' })
         sourceId: payment.id,
         amount: data.amount,
         paymentMethod: data.paymentMethod,
-        description: `Renovación de membresía - Socio: ${memberName} (Sub: #${subscription.id})`,
+        description: `Renovación de membresía - Socio: ${memberName} (Sub: #${newSubscription.id})`,
       })
 
-      return subscription
+      return newSubscription
     })
 
     createAuditLog({
@@ -142,14 +149,17 @@ export const renewSubscription = createServerFn({ method: 'POST' })
     return subscription
   })
 
-export const processAutoRenewals = createServerFn({ method: 'POST' })
-  .handler(async () => {
+export const processAutoRenewals = createServerFn({ method: 'POST' }).handler(
+  async () => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
     const userId = session.user.id
 
     const settingsRows = await db.select().from(settings).limit(1)
     if (!settingsRows[0]?.enableAutoRenew) {
-      return { renewed: 0, message: 'Renovación automática desactivada en configuración' }
+      return {
+        renewed: 0,
+        message: 'Renovación automática desactivada en configuración',
+      }
     }
 
     const now = new Date()
@@ -232,11 +242,17 @@ export const processAutoRenewals = createServerFn({ method: 'POST' })
       description: `Procesó renovaciones automáticas: ${renewedCount} suscripciones renovadas`,
     })
 
-    return { renewed: renewedCount, message: `Se renovaron ${renewedCount} suscripciones` }
-  })
+    return {
+      renewed: renewedCount,
+      message: `Se renovaron ${renewedCount} suscripciones`,
+    }
+  },
+)
 
 export const getMemberRenewalHistory = createServerFn({ method: 'GET' })
-  .inputValidator((data: unknown) => z.object({ memberId: z.number() }).parse(data))
+  .inputValidator((data: unknown) =>
+    z.object({ memberId: z.number() }).parse(data),
+  )
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
 

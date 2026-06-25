@@ -11,32 +11,54 @@ describe('Permissions', () => {
 
     it('should have all admin permissions', () => {
       const adminPerms = [
-        'members:read', 'members:write',
-        'plans:read', 'plans:write',
-        'subscriptions:read', 'subscriptions:write',
-        'payments:read', 'payments:write',
-        'checkins:read', 'checkins:write',
-        'classes:read', 'classes:write',
-        'products:read', 'products:write',
-        'categories:read', 'categories:write',
-        'suppliers:read', 'suppliers:write',
-        'purchases:read', 'purchases:write',
-        'sales:read', 'sales:write',
+        'members:read',
+        'members:write',
+        'plans:read',
+        'plans:write',
+        'subscriptions:read',
+        'subscriptions:write',
+        'payments:read',
+        'payments:write',
+        'checkins:read',
+        'checkins:write',
+        'classes:read',
+        'classes:write',
+        'products:read',
+        'products:write',
+        'categories:read',
+        'categories:write',
+        'suppliers:read',
+        'suppliers:write',
+        'purchases:read',
+        'purchases:write',
+        'sales:read',
+        'sales:write',
         'pos:use',
-        'inventory:read', 'inventory:write',
-        'cash:read', 'cash:write',
+        'inventory:read',
+        'inventory:write',
+        'cash:read',
+        'cash:write',
         'dashboard:read',
-        'users:read', 'users:write',
+        'users:read',
+        'users:write',
         'reports:read',
-        'settings:read', 'settings:write',
-        'renewals:read', 'renewals:write',
+        'settings:read',
+        'settings:write',
+        'renewals:read',
+        'renewals:write',
         'export:read',
-        'trainers:read', 'trainers:write',
-        'notifications:read', 'notifications:write',
-        'membership-freezes:read', 'membership-freezes:write',
-        'audit:read', 'audit:export',
-        'branches:read', 'branches:write',
-        'backup:read', 'backup:write',
+        'trainers:read',
+        'trainers:write',
+        'notifications:read',
+        'notifications:write',
+        'membership-freezes:read',
+        'membership-freezes:write',
+        'audit:read',
+        'audit:export',
+        'branches:read',
+        'branches:write',
+        'backup:read',
+        'backup:write',
       ]
       for (const perm of adminPerms) {
         expect(hasPermission('ADMIN', perm as never)).toBe(true)
@@ -100,15 +122,33 @@ describe('Permissions', () => {
 
   describe('hasAnyPermission', () => {
     it('should return true when user has at least one permission', () => {
-      expect(hasAnyPermission('RECEPTIONIST', ['audit:read', 'members:read', 'backup:write'])).toBe(true)
+      expect(
+        hasAnyPermission('RECEPTIONIST', [
+          'audit:read',
+          'members:read',
+          'backup:write',
+        ]),
+      ).toBe(true)
     })
 
     it('should return false when user has none of the permissions', () => {
-      expect(hasAnyPermission('TRAINER', ['sales:write', 'cash:write', 'settings:write'])).toBe(false)
+      expect(
+        hasAnyPermission('TRAINER', [
+          'sales:write',
+          'cash:write',
+          'settings:write',
+        ]),
+      ).toBe(false)
     })
 
     it('should return true when all permissions match', () => {
-      expect(hasAnyPermission('ADMIN', ['members:read', 'users:write', 'backup:read'])).toBe(true)
+      expect(
+        hasAnyPermission('ADMIN', [
+          'members:read',
+          'users:write',
+          'backup:read',
+        ]),
+      ).toBe(true)
     })
 
     it('should return false for empty permissions array', () => {
@@ -118,7 +158,14 @@ describe('Permissions', () => {
 
   describe('role permissions are mutually exclusive', () => {
     it('should have unique permission sets per role', () => {
-      const adminSet = new Set(['members:write', 'users:write', 'settings:write', 'audit:read', 'branches:write', 'backup:write'])
+      const adminSet = new Set([
+        'members:write',
+        'users:write',
+        'settings:write',
+        'audit:read',
+        'branches:write',
+        'backup:write',
+      ])
       const receptionistSet = new Set(['members:write'])
       const trainerSet = new Set<string>()
 
@@ -140,7 +187,7 @@ describe('Audit Context', () => {
     const session = {
       user: { id: 'u1', name: 'Admin', role: 'ADMIN' },
     }
-    const ctx = getAuditContext(session as never)
+    const ctx = getAuditContext(session)
     expect(ctx.userId).toBe('u1')
     expect(ctx.userName).toBe('Admin')
     expect(ctx.userRole).toBe('ADMIN')
@@ -154,7 +201,7 @@ describe('Audit Context', () => {
   })
 
   it('should return SYSTEM defaults when session.user is undefined', () => {
-    const ctx = getAuditContext({} as never)
+    const ctx = getAuditContext({})
     expect(ctx.userId).toBe('SYSTEM')
     expect(ctx.userName).toBe('SYSTEM')
     expect(ctx.userRole).toBe('SYSTEM')
@@ -162,7 +209,7 @@ describe('Audit Context', () => {
 
   it('should return SYSTEM defaults when user fields are missing', () => {
     const session = { user: {} }
-    const ctx = getAuditContext(session as never)
+    const ctx = getAuditContext(session)
     expect(ctx.userId).toBe('SYSTEM')
     expect(ctx.userName).toBe('SYSTEM')
     expect(ctx.userRole).toBe('SYSTEM')
@@ -170,7 +217,7 @@ describe('Audit Context', () => {
 
   it('should handle partial user data', () => {
     const session = { user: { id: 'u2', name: 'Recepcionista' } }
-    const ctx = getAuditContext(session as never)
+    const ctx = getAuditContext(session)
     expect(ctx.userId).toBe('u2')
     expect(ctx.userName).toBe('Recepcionista')
     expect(ctx.userRole).toBe('SYSTEM')

@@ -32,7 +32,9 @@ const createPlanSchema = z.object({
 export const createPlan = createServerFn({ method: 'POST' })
   .inputValidator((data) => createPlanSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    const session = await requireRole({
+      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
+    })
 
     const [plan] = await db
       .insert(membershipPlans)
@@ -67,7 +69,9 @@ const updatePlanSchema = z.object({
 export const updatePlan = createServerFn({ method: 'POST' })
   .inputValidator((data) => updatePlanSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    const session = await requireRole({
+      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
+    })
 
     const [plan] = await db
       .update(membershipPlans)

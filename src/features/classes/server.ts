@@ -1,19 +1,25 @@
 import { createServerFn } from '@tanstack/react-start'
 import { db } from '#/shared/db/index.ts'
-import { classes, classSchedules, classBookings } from '#/shared/db/schema/classes.ts'
+import {
+  classes,
+  classSchedules,
+  classBookings,
+} from '#/shared/db/schema/classes.ts'
 import { eq, desc, and, inArray, sql } from 'drizzle-orm'
 import { requireRole } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { z } from 'zod'
 
-export const getClasses = createServerFn({ method: 'GET' }).handler(async () => {
-  await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
-  return await db.query.classes.findMany({
-    with: { schedules: true },
-    orderBy: [desc(classes.createdAt)],
-  })
-})
+export const getClasses = createServerFn({ method: 'GET' }).handler(
+  async () => {
+    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
+    return await db.query.classes.findMany({
+      with: { schedules: true },
+      orderBy: [desc(classes.createdAt)],
+    })
+  },
+)
 
 export const getClass = createServerFn({ method: 'GET' })
   .inputValidator((data: { id: number }) => data)
@@ -35,7 +41,9 @@ const createClassSchema = z.object({
 export const createClass = createServerFn({ method: 'POST' })
   .inputValidator((data) => createClassSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    const session = await requireRole({
+      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
+    })
     const [classItem] = await db
       .insert(classes)
       .values({
@@ -66,7 +74,9 @@ const updateClassSchema = z.object({
 export const updateClass = createServerFn({ method: 'POST' })
   .inputValidator((data) => updateClassSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    const session = await requireRole({
+      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
+    })
     const [classItem] = await db
       .update(classes)
       .set({
@@ -116,7 +126,9 @@ const addScheduleSchema = z.object({
 export const addSchedule = createServerFn({ method: 'POST' })
   .inputValidator((data) => addScheduleSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    const session = await requireRole({
+      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
+    })
     const [schedule] = await db
       .insert(classSchedules)
       .values({
@@ -142,7 +154,9 @@ const removeScheduleSchema = z.object({ id: z.number() })
 export const removeSchedule = createServerFn({ method: 'POST' })
   .inputValidator((data) => removeScheduleSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    const session = await requireRole({
+      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
+    })
     await db.delete(classSchedules).where(eq(classSchedules.id, data.id))
     createAuditLog({
       ...getAuditContext(session),
@@ -171,11 +185,21 @@ export const getBookings = createServerFn({ method: 'GET' })
         .from(classSchedules)
         .where(eq(classSchedules.classId, data.classId))
       if (scheduleRows.length > 0) {
-        conditions.push(inArray(classBookings.classScheduleId, scheduleRows.map((r) => r.id)))
+        conditions.push(
+          inArray(
+            classBookings.classScheduleId,
+            scheduleRows.map((r) => r.id),
+          ),
+        )
       }
     }
     if (data.status) {
-      conditions.push(eq(classBookings.status, data.status as typeof classBookings.status.enumValues[number]))
+      conditions.push(
+        eq(
+          classBookings.status,
+          data.status as (typeof classBookings.status.enumValues)[number],
+        ),
+      )
     }
 
     return await db.query.classBookings.findMany({
@@ -198,7 +222,9 @@ const createBookingSchema = z.object({
 export const createBooking = createServerFn({ method: 'POST' })
   .inputValidator((data) => createBookingSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    const session = await requireRole({
+      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
+    })
 
     const schedule = await db.query.classSchedules.findFirst({
       where: eq(classSchedules.id, data.classScheduleId),
@@ -244,7 +270,9 @@ const cancelBookingSchema = z.object({ id: z.number() })
 export const cancelBooking = createServerFn({ method: 'POST' })
   .inputValidator((data) => cancelBookingSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    const session = await requireRole({
+      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
+    })
     const [booking] = await db
       .update(classBookings)
       .set({ status: 'CANCELLED' })
@@ -265,7 +293,9 @@ const markAttendanceSchema = z.object({ id: z.number() })
 export const markAttendance = createServerFn({ method: 'POST' })
   .inputValidator((data) => markAttendanceSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
+    const session = await requireRole({
+      data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] },
+    })
     const [booking] = await db
       .update(classBookings)
       .set({ status: 'ATTENDED' })
@@ -281,11 +311,13 @@ export const markAttendance = createServerFn({ method: 'POST' })
     return booking
   })
 
-export const getWeeklySchedule = createServerFn({ method: 'GET' }).handler(async () => {
-  await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
-  return await db.query.classSchedules.findMany({
-    where: eq(classSchedules.isActive, true),
-    with: { class: true },
-    orderBy: [classSchedules.dayOfWeek, classSchedules.startTime],
-  })
-})
+export const getWeeklySchedule = createServerFn({ method: 'GET' }).handler(
+  async () => {
+    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
+    return await db.query.classSchedules.findMany({
+      where: eq(classSchedules.isActive, true),
+      with: { class: true },
+      orderBy: [classSchedules.dayOfWeek, classSchedules.startTime],
+    })
+  },
+)

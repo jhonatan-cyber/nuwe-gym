@@ -2,13 +2,24 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Snowflake, Play, Users, Search } from 'lucide-react'
 import { toast } from 'sonner'
-import { getFreezes, createFreeze, resumeSubscription, getFrozenSubscriptions } from '#/features/membership-freezes/server.ts'
+import {
+  getFreezes,
+  createFreeze,
+  resumeSubscription,
+  getFrozenSubscriptions,
+} from '#/features/membership-freezes/server.ts'
 import { getSubscriptions } from '#/features/subscriptions/server.ts'
 import { formatDate } from '#/shared/lib/formatters.ts'
 
 import { Button } from '#/shared/components/ui/button'
 import { LoadingButton } from '#/shared/components/ui/loading-button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '#/shared/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '#/shared/components/ui/card'
 import { Input } from '#/shared/components/ui/input'
 import { Label } from '#/shared/components/ui/label'
 import { Textarea } from '#/shared/components/ui/textarea'
@@ -36,7 +47,9 @@ interface MembershipFreezesPageProps {
   userRole: string
 }
 
-export function MembershipFreezesPage({ userRole }: MembershipFreezesPageProps) {
+export function MembershipFreezesPage({
+  userRole,
+}: MembershipFreezesPageProps) {
   const queryClient = useQueryClient()
   const isAdmin = userRole === 'ADMIN'
   const canWrite = userRole === 'ADMIN' || userRole === 'RECEPTIONIST'
@@ -78,7 +91,8 @@ export function MembershipFreezesPage({ userRole }: MembershipFreezesPageProps) 
       setIsFreezeModalOpen(false)
       toast.success('Membresía congelada exitosamente')
     },
-    onError: (error: Error) => toast.error(error.message || 'Error al congelar'),
+    onError: (error: Error) =>
+      toast.error(error.message || 'Error al congelar'),
   })
 
   const resumeMutation = useMutation({
@@ -89,7 +103,8 @@ export function MembershipFreezesPage({ userRole }: MembershipFreezesPageProps) 
       queryClient.invalidateQueries({ queryKey: ['subscriptions'] })
       toast.success('Suscripción reanudada exitosamente')
     },
-    onError: (error: Error) => toast.error(error.message || 'Error al reanudar'),
+    onError: (error: Error) =>
+      toast.error(error.message || 'Error al reanudar'),
   })
 
   const handleOpenFreezeModal = () => {
@@ -111,17 +126,19 @@ export function MembershipFreezesPage({ userRole }: MembershipFreezesPageProps) 
   }
 
   const selectedSub = activeSubs.find((s) => s.id === formData.subscriptionId)
-  const calculatedEndDate = selectedSub && formData.startDate && formData.endDate
-    ? (() => {
-        const freezeDays = Math.ceil(
-          (new Date(formData.endDate).getTime() - new Date(formData.startDate).getTime()) /
-            (1000 * 60 * 60 * 24),
-        )
-        const end = new Date(selectedSub.endDate)
-        end.setDate(end.getDate() + freezeDays)
-        return end
-      })()
-    : null
+  const calculatedEndDate =
+    selectedSub && formData.startDate && formData.endDate
+      ? (() => {
+          const freezeDays = Math.ceil(
+            (new Date(formData.endDate).getTime() -
+              new Date(formData.startDate).getTime()) /
+              (1000 * 60 * 60 * 24),
+          )
+          const end = new Date(selectedSub.endDate)
+          end.setDate(end.getDate() + freezeDays)
+          return end
+        })()
+      : null
 
   const daysRemaining = (freezeEnd: Date) => {
     const diff = new Date(freezeEnd).getTime() - Date.now()
@@ -132,8 +149,13 @@ export function MembershipFreezesPage({ userRole }: MembershipFreezesPageProps) 
     if (f.resumedAt) return <Badge variant="secondary">Reanudado</Badge>
     const remaining = daysRemaining(f.endDate)
     if (remaining <= 0) return <Badge variant="outline">Finalizado</Badge>
-    if (remaining <= 3) return <Badge variant="destructive">{remaining} días rest.</Badge>
-    return <Badge className="bg-sky-500/15 text-sky-600 border-sky-500/20">{remaining} días rest.</Badge>
+    if (remaining <= 3)
+      return <Badge variant="destructive">{remaining} días rest.</Badge>
+    return (
+      <Badge className="bg-sky-500/15 text-sky-600 border-sky-500/20">
+        {remaining} días rest.
+      </Badge>
+    )
   }
 
   return (
@@ -141,7 +163,13 @@ export function MembershipFreezesPage({ userRole }: MembershipFreezesPageProps) 
       <PageHeader
         title="Congelamientos"
         description="Gestioná las pausas temporales de membresías."
-        action={canWrite && <Button onClick={handleOpenFreezeModal}><Snowflake className="mr-2 size-4" /> Congelar Membresía</Button>}
+        action={
+          canWrite && (
+            <Button onClick={handleOpenFreezeModal}>
+              <Snowflake className="mr-2 size-4" /> Congelar Membresía
+            </Button>
+          )
+        }
       />
 
       {frozenSubs.length > 0 && (
@@ -151,7 +179,9 @@ export function MembershipFreezesPage({ userRole }: MembershipFreezesPageProps) 
               <Snowflake className="size-5 text-sky-500" />
               <CardTitle>Suscripciones congeladas</CardTitle>
               <CardDescription>
-                {frozenSubs.length} {frozenSubs.length === 1 ? 'suscripción' : 'suscripciones'} actualmente en pausa
+                {frozenSubs.length}{' '}
+                {frozenSubs.length === 1 ? 'suscripción' : 'suscripciones'}{' '}
+                actualmente en pausa
               </CardDescription>
             </div>
           </CardHeader>
@@ -164,7 +194,9 @@ export function MembershipFreezesPage({ userRole }: MembershipFreezesPageProps) 
                   <TableHead>Congelado desde</TableHead>
                   <TableHead>Finaliza</TableHead>
                   <TableHead>Días rest.</TableHead>
-                  {isAdmin && <TableHead className="text-right">Acciones</TableHead>}
+                  {isAdmin && (
+                    <TableHead className="text-right">Acciones</TableHead>
+                  )}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -175,16 +207,22 @@ export function MembershipFreezesPage({ userRole }: MembershipFreezesPageProps) 
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <Users className="size-4 text-muted-foreground shrink-0" />
-                          <span className="font-medium">{f.member.fullName}</span>
+                          <span className="font-medium">
+                            {f.member.fullName}
+                          </span>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <span className="font-medium text-primary">{f.subscription.plan.name}</span>
+                        <span className="font-medium text-primary">
+                          {f.subscription.plan.name}
+                        </span>
                       </TableCell>
                       <TableCell>{formatDate(f.startDate)}</TableCell>
                       <TableCell>{formatDate(f.endDate)}</TableCell>
                       <TableCell>
-                        <Badge variant={remaining <= 3 ? 'destructive' : 'secondary'}>
+                        <Badge
+                          variant={remaining <= 3 ? 'destructive' : 'secondary'}
+                        >
                           {remaining} días
                         </Badge>
                       </TableCell>
@@ -194,8 +232,14 @@ export function MembershipFreezesPage({ userRole }: MembershipFreezesPageProps) 
                             variant="outline"
                             size="sm"
                             onClick={() => {
-                              if (confirm('¿Reanudar esta suscripción anticipadamente?')) {
-                                resumeMutation.mutate({ data: { freezeId: f.id } })
+                              if (
+                                confirm(
+                                  '¿Reanudar esta suscripción anticipadamente?',
+                                )
+                              ) {
+                                resumeMutation.mutate({
+                                  data: { freezeId: f.id },
+                                })
                               }
                             }}
                           >
@@ -222,42 +266,93 @@ export function MembershipFreezesPage({ userRole }: MembershipFreezesPageProps) 
         </CardHeader>
         <DataTable
           columns={[
-            { key: 'member', label: 'Socio', render: (f: typeof freezes[number]) => (
-              <div className="flex items-center gap-2">
-                <Users className="size-4 text-muted-foreground shrink-0" />
-                <div>
-                  <div className="font-medium">{f.member.fullName}</div>
-                  {f.subscription.member.email && (
-                    <div className="text-xs text-muted-foreground">{f.subscription.member.email}</div>
-                  )}
+            {
+              key: 'member',
+              label: 'Socio',
+              render: (f: (typeof freezes)[number]) => (
+                <div className="flex items-center gap-2">
+                  <Users className="size-4 text-muted-foreground shrink-0" />
+                  <div>
+                    <div className="font-medium">{f.member.fullName}</div>
+                    {f.subscription.member.email && (
+                      <div className="text-xs text-muted-foreground">
+                        {f.subscription.member.email}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )},
-            { key: 'plan', label: 'Plan', render: (f: typeof freezes[number]) => <span className="font-medium text-primary">{f.subscription.plan.name}</span> },
-            { key: 'start', label: 'Inicio', render: (f: typeof freezes[number]) => formatDate(f.startDate) },
-            { key: 'end', label: 'Fin', render: (f: typeof freezes[number]) => formatDate(f.endDate) },
-            { key: 'reason', label: 'Motivo', render: (f: typeof freezes[number]) => <span className="max-w-[200px] truncate">{f.reason || '—'}</span> },
-            { key: 'status', label: 'Estado', render: (f: typeof freezes[number]) => getFreezeStatus(f) },
-            ...(isAdmin ? [{
-              key: 'actions' as string, label: 'Acciones', className: 'text-right' as string, render: (f: typeof freezes[number]) => {
-                const remaining = daysRemaining(f.endDate)
-                return !f.resumedAt && remaining > 0 ? (
-                  <Button variant="outline" size="sm" onClick={() => {
-                    if (confirm('¿Reanudar esta suscripción anticipadamente?')) {
-                      resumeMutation.mutate({ data: { freezeId: f.id } })
-                    }
-                  }}>
-                    <Play className="size-3.5 mr-1" /> Reanudar
-                  </Button>
-                ) : null
-              },
-            }] : []),
+              ),
+            },
+            {
+              key: 'plan',
+              label: 'Plan',
+              render: (f: (typeof freezes)[number]) => (
+                <span className="font-medium text-primary">
+                  {f.subscription.plan.name}
+                </span>
+              ),
+            },
+            {
+              key: 'start',
+              label: 'Inicio',
+              render: (f: (typeof freezes)[number]) => formatDate(f.startDate),
+            },
+            {
+              key: 'end',
+              label: 'Fin',
+              render: (f: (typeof freezes)[number]) => formatDate(f.endDate),
+            },
+            {
+              key: 'reason',
+              label: 'Motivo',
+              render: (f: (typeof freezes)[number]) => (
+                <span className="max-w-[200px] truncate">
+                  {f.reason || '—'}
+                </span>
+              ),
+            },
+            {
+              key: 'status',
+              label: 'Estado',
+              render: (f: (typeof freezes)[number]) => getFreezeStatus(f),
+            },
+            ...(isAdmin
+              ? [
+                  {
+                    key: 'actions' as string,
+                    label: 'Acciones',
+                    className: 'text-right' as string,
+                    render: (f: (typeof freezes)[number]) => {
+                      const remaining = daysRemaining(f.endDate)
+                      return !f.resumedAt && remaining > 0 ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            if (
+                              confirm(
+                                '¿Reanudar esta suscripción anticipadamente?',
+                              )
+                            ) {
+                              resumeMutation.mutate({
+                                data: { freezeId: f.id },
+                              })
+                            }
+                          }}
+                        >
+                          <Play className="size-3.5 mr-1" /> Reanudar
+                        </Button>
+                      ) : null
+                    },
+                  },
+                ]
+              : []),
           ]}
           data={freezes}
           isLoading={isLoading}
           loadingMessage="Cargando congelamientos..."
           emptyMessage="No hay congelamientos registrados."
-          keyExtractor={(f: typeof freezes[number]) => f.id}
+          keyExtractor={(f: (typeof freezes)[number]) => f.id}
         />
       </Card>
 
@@ -267,7 +362,8 @@ export function MembershipFreezesPage({ userRole }: MembershipFreezesPageProps) 
             <DialogHeader>
               <DialogTitle>Congelar Membresía</DialogTitle>
               <DialogDescription>
-                Pausá temporalmente la suscripción de un socio. Los días congelados se añadirán al final del período.
+                Pausá temporalmente la suscripción de un socio. Los días
+                congelados se añadirán al final del período.
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
@@ -297,7 +393,10 @@ export function MembershipFreezesPage({ userRole }: MembershipFreezesPageProps) 
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                   value={formData.subscriptionId || ''}
                   onChange={(e) =>
-                    setFormData({ ...formData, subscriptionId: Number(e.target.value) })
+                    setFormData({
+                      ...formData,
+                      subscriptionId: Number(e.target.value),
+                    })
                   }
                 >
                   <option value="" disabled>
@@ -305,7 +404,8 @@ export function MembershipFreezesPage({ userRole }: MembershipFreezesPageProps) 
                   </option>
                   {activeSubs.map((s) => (
                     <option key={s.id} value={s.id}>
-                      {s.member.fullName} — {s.plan.name} (vence: {formatDate(s.endDate)})
+                      {s.member.fullName} — {s.plan.name} (vence:{' '}
+                      {formatDate(s.endDate)})
                     </option>
                   ))}
                 </select>
@@ -314,7 +414,8 @@ export function MembershipFreezesPage({ userRole }: MembershipFreezesPageProps) 
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="startDate">
-                    Inicio del congelamiento <span className="text-destructive">*</span>
+                    Inicio del congelamiento{' '}
+                    <span className="text-destructive">*</span>
                   </Label>
                   <Input
                     id="startDate"
@@ -328,7 +429,8 @@ export function MembershipFreezesPage({ userRole }: MembershipFreezesPageProps) 
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="endDate">
-                    Fin del congelamiento <span className="text-destructive">*</span>
+                    Fin del congelamiento{' '}
+                    <span className="text-destructive">*</span>
                   </Label>
                   <Input
                     id="endDate"
@@ -345,15 +447,25 @@ export function MembershipFreezesPage({ userRole }: MembershipFreezesPageProps) 
               {selectedSub && calculatedEndDate && (
                 <div className="bg-primary/5 border border-primary/10 rounded-lg p-3 text-sm space-y-1">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Vencimiento actual:</span>
-                    <span className="font-medium">{formatDate(selectedSub.endDate)}</span>
+                    <span className="text-muted-foreground">
+                      Vencimiento actual:
+                    </span>
+                    <span className="font-medium">
+                      {formatDate(selectedSub.endDate)}
+                    </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Nuevo vencimiento:</span>
-                    <span className="font-medium text-primary">{formatDate(calculatedEndDate)}</span>
+                    <span className="text-muted-foreground">
+                      Nuevo vencimiento:
+                    </span>
+                    <span className="font-medium text-primary">
+                      {formatDate(calculatedEndDate)}
+                    </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Días extendidos:</span>
+                    <span className="text-muted-foreground">
+                      Días extendidos:
+                    </span>
                     <span className="font-medium">
                       {Math.ceil(
                         (new Date(formData.endDate).getTime() -
@@ -390,7 +502,11 @@ export function MembershipFreezesPage({ userRole }: MembershipFreezesPageProps) 
               <LoadingButton
                 type="submit"
                 isLoading={createMutation.isPending}
-                disabled={!formData.subscriptionId || !formData.startDate || !formData.endDate}
+                disabled={
+                  !formData.subscriptionId ||
+                  !formData.startDate ||
+                  !formData.endDate
+                }
               >
                 Congelar Membresía
               </LoadingButton>

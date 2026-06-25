@@ -1,7 +1,10 @@
 import { createServerFn } from '@tanstack/react-start'
 import { db } from '#/shared/db/index.ts'
 import { membershipPayments } from '#/shared/db/schema/membership-payments.ts'
-import { cashRegisterSessions, cashMovements } from '#/shared/db/schema/cash-register.ts'
+import {
+  cashRegisterSessions,
+  cashMovements,
+} from '#/shared/db/schema/cash-register.ts'
 import { members } from '#/shared/db/schema/members.ts'
 import { eq, desc } from 'drizzle-orm'
 import { requireRole } from '#/shared/lib/server-utils.ts'
@@ -38,7 +41,9 @@ const createDirectPaymentSchema = z.object({
 export const createDirectPayment = createServerFn({ method: 'POST' })
   .inputValidator((data) => createDirectPaymentSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    const session = await requireRole({
+      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
+    })
 
     const payment = await db.transaction(async (tx) => {
       const openSession = await tx.query.cashRegisterSessions.findFirst({
@@ -49,7 +54,7 @@ export const createDirectPayment = createServerFn({ method: 'POST' })
         throw new Error('Debe abrir la caja antes de registrar un pago.')
       }
 
-      const [payment] = await tx
+      const [newPayment] = await tx
         .insert(membershipPayments)
         .values({
           memberId: data.memberId,
@@ -71,13 +76,13 @@ export const createDirectPayment = createServerFn({ method: 'POST' })
         cashSessionId: openSession.id,
         movementType: 'INCOME',
         sourceType: 'MEMBERSHIP_PAYMENT',
-        sourceId: payment.id,
+        sourceId: newPayment.id,
         amount: data.amount,
         paymentMethod: data.paymentMethod,
         description: `Pago directo de membresía - Socio: ${memberName} (Sub: #${data.subscriptionId})`,
       })
 
-      return payment
+      return newPayment
     })
 
     createAuditLog({

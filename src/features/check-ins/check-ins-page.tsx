@@ -2,15 +2,22 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { DoorOpen, Search, UserCheck, Clock } from 'lucide-react'
 import { toast } from 'sonner'
-import { getRecentCheckIns, createCheckIn } from '#/features/check-ins/server.ts'
+import {
+  getRecentCheckIns,
+  createCheckIn,
+} from '#/features/check-ins/server.ts'
 import { getMembers } from '#/features/members/server.ts'
 import { formatDateTime, formatDate } from '#/shared/lib/formatters.ts'
 
 import { Button } from '#/shared/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '#/shared/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '#/shared/components/ui/card'
 import { Input } from '#/shared/components/ui/input'
 import { Badge } from '#/shared/components/ui/badge'
-
 
 export function CheckInsPage() {
   const queryClient = useQueryClient()
@@ -104,8 +111,7 @@ export function CheckInsPage() {
                         const hasSub = member.subscriptions.length > 0
                         const activeSub = member.subscriptions[0]
                         const isSubActive =
-                          hasSub &&
-                          new Date(activeSub.endDate) >= new Date()
+                          hasSub && new Date(activeSub.endDate) >= new Date()
 
                         return (
                           <div
@@ -188,7 +194,7 @@ export function CheckInsPage() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                      {checkInsList.map((checkIn) => (
+                  {checkInsList.map((checkIn) => (
                     <div
                       key={checkIn.id}
                       className="flex items-start justify-between border-b pb-3 last:border-0 last:pb-0"

@@ -100,7 +100,10 @@ describe('Purchases', () => {
     })
 
     expect(foundItems).toHaveLength(2)
-    const total = foundItems.reduce((sum, item) => sum + Number(item.unitCost) * item.quantity, 0)
+    const total = foundItems.reduce(
+      (sum, item) => sum + Number(item.unitCost) * item.quantity,
+      0,
+    )
     expect(total).toBe(4500)
   })
 

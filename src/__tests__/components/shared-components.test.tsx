@@ -7,7 +7,11 @@ import { SearchInput } from '#/shared/components/search-input.tsx'
 
 vi.mock('@tanstack/react-router', () => ({
   useNavigate: () => vi.fn(),
-  Link: ({ children, to, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { to?: string }) =>
+  Link: ({
+    children,
+    to,
+    ...props
+  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { to?: string }) =>
     React.createElement('a', { href: to, ...props }, children),
 }))
 
@@ -18,12 +22,19 @@ describe('PageHeader', () => {
   })
 
   it('should render description when provided', () => {
-    render(React.createElement(PageHeader, { title: 'T', description: 'Test description' }))
+    render(
+      React.createElement(PageHeader, {
+        title: 'T',
+        description: 'Test description',
+      }),
+    )
     expect(screen.getByText('Test description')).toBeDefined()
   })
 
   it('should not render description when not provided', () => {
-    const { container } = render(React.createElement(PageHeader, { title: 'T' }))
+    const { container } = render(
+      React.createElement(PageHeader, { title: 'T' }),
+    )
     expect(container.querySelector('p.text-muted-foreground')).toBeNull()
   })
 
@@ -52,7 +63,13 @@ describe('PageHeader', () => {
 
 describe('SearchInput', () => {
   it('should render with custom placeholder', () => {
-    render(React.createElement(SearchInput, { placeholder: 'Buscar socio...', value: '', onChange: vi.fn() }))
+    render(
+      React.createElement(SearchInput, {
+        placeholder: 'Buscar socio...',
+        value: '',
+        onChange: vi.fn(),
+      }),
+    )
     expect(screen.getByPlaceholderText('Buscar socio...')).toBeDefined()
   })
 
@@ -62,20 +79,24 @@ describe('SearchInput', () => {
   })
 
   it('should render with initial value', () => {
-    render(React.createElement(SearchInput, { value: 'test', onChange: vi.fn() }))
+    render(
+      React.createElement(SearchInput, { value: 'test', onChange: vi.fn() }),
+    )
     expect(screen.getByDisplayValue('test')).toBeDefined()
   })
 
   it('should fire onChange on input change', () => {
     const onChange = vi.fn()
     render(React.createElement(SearchInput, { value: '', onChange }))
-    const input = screen.getByPlaceholderText('Buscar...') as HTMLInputElement
+    const input = screen.getByPlaceholderText('Buscar...')
     fireEvent.change(input, { target: { value: 'new value' } })
     expect(onChange).toHaveBeenCalledTimes(1)
   })
 
   it('should render search icon', () => {
-    const { container } = render(React.createElement(SearchInput, { value: '', onChange: vi.fn() }))
+    const { container } = render(
+      React.createElement(SearchInput, { value: '', onChange: vi.fn() }),
+    )
     expect(container.querySelector('svg.lucide-search')).not.toBeNull()
   })
 })

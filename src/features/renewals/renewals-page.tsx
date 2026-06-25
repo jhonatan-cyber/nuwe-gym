@@ -1,6 +1,12 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { RefreshCw, Users, Calendar, AlertTriangle, Receipt } from 'lucide-react'
+import {
+  RefreshCw,
+  Users,
+  Calendar,
+  AlertTriangle,
+  Receipt,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import {
   getExpiringSubscriptions,
@@ -12,7 +18,13 @@ import { formatCurrency, formatDate } from '#/shared/lib/formatters.ts'
 
 import { Button } from '#/shared/components/ui/button'
 import { LoadingButton } from '#/shared/components/ui/loading-button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '#/shared/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '#/shared/components/ui/card'
 import { Input } from '#/shared/components/ui/input'
 import { Label } from '#/shared/components/ui/label'
 import {
@@ -70,7 +82,8 @@ export function RenewalsPage() {
 
   const [days, setDays] = useState(7)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [selectedSub, setSelectedSub] = useState<SubscriptionWithRelations | null>(null)
+  const [selectedSub, setSelectedSub] =
+    useState<SubscriptionWithRelations | null>(null)
   const [formData, setFormData] = useState({
     planId: 0,
     paymentMethod: 'CASH' as 'CASH' | 'CARD' | 'TRANSFER' | 'QR',
@@ -202,7 +215,7 @@ export function RenewalsPage() {
               {loadingExpiring ? (
                 Array.from({ length: 3 }).map((_, i) => (
                   <TableRow key={i}>
-                    {Array.from({ length: 5 }).map((_, j) => (
+                    {Array.from({ length: 5 }).map((_cell, j) => (
                       <TableCell key={j}>
                         <Skeleton className="h-4 w-full" />
                       </TableCell>
@@ -211,7 +224,10 @@ export function RenewalsPage() {
                 ))
               ) : expiringList.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                  <TableCell
+                    colSpan={5}
+                    className="text-center py-8 text-muted-foreground"
+                  >
                     No hay suscripciones próximas a vencer.
                   </TableCell>
                 </TableRow>
@@ -224,20 +240,29 @@ export function RenewalsPage() {
                         <div className="flex items-center gap-2">
                           <Users className="size-4 text-muted-foreground shrink-0" />
                           <div>
-                            <div className="font-medium">{sub.member.fullName}</div>
-                            <div className="text-xs text-muted-foreground">{sub.member.email}</div>
+                            <div className="font-medium">
+                              {sub.member.fullName}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {sub.member.email}
+                            </div>
                           </div>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="font-medium text-primary">{sub.plan.name}</div>
+                        <div className="font-medium text-primary">
+                          {sub.plan.name}
+                        </div>
                       </TableCell>
                       <TableCell>{formatDate(sub.endDate)}</TableCell>
                       <TableCell>
                         {left <= 3 ? (
                           <Badge variant="destructive">{left} días</Badge>
                         ) : left <= 7 ? (
-                          <Badge variant="secondary" className="bg-orange-500/15 text-orange-600">
+                          <Badge
+                            variant="secondary"
+                            className="bg-orange-500/15 text-orange-600"
+                          >
                             {left} días
                           </Badge>
                         ) : (
@@ -284,7 +309,7 @@ export function RenewalsPage() {
               {loadingExpired ? (
                 Array.from({ length: 3 }).map((_, i) => (
                   <TableRow key={i}>
-                    {Array.from({ length: 5 }).map((_, j) => (
+                    {Array.from({ length: 5 }).map((_cell, j) => (
                       <TableCell key={j}>
                         <Skeleton className="h-4 w-full" />
                       </TableCell>
@@ -293,7 +318,10 @@ export function RenewalsPage() {
                 ))
               ) : expiredList.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                  <TableCell
+                    colSpan={5}
+                    className="text-center py-8 text-muted-foreground"
+                  >
                     No hay suscripciones vencidas.
                   </TableCell>
                 </TableRow>
@@ -306,13 +334,19 @@ export function RenewalsPage() {
                         <div className="flex items-center gap-2">
                           <Users className="size-4 text-muted-foreground shrink-0" />
                           <div>
-                            <div className="font-medium">{sub.member.fullName}</div>
-                            <div className="text-xs text-muted-foreground">{sub.member.email}</div>
+                            <div className="font-medium">
+                              {sub.member.fullName}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {sub.member.email}
+                            </div>
                           </div>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="font-medium text-primary">{sub.plan.name}</div>
+                        <div className="font-medium text-primary">
+                          {sub.plan.name}
+                        </div>
                       </TableCell>
                       <TableCell>{formatDate(sub.endDate)}</TableCell>
                       <TableCell>
@@ -346,10 +380,16 @@ export function RenewalsPage() {
             {selectedSub && (
               <div className="grid gap-4 py-4">
                 <div className="bg-muted/50 rounded-lg p-3 border">
-                  <div className="text-sm font-medium">{selectedSub.member.fullName}</div>
+                  <div className="text-sm font-medium">
+                    {selectedSub.member.fullName}
+                  </div>
                   <div className="text-xs text-muted-foreground mt-0.5">
-                    {selectedSub.member.email && <span>{selectedSub.member.email} · </span>}
-                    {selectedSub.member.phone && <span>{selectedSub.member.phone}</span>}
+                    {selectedSub.member.email && (
+                      <span>{selectedSub.member.email} · </span>
+                    )}
+                    {selectedSub.member.phone && (
+                      <span>{selectedSub.member.phone}</span>
+                    )}
                   </div>
                   <div className="text-xs text-muted-foreground mt-0.5">
                     Documento: {selectedSub.member.documentNumber || '—'}
@@ -358,7 +398,8 @@ export function RenewalsPage() {
 
                 <div className="grid gap-2">
                   <Label htmlFor="plan">
-                    Plan de Membresía <span className="text-destructive">*</span>
+                    Plan de Membresía{' '}
+                    <span className="text-destructive">*</span>
                   </Label>
                   <select
                     id="plan"
@@ -372,7 +413,8 @@ export function RenewalsPage() {
                     </option>
                     {plans.map((p) => (
                       <option key={p.id} value={p.id}>
-                        {p.name} - {formatCurrency(p.price)} ({p.durationDays} días)
+                        {p.name} - {formatCurrency(p.price)} ({p.durationDays}{' '}
+                        días)
                       </option>
                     ))}
                   </select>
@@ -390,7 +432,11 @@ export function RenewalsPage() {
                     onChange={(e) =>
                       setFormData({
                         ...formData,
-                        paymentMethod: e.target.value as 'CASH' | 'CARD' | 'TRANSFER' | 'QR',
+                        paymentMethod: e.target.value as
+                          | 'CASH'
+                          | 'CARD'
+                          | 'TRANSFER'
+                          | 'QR',
                       })
                     }
                   >
@@ -413,7 +459,9 @@ export function RenewalsPage() {
                     min="0"
                     required
                     value={formData.amount}
-                    onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, amount: e.target.value })
+                    }
                   />
                 </div>
 
@@ -422,7 +470,9 @@ export function RenewalsPage() {
                   <Input
                     id="notes"
                     value={formData.notes}
-                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, notes: e.target.value })
+                    }
                     placeholder="Notas sobre la renovación..."
                   />
                 </div>

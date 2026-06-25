@@ -7,12 +7,14 @@ import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { z } from 'zod'
 
-export const getSuppliers = createServerFn({ method: 'GET' }).handler(async () => {
-  await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
-  return await db.query.suppliers.findMany({
-    orderBy: [desc(suppliers.createdAt)],
-  })
-})
+export const getSuppliers = createServerFn({ method: 'GET' }).handler(
+  async () => {
+    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    return await db.query.suppliers.findMany({
+      orderBy: [desc(suppliers.createdAt)],
+    })
+  },
+)
 
 const createSupplierSchema = z.object({
   name: z.string(),

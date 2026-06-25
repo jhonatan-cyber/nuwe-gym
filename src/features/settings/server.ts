@@ -7,13 +7,14 @@ import { requireRole } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 
-export const getSettings = createServerFn({ method: 'GET' })
-  .handler(async () => {
+export const getSettings = createServerFn({ method: 'GET' }).handler(
+  async () => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
 
     const rows = await db.select().from(settings).limit(1)
     return rows[0] ?? null
-  })
+  },
+)
 
 const updateSettingsSchema = z.object({
   gymName: z.string().min(1, 'El nombre del gimnasio es obligatorio'),
@@ -45,7 +46,10 @@ export const updateSettings = createServerFn({ method: 'POST' })
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
 
-    const existing = await db.select({ id: settings.id }).from(settings).limit(1)
+    const existing = await db
+      .select({ id: settings.id })
+      .from(settings)
+      .limit(1)
 
     if (existing.length > 0) {
       await db

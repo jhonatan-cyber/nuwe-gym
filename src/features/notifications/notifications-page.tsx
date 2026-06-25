@@ -1,5 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Bell, CalendarCheck, CreditCard, Package, RefreshCw, CheckCheck, Sparkles } from 'lucide-react'
+import {
+  Bell,
+  CalendarCheck,
+  CreditCard,
+  Package,
+  RefreshCw,
+  CheckCheck,
+  Sparkles,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import {
   getNotifications,
@@ -57,33 +65,42 @@ export function NotificationsPage() {
     mutationFn: markAsRead,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] })
-      queryClient.invalidateQueries({ queryKey: ['notifications-unread-count'] })
+      queryClient.invalidateQueries({
+        queryKey: ['notifications-unread-count'],
+      })
     },
-    onError: (err: Error) => toast.error(err.message || 'Error al marcar como leída'),
+    onError: (err: Error) =>
+      toast.error(err.message || 'Error al marcar como leída'),
   })
 
   const markAllAsReadMutation = useMutation({
     mutationFn: markAllAsRead,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] })
-      queryClient.invalidateQueries({ queryKey: ['notifications-unread-count'] })
+      queryClient.invalidateQueries({
+        queryKey: ['notifications-unread-count'],
+      })
       toast.success('Todas las notificaciones marcadas como leídas')
     },
-    onError: (err: Error) => toast.error(err.message || 'Error al marcar todo como leído'),
+    onError: (err: Error) =>
+      toast.error(err.message || 'Error al marcar todo como leído'),
   })
 
   const generateMutation = useMutation({
     mutationFn: generateNotifications,
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] })
-      queryClient.invalidateQueries({ queryKey: ['notifications-unread-count'] })
+      queryClient.invalidateQueries({
+        queryKey: ['notifications-unread-count'],
+      })
       if (result.length === 0) {
         toast.info('No se encontraron novedades para notificar')
       } else {
         toast.success(`${result.length} notificaciones generadas`)
       }
     },
-    onError: (err: Error) => toast.error(err.message || 'Error al generar notificaciones'),
+    onError: (err: Error) =>
+      toast.error(err.message || 'Error al generar notificaciones'),
   })
 
   const notifications = data?.notifications ?? []
@@ -105,13 +122,23 @@ export function NotificationsPage() {
         </div>
         <div className="flex gap-2">
           {unreadCount > 0 && (
-            <Button variant="outline" size="sm"               onClick={() => markAllAsReadMutation.mutate({})} disabled={markAllAsReadMutation.isPending}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => markAllAsReadMutation.mutate({})}
+              disabled={markAllAsReadMutation.isPending}
+            >
               <CheckCheck className="size-4 mr-1" />
               Marcar todo como leído
             </Button>
           )}
           {isAdmin && (
-            <Button variant="outline" size="sm"             onClick={() => generateMutation.mutate({})} disabled={generateMutation.isPending}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => generateMutation.mutate({})}
+              disabled={generateMutation.isPending}
+            >
               <Sparkles className="size-4 mr-1" />
               Generar
             </Button>
@@ -144,7 +171,9 @@ export function NotificationsPage() {
         <div className="space-y-2">
           {notifications.map((notification) => {
             const Icon = NOTIFICATION_ICONS[notification.type] ?? Bell
-            const style = NOTIFICATION_STYLES[notification.type] ?? NOTIFICATION_STYLES.SYSTEM
+            const style =
+              NOTIFICATION_STYLES[notification.type] ??
+              NOTIFICATION_STYLES.SYSTEM
             const label = NOTIFICATION_LABELS[notification.type] ?? 'Sistema'
 
             return (
@@ -158,12 +187,16 @@ export function NotificationsPage() {
                 }}
               >
                 <div className="flex items-start gap-3">
-                  <div className={`size-10 rounded-lg flex items-center justify-center shrink-0 ${style}`}>
+                  <div
+                    className={`size-10 rounded-lg flex items-center justify-center shrink-0 ${style}`}
+                  >
                     <Icon className="size-5" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
-                      <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${style}`}>
+                      <span
+                        className={`text-xs font-medium px-1.5 py-0.5 rounded ${style}`}
+                      >
                         {label}
                       </span>
                       {!notification.isRead && (
@@ -171,7 +204,9 @@ export function NotificationsPage() {
                       )}
                     </div>
                     <p className="text-sm font-medium">{notification.title}</p>
-                    <p className="text-sm text-muted-foreground line-clamp-2">{notification.message}</p>
+                    <p className="text-sm text-muted-foreground line-clamp-2">
+                      {notification.message}
+                    </p>
                     <p className="text-xs text-muted-foreground mt-1">
                       {formatRelativeTime(notification.createdAt)}
                     </p>

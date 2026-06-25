@@ -52,9 +52,7 @@ import viteTsConfigPaths from 'vite-tsconfig-paths'
 
 export default defineConfig({
   vite: {
-    plugins: [
-      viteTsConfigPaths({ projects: ['./tsconfig.json'] }),
-    ],
+    plugins: [viteTsConfigPaths({ projects: ['./tsconfig.json'] })],
   },
   server: {
     preset: 'node-server', // 'vercel' | 'netlify' | 'cloudflare-pages' | etc.
@@ -77,11 +75,10 @@ Server functions provide type-safe RPC calls between client and server.
 import { createServerFn } from '@tanstack/react-start'
 
 // GET (data fetching, cacheable)
-const getUsers = createServerFn()
-  .handler(async () => {
-    const users = await db.query.users.findMany()
-    return users
-  })
+const getUsers = createServerFn().handler(async () => {
+  const users = await db.query.users.findMany()
+  return users
+})
 
 // POST (mutations, side effects)
 const createUser = createServerFn({ method: 'POST' })
@@ -103,7 +100,7 @@ const updateUser = createServerFn({ method: 'POST' })
       id: z.string(),
       name: z.string().min(1),
       email: z.string().email(),
-    })
+    }),
   )
   .handler(async ({ data }) => {
     // data is fully typed: { id: string; name: string; email: string }
@@ -219,7 +216,7 @@ function Dashboard() {
 // app.config.ts
 export default defineConfig({
   server: {
-    preset: 'node-server',        // Self-hosted Node.js
+    preset: 'node-server', // Self-hosted Node.js
     // preset: 'vercel',          // Vercel
     // preset: 'netlify',         // Netlify
     // preset: 'cloudflare-pages', // Cloudflare Pages

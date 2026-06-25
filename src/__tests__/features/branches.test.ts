@@ -27,11 +27,9 @@ describe('Branches', () => {
     await createBranch({ name: 'Sucursal A' })
     await createBranch({ name: 'Sucursal B' })
 
-    const result = await db
-      .select({ count: count() })
-      .from(branches)
+    const result = await db.select({ count: count() }).from(branches)
 
-    expect(result[0]!.count).toBeGreaterThanOrEqual(2)
+    expect(result[0].count).toBeGreaterThanOrEqual(2)
   })
 
   it('should update branch name and active status', async () => {

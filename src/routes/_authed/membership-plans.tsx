@@ -1,11 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { MembershipPlansPage } from '#/features/membership-plans/membership-plans-page.tsx'
+import { PackagesPage } from '#/features/packages/packages-page.tsx'
 
 export const Route = createFileRoute('/_authed/membership-plans')({
-  component: MembershipPlansRoute,
+  component: PackagesRoute,
 })
 
-function MembershipPlansRoute() {
+function PackagesRoute() {
   const { userRole } = Route.useRouteContext()
-  return <MembershipPlansPage userRole={userRole} />
+  return <PackagesPage userRole={userRole} />
 }

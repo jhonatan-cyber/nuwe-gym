@@ -9,21 +9,23 @@ import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { z } from 'zod'
 
-export const getPurchases = createServerFn({ method: 'GET' }).handler(async () => {
-  await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
-  return await db.query.purchases.findMany({
-    orderBy: [desc(purchases.purchasedAt)],
-    with: {
-      supplier: true,
-      createdBy: true,
-      items: {
-        with: {
-          product: true,
+export const getPurchases = createServerFn({ method: 'GET' }).handler(
+  async () => {
+    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    return await db.query.purchases.findMany({
+      orderBy: [desc(purchases.purchasedAt)],
+      with: {
+        supplier: true,
+        createdBy: true,
+        items: {
+          with: {
+            product: true,
+          },
         },
       },
-    },
-  })
-})
+    })
+  },
+)
 
 const createPurchaseSchema = z.object({
   supplierId: z.number(),
@@ -34,7 +36,7 @@ const createPurchaseSchema = z.object({
       productId: z.number(),
       quantity: z.number(),
       unitCost: z.string(),
-    })
+    }),
   ),
 })
 
@@ -52,7 +54,7 @@ export const createPurchase = createServerFn({ method: 'POST' })
       const subtotal = subtotalSum.toFixed(2)
       const total = subtotal
 
-      const [purchase] = await tx
+      const [newPurchase] = await tx
         .insert(purchases)
         .values({
           supplierId: data.supplierId,
@@ -64,17 +66,23 @@ export const createPurchase = createServerFn({ method: 'POST' })
         })
         .returning()
 
-      const productIds = Array.from(new Set(data.items.map(item => item.productId)))
-      const productsFound = productIds.length > 0
-        ? await tx.select().from(products).where(inArray(products.id, productIds))
-        : []
-      const productMap = new Map(productsFound.map(p => [p.id, p]))
+      const productIds = Array.from(
+        new Set(data.items.map((item) => item.productId)),
+      )
+      const productsFound =
+        productIds.length > 0
+          ? await tx
+              .select()
+              .from(products)
+              .where(inArray(products.id, productIds))
+          : []
+      const productMap = new Map(productsFound.map((p) => [p.id, p]))
 
       for (const item of data.items) {
         const itemSubtotal = (Number(item.unitCost) * item.quantity).toFixed(2)
 
         await tx.insert(purchaseItems).values({
-          purchaseId: purchase.id,
+          purchaseId: newPurchase.id,
           productId: item.productId,
           quantity: item.quantity,
           unitCost: item.unitCost,
@@ -105,14 +113,14 @@ export const createPurchase = createServerFn({ method: 'POST' })
           previousStock: product.stockCurrent,
           newStock,
           referenceType: 'PURCHASE',
-          referenceId: purchase.id,
+          referenceId: newPurchase.id,
           createdByUserId: session.user.id,
         })
 
         product.stockCurrent = newStock
       }
 
-      return purchase
+      return newPurchase
     })
 
     createAuditLog({

@@ -14,7 +14,12 @@ import {
   Pie,
   Cell,
 } from 'recharts'
-import { Card, CardContent, CardHeader, CardTitle } from '#/shared/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '#/shared/components/ui/card'
 import { Button } from '#/shared/components/ui/button'
 import { Badge } from '#/shared/components/ui/badge'
 import { Skeleton } from '#/shared/components/ui/skeleton'
@@ -51,7 +56,11 @@ import { formatCurrency } from '#/shared/lib/formatters.ts'
 type Tab = 'financial' | 'attendance' | 'sales' | 'members'
 type Preset = 'today' | 'week' | 'month' | 'year' | 'custom'
 
-const tabs: { id: Tab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+const tabs: {
+  id: Tab
+  label: string
+  icon: React.ComponentType<{ className?: string }>
+}[] = [
   { id: 'financial', label: 'Financiero', icon: DollarSign },
   { id: 'attendance', label: 'Asistencia', icon: DoorOpen },
   { id: 'sales', label: 'Ventas', icon: ShoppingBag },
@@ -66,19 +75,46 @@ const presets: { id: Preset; label: string }[] = [
   { id: 'custom', label: 'Personalizado' },
 ]
 
-function getPresetRange(preset: Preset): { startDate: string; endDate: string } {
+function getPresetRange(preset: Preset): {
+  startDate: string
+  endDate: string
+} {
   const now = new Date()
-  const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999)
+  const end = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+    23,
+    59,
+    59,
+    999,
+  )
 
   switch (preset) {
     case 'today': {
-      const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0)
+      const start = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+        0,
+        0,
+        0,
+        0,
+      )
       return { startDate: start.toISOString(), endDate: end.toISOString() }
     }
     case 'week': {
       const dayOfWeek = now.getDay()
       const diff = dayOfWeek === 0 ? 6 : dayOfWeek - 1
-      const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - diff, 0, 0, 0, 0)
+      const start = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() - diff,
+        0,
+        0,
+        0,
+        0,
+      )
       return { startDate: start.toISOString(), endDate: end.toISOString() }
     }
     case 'month': {
@@ -101,7 +137,14 @@ function formatDateLabel(dateStr: string): string {
   return d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })
 }
 
-const CHART_COLORS = ['#6366f1', '#22c55e', '#ef4444', '#f59e0b', '#8b5cf6', '#06b6d4']
+const CHART_COLORS = [
+  '#6366f1',
+  '#22c55e',
+  '#ef4444',
+  '#f59e0b',
+  '#8b5cf6',
+  '#06b6d4',
+]
 
 export function ReportsPage() {
   const [activeTab, setActiveTab] = useState<Tab>('financial')
@@ -136,15 +179,15 @@ export function ReportsPage() {
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {presets.map((p) => (
-              <Button
-                  key={p.id}
-                  variant={preset === p.id ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setPreset(p.id)}
-                  className="transition-all duration-200"
-                >
-                  {p.label}
-                </Button>
+            <Button
+              key={p.id}
+              variant={preset === p.id ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setPreset(p.id)}
+              className="transition-all duration-200"
+            >
+              {p.label}
+            </Button>
           ))}
           <Button variant="outline" size="sm" onClick={() => window.print()}>
             <Printer className="size-4 mr-1" />
@@ -172,10 +215,24 @@ export function ReportsPage() {
       </div>
 
       <div ref={printRef} className="print-area">
-        {activeTab === 'financial' && <FinancialReport startDate={range.startDate} endDate={range.endDate} />}
-        {activeTab === 'attendance' && <AttendanceReport startDate={range.startDate} endDate={range.endDate} />}
-        {activeTab === 'sales' && <SalesReport startDate={range.startDate} endDate={range.endDate} />}
-        {activeTab === 'members' && <MembersReport startDate={range.startDate} endDate={range.endDate} />}
+        {activeTab === 'financial' && (
+          <FinancialReport
+            startDate={range.startDate}
+            endDate={range.endDate}
+          />
+        )}
+        {activeTab === 'attendance' && (
+          <AttendanceReport
+            startDate={range.startDate}
+            endDate={range.endDate}
+          />
+        )}
+        {activeTab === 'sales' && (
+          <SalesReport startDate={range.startDate} endDate={range.endDate} />
+        )}
+        {activeTab === 'members' && (
+          <MembersReport startDate={range.startDate} endDate={range.endDate} />
+        )}
       </div>
     </div>
   )
@@ -199,19 +256,28 @@ function useServerData<T>(
         if (!cancelled) setData(result)
       })
       .catch((e) => {
-        if (!cancelled) setError(e instanceof Error ? e.message : 'Error desconocido')
+        if (!cancelled)
+          setError(e instanceof Error ? e.message : 'Error desconocido')
       })
       .finally(() => {
         if (!cancelled) setLoading(false)
       })
 
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+    }
   }, deps)
 
   return { data, error, loading }
 }
 
-function FinancialReport({ startDate, endDate }: { startDate: string; endDate: string }) {
+function FinancialReport({
+  startDate,
+  endDate,
+}: {
+  startDate: string
+  endDate: string
+}) {
   const { data, error, loading } = useServerData(
     () => getFinancialReport({ data: { startDate, endDate } }),
     [startDate, endDate],
@@ -224,10 +290,30 @@ function FinancialReport({ startDate, endDate }: { startDate: string; endDate: s
   return (
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <SummaryCard title="Ingresos Membresías" value={formatCurrency(data.summary.totalMembershipIncome)} icon={DollarSign} trend="up" />
-        <SummaryCard title="Ingresos POS" value={formatCurrency(data.summary.totalPosIncome)} icon={ShoppingBag} trend="up" />
-        <SummaryCard title="Egresos" value={formatCurrency(data.summary.totalExpenses)} icon={TrendingDown} trend="down" />
-        <SummaryCard title="Balance Neto" value={formatCurrency(data.summary.netBalance)} icon={BarChart3} trend={data.summary.netBalance >= 0 ? 'up' : 'down'} />
+        <SummaryCard
+          title="Ingresos Membresías"
+          value={formatCurrency(data.summary.totalMembershipIncome)}
+          icon={DollarSign}
+          trend="up"
+        />
+        <SummaryCard
+          title="Ingresos POS"
+          value={formatCurrency(data.summary.totalPosIncome)}
+          icon={ShoppingBag}
+          trend="up"
+        />
+        <SummaryCard
+          title="Egresos"
+          value={formatCurrency(data.summary.totalExpenses)}
+          icon={TrendingDown}
+          trend="down"
+        />
+        <SummaryCard
+          title="Balance Neto"
+          value={formatCurrency(data.summary.netBalance)}
+          icon={BarChart3}
+          trend={data.summary.netBalance >= 0 ? 'up' : 'down'}
+        />
       </div>
 
       <Card>
@@ -238,18 +324,43 @@ function FinancialReport({ startDate, endDate }: { startDate: string; endDate: s
           <div className="h-[350px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data.chartData}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                <XAxis dataKey="date" tickFormatter={formatDateLabel} className="text-xs text-muted-foreground" />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  className="stroke-border"
+                />
+                <XAxis
+                  dataKey="date"
+                  tickFormatter={formatDateLabel}
+                  className="text-xs text-muted-foreground"
+                />
                 <YAxis className="text-xs text-muted-foreground" />
                 <Tooltip
-                  contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border))' }}
+                  contentStyle={{
+                    borderRadius: '8px',
+                    border: '1px solid hsl(var(--border))',
+                  }}
                   labelFormatter={(l) => formatDateLabel(l)}
                   formatter={(value) => formatCurrency(Number(value ?? 0))}
                 />
                 <Legend />
-                <Bar dataKey="membershipIncome" name="Membresías" fill="#6366f1" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="posIncome" name="POS" fill="#22c55e" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="expenses" name="Egresos" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                <Bar
+                  dataKey="membershipIncome"
+                  name="Membresías"
+                  fill="#6366f1"
+                  radius={[4, 4, 0, 0]}
+                />
+                <Bar
+                  dataKey="posIncome"
+                  name="POS"
+                  fill="#22c55e"
+                  radius={[4, 4, 0, 0]}
+                />
+                <Bar
+                  dataKey="expenses"
+                  name="Egresos"
+                  fill="#ef4444"
+                  radius={[4, 4, 0, 0]}
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -259,7 +370,13 @@ function FinancialReport({ startDate, endDate }: { startDate: string; endDate: s
   )
 }
 
-function AttendanceReport({ startDate, endDate }: { startDate: string; endDate: string }) {
+function AttendanceReport({
+  startDate,
+  endDate,
+}: {
+  startDate: string
+  endDate: string
+}) {
   const { data, error, loading } = useServerData(
     () => getAttendanceReport({ data: { startDate, endDate } }),
     [startDate, endDate],
@@ -272,8 +389,17 @@ function AttendanceReport({ startDate, endDate }: { startDate: string; endDate: 
   return (
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-2">
-        <SummaryCard title="Total Check-ins" value={String(data.summary.total)} icon={DoorOpen} trend="up" />
-        <SummaryCard title="Promedio Diario" value={String(data.summary.dailyAverage)} icon={LineChartIcon} />
+        <SummaryCard
+          title="Total Check-ins"
+          value={String(data.summary.total)}
+          icon={DoorOpen}
+          trend="up"
+        />
+        <SummaryCard
+          title="Promedio Diario"
+          value={String(data.summary.dailyAverage)}
+          icon={LineChartIcon}
+        />
       </div>
 
       <Card>
@@ -284,14 +410,35 @@ function AttendanceReport({ startDate, endDate }: { startDate: string; endDate: 
           <div className="h-[350px]">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={data.chartData}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                <XAxis dataKey="date" tickFormatter={formatDateLabel} className="text-xs text-muted-foreground" />
-                <YAxis className="text-xs text-muted-foreground" allowDecimals={false} />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  className="stroke-border"
+                />
+                <XAxis
+                  dataKey="date"
+                  tickFormatter={formatDateLabel}
+                  className="text-xs text-muted-foreground"
+                />
+                <YAxis
+                  className="text-xs text-muted-foreground"
+                  allowDecimals={false}
+                />
                 <Tooltip
-                  contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border))' }}
+                  contentStyle={{
+                    borderRadius: '8px',
+                    border: '1px solid hsl(var(--border))',
+                  }}
                   labelFormatter={(l) => formatDateLabel(l)}
                 />
-                <Line type="monotone" dataKey="count" name="Check-ins" stroke="#6366f1" strokeWidth={2} dot={{ fill: '#6366f1', r: 4 }} activeDot={{ r: 6 }} />
+                <Line
+                  type="monotone"
+                  dataKey="count"
+                  name="Check-ins"
+                  stroke="#6366f1"
+                  strokeWidth={2}
+                  dot={{ fill: '#6366f1', r: 4 }}
+                  activeDot={{ r: 6 }}
+                />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -301,7 +448,13 @@ function AttendanceReport({ startDate, endDate }: { startDate: string; endDate: 
   )
 }
 
-function SalesReport({ startDate, endDate }: { startDate: string; endDate: string }) {
+function SalesReport({
+  startDate,
+  endDate,
+}: {
+  startDate: string
+  endDate: string
+}) {
   const { data, error, loading } = useServerData(
     () => getSalesReport({ data: { startDate, endDate } }),
     [startDate, endDate],
@@ -311,14 +464,29 @@ function SalesReport({ startDate, endDate }: { startDate: string; endDate: strin
   if (error) return <ErrorState message={error} />
   if (!data || data.chartData.length === 0) return <EmptyState />
 
-  const topProducts = [...data.chartData].sort((a, b) => b.total - a.total).slice(0, 5)
+  const topProducts = [...data.chartData]
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 5)
 
   return (
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <SummaryCard title="Ingresos Totales" value={formatCurrency(data.summary.totalRevenue)} icon={ShoppingBag} trend="up" />
-        <SummaryCard title="Transacciones" value={String(data.summary.totalTransactions)} icon={FileBarChart} />
-        <SummaryCard title="Productos Vendidos" value={String(data.chartData.reduce((a, b) => a + b.quantity, 0))} icon={BarChart3} />
+        <SummaryCard
+          title="Ingresos Totales"
+          value={formatCurrency(data.summary.totalRevenue)}
+          icon={ShoppingBag}
+          trend="up"
+        />
+        <SummaryCard
+          title="Transacciones"
+          value={String(data.summary.totalTransactions)}
+          icon={FileBarChart}
+        />
+        <SummaryCard
+          title="Productos Vendidos"
+          value={String(data.chartData.reduce((a, b) => a + b.quantity, 0))}
+          icon={BarChart3}
+        />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-5">
@@ -340,7 +508,9 @@ function SalesReport({ startDate, endDate }: { startDate: string; endDate: strin
                   <TableRow key={row.name}>
                     <TableCell className="font-medium">{row.name}</TableCell>
                     <TableCell className="text-right">{row.quantity}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(row.total)}</TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(row.total)}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -356,10 +526,27 @@ function SalesReport({ startDate, endDate }: { startDate: string; endDate: strin
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie data={topProducts} dataKey="total" nameKey="name" cx="50%" cy="50%" outerRadius={100}                   label={({ name, percent }) => `${name} (${((percent ?? 0) * 100).toFixed(0)}%)`}>
-                    {topProducts.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
+                  <Pie
+                    data={topProducts}
+                    dataKey="total"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={100}
+                    label={({ name, percent }) =>
+                      `${name} (${((percent ?? 0) * 100).toFixed(0)}%)`
+                    }
+                  >
+                    {topProducts.map((_, i) => (
+                      <Cell
+                        key={i}
+                        fill={CHART_COLORS[i % CHART_COLORS.length]}
+                      />
+                    ))}
                   </Pie>
-                  <Tooltip formatter={(value) => formatCurrency(Number(value ?? 0))} />
+                  <Tooltip
+                    formatter={(value) => formatCurrency(Number(value ?? 0))}
+                  />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -370,7 +557,13 @@ function SalesReport({ startDate, endDate }: { startDate: string; endDate: strin
   )
 }
 
-function MembersReport({ startDate, endDate }: { startDate: string; endDate: string }) {
+function MembersReport({
+  startDate,
+  endDate,
+}: {
+  startDate: string
+  endDate: string
+}) {
   const { data, error, loading } = useServerData(
     () => getMembersReport({ data: { startDate, endDate } }),
     [startDate, endDate],
@@ -388,10 +581,24 @@ function MembersReport({ startDate, endDate }: { startDate: string; endDate: str
   return (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <SummaryCard title="Total Socios" value={String(data.total)} icon={Users} />
-        <SummaryCard title="Nuevos (período)" value={String(data.newMembers)} icon={TrendingUp} trend="up" />
+        <SummaryCard
+          title="Total Socios"
+          value={String(data.total)}
+          icon={Users}
+        />
+        <SummaryCard
+          title="Nuevos (período)"
+          value={String(data.newMembers)}
+          icon={TrendingUp}
+          trend="up"
+        />
         <SummaryCard title="Activos" value={String(data.active)} icon={Users} />
-        <SummaryCard title="Bajas (período)" value={String(data.churned)} icon={TrendingDown} trend="down" />
+        <SummaryCard
+          title="Bajas (período)"
+          value={String(data.churned)}
+          icon={TrendingDown}
+          trend="down"
+        />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -403,8 +610,18 @@ function MembersReport({ startDate, endDate }: { startDate: string; endDate: str
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie data={statusData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} label={({ name, value }) => `${name}: ${value}`}>
-                    {statusData.map((entry) => <Cell key={entry.name} fill={entry.color} />)}
+                  <Pie
+                    data={statusData}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={100}
+                    label={({ name, value }) => `${name}: ${value}`}
+                  >
+                    {statusData.map((entry) => (
+                      <Cell key={entry.name} fill={entry.color} />
+                    ))}
                   </Pie>
                   <Tooltip />
                   <Legend />
@@ -429,29 +646,42 @@ function MembersReport({ startDate, endDate }: { startDate: string; endDate: str
               </div>
               <div className="flex items-center justify-between border-b pb-3">
                 <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800">
+                  <Badge
+                    variant="outline"
+                    className="bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800"
+                  >
                     NUEVOS
                   </Badge>
                   <span className="text-sm">Nuevos en el período</span>
                 </div>
-                <span className="text-xl font-bold text-emerald-600">{data.newMembers}</span>
+                <span className="text-xl font-bold text-emerald-600">
+                  {data.newMembers}
+                </span>
               </div>
               <div className="flex items-center justify-between border-b pb-3">
                 <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800">
+                  <Badge
+                    variant="outline"
+                    className="bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800"
+                  >
                     BAJAS
                   </Badge>
                   <span className="text-sm">Bajas en el período</span>
                 </div>
-                <span className="text-xl font-bold text-red-600">{data.churned}</span>
+                <span className="text-xl font-bold text-red-600">
+                  {data.churned}
+                </span>
               </div>
               <div className="flex items-center justify-between pt-1">
                 <div className="flex items-center gap-2">
                   <TrendingUp className="size-4 text-emerald-500" />
                   <span className="text-sm">Crecimiento neto</span>
                 </div>
-                <span className={`text-xl font-bold ${data.newMembers - data.churned >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                  {data.newMembers - data.churned >= 0 ? '+' : ''}{data.newMembers - data.churned}
+                <span
+                  className={`text-xl font-bold ${data.newMembers - data.churned >= 0 ? 'text-emerald-600' : 'text-red-600'}`}
+                >
+                  {data.newMembers - data.churned >= 0 ? '+' : ''}
+                  {data.newMembers - data.churned}
                 </span>
               </div>
             </div>
@@ -476,7 +706,9 @@ function SummaryCard({
   return (
     <Card className="transition-all duration-200 hover:shadow-md">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
+        <CardTitle className="text-sm font-medium text-muted-foreground">
+          {title}
+        </CardTitle>
         <div className="rounded-lg bg-primary/10 p-2">
           <Icon className="size-4 text-primary" />
         </div>
@@ -517,5 +749,3 @@ function SkeletonGrid() {
     </div>
   )
 }
-
-

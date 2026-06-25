@@ -48,7 +48,9 @@ function QRCheckInPage() {
           <div className="inline-flex size-16 items-center justify-center rounded-full bg-primary/10 mb-2">
             <DoorOpen className="size-8 text-primary" />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight">Control de Ingreso</h1>
+          <h1 className="text-2xl font-bold tracking-tight">
+            Control de Ingreso
+          </h1>
           <p className="text-muted-foreground">
             Escaneá tu código QR o ingresalo manualmente
           </p>
@@ -58,7 +60,10 @@ function QRCheckInPage() {
           <CardContent className="p-6">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <label htmlFor="qrToken" className="text-sm font-medium flex items-center gap-2">
+                <label
+                  htmlFor="qrToken"
+                  className="text-sm font-medium flex items-center gap-2"
+                >
                   <Scan className="size-4" />
                   Código QR
                 </label>
@@ -77,7 +82,9 @@ function QRCheckInPage() {
                 className="w-full h-12 text-lg"
                 disabled={checkInMutation.isPending || !qrToken.trim()}
               >
-                {checkInMutation.isPending ? 'Procesando...' : 'Registrar Ingreso'}
+                {checkInMutation.isPending
+                  ? 'Procesando...'
+                  : 'Registrar Ingreso'}
               </Button>
             </form>
           </CardContent>
@@ -86,7 +93,9 @@ function QRCheckInPage() {
         {checkInMutation.isPending && (
           <Card>
             <CardContent className="p-6 text-center">
-              <div className="animate-pulse text-muted-foreground">Verificando código QR...</div>
+              <div className="animate-pulse text-muted-foreground">
+                Verificando código QR...
+              </div>
             </CardContent>
           </Card>
         )}

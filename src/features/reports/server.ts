@@ -19,10 +19,9 @@ const dateRangeSchema = z.object({
 export const getFinancialReport = createServerFn({ method: 'GET' })
   .inputValidator((data: unknown) => dateRangeSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({
+    await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST'] },
     })
-    if (!session) throw new Error('Unauthorized')
 
     const startDate = new Date(data.startDate)
     const endDate = new Date(data.endDate)
@@ -81,19 +80,22 @@ export const getFinancialReport = createServerFn({ method: 'GET' })
 
     for (const row of membershipIncomeRes) {
       const d = row.date
-      if (!dateMap.has(d)) dateMap.set(d, { membershipIncome: 0, posIncome: 0, expenses: 0 })
+      if (!dateMap.has(d))
+        dateMap.set(d, { membershipIncome: 0, posIncome: 0, expenses: 0 })
       dateMap.get(d)!.membershipIncome += Number(row.amount ?? 0)
     }
 
     for (const row of posIncomeRes) {
       const d = row.date
-      if (!dateMap.has(d)) dateMap.set(d, { membershipIncome: 0, posIncome: 0, expenses: 0 })
+      if (!dateMap.has(d))
+        dateMap.set(d, { membershipIncome: 0, posIncome: 0, expenses: 0 })
       dateMap.get(d)!.posIncome += Number(row.amount ?? 0)
     }
 
     for (const row of expensesRes) {
       const d = row.date
-      if (!dateMap.has(d)) dateMap.set(d, { membershipIncome: 0, posIncome: 0, expenses: 0 })
+      if (!dateMap.has(d))
+        dateMap.set(d, { membershipIncome: 0, posIncome: 0, expenses: 0 })
       dateMap.get(d)!.expenses += Number(row.amount ?? 0)
     }
 
@@ -114,8 +116,7 @@ export const getFinancialReport = createServerFn({ method: 'GET' })
         totalMembershipIncome,
         totalPosIncome,
         totalExpenses,
-        netBalance:
-          totalMembershipIncome + totalPosIncome - totalExpenses,
+        netBalance: totalMembershipIncome + totalPosIncome - totalExpenses,
       },
     }
   })
@@ -123,10 +124,9 @@ export const getFinancialReport = createServerFn({ method: 'GET' })
 export const getAttendanceReport = createServerFn({ method: 'GET' })
   .inputValidator((data: unknown) => dateRangeSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({
+    await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] },
     })
-    if (!session) throw new Error('Unauthorized')
 
     const startDate = new Date(data.startDate)
     const endDate = new Date(data.endDate)
@@ -147,20 +147,25 @@ export const getAttendanceReport = createServerFn({ method: 'GET' })
       .groupBy(sql`DATE(${checkIns.checkedInAt})`)
       .orderBy(sql`DATE(${checkIns.checkedInAt})`)
 
-    const chartData = rows.map((r) => ({ date: r.date, count: Number(r.count) }))
+    const chartData = rows.map((r) => ({
+      date: r.date,
+      count: Number(r.count),
+    }))
     const total = chartData.reduce((acc, d) => acc + d.count, 0)
     const dayCount = chartData.length || 1
 
-    return { chartData, summary: { total, dailyAverage: Math.round(total / dayCount) } }
+    return {
+      chartData,
+      summary: { total, dailyAverage: Math.round(total / dayCount) },
+    }
   })
 
 export const getSalesReport = createServerFn({ method: 'GET' })
   .inputValidator((data: unknown) => dateRangeSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({
+    await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST'] },
     })
-    if (!session) throw new Error('Unauthorized')
 
     const startDate = new Date(data.startDate)
     const endDate = new Date(data.endDate)
@@ -179,7 +184,10 @@ export const getSalesReport = createServerFn({ method: 'GET' })
         ),
       )
 
-    const summary = salesSummaryRes[0] ?? { totalRevenue: '0', totalTransactions: 0 }
+    const summary = salesSummaryRes[0] ?? {
+      totalRevenue: '0',
+      totalTransactions: 0,
+    }
 
     const productSales = await db
       .select({
@@ -207,7 +215,7 @@ export const getSalesReport = createServerFn({ method: 'GET' })
     }))
 
     const totalRevenue = Number(summary.totalRevenue ?? 0)
-    const totalTransactions = Number(summary.totalTransactions ?? 0)
+    const totalTransactions = Number(summary.totalTransactions)
 
     return { chartData, summary: { totalRevenue, totalTransactions } }
   })
@@ -215,26 +223,20 @@ export const getSalesReport = createServerFn({ method: 'GET' })
 export const getMembersReport = createServerFn({ method: 'GET' })
   .inputValidator((data: unknown) => dateRangeSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({
+    await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST'] },
     })
-    if (!session) throw new Error('Unauthorized')
 
     const startDate = new Date(data.startDate)
     const endDate = new Date(data.endDate)
 
-    const totalRes = await db
-      .select({ count: count() })
-      .from(members)
+    const totalRes = await db.select({ count: count() }).from(members)
 
     const newMembersRes = await db
       .select({ count: count() })
       .from(members)
       .where(
-        and(
-          gte(members.createdAt, startDate),
-          lte(members.createdAt, endDate),
-        ),
+        and(gte(members.createdAt, startDate), lte(members.createdAt, endDate)),
       )
 
     const activeRes = await db

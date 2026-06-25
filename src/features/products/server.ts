@@ -26,7 +26,9 @@ const createCategorySchema = z.object({
 export const createCategory = createServerFn({ method: 'POST' })
   .inputValidator((data) => createCategorySchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    const session = await requireRole({
+      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
+    })
     const [category] = await db
       .insert(productCategories)
       .values({
@@ -54,7 +56,9 @@ const updateCategorySchema = z.object({
 export const updateCategory = createServerFn({ method: 'POST' })
   .inputValidator((data) => updateCategorySchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    const session = await requireRole({
+      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
+    })
     const [category] = await db
       .update(productCategories)
       .set({
@@ -207,8 +211,10 @@ const adjustStockSchema = z.object({
 export const adjustStock = createServerFn({ method: 'POST' })
   .inputValidator((data) => adjustStockSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
-    
+    const session = await requireRole({
+      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
+    })
+
     const newStock = await db.transaction(async (tx) => {
       const results = await tx
         .select()
@@ -220,11 +226,11 @@ export const adjustStock = createServerFn({ method: 'POST' })
       const product = results[0]
 
       const previousStock = product.stockCurrent
-      const newStock = previousStock + data.quantity
+      const calculatedNewStock = previousStock + data.quantity
 
       await tx
         .update(products)
-        .set({ stockCurrent: newStock, updatedAt: new Date() })
+        .set({ stockCurrent: calculatedNewStock, updatedAt: new Date() })
         .where(eq(products.id, data.productId))
 
       await tx.insert(inventoryMovements).values({
@@ -232,12 +238,12 @@ export const adjustStock = createServerFn({ method: 'POST' })
         movementType: data.movementType,
         quantity: data.quantity,
         previousStock,
-        newStock,
+        newStock: calculatedNewStock,
         notes: data.notes || null,
         createdByUserId: session.user.id,
       })
 
-      return newStock
+      return calculatedNewStock
     })
 
     createAuditLog({
@@ -246,7 +252,11 @@ export const adjustStock = createServerFn({ method: 'POST' })
       entityType: 'INVENTORY',
       entityId: data.productId,
       description: `Ajustó stock del producto #${data.productId}: ${data.quantity} unidades`,
-      details: { movementType: data.movementType, quantity: data.quantity, newStock },
+      details: {
+        movementType: data.movementType,
+        quantity: data.quantity,
+        newStock,
+      },
     })
 
     return newStock

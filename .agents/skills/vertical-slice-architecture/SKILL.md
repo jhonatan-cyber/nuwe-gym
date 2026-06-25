@@ -46,6 +46,7 @@ description: Enforce Vertical Slice Architecture (VSA) when building application
 ## Workflow: Adding Cross-Cutting Concerns
 
 Place in `platform/` (not inside a feature). Examples:
+
 - Auth middleware, error handling, request logging
 - Database connection pooling, circuit breakers
 - Idempotency middleware, operation queues, event notifications
@@ -54,6 +55,7 @@ Place in `platform/` (not inside a feature). Examples:
 ## Workflow: Extracting Shared Logic
 
 Only extract when genuine duplication emerges across multiple slices (use judgment — the "3+ slices" heuristic is guidance, not a hard rule):
+
 - Duplicate business rule: extract to a domain entity/value object
 - Duplicate data access pattern: extract to a shared repository (only for that specific pattern)
 - Duplicate HTTP helper: extract to `platform/httpx/`
@@ -61,6 +63,7 @@ Only extract when genuine duplication emerges across multiple slices (use judgme
 ## Key Decisions by Language
 
 Detect the project's language/framework and consult the appropriate reference:
+
 - **Patterns per language**: See [references/patterns-by-language.md](references/patterns-by-language.md) for Go, .NET, Java, TypeScript, Python
 - **Testing per language**: See [references/testing.md](references/testing.md) for testcontainers, mock verification, integration test patterns
 - **Core principles**: See [references/principles.md](references/principles.md) for detailed rules, anti-patterns, and shared domain model guidance
@@ -69,13 +72,13 @@ Detect the project's language/framework and consult the appropriate reference:
 
 Every feature exposes one primary setup/registration function. Internal types stay private. The entry point name is conventional — the invariant is: **one public function per feature that wires the slice to the framework**.
 
-| Language | Convention | Signature | DI mechanism |
-|----------|-----------|-----------|--------------|
-| Go | `Setup` or `RegisterRoute` | `func Setup(r gin.IRoutes, repo Repository)` | Explicit params |
-| .NET | `Map` (static) | `static void Map(IEndpointRouteBuilder app)` | DI container resolves deps in handler |
-| Java/Kotlin | `@RestController` class | Controller discovered by component scan | Spring DI (constructor injection) |
-| TypeScript | `setup` | `function setup(router: Router, db: Database): void` | Explicit params |
-| Python | `setup` | `def setup(router: APIRouter, db: Database) -> None` | Explicit params or `Depends()` |
+| Language    | Convention                 | Signature                                            | DI mechanism                          |
+| ----------- | -------------------------- | ---------------------------------------------------- | ------------------------------------- |
+| Go          | `Setup` or `RegisterRoute` | `func Setup(r gin.IRoutes, repo Repository)`         | Explicit params                       |
+| .NET        | `Map` (static)             | `static void Map(IEndpointRouteBuilder app)`         | DI container resolves deps in handler |
+| Java/Kotlin | `@RestController` class    | Controller discovered by component scan              | Spring DI (constructor injection)     |
+| TypeScript  | `setup`                    | `function setup(router: Router, db: Database): void` | Explicit params                       |
+| Python      | `setup`                    | `def setup(router: APIRouter, db: Database) -> None` | Explicit params or `Depends()`        |
 
 **Exceptions**: Versioned APIs may have `SetupV1`/`SetupV2` wrappers sharing internal handler wiring. Frameworks with auto-discovery (Spring, NestJS) use the controller/module class itself as the entry point.
 

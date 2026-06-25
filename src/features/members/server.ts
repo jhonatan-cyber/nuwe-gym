@@ -72,7 +72,9 @@ export type CreateMemberData = z.infer<typeof createMemberSchema>
 export const createMember = createServerFn({ method: 'POST' })
   .inputValidator((data) => createMemberSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    const session = await requireRole({
+      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
+    })
 
     const [member] = await db
       .insert(members)
@@ -114,7 +116,9 @@ const uploadPhotoSchema = z.object({
 export const uploadMemberPhoto = createServerFn({ method: 'POST' })
   .inputValidator((data) => uploadPhotoSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    const session = await requireRole({
+      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
+    })
 
     const [member] = await db
       .update(members)
@@ -136,7 +140,9 @@ export const uploadMemberPhoto = createServerFn({ method: 'POST' })
 export const updateMember = createServerFn({ method: 'POST' })
   .inputValidator((data) => updateMemberSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    const session = await requireRole({
+      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
+    })
 
     const [member] = await db
       .update(members)

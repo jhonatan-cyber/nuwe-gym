@@ -18,9 +18,16 @@ export function ErrorState({
       <CardContent className="flex flex-col items-center justify-center py-12">
         <AlertCircle className="size-12 text-destructive mb-4" />
         <p className="text-lg font-medium">{title}</p>
-        {message && <p className="text-sm text-muted-foreground mt-1">{message}</p>}
+        {message && (
+          <p className="text-sm text-muted-foreground mt-1">{message}</p>
+        )}
         {onRetry && (
-          <Button variant="outline" size="sm" className="mt-4" onClick={onRetry}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-4"
+            onClick={onRetry}
+          >
             <RefreshCw className="size-4 mr-2" />
             Reintentar
           </Button>

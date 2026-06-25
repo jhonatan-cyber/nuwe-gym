@@ -50,6 +50,7 @@ CREATE INDEX CONCURRENTLY "idx_orders_created" ON "orders" ("created_at");
 - [ ] Changes match your intent
 
 **Why it matters:**
+
 - Schema diff algorithms aren't perfect
 - Data loss from misinterpreted renames
 - Production outages from table locks

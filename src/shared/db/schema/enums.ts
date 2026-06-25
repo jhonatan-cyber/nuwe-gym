@@ -54,3 +54,8 @@ export const bookingStatusEnum = pgEnum('booking_status', [
   'CANCELLED',
   'ATTENDED',
 ])
+export const packageTypeEnum = pgEnum('package_type', [
+  'PACKAGE',
+  'PROMOTION',
+  'SPECIAL',
+])

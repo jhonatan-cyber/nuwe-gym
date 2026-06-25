@@ -53,13 +53,22 @@ describe('Members', () => {
   })
 
   it('should update member data', async () => {
-    const member = await createMember({ phone: '1111111111', address: 'Calle Vieja 123' })
+    const member = await createMember({
+      phone: '1111111111',
+      address: 'Calle Vieja 123',
+    })
     await db
       .update(members)
-      .set({ phone: '2222222222', address: 'Calle Nueva 456', updatedAt: new Date() })
+      .set({
+        phone: '2222222222',
+        address: 'Calle Nueva 456',
+        updatedAt: new Date(),
+      })
       .where(eq(members.id, member.id))
 
-    const updated = await db.query.members.findFirst({ where: eq(members.id, member.id) })
+    const updated = await db.query.members.findFirst({
+      where: eq(members.id, member.id),
+    })
     expect(updated!.phone).toBe('2222222222')
     expect(updated!.address).toBe('Calle Nueva 456')
   })
@@ -71,7 +80,9 @@ describe('Members', () => {
       .set({ status: 'INACTIVE', updatedAt: new Date() })
       .where(eq(members.id, member.id))
 
-    const updated = await db.query.members.findFirst({ where: eq(members.id, member.id) })
+    const updated = await db.query.members.findFirst({
+      where: eq(members.id, member.id),
+    })
     expect(updated!.status).toBe('INACTIVE')
   })
 
@@ -126,7 +137,9 @@ describe('Subscriptions', () => {
       with: { member: true, plan: true },
     })
     expect(activeSubs.length).toBeGreaterThanOrEqual(1)
-    const found = activeSubs.find((s) => s.member.fullName === 'Suscripto Activo')
+    const found = activeSubs.find(
+      (s) => s.member.fullName === 'Suscripto Activo',
+    )
     expect(found).toBeDefined()
     expect(found!.plan.name).toBe('Premium')
   })
@@ -134,7 +147,9 @@ describe('Subscriptions', () => {
   it('should expire a subscription', async () => {
     const member = await createMember()
     const plan = await createPlan()
-    const sub = await createSubscription(member.id, plan.id, { status: 'ACTIVE' })
+    const sub = await createSubscription(member.id, plan.id, {
+      status: 'ACTIVE',
+    })
 
     await db
       .update(subscriptions)
@@ -155,8 +170,14 @@ describe('Subscriptions', () => {
     const farEnd = new Date()
     farEnd.setDate(farEnd.getDate() + 30)
 
-    await createSubscription(member.id, plan.id, { endDate: nearEnd, status: 'ACTIVE' })
-    await createSubscription(member.id, plan.id, { endDate: farEnd, status: 'ACTIVE' })
+    await createSubscription(member.id, plan.id, {
+      endDate: nearEnd,
+      status: 'ACTIVE',
+    })
+    await createSubscription(member.id, plan.id, {
+      endDate: farEnd,
+      status: 'ACTIVE',
+    })
 
     const now = new Date()
     const weekLater = new Date()
@@ -183,7 +204,9 @@ describe('Membership Payments', () => {
     const member = await createMember()
     const plan = await createPlan()
     const sub = await createSubscription(member.id, plan.id)
-    const payment = await createPayment(sub.id, member.id, { amount: '15000.00' })
+    const payment = await createPayment(sub.id, member.id, {
+      amount: '15000.00',
+    })
 
     const found = await db.query.membershipPayments.findFirst({
       where: eq(membershipPayments.id, payment.id),

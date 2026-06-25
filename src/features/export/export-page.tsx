@@ -1,6 +1,12 @@
 import { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
-import { Download, Users, ShoppingBag, CreditCard, DoorOpen } from 'lucide-react'
+import {
+  Download,
+  Users,
+  ShoppingBag,
+  CreditCard,
+  DoorOpen,
+} from 'lucide-react'
 import { toast } from 'sonner'
 
 import { LoadingButton } from '#/shared/components/ui/loading-button'
@@ -69,7 +75,12 @@ function MembersCard() {
         <LoadingButton
           className="w-full transition-all duration-200"
           onClick={() =>
-            mutation.mutate({ data: { format: 'csv', status: status as 'ACTIVE' | 'INACTIVE' | 'ALL' } })
+            mutation.mutate({
+              data: {
+                format: 'csv',
+                status: status as 'ACTIVE' | 'INACTIVE' | 'ALL',
+              },
+            })
           }
           isLoading={mutation.isPending}
           loadingText="Exportando..."

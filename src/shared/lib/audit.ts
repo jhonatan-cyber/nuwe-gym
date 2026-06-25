@@ -17,14 +17,18 @@ export async function createAuditLog(params: {
       userId: params.userId ?? null,
       userName: params.userName ?? null,
       userRole: params.userRole ?? null,
-      action: params.action as typeof auditLogs.action.enumValues[number],
-      entityType: params.entityType as typeof auditLogs.entityType.enumValues[number],
+      action: params.action as (typeof auditLogs.action.enumValues)[number],
+      entityType:
+        params.entityType as (typeof auditLogs.entityType.enumValues)[number],
       entityId: params.entityId ?? null,
       description: params.description,
       details: params.details ?? null,
       ipAddress: params.ipAddress ?? null,
     })
   } catch (err) {
-    console.warn('[audit] failed to create audit log:', err instanceof Error ? err.message : err)
+    console.warn(
+      '[audit] failed to create audit log:',
+      err instanceof Error ? err.message : err,
+    )
   }
 }

@@ -9,25 +9,29 @@ import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { z } from 'zod'
 
-export const getFreezes = createServerFn({ method: 'GET' }).handler(async () => {
-  await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+export const getFreezes = createServerFn({ method: 'GET' }).handler(
+  async () => {
+    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
 
-  return await db.query.membershipFreezes.findMany({
-    orderBy: [desc(membershipFreezes.createdAt)],
-    with: {
-      subscription: {
-        with: {
-          member: true,
-          plan: true,
+    return await db.query.membershipFreezes.findMany({
+      orderBy: [desc(membershipFreezes.createdAt)],
+      with: {
+        subscription: {
+          with: {
+            member: true,
+            plan: true,
+          },
         },
+        member: true,
       },
-      member: true,
-    },
-  })
-})
+    })
+  },
+)
 
 export const getMemberFreezes = createServerFn({ method: 'GET' })
-  .inputValidator((data: { memberId: number }) => z.object({ memberId: z.number() }).parse(data))
+  .inputValidator((data: { memberId: number }) =>
+    z.object({ memberId: z.number() }).parse(data),
+  )
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
 
@@ -54,7 +58,9 @@ export type CreateFreezeData = z.infer<typeof createFreezeSchema>
 export const createFreeze = createServerFn({ method: 'POST' })
   .inputValidator((data) => createFreezeSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    const session = await requireRole({
+      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
+    })
     const userId = Number(session.user.id)
 
     const sub = await db.query.subscriptions.findFirst({
@@ -62,7 +68,8 @@ export const createFreeze = createServerFn({ method: 'POST' })
     })
 
     if (!sub) throw new Error('Suscripción no encontrada.')
-    if (sub.status !== 'ACTIVE') throw new Error('La suscripción no está activa.')
+    if (sub.status !== 'ACTIVE')
+      throw new Error('La suscripción no está activa.')
 
     const freezeStart = new Date(data.startDate)
     const freezeEnd = new Date(data.endDate)
@@ -81,7 +88,9 @@ export const createFreeze = createServerFn({ method: 'POST' })
     })
 
     if (overlapping) {
-      throw new Error('Ya existe un congelamiento activo que se superpone con estas fechas.')
+      throw new Error(
+        'Ya existe un congelamiento activo que se superpone con estas fechas.',
+      )
     }
 
     const freezeDurationDays = Math.ceil(
@@ -125,7 +134,9 @@ export const createFreeze = createServerFn({ method: 'POST' })
   })
 
 export const resumeSubscription = createServerFn({ method: 'POST' })
-  .inputValidator((data: { freezeId: number }) => z.object({ freezeId: z.number() }).parse(data))
+  .inputValidator((data: { freezeId: number }) =>
+    z.object({ freezeId: z.number() }).parse(data),
+  )
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
 
@@ -135,11 +146,13 @@ export const resumeSubscription = createServerFn({ method: 'POST' })
     })
 
     if (!freeze) throw new Error('Congelamiento no encontrado.')
-    if (freeze.resumedAt) throw new Error('Este congelamiento ya fue reanudado.')
+    if (freeze.resumedAt)
+      throw new Error('Este congelamiento ya fue reanudado.')
 
     const now = new Date()
     const plannedFreezeDays = Math.ceil(
-      (freeze.endDate.getTime() - freeze.startDate.getTime()) / (1000 * 60 * 60 * 24),
+      (freeze.endDate.getTime() - freeze.startDate.getTime()) /
+        (1000 * 60 * 60 * 24),
     )
 
     const actualFreezeDays = Math.ceil(
@@ -158,13 +171,13 @@ export const resumeSubscription = createServerFn({ method: 'POST' })
         .set({ resumedAt: now })
         .where(eq(membershipFreezes.id, data.freezeId))
 
-      const [updated] = await tx
+      const [newSubscription] = await tx
         .update(subscriptions)
         .set({ endDate: newEndDate, updatedAt: new Date() })
         .where(eq(subscriptions.id, freeze.subscriptionId))
         .returning()
 
-      return updated
+      return newSubscription
     })
 
     createAuditLog({
@@ -178,37 +191,41 @@ export const resumeSubscription = createServerFn({ method: 'POST' })
     return updated
   })
 
-export const getFreezeRules = createServerFn({ method: 'GET' }).handler(async () => {
-  await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+export const getFreezeRules = createServerFn({ method: 'GET' }).handler(
+  async () => {
+    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
 
-  return {
-    maxFreezeDays: 90,
-    minDaysBetweenFreezes: 30,
-  }
-})
+    return {
+      maxFreezeDays: 90,
+      minDaysBetweenFreezes: 30,
+    }
+  },
+)
 
-export const getFrozenSubscriptions = createServerFn({ method: 'GET' }).handler(async () => {
-  await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+export const getFrozenSubscriptions = createServerFn({ method: 'GET' }).handler(
+  async () => {
+    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
 
-  const now = new Date()
+    const now = new Date()
 
-  const activeFreezes = await db.query.membershipFreezes.findMany({
-    where: and(
-      isNull(membershipFreezes.resumedAt),
-      lte(membershipFreezes.startDate, now),
-      gte(membershipFreezes.endDate, now),
-    ),
-    orderBy: [desc(membershipFreezes.createdAt)],
-    with: {
-      subscription: {
-        with: {
-          member: true,
-          plan: true,
+    const activeFreezes = await db.query.membershipFreezes.findMany({
+      where: and(
+        isNull(membershipFreezes.resumedAt),
+        lte(membershipFreezes.startDate, now),
+        gte(membershipFreezes.endDate, now),
+      ),
+      orderBy: [desc(membershipFreezes.createdAt)],
+      with: {
+        subscription: {
+          with: {
+            member: true,
+            plan: true,
+          },
         },
+        member: true,
       },
-      member: true,
-    },
-  })
+    })
 
-  return activeFreezes
-})
+    return activeFreezes
+  },
+)

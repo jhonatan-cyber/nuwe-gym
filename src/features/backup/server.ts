@@ -17,11 +17,22 @@ import { suppliers } from '#/shared/db/schema/suppliers.ts'
 import { purchases, purchaseItems } from '#/shared/db/schema/purchases.ts'
 import { sales, saleItems } from '#/shared/db/schema/sales.ts'
 import { checkIns } from '#/shared/db/schema/check-ins.ts'
-import { cashRegisterSessions, cashMovements } from '#/shared/db/schema/cash-register.ts'
+import {
+  cashRegisterSessions,
+  cashMovements,
+} from '#/shared/db/schema/cash-register.ts'
 import { inventoryMovements } from '#/shared/db/schema/inventory.ts'
 import { notifications } from '#/shared/db/schema/notifications.ts'
-import { classes, classSchedules, classBookings } from '#/shared/db/schema/classes.ts'
-import { trainerProfiles, trainerAssignments, trainerAvailability } from '#/shared/db/schema/trainers.ts'
+import {
+  classes,
+  classSchedules,
+  classBookings,
+} from '#/shared/db/schema/classes.ts'
+import {
+  trainerProfiles,
+  trainerAssignments,
+  trainerAvailability,
+} from '#/shared/db/schema/trainers.ts'
 import { membershipFreezes } from '#/shared/db/schema/membership-freezes.ts'
 import { auditLogs } from '#/shared/db/schema/audit-logs.ts'
 import { users } from '#/shared/db/schema/auth.ts'
@@ -93,11 +104,15 @@ const IMPORT_ORDER: TableName[] = [
 async function getAllRows<T>(table: any, batchSize = 1000): Promise<T[]> {
   const rows: T[] = []
   let offset = 0
-  while (true) {
+  let hasMore = true
+  while (hasMore) {
     const batch = await db.select().from(table).limit(batchSize).offset(offset)
-    if (batch.length === 0) break
-    rows.push(...batch)
-    offset += batchSize
+    if (batch.length === 0) {
+      hasMore = false
+    } else {
+      rows.push(...batch)
+      offset += batchSize
+    }
   }
   return rows
 }
@@ -118,7 +133,14 @@ export const exportDatabase = createServerFn({ method: 'GET' })
     for (const [name, table] of Object.entries(TABLES)) {
       if (name === 'users') {
         const rows = await db
-          .select({ id: users.id, name: users.name, email: users.email, role: users.role, createdAt: users.createdAt, updatedAt: users.updatedAt })
+          .select({
+            id: users.id,
+            name: users.name,
+            email: users.email,
+            role: users.role,
+            createdAt: users.createdAt,
+            updatedAt: users.updatedAt,
+          })
           .from(users)
         data[name] = rows
       } else {
@@ -155,7 +177,7 @@ export const importDatabase = createServerFn({ method: 'POST' })
       }
 
       for (const name of IMPORT_ORDER) {
-        const rows = data.data[name]
+        const rows = data.data[name] as any[] | undefined
         if (!rows || rows.length === 0) {
           counts[name] = 0
           continue
@@ -180,24 +202,25 @@ export const importDatabase = createServerFn({ method: 'POST' })
     return counts
   })
 
-export const getBackupInfo = createServerFn({ method: 'GET' })
-  .handler(async () => {
+export const getBackupInfo = createServerFn({ method: 'GET' }).handler(
+  async () => {
     await requireRole({ data: { roles: ['ADMIN'] } })
 
     const counts: Record<string, number> = {}
 
     for (const [name, table] of Object.entries(TABLES)) {
       const [result] = await db.select({ total: count() }).from(table)
-      counts[name] = result?.total ?? 0
+      counts[name] = result.total
     }
 
     const dbSizeResult = await db.execute<{ size: string }>(
       sql`SELECT pg_size_pretty(pg_database_size(current_database())) as size`,
     )
-    const dbSize = dbSizeResult.rows?.[0]?.size ?? null
+    const dbSize = dbSizeResult.rows[0].size
 
     return { counts, dbSize }
-  })
+  },
+)
 
 const backupSettingsSchema = z.object({
   backupEnabled: z.boolean(),
@@ -209,12 +232,19 @@ export const saveBackupSettings = createServerFn({ method: 'POST' })
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
 
-    const existing = await db.select({ id: settings.id }).from(settings).limit(1)
+    const existing = await db
+      .select({ id: settings.id })
+      .from(settings)
+      .limit(1)
 
     if (existing.length > 0) {
       await db
         .update(settings)
-        .set({ backupEnabled: data.backupEnabled, backupFrequency: data.backupFrequency, updatedAt: new Date() })
+        .set({
+          backupEnabled: data.backupEnabled,
+          backupFrequency: data.backupFrequency,
+          updatedAt: new Date(),
+        })
         .where(sql`${settings.id} = ${existing[0].id}`)
     }
 
@@ -228,14 +258,18 @@ export const saveBackupSettings = createServerFn({ method: 'POST' })
     return { success: true }
   })
 
-export const getBackupSettings = createServerFn({ method: 'GET' })
-  .handler(async () => {
+export const getBackupSettings = createServerFn({ method: 'GET' }).handler(
+  async () => {
     await requireRole({ data: { roles: ['ADMIN'] } })
 
     const row = await db
-      .select({ backupEnabled: settings.backupEnabled, backupFrequency: settings.backupFrequency })
+      .select({
+        backupEnabled: settings.backupEnabled,
+        backupFrequency: settings.backupFrequency,
+      })
       .from(settings)
       .limit(1)
 
     return row[0] ?? { backupEnabled: false, backupFrequency: 'weekly' }
-  })
+  },
+)

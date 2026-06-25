@@ -34,6 +34,16 @@ export function parseNumeric(value: string | null | undefined): number {
   return parseFloat(value)
 }
 
+export function capitalize(str: string | null | undefined): string {
+  if (!str) return ''
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
+}
+
+export function capitalizeWords(str: string | null | undefined): string {
+  if (!str) return ''
+  return str.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
 export function formatRelativeTime(date: Date | string | null): string {
   if (!date) return ''
   const d = typeof date === 'string' ? new Date(date) : date

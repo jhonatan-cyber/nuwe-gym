@@ -1,28 +1,29 @@
 ---
 name: tech-drizzle
-description: 'Drizzle ORM typesafe schema design, relational queries, prepared statements,
+description:
+  'Drizzle ORM typesafe schema design, relational queries, prepared statements,
   migrations, and transactions. Use when working with Drizzle ORM, writing database
   queries, managing migrations, or optimizing query performance with prepared statements.
 
   '
 allowed-tools:
-- Bash
-- Read
-- Write
-- Edit
-- Grep
-- Glob
+  - Bash
+  - Read
+  - Write
+  - Edit
+  - Grep
+  - Glob
 metadata:
   category: database
   extends: platform-database
   tags:
-  - drizzle
-  - orm
-  - database
-  - typescript
-  - migration
-  - query
-  - performance
+    - drizzle
+    - orm
+    - database
+    - typescript
+    - migration
+    - query
+    - performance
   status: ready
   version: 6
 ---
@@ -30,6 +31,7 @@ metadata:
 # Drizzle ORM TypeSafe Database Access
 
 Lightweight, headless TypeScript ORM with zero dependencies. Drizzle excels at:
+
 - **Type inference** — Full TypeScript types from schema; no generated types or separate schema language
 - **Relational queries** — Fetch nested data with `.with()` without manual joins
 - **Prepared statements** — Pre-compile queries for repeated execution; significant performance boost

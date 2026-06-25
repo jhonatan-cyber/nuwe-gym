@@ -1,4 +1,10 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from 'react'
 
 type Theme = 'dark' | 'light' | 'system'
 
@@ -29,9 +35,11 @@ export function ThemeProvider({
   const [theme, setTheme] = useState<Theme>(() => {
     // Try localStorage first, fall back to sessionStorage, then default
     try {
-      return (localStorage.getItem(storageKey) as Theme) ||
-             (sessionStorage.getItem(storageKey) as Theme) ||
-             defaultTheme
+      return (
+        (localStorage.getItem(storageKey) as Theme) ||
+        (sessionStorage.getItem(storageKey) as Theme) ||
+        defaultTheme
+      )
     } catch (e) {
       // Storage unavailable (incognito/privacy mode) - use default
       return defaultTheme

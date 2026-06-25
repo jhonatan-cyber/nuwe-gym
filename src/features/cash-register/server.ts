@@ -1,6 +1,9 @@
 import { createServerFn } from '@tanstack/react-start'
 import { db } from '#/shared/db/index.ts'
-import { cashRegisterSessions, cashMovements } from '#/shared/db/schema/cash-register.ts'
+import {
+  cashRegisterSessions,
+  cashMovements,
+} from '#/shared/db/schema/cash-register.ts'
 import { eq, desc } from 'drizzle-orm'
 import { requireRole } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
@@ -28,7 +31,9 @@ const openCashSessionSchema = z.object({
 export const openCashSession = createServerFn({ method: 'POST' })
   .inputValidator((data) => openCashSessionSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    const session = await requireRole({
+      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
+    })
 
     const openSession = await db.query.cashRegisterSessions.findFirst({
       where: eq(cashRegisterSessions.status, 'OPEN'),
@@ -69,7 +74,9 @@ const closeCashSessionSchema = z.object({
 export const closeCashSession = createServerFn({ method: 'POST' })
   .inputValidator((data) => closeCashSessionSchema.parse(data))
   .handler(async ({ data }) => {
-    const userSession = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    const userSession = await requireRole({
+      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
+    })
 
     const closedSession = await db.transaction(async (tx) => {
       const openSession = await tx.query.cashRegisterSessions.findFirst({
@@ -100,7 +107,7 @@ export const closeCashSession = createServerFn({ method: 'POST' })
       const actualClosingAmount = Number(data.actualClosingAmount)
       const difference = (actualClosingAmount - cashBalance).toFixed(2)
 
-      const [closedSession] = await tx
+      const [newClosedSession] = await tx
         .update(cashRegisterSessions)
         .set({
           closedByUserId: userSession.user.id,
@@ -114,7 +121,7 @@ export const closeCashSession = createServerFn({ method: 'POST' })
         .where(eq(cashRegisterSessions.id, openSession.id))
         .returning()
 
-      return closedSession
+      return newClosedSession
     })
 
     createAuditLog({
@@ -123,7 +130,10 @@ export const closeCashSession = createServerFn({ method: 'POST' })
       entityType: 'CASH_REGISTER',
       entityId: closedSession.id,
       description: 'Cerró sesión de caja',
-      details: { expectedClosingAmount: closedSession.expectedClosingAmount, difference: closedSession.difference },
+      details: {
+        expectedClosingAmount: closedSession.expectedClosingAmount,
+        difference: closedSession.difference,
+      },
     })
 
     return closedSession
@@ -138,7 +148,9 @@ const createManualMovementSchema = z.object({
 export const createManualMovement = createServerFn({ method: 'POST' })
   .inputValidator((data) => createManualMovementSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    const session = await requireRole({
+      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
+    })
 
     const movement = await db.transaction(async (tx) => {
       const openSession = await tx.query.cashRegisterSessions.findFirst({
@@ -149,7 +161,7 @@ export const createManualMovement = createServerFn({ method: 'POST' })
         throw new Error('Debe abrir la caja antes de registrar un movimiento.')
       }
 
-      const [movement] = await tx
+      const [newMovement] = await tx
         .insert(cashMovements)
         .values({
           cashSessionId: openSession.id,
@@ -161,7 +173,7 @@ export const createManualMovement = createServerFn({ method: 'POST' })
         })
         .returning()
 
-      return movement
+      return newMovement
     })
 
     createAuditLog({

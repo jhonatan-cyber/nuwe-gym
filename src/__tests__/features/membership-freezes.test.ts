@@ -87,8 +87,13 @@ describe('Membership Freezes', () => {
     const active = await db
       .select({ count: count() })
       .from(membershipFreezes)
-      .where(and(eq(membershipFreezes.memberId, member.id), isNull(membershipFreezes.resumedAt)))
+      .where(
+        and(
+          eq(membershipFreezes.memberId, member.id),
+          isNull(membershipFreezes.resumedAt),
+        ),
+      )
 
-    expect(active[0]!.count).toBeGreaterThanOrEqual(1)
+    expect(active[0].count).toBeGreaterThanOrEqual(1)
   })
 })

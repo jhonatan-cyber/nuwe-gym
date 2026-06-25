@@ -2,7 +2,11 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Store, Plus, Pencil, Power, PowerOff } from 'lucide-react'
 import { toast } from 'sonner'
-import { getBranches, createBranch, updateBranch } from '#/features/branches/server.ts'
+import {
+  getBranches,
+  createBranch,
+  updateBranch,
+} from '#/features/branches/server.ts'
 import { Button } from '#/shared/components/ui/button'
 import { Input } from '#/shared/components/ui/input'
 import { Badge } from '#/shared/components/ui/badge'
@@ -71,7 +75,7 @@ export function BranchesPage() {
     setIsOpen(true)
   }
 
-  const openEdit = (branch: typeof branchesList[number]) => {
+  const openEdit = (branch: (typeof branchesList)[number]) => {
     setEditingId(branch.id)
     setForm({
       name: branch.name,
@@ -100,7 +104,7 @@ export function BranchesPage() {
     }
   }
 
-  const handleToggleActive = (branch: typeof branchesList[number]) => {
+  const handleToggleActive = (branch: (typeof branchesList)[number]) => {
     updateMutation.mutate({
       data: {
         id: branch.id,
@@ -123,42 +127,97 @@ export function BranchesPage() {
         title="Sucursales"
         description="Gestioná las sucursales del gimnasio"
         icon={<Store className="size-8 text-primary" />}
-        action={<Button onClick={openCreate}><Plus className="size-4" /> Nueva Sucursal</Button>}
+        action={
+          <Button onClick={openCreate}>
+            <Plus className="size-4" /> Nueva Sucursal
+          </Button>
+        }
       />
 
       <DataTable
         columns={[
-          { key: 'name', label: 'Nombre', render: (b: typeof branchesList[number]) => <span className="font-semibold">{b.name}</span> },
-          { key: 'address', label: 'Dirección', render: (b: typeof branchesList[number]) => <span className="text-muted-foreground">{b.address || '-'}</span> },
-          { key: 'phone', label: 'Teléfono', render: (b: typeof branchesList[number]) => <span className="text-muted-foreground">{b.phone || '-'}</span> },
-          { key: 'email', label: 'Email', render: (b: typeof branchesList[number]) => <span className="text-muted-foreground">{b.email || '-'}</span> },
-          { key: 'hours', label: 'Horario', render: (b: typeof branchesList[number]) => <span className="text-sm whitespace-nowrap">{b.openingTime} - {b.closingTime}</span> },
-          { key: 'status', label: 'Estado', render: (b: typeof branchesList[number]) => (
-            <Badge variant={b.isActive ? 'default' : 'secondary'}>
-              {b.isActive ? 'Activa' : 'Inactiva'}
-            </Badge>
-          )},
-          { key: 'actions', label: 'Acciones', className: 'text-right', render: (b: typeof branchesList[number]) => (
-            <div className="flex justify-end gap-1">
-              <Button size="icon" variant="ghost" onClick={() => openEdit(b)}>
-                <Pencil className="size-4" />
-              </Button>
-              <Button size="icon" variant="ghost" onClick={() => handleToggleActive(b)}>
-                {b.isActive ? <PowerOff className="size-4 text-destructive" /> : <Power className="size-4 text-green-500" />}
-              </Button>
-            </div>
-          )},
+          {
+            key: 'name',
+            label: 'Nombre',
+            render: (b: (typeof branchesList)[number]) => (
+              <span className="font-semibold">{b.name}</span>
+            ),
+          },
+          {
+            key: 'address',
+            label: 'Dirección',
+            render: (b: (typeof branchesList)[number]) => (
+              <span className="text-muted-foreground">{b.address || '-'}</span>
+            ),
+          },
+          {
+            key: 'phone',
+            label: 'Teléfono',
+            render: (b: (typeof branchesList)[number]) => (
+              <span className="text-muted-foreground">{b.phone || '-'}</span>
+            ),
+          },
+          {
+            key: 'email',
+            label: 'Email',
+            render: (b: (typeof branchesList)[number]) => (
+              <span className="text-muted-foreground">{b.email || '-'}</span>
+            ),
+          },
+          {
+            key: 'hours',
+            label: 'Horario',
+            render: (b: (typeof branchesList)[number]) => (
+              <span className="text-sm whitespace-nowrap">
+                {b.openingTime} - {b.closingTime}
+              </span>
+            ),
+          },
+          {
+            key: 'status',
+            label: 'Estado',
+            render: (b: (typeof branchesList)[number]) => (
+              <Badge variant={b.isActive ? 'default' : 'secondary'}>
+                {b.isActive ? 'Activa' : 'Inactiva'}
+              </Badge>
+            ),
+          },
+          {
+            key: 'actions',
+            label: 'Acciones',
+            className: 'text-right',
+            render: (b: (typeof branchesList)[number]) => (
+              <div className="flex justify-end gap-1">
+                <Button size="icon" variant="ghost" onClick={() => openEdit(b)}>
+                  <Pencil className="size-4" />
+                </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => handleToggleActive(b)}
+                >
+                  {b.isActive ? (
+                    <PowerOff className="size-4 text-destructive" />
+                  ) : (
+                    <Power className="size-4 text-green-500" />
+                  )}
+                </Button>
+              </div>
+            ),
+          },
         ]}
         data={branchesList}
         isLoading={isLoading}
         emptyMessage="No hay sucursales"
-        keyExtractor={(b: typeof branchesList[number]) => b.id}
+        keyExtractor={(b: (typeof branchesList)[number]) => b.id}
       />
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingId ? 'Editar Sucursal' : 'Nueva Sucursal'}</DialogTitle>
+            <DialogTitle>
+              {editingId ? 'Editar Sucursal' : 'Nueva Sucursal'}
+            </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1">
@@ -203,7 +262,9 @@ export function BranchesPage() {
                 <Input
                   type="time"
                   value={form.openingTime}
-                  onChange={(e) => setForm({ ...form, openingTime: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, openingTime: e.target.value })
+                  }
                 />
               </div>
               <div className="space-y-1">
@@ -211,7 +272,9 @@ export function BranchesPage() {
                 <Input
                   type="time"
                   value={form.closingTime}
-                  onChange={(e) => setForm({ ...form, closingTime: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, closingTime: e.target.value })
+                  }
                 />
               </div>
             </div>

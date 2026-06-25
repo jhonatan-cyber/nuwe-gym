@@ -27,7 +27,7 @@ describe('Dashboard Queries', () => {
     await createMember()
     await createMember()
     const after = await db.select({ count: count() }).from(members)
-    expect(after[0]!.count - before[0]!.count).toBeGreaterThanOrEqual(3)
+    expect(after[0].count - before[0].count).toBeGreaterThanOrEqual(3)
   })
 
   it('should count active subscriptions', async () => {
@@ -42,7 +42,7 @@ describe('Dashboard Queries', () => {
       .from(subscriptions)
       .where(eq(subscriptions.status, 'ACTIVE'))
 
-    expect(result[0]!.count).toBeGreaterThanOrEqual(2)
+    expect(result[0].count).toBeGreaterThanOrEqual(2)
   })
 
   it('should count check-ins today', async () => {
@@ -66,7 +66,7 @@ describe('Dashboard Queries', () => {
         ),
       )
 
-    expect(result[0]!.count).toBeGreaterThanOrEqual(2)
+    expect(result[0].count).toBeGreaterThanOrEqual(2)
   })
 
   it('should find members with expiring subscriptions', async () => {
@@ -74,7 +74,10 @@ describe('Dashboard Queries', () => {
     const plan = await createPlan()
     const nearEnd = new Date()
     nearEnd.setDate(nearEnd.getDate() + 3)
-    await createSubscription(m.id, plan.id, { endDate: nearEnd, status: 'ACTIVE' })
+    await createSubscription(m.id, plan.id, {
+      endDate: nearEnd,
+      status: 'ACTIVE',
+    })
 
     const now = new Date()
     const weekLater = new Date()
@@ -90,8 +93,8 @@ describe('Dashboard Queries', () => {
     })
 
     expect(expiring.length).toBeGreaterThanOrEqual(1)
-    expect(expiring[0]!.member).toBeDefined()
-    expect(expiring[0]!.plan).toBeDefined()
+    expect(expiring[0].member).toBeDefined()
+    expect(expiring[0].plan).toBeDefined()
   })
 
   it('should get today sales total', async () => {
@@ -99,8 +102,12 @@ describe('Dashboard Queries', () => {
 
     const last24h = new Date(Date.now() - 24 * 60 * 60 * 1000)
 
-    await createSale([{ productId: product.id, quantity: 2, unitPrice: '1000.00' }])
-    await createSale([{ productId: product.id, quantity: 1, unitPrice: '500.00' }])
+    await createSale([
+      { productId: product.id, quantity: 2, unitPrice: '1000.00' },
+    ])
+    await createSale([
+      { productId: product.id, quantity: 1, unitPrice: '500.00' },
+    ])
 
     const recentSales = await db.query.sales.findMany({
       where: gte(sales.createdAt, last24h),

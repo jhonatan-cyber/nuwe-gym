@@ -73,18 +73,14 @@ export function ReactQueryProvider({ children }: { children: React.ReactNode }) 
 ### Basic Query Hook
 
 ```typescript
-import { useQuery } from 'react-query';
-import { fetchUser, User } from '@/services/api/users';
+import { useQuery } from 'react-query'
+import { fetchUser, User } from '@/services/api/users'
 
 export function useUser(userId: string) {
-  return useQuery<User, Error>(
-    ['user', userId],
-    () => fetchUser(userId),
-    {
-      enabled: !!userId,
-      staleTime: 1000 * 60 * 10, // 10 minutes
-    }
-  );
+  return useQuery<User, Error>(['user', userId], () => fetchUser(userId), {
+    enabled: !!userId,
+    staleTime: 1000 * 60 * 10, // 10 minutes
+  })
 }
 ```
 
@@ -120,17 +116,13 @@ function UserProfile({ userId }: { userId: string }) {
 
 ```typescript
 function useUserWithPosts(userId: string) {
-  const userQuery = useUser(userId);
+  const userQuery = useUser(userId)
 
-  const postsQuery = useQuery(
-    ['posts', userId],
-    () => fetchUserPosts(userId),
-    {
-      enabled: !!userQuery.data,
-    }
-  );
+  const postsQuery = useQuery(['posts', userId], () => fetchUserPosts(userId), {
+    enabled: !!userQuery.data,
+  })
 
-  return { userQuery, postsQuery };
+  return { userQuery, postsQuery }
 }
 ```
 
@@ -143,15 +135,15 @@ function usePaginatedUsers(page: number, limit: number = 10) {
     () => fetchUsers({ page, limit }),
     {
       keepPreviousData: true,
-    }
-  );
+    },
+  )
 }
 ```
 
 ### Infinite Scroll
 
 ```typescript
-import { useInfiniteQuery } from 'react-query';
+import { useInfiniteQuery } from 'react-query'
 
 function useInfiniteUsers() {
   return useInfiniteQuery(
@@ -159,8 +151,8 @@ function useInfiniteUsers() {
     ({ pageParam = 1 }) => fetchUsers({ page: pageParam }),
     {
       getNextPageParam: (lastPage) => lastPage.nextPage ?? undefined,
-    }
-  );
+    },
+  )
 }
 ```
 
@@ -169,19 +161,19 @@ function useInfiniteUsers() {
 ### Basic Mutation
 
 ```typescript
-import { useMutation, useQueryClient } from 'react-query';
+import { useMutation, useQueryClient } from 'react-query'
 
 function useCreateUser() {
-  const queryClient = useQueryClient();
+  const queryClient = useQueryClient()
 
   return useMutation(createUser, {
     onSuccess: () => {
-      queryClient.invalidateQueries(['users']);
+      queryClient.invalidateQueries(['users'])
     },
     onError: (error: Error) => {
-      toast.error(error.message);
+      toast.error(error.message)
     },
-  });
+  })
 }
 ```
 
@@ -189,27 +181,27 @@ function useCreateUser() {
 
 ```typescript
 function useUpdateUser() {
-  const queryClient = useQueryClient();
+  const queryClient = useQueryClient()
 
   return useMutation(updateUser, {
     onMutate: async (updatedUser) => {
-      await queryClient.cancelQueries(['user', updatedUser.id]);
+      await queryClient.cancelQueries(['user', updatedUser.id])
 
-      const previousUser = queryClient.getQueryData(['user', updatedUser.id]);
+      const previousUser = queryClient.getQueryData(['user', updatedUser.id])
 
-      queryClient.setQueryData(['user', updatedUser.id], updatedUser);
+      queryClient.setQueryData(['user', updatedUser.id], updatedUser)
 
-      return { previousUser };
+      return { previousUser }
     },
     onError: (err, updatedUser, context) => {
       if (context?.previousUser) {
-        queryClient.setQueryData(['user', updatedUser.id], context.previousUser);
+        queryClient.setQueryData(['user', updatedUser.id], context.previousUser)
       }
     },
     onSettled: (data, error, updatedUser) => {
-      queryClient.invalidateQueries(['user', updatedUser.id]);
+      queryClient.invalidateQueries(['user', updatedUser.id])
     },
-  });
+  })
 }
 ```
 
@@ -279,7 +271,7 @@ const queryKeys = {
     details: () => [...queryKeys.users.all, 'detail'] as const,
     detail: (id: string) => [...queryKeys.users.details(), id] as const,
   },
-};
+}
 ```
 
 ### Selective Subscriptions
@@ -289,7 +281,7 @@ const queryKeys = {
 function useUserName(userId: string) {
   return useUser(userId, {
     select: (user) => user.name,
-  });
+  })
 }
 ```
 
@@ -324,16 +316,16 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       onError: (error: Error) => {
-        console.error('Query error:', error);
+        console.error('Query error:', error)
       },
     },
     mutations: {
       onError: (error: Error) => {
-        toast.error(error.message);
+        toast.error(error.message)
       },
     },
   },
-});
+})
 ```
 
 ### Error Boundaries

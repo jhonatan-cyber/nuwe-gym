@@ -1,10 +1,21 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { ScrollText, Search, ChevronLeft, ChevronRight, Filter } from 'lucide-react'
+import {
+  ScrollText,
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  Filter,
+} from 'lucide-react'
 import { getAuditLogs, getAuditSummary } from '#/features/audit-logs/server.ts'
 import type { AuditLogRow } from '#/features/audit-logs/server.ts'
 import { Button } from '#/shared/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '#/shared/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '#/shared/components/ui/card'
 import { Input } from '#/shared/components/ui/input'
 import { Badge } from '#/shared/components/ui/badge'
 import { Skeleton } from '#/shared/components/ui/skeleton'
@@ -104,7 +115,15 @@ export function AuditLogsPage() {
   const [selectedLog, setSelectedLog] = useState<AuditLogRow | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
 
-  const filters = { action: actionFilter, entityType: entityFilter, userId: userSearch, dateFrom, dateTo, page, pageSize: 25 }
+  const filters = {
+    action: actionFilter,
+    entityType: entityFilter,
+    userId: userSearch,
+    dateFrom,
+    dateTo,
+    page,
+    pageSize: 25,
+  }
 
   const { data: statsData, isLoading: statsLoading } = useQuery({
     queryKey: ['audit-summary'],
@@ -141,37 +160,49 @@ export function AuditLogsPage() {
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
         <Card className="transition-all duration-200 hover:shadow-md">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Hoy</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Hoy
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {statsLoading ? (
               <Skeleton className="h-8 w-16" />
             ) : (
-              <p className="text-3xl font-bold">{(statsData as { today: number } | undefined)?.today ?? 0}</p>
+              <p className="text-3xl font-bold">
+                {(statsData as { today: number } | undefined)?.today ?? 0}
+              </p>
             )}
           </CardContent>
         </Card>
         <Card className="transition-all duration-200 hover:shadow-md">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Esta semana</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Esta semana
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {statsLoading ? (
               <Skeleton className="h-8 w-16" />
             ) : (
-              <p className="text-3xl font-bold">{(statsData as { week: number } | undefined)?.week ?? 0}</p>
+              <p className="text-3xl font-bold">
+                {(statsData as { week: number } | undefined)?.week ?? 0}
+              </p>
             )}
           </CardContent>
         </Card>
         <Card className="transition-all duration-200 hover:shadow-md">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Este mes</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Este mes
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {statsLoading ? (
               <Skeleton className="h-8 w-16" />
             ) : (
-              <p className="text-3xl font-bold">{(statsData as { month: number } | undefined)?.month ?? 0}</p>
+              <p className="text-3xl font-bold">
+                {(statsData as { month: number } | undefined)?.month ?? 0}
+              </p>
             )}
           </CardContent>
         </Card>
@@ -187,33 +218,43 @@ export function AuditLogsPage() {
         <CardContent>
           <div className="flex flex-wrap gap-3 items-end">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">Acción</label>
+              <label className="text-xs font-medium text-muted-foreground">
+                Acción
+              </label>
               <Select value={actionFilter} onValueChange={setActionFilter}>
                 <SelectTrigger className="w-40">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {ACTION_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">Entidad</label>
+              <label className="text-xs font-medium text-muted-foreground">
+                Entidad
+              </label>
               <Select value={entityFilter} onValueChange={setEntityFilter}>
                 <SelectTrigger className="w-44">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {ENTITY_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">Usuario</label>
+              <label className="text-xs font-medium text-muted-foreground">
+                Usuario
+              </label>
               <Input
                 placeholder="ID del usuario"
                 value={userSearch}
@@ -222,7 +263,9 @@ export function AuditLogsPage() {
               />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">Desde</label>
+              <label className="text-xs font-medium text-muted-foreground">
+                Desde
+              </label>
               <Input
                 type="date"
                 value={dateFrom}
@@ -231,7 +274,9 @@ export function AuditLogsPage() {
               />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">Hasta</label>
+              <label className="text-xs font-medium text-muted-foreground">
+                Hasta
+              </label>
               <Input
                 type="date"
                 value={dateTo}
@@ -258,8 +303,12 @@ export function AuditLogsPage() {
           ) : logs.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
               <ScrollText className="size-12 mb-3 opacity-30" />
-              <p className="text-lg font-medium">No hay registros de auditoría</p>
-              <p className="text-sm">No se encontraron acciones que coincidan con los filtros.</p>
+              <p className="text-lg font-medium">
+                No hay registros de auditoría
+              </p>
+              <p className="text-sm">
+                No se encontraron acciones que coincidan con los filtros.
+              </p>
             </div>
           ) : (
             <Table>
@@ -284,20 +333,28 @@ export function AuditLogsPage() {
                       {formatTimestamp(log.createdAt)}
                     </TableCell>
                     <TableCell>
-                      <div className="text-sm font-medium">{log.userName ?? '-'}</div>
+                      <div className="text-sm font-medium">
+                        {log.userName ?? '-'}
+                      </div>
                       {log.userRole && (
-                        <div className="text-xs text-muted-foreground">{log.userRole}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {log.userRole}
+                        </div>
                       )}
                     </TableCell>
                     <TableCell>
-                      <Badge className={`text-xs font-semibold ${ACTION_COLORS[log.action] ?? ''}`}>
+                      <Badge
+                        className={`text-xs font-semibold ${ACTION_COLORS[log.action] ?? ''}`}
+                      >
                         {log.action}
                       </Badge>
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">{log.entityType}</div>
                       {log.entityId != null && (
-                        <div className="text-xs text-muted-foreground">ID: {log.entityId}</div>
+                        <div className="text-xs text-muted-foreground">
+                          ID: {log.entityId}
+                        </div>
                       )}
                     </TableCell>
                     <TableCell className="max-w-md truncate text-sm">
@@ -351,47 +408,75 @@ export function AuditLogsPage() {
             <div className="space-y-4 text-sm">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground">ID</p>
+                  <p className="text-xs font-medium text-muted-foreground">
+                    ID
+                  </p>
                   <p>{selectedLog.id}</p>
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground">Fecha y hora</p>
+                  <p className="text-xs font-medium text-muted-foreground">
+                    Fecha y hora
+                  </p>
                   <p>{formatTimestamp(selectedLog.createdAt)}</p>
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground">Usuario</p>
+                  <p className="text-xs font-medium text-muted-foreground">
+                    Usuario
+                  </p>
                   <p>{selectedLog.userName ?? '-'}</p>
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground">Rol</p>
+                  <p className="text-xs font-medium text-muted-foreground">
+                    Rol
+                  </p>
                   <p>{selectedLog.userRole ?? '-'}</p>
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground">Acción</p>
-                  <Badge className={`text-xs font-semibold ${ACTION_COLORS[selectedLog.action] ?? ''}`}>
+                  <p className="text-xs font-medium text-muted-foreground">
+                    Acción
+                  </p>
+                  <Badge
+                    className={`text-xs font-semibold ${ACTION_COLORS[selectedLog.action] ?? ''}`}
+                  >
                     {selectedLog.action}
                   </Badge>
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground">Entidad</p>
+                  <p className="text-xs font-medium text-muted-foreground">
+                    Entidad
+                  </p>
                   <p>{selectedLog.entityType}</p>
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground">ID de entidad</p>
-                  <p>{selectedLog.entityId != null ? String(selectedLog.entityId) : '-'}</p>
+                  <p className="text-xs font-medium text-muted-foreground">
+                    ID de entidad
+                  </p>
+                  <p>
+                    {selectedLog.entityId != null
+                      ? String(selectedLog.entityId)
+                      : '-'}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground">Dirección IP</p>
+                  <p className="text-xs font-medium text-muted-foreground">
+                    Dirección IP
+                  </p>
                   <p className="font-mono">{selectedLog.ipAddress ?? '-'}</p>
                 </div>
               </div>
               <div>
-                <p className="text-xs font-medium text-muted-foreground mb-1">Descripción</p>
-                <p className="bg-muted rounded-lg p-3">{selectedLog.description}</p>
+                <p className="text-xs font-medium text-muted-foreground mb-1">
+                  Descripción
+                </p>
+                <p className="bg-muted rounded-lg p-3">
+                  {selectedLog.description}
+                </p>
               </div>
               {selectedLog.details && (
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground mb-1">Detalles (JSON)</p>
+                  <p className="text-xs font-medium text-muted-foreground mb-1">
+                    Detalles (JSON)
+                  </p>
                   <pre className="bg-muted rounded-lg p-3 text-xs overflow-auto max-h-64">
                     {JSON.stringify(selectedLog.details, null, 2)}
                   </pre>

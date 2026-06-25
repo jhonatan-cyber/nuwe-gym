@@ -1,4 +1,4 @@
-﻿import { faker } from '@faker-js/faker'
+import { faker } from '@faker-js/faker'
 import { db } from '#/shared/db/index.ts'
 import { eq } from 'drizzle-orm'
 import { members } from '#/shared/db/schema/members.ts'
@@ -11,8 +11,7 @@ import { products } from '#/shared/db/schema/products.ts'
 import { productCategories } from '#/shared/db/schema/product-categories.ts'
 import { suppliers } from '#/shared/db/schema/suppliers.ts'
 import { purchases, purchaseItems } from '#/shared/db/schema/purchases.ts'
-import { sales } from '#/shared/db/schema/sales.ts'
-import { saleItems } from '#/shared/db/schema/sales.ts'
+import { sales, saleItems } from '#/shared/db/schema/sales.ts'
 import { inventoryMovements } from '#/shared/db/schema/inventory.ts'
 import { classes, classSchedules } from '#/shared/db/schema/classes.ts'
 import { cashRegisterSessions } from '#/shared/db/schema/cash-register.ts'
@@ -23,8 +22,14 @@ import type { InferInsertModel } from 'drizzle-orm'
 
 export const TEST_USER_ID = '00000000-0000-0000-0000-000000000001'
 
-export async function createTestUser(overrides: Partial<InferInsertModel<typeof users>> = {}) {
-  const existing = await db.select().from(users).where(eq(users.id, TEST_USER_ID)).limit(1)
+export async function createTestUser(
+  overrides: Partial<InferInsertModel<typeof users>> = {},
+) {
+  const existing = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, TEST_USER_ID))
+    .limit(1)
   if (existing.length > 0) return existing[0]
   const [user] = await db
     .insert(users)
@@ -42,7 +47,9 @@ export async function createTestUser(overrides: Partial<InferInsertModel<typeof 
   return user
 }
 
-function buildMember(overrides: Partial<InferInsertModel<typeof members>> = {}) {
+function buildMember(
+  overrides: Partial<InferInsertModel<typeof members>> = {},
+) {
   return {
     fullName: faker.person.fullName(),
     email: faker.internet.email(),
@@ -52,8 +59,13 @@ function buildMember(overrides: Partial<InferInsertModel<typeof members>> = {}) 
   }
 }
 
-export async function createMember(overrides: Partial<InferInsertModel<typeof members>> = {}) {
-  const [member] = await db.insert(members).values(buildMember(overrides)).returning()
+export async function createMember(
+  overrides: Partial<InferInsertModel<typeof members>> = {},
+) {
+  const [member] = await db
+    .insert(members)
+    .values(buildMember(overrides))
+    .returning()
   return member
 }
 
@@ -64,10 +76,17 @@ export const planData = [
   { name: 'Anual', durationDays: 365, price: '120000.00' },
 ] as const
 
-export async function createPlan(overrides: Partial<InferInsertModel<typeof membershipPlans>> = {}) {
+export async function createPlan(
+  overrides: Partial<InferInsertModel<typeof membershipPlans>> = {},
+) {
   const [plan] = await db
     .insert(membershipPlans)
-    .values({ name: 'Mensual', durationDays: 30, price: '15000.00', ...overrides })
+    .values({
+      name: 'Mensual',
+      durationDays: 30,
+      price: '15000.00',
+      ...overrides,
+    })
     .returning()
   return plan
 }
@@ -95,7 +114,10 @@ export async function createSubscription(
   planId: number,
   overrides: Partial<InferInsertModel<typeof subscriptions>> = {},
 ) {
-  const [sub] = await db.insert(subscriptions).values(buildSubscription(memberId, planId, overrides)).returning()
+  const [sub] = await db
+    .insert(subscriptions)
+    .values(buildSubscription(memberId, planId, overrides))
+    .returning()
   return sub
 }
 
@@ -117,10 +139,15 @@ export async function createCheckIn(
   return checkIn
 }
 
-export async function createCategory(overrides: Partial<InferInsertModel<typeof productCategories>> = {}) {
+export async function createCategory(
+  overrides: Partial<InferInsertModel<typeof productCategories>> = {},
+) {
   const [cat] = await db
     .insert(productCategories)
-    .values({ name: faker.commerce.department(), ...overrides })
+    .values({
+      name: `${faker.commerce.department()} ${faker.string.alphanumeric(8)}`,
+      ...overrides,
+    })
     .returning()
   return cat
 }
@@ -148,12 +175,17 @@ async function defaultSupplierId(): Promise<number> {
 
 async function defaultBranchId(): Promise<number> {
   if (cachedBranchId) return cachedBranchId
-  const [branch] = await db.insert(branches).values({ name: 'Default Branch' }).returning()
+  const [branch] = await db
+    .insert(branches)
+    .values({ name: 'Default Branch' })
+    .returning()
   cachedBranchId = branch.id
   return branch.id
 }
 
-export async function createProduct(overrides: Partial<InferInsertModel<typeof products>> = {}) {
+export async function createProduct(
+  overrides: Partial<InferInsertModel<typeof products>> = {},
+) {
   const catId = await defaultCategoryId()
   const [product] = await db
     .insert(products)
@@ -168,7 +200,9 @@ export async function createProduct(overrides: Partial<InferInsertModel<typeof p
   return product
 }
 
-export async function createSupplier(overrides: Partial<InferInsertModel<typeof suppliers>> = {}) {
+export async function createSupplier(
+  overrides: Partial<InferInsertModel<typeof suppliers>> = {},
+) {
   const [supplier] = await db
     .insert(suppliers)
     .values({
@@ -227,7 +261,12 @@ export async function createSale(
       saleNumber: faker.string.alphanumeric(10).toUpperCase(),
       userId: TEST_USER_ID,
       subtotal: '0',
-      total: items.reduce((sum, i) => sum + Number.parseFloat(i.unitPrice) * i.quantity, 0).toFixed(2),
+      total: items
+        .reduce(
+          (sum, i) => sum + Number.parseFloat(i.unitPrice) * i.quantity,
+          0,
+        )
+        .toFixed(2),
       status: 'COMPLETED',
       ...overrides,
     })
@@ -245,7 +284,9 @@ export async function createSale(
   return { ...sale, items: saleItemsData }
 }
 
-export async function createClass(overrides: Partial<InferInsertModel<typeof classes>> = {}) {
+export async function createClass(
+  overrides: Partial<InferInsertModel<typeof classes>> = {},
+) {
   const [cls] = await db
     .insert(classes)
     .values({
@@ -332,7 +373,9 @@ export async function createMembershipPayment(
   return payment
 }
 
-export async function createBranch(overrides: Partial<InferInsertModel<typeof branches>> = {}) {
+export async function createBranch(
+  overrides: Partial<InferInsertModel<typeof branches>> = {},
+) {
   const [branch] = await db
     .insert(branches)
     .values({
@@ -369,7 +412,9 @@ export async function createFreeze(
   return freeze
 }
 
-export async function createNotification(overrides: Partial<InferInsertModel<typeof notifications>> = {}) {
+export async function createNotification(
+  overrides: Partial<InferInsertModel<typeof notifications>> = {},
+) {
   const [notification] = await db
     .insert(notifications)
     .values({

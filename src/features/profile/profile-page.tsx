@@ -5,12 +5,22 @@ import { User, Lock, Eye, EyeOff } from 'lucide-react'
 import { toast } from 'sonner'
 import { updateProfile, changePassword } from '#/features/profile/server.ts'
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '#/shared/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '#/shared/components/ui/card'
 import { Button } from '#/shared/components/ui/button'
 import { LoadingButton } from '#/shared/components/ui/loading-button'
 import { Input } from '#/shared/components/ui/input'
 import { Label } from '#/shared/components/ui/label'
-import { Avatar, AvatarFallback, AvatarImage } from '#/shared/components/ui/avatar'
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from '#/shared/components/ui/avatar'
 import { Badge } from '#/shared/components/ui/badge'
 
 export const Route = createFileRoute('/_authed/profile')({
@@ -25,7 +35,7 @@ const ROLE_LABELS: Record<string, string> = {
 
 export function ProfilePage() {
   const { session } = Route.useRouteContext()
-  const user = session!.user
+  const user = session.user
   const router = useRouter()
 
   const [showCurrent, setShowCurrent] = useState(false)
@@ -43,7 +53,8 @@ export function ProfilePage() {
       toast.success('Perfil actualizado')
       router.invalidate()
     },
-    onError: (err: Error) => toast.error(err.message || 'Error al actualizar el perfil'),
+    onError: (err: Error) =>
+      toast.error(err.message || 'Error al actualizar el perfil'),
   })
 
   const passwordMutation = useMutation({
@@ -54,7 +65,8 @@ export function ProfilePage() {
       setNewPassword('')
       setConfirmPassword('')
     },
-    onError: (err: Error) => toast.error(err.message || 'Error al cambiar la contraseña'),
+    onError: (err: Error) =>
+      toast.error(err.message || 'Error al cambiar la contraseña'),
   })
 
   const handleProfileSubmit = (e: React.FormEvent) => {
@@ -66,8 +78,10 @@ export function ProfilePage() {
   const handlePasswordSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!currentPassword) return toast.error('Ingresá tu contraseña actual')
-    if (newPassword.length < 6) return toast.error('La nueva contraseña debe tener al menos 6 caracteres')
-    if (newPassword !== confirmPassword) return toast.error('Las contraseñas nuevas no coinciden')
+    if (newPassword.length < 6)
+      return toast.error('La nueva contraseña debe tener al menos 6 caracteres')
+    if (newPassword !== confirmPassword)
+      return toast.error('Las contraseñas nuevas no coinciden')
     passwordMutation.mutate({ data: { currentPassword, newPassword } })
   }
 
@@ -75,7 +89,9 @@ export function ProfilePage() {
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Mi Perfil</h1>
-        <p className="text-muted-foreground">Gestioná tu información personal y contraseña.</p>
+        <p className="text-muted-foreground">
+          Gestioná tu información personal y contraseña.
+        </p>
       </div>
 
       <Card>
@@ -106,9 +122,7 @@ export function ProfilePage() {
             <User className="size-4" />
             Información Personal
           </CardTitle>
-          <CardDescription>
-            Actualizá tu nombre de usuario.
-          </CardDescription>
+          <CardDescription>Actualizá tu nombre de usuario.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleProfileSubmit} className="space-y-4">
@@ -123,12 +137,14 @@ export function ProfilePage() {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" value={user.email} disabled className="text-muted-foreground" />
+              <Input
+                id="email"
+                value={user.email}
+                disabled
+                className="text-muted-foreground"
+              />
             </div>
-            <LoadingButton
-              type="submit"
-              isLoading={profileMutation.isPending}
-            >
+            <LoadingButton type="submit" isLoading={profileMutation.isPending}>
               Guardar Cambios
             </LoadingButton>
           </form>
@@ -162,7 +178,11 @@ export function ProfilePage() {
                   onClick={() => setShowCurrent(!showCurrent)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  {showCurrent ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                  {showCurrent ? (
+                    <EyeOff className="size-4" />
+                  ) : (
+                    <Eye className="size-4" />
+                  )}
                 </button>
               </div>
             </div>
@@ -182,12 +202,18 @@ export function ProfilePage() {
                   onClick={() => setShowNew(!showNew)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  {showNew ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                  {showNew ? (
+                    <EyeOff className="size-4" />
+                  ) : (
+                    <Eye className="size-4" />
+                  )}
                 </button>
               </div>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="confirmPassword">Confirmar Nueva Contraseña</Label>
+              <Label htmlFor="confirmPassword">
+                Confirmar Nueva Contraseña
+              </Label>
               <div className="relative">
                 <Input
                   id="confirmPassword"
@@ -201,15 +227,18 @@ export function ProfilePage() {
                   onClick={() => setShowConfirm(!showConfirm)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  {showConfirm ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                  {showConfirm ? (
+                    <EyeOff className="size-4" />
+                  ) : (
+                    <Eye className="size-4" />
+                  )}
                 </button>
               </div>
             </div>
-            <Button
-              type="submit"
-              disabled={passwordMutation.isPending}
-            >
-              {passwordMutation.isPending ? 'Cambiando...' : 'Cambiar Contraseña'}
+            <Button type="submit" disabled={passwordMutation.isPending}>
+              {passwordMutation.isPending
+                ? 'Cambiando...'
+                : 'Cambiar Contraseña'}
             </Button>
           </form>
         </CardContent>

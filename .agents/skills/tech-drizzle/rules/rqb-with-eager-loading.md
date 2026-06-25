@@ -14,13 +14,13 @@ Use the `with` clause to eagerly load relations in a single query. This prevents
 // Bad - N+1: one query per member
 const memberships = await db.query.userOrganizations.findMany({
   where: (uo, { eq }) => eq(uo.organizationId, orgId),
-});
+})
 
 // Then fetch each user separately (N more queries!)
 for (const m of memberships) {
   const user = await db.query.users.findFirst({
     where: (u, { eq }) => eq(u.id, m.userId),
-  });
+  })
 }
 ```
 
@@ -40,7 +40,7 @@ const members = await db.query.userOrganizations.findMany({
       },
     },
   },
-});
+})
 
 // members[0].user is already populated
 ```
@@ -60,7 +60,7 @@ const invitations = await db.query.invitations.findMany({
       },
     },
   },
-});
+})
 ```
 
 **Why it matters:**

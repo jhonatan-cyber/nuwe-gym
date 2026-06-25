@@ -51,7 +51,15 @@ interface TrainersPageProps {
   userRole: string
 }
 
-const DAY_LABELS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
+const DAY_LABELS = [
+  'Domingo',
+  'Lunes',
+  'Martes',
+  'Miércoles',
+  'Jueves',
+  'Viernes',
+  'Sábado',
+]
 const DAY_NAMES = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
 
 type Tab = 'trainers' | 'assignments'
@@ -82,7 +90,9 @@ export function TrainersPage({ userRole }: TrainersPageProps) {
   // Availability dialog
   const [availDialogOpen, setAvailDialogOpen] = useState(false)
   const [availTrainerId, setAvailTrainerId] = useState<number | null>(null)
-  const [availSlots, setAvailSlots] = useState<{ dayOfWeek: string; startTime: string; endTime: string }[]>([])
+  const [availSlots, setAvailSlots] = useState<
+    { dayOfWeek: string; startTime: string; endTime: string }[]
+  >([])
 
   // Queries
   const { data: trainers = [], isLoading: trainersLoading } = useQuery({
@@ -90,7 +100,9 @@ export function TrainersPage({ userRole }: TrainersPageProps) {
     queryFn: () => getTrainers(),
   })
 
-  const [editingTrainer, setEditingTrainer] = useState<typeof trainers[number] | null>(null)
+  const [editingTrainer, setEditingTrainer] = useState<
+    (typeof trainers)[number] | null
+  >(null)
 
   const { data: trainerUsers = [] } = useQuery({
     queryKey: ['trainer-users'],
@@ -124,7 +136,8 @@ export function TrainersPage({ userRole }: TrainersPageProps) {
       setTrainerDialogOpen(false)
       toast.success('Entrenador creado exitosamente')
     },
-    onError: (err: Error) => toast.error(err.message || 'Error al crear entrenador'),
+    onError: (err: Error) =>
+      toast.error(err.message || 'Error al crear entrenador'),
   })
 
   const updateTrainerMutation = useMutation({
@@ -144,7 +157,8 @@ export function TrainersPage({ userRole }: TrainersPageProps) {
       setAssignDialogOpen(false)
       toast.success('Socio asignado correctamente')
     },
-    onError: (err: Error) => toast.error(err.message || 'Error al asignar socio'),
+    onError: (err: Error) =>
+      toast.error(err.message || 'Error al asignar socio'),
   })
 
   const unassignMutation = useMutation({
@@ -173,7 +187,7 @@ export function TrainersPage({ userRole }: TrainersPageProps) {
     setTrainerDialogOpen(true)
   }
 
-  function handleOpenEditDialog(trainer: typeof trainers[number]) {
+  function handleOpenEditDialog(trainer: (typeof trainers)[number]) {
     setEditingTrainer(trainer)
     setTrainerForm({
       userId: trainer.userId,
@@ -244,7 +258,10 @@ export function TrainersPage({ userRole }: TrainersPageProps) {
   }
 
   function addAvailSlot() {
-    setAvailSlots([...availSlots, { dayOfWeek: '1', startTime: '08:00', endTime: '17:00' }])
+    setAvailSlots([
+      ...availSlots,
+      { dayOfWeek: '1', startTime: '08:00', endTime: '17:00' },
+    ])
   }
 
   function removeAvailSlot(index: number) {
@@ -252,7 +269,9 @@ export function TrainersPage({ userRole }: TrainersPageProps) {
   }
 
   function updateAvailSlot(index: number, field: string, value: string) {
-    setAvailSlots(availSlots.map((s, i) => (i === index ? { ...s, [field]: value } : s)))
+    setAvailSlots(
+      availSlots.map((s, i) => (i === index ? { ...s, [field]: value } : s)),
+    )
   }
 
   if (isTrainer) {
@@ -275,14 +294,19 @@ export function TrainersPage({ userRole }: TrainersPageProps) {
               <TableBody>
                 {myMembers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
+                    <TableCell
+                      colSpan={3}
+                      className="text-center py-8 text-muted-foreground"
+                    >
                       No tenés socios asignados.
                     </TableCell>
                   </TableRow>
                 ) : (
-                  myMembers.map((member: typeof myMembers[number]) => (
+                  myMembers.map((member: (typeof myMembers)[number]) => (
                     <TableRow key={member.id}>
-                      <TableCell className="font-medium">{member.fullName}</TableCell>
+                      <TableCell className="font-medium">
+                        {member.fullName}
+                      </TableCell>
                       <TableCell>{member.phone || '-'}</TableCell>
                       <TableCell>{member.email || '-'}</TableCell>
                     </TableRow>
@@ -305,7 +329,9 @@ export function TrainersPage({ userRole }: TrainersPageProps) {
     <div className="space-y-6 animate-in fade-in duration-500">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Entrenadores</h1>
-        <p className="text-muted-foreground">Gestión de entrenadores, asignaciones y disponibilidad.</p>
+        <p className="text-muted-foreground">
+          Gestión de entrenadores, asignaciones y disponibilidad.
+        </p>
       </div>
 
       <div className="flex gap-1 rounded-lg bg-muted p-1 w-fit">
@@ -328,7 +354,8 @@ export function TrainersPage({ userRole }: TrainersPageProps) {
         <>
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
-              {trainers.length} entrenador{trainers.length !== 1 ? 'es' : ''} registrado{trainers.length !== 1 ? 's' : ''}
+              {trainers.length} entrenador{trainers.length !== 1 ? 'es' : ''}{' '}
+              registrado{trainers.length !== 1 ? 's' : ''}
             </p>
             {canWrite && (
               <Button onClick={handleOpenCreateDialog}>
@@ -347,14 +374,16 @@ export function TrainersPage({ userRole }: TrainersPageProps) {
                     <TableHead>Especialidad</TableHead>
                     <TableHead>Socios</TableHead>
                     <TableHead>Estado</TableHead>
-                    {canWrite && <TableHead className="text-right">Acciones</TableHead>}
+                    {canWrite && (
+                      <TableHead className="text-right">Acciones</TableHead>
+                    )}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {trainersLoading ? (
                     Array.from({ length: 3 }).map((_, i) => (
                       <TableRow key={i}>
-                        {Array.from({ length: 5 }).map((_, j) => (
+                        {Array.from({ length: 5 }).map((_cell, j) => (
                           <TableCell key={j}>
                             <Skeleton className="h-4 w-full" />
                           </TableCell>
@@ -363,26 +392,32 @@ export function TrainersPage({ userRole }: TrainersPageProps) {
                     ))
                   ) : trainers.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                      <TableCell
+                        colSpan={5}
+                        className="text-center py-8 text-muted-foreground"
+                      >
                         No hay entrenadores registrados.
                       </TableCell>
                     </TableRow>
                   ) : (
-                    trainers.map((t: typeof trainers[number]) => (
+                    trainers.map((t: (typeof trainers)[number]) => (
                       <TableRow key={t.id}>
                         <TableCell>
                           <div className="flex items-center gap-2">
                             <div className="size-8 bg-primary/10 text-primary rounded-full flex items-center justify-center font-bold text-xs uppercase">
-                              {t.user?.name?.substring(0, 2) || '??'}
+                              {t.user.name.substring(0, 2)}
                             </div>
-                            <span className="font-medium">{t.user?.name || 'Sin usuario'}</span>
+                            <span className="font-medium">{t.user.name}</span>
                           </div>
                         </TableCell>
                         <TableCell className="text-muted-foreground">
                           {t.specialty || '-'}
                         </TableCell>
                         <TableCell>
-                          <Badge variant="secondary">{t.memberCount} socio{(t.memberCount) !== 1 ? 's' : ''}</Badge>
+                          <Badge variant="secondary">
+                            {t.memberCount} socio
+                            {t.memberCount !== 1 ? 's' : ''}
+                          </Badge>
                         </TableCell>
                         <TableCell>
                           <Badge variant={t.isActive ? 'default' : 'secondary'}>
@@ -428,7 +463,12 @@ export function TrainersPage({ userRole }: TrainersPageProps) {
               Asignaciones de socios a entrenadores.
             </p>
             {canWrite && (
-              <Button onClick={() => { setAssignForm({ trainerId: '', memberId: '' }); setAssignDialogOpen(true) }}>
+              <Button
+                onClick={() => {
+                  setAssignForm({ trainerId: '', memberId: '' })
+                  setAssignDialogOpen(true)
+                }}
+              >
                 <Plus className="mr-2 size-4" />
                 Asignar Socio
               </Button>
@@ -444,48 +484,65 @@ export function TrainersPage({ userRole }: TrainersPageProps) {
                     <TableHead>Socio</TableHead>
                     <TableHead>Asignado</TableHead>
                     <TableHead>Estado</TableHead>
-                    {canWrite && <TableHead className="text-right">Acciones</TableHead>}
+                    {canWrite && (
+                      <TableHead className="text-right">Acciones</TableHead>
+                    )}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {trainers.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                      <TableCell
+                        colSpan={5}
+                        className="text-center py-8 text-muted-foreground"
+                      >
                         No hay asignaciones.
                       </TableCell>
                     </TableRow>
                   ) : (
-                    trainers.flatMap((t: typeof trainers[number]) =>
-                      (t as typeof trainers[number]).memberCount === 0
+                    trainers.flatMap((t: (typeof trainers)[number]) =>
+                      t.memberCount === 0
                         ? []
-                        : (t as typeof trainers[number]).assignments?.map((a: typeof trainers[number]['assignments'][number]) => (
-                            <TableRow key={`${t.id}-${a.id}`}>
-                              <TableCell className="font-medium">{t.user?.name}</TableCell>
-                              <TableCell>{a.member?.fullName || 'Socio #' + a.memberId}</TableCell>
-                              <TableCell className="text-muted-foreground text-sm">
-                                {new Date(a.assignedAt).toLocaleDateString('es-AR')}
-                              </TableCell>
-                              <TableCell>
-                                <Badge variant={a.isActive ? 'default' : 'secondary'}>
-                                  {a.isActive ? 'Activa' : 'Inactiva'}
-                                </Badge>
-                              </TableCell>
-                              {canWrite && (
-                                <TableCell className="text-right">
-                                  {a.isActive && (
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={() => handleUnassign(a.id)}
-                                      title="Desasignar"
-                                    >
-                                      <X className="size-4 text-destructive" />
-                                    </Button>
+                        : t.assignments.map(
+                            (
+                              a: (typeof trainers)[number]['assignments'][number],
+                            ) => (
+                              <TableRow key={`${t.id}-${a.id}`}>
+                                <TableCell className="font-medium">
+                                  {t.user.name}
+                                </TableCell>
+                                <TableCell>{a.member.fullName}</TableCell>
+                                <TableCell className="text-muted-foreground text-sm">
+                                  {new Date(a.assignedAt).toLocaleDateString(
+                                    'es-AR',
                                   )}
                                 </TableCell>
-                              )}
-                            </TableRow>
-                          )),
+                                <TableCell>
+                                  <Badge
+                                    variant={
+                                      a.isActive ? 'default' : 'secondary'
+                                    }
+                                  >
+                                    {a.isActive ? 'Activa' : 'Inactiva'}
+                                  </Badge>
+                                </TableCell>
+                                {canWrite && (
+                                  <TableCell className="text-right">
+                                    {a.isActive && (
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => handleUnassign(a.id)}
+                                        title="Desasignar"
+                                      >
+                                        <X className="size-4 text-destructive" />
+                                      </Button>
+                                    )}
+                                  </TableCell>
+                                )}
+                              </TableRow>
+                            ),
+                          ),
                     )
                   )}
                 </TableBody>
@@ -500,7 +557,9 @@ export function TrainersPage({ userRole }: TrainersPageProps) {
         <DialogContent className="sm:max-w-lg">
           <form onSubmit={handleTrainerSubmit}>
             <DialogHeader>
-              <DialogTitle>{editingTrainer ? 'Editar Entrenador' : 'Nuevo Entrenador'}</DialogTitle>
+              <DialogTitle>
+                {editingTrainer ? 'Editar Entrenador' : 'Nuevo Entrenador'}
+              </DialogTitle>
               <DialogDescription>
                 {editingTrainer
                   ? 'Actualizá los datos del entrenador.'
@@ -513,13 +572,15 @@ export function TrainersPage({ userRole }: TrainersPageProps) {
                   <Label htmlFor="userId">Usuario</Label>
                   <Select
                     value={trainerForm.userId}
-                    onValueChange={(v) => setTrainerForm({ ...trainerForm, userId: v })}
+                    onValueChange={(v) =>
+                      setTrainerForm({ ...trainerForm, userId: v })
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Seleccionar usuario" />
                     </SelectTrigger>
                     <SelectContent>
-                      {trainerUsers.map((u: typeof trainerUsers[number]) => (
+                      {trainerUsers.map((u: (typeof trainerUsers)[number]) => (
                         <SelectItem key={u.id} value={u.id}>
                           {u.name} ({u.email})
                         </SelectItem>
@@ -533,7 +594,12 @@ export function TrainersPage({ userRole }: TrainersPageProps) {
                 <Input
                   id="specialty"
                   value={trainerForm.specialty}
-                  onChange={(e) => setTrainerForm({ ...trainerForm, specialty: e.target.value })}
+                  onChange={(e) =>
+                    setTrainerForm({
+                      ...trainerForm,
+                      specialty: e.target.value,
+                    })
+                  }
                   placeholder="Ej: Musculación, Yoga, Spinning"
                 />
               </div>
@@ -542,7 +608,9 @@ export function TrainersPage({ userRole }: TrainersPageProps) {
                 <Textarea
                   id="bio"
                   value={trainerForm.bio}
-                  onChange={(e) => setTrainerForm({ ...trainerForm, bio: e.target.value })}
+                  onChange={(e) =>
+                    setTrainerForm({ ...trainerForm, bio: e.target.value })
+                  }
                   placeholder="Breve descripción del entrenador"
                 />
               </div>
@@ -555,17 +623,29 @@ export function TrainersPage({ userRole }: TrainersPageProps) {
                   min="0"
                   max="100"
                   value={trainerForm.commissionRate}
-                  onChange={(e) => setTrainerForm({ ...trainerForm, commissionRate: e.target.value })}
+                  onChange={(e) =>
+                    setTrainerForm({
+                      ...trainerForm,
+                      commissionRate: e.target.value,
+                    })
+                  }
                 />
               </div>
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setTrainerDialogOpen(false)}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setTrainerDialogOpen(false)}
+              >
                 Cancelar
               </Button>
               <LoadingButton
                 type="submit"
-                isLoading={createTrainerMutation.isPending || updateTrainerMutation.isPending}
+                isLoading={
+                  createTrainerMutation.isPending ||
+                  updateTrainerMutation.isPending
+                }
               >
                 Guardar
               </LoadingButton>
@@ -588,15 +668,17 @@ export function TrainersPage({ userRole }: TrainersPageProps) {
               <Label>Entrenador</Label>
               <Select
                 value={assignForm.trainerId}
-                onValueChange={(v) => setAssignForm({ ...assignForm, trainerId: v })}
+                onValueChange={(v) =>
+                  setAssignForm({ ...assignForm, trainerId: v })
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar entrenador" />
                 </SelectTrigger>
                 <SelectContent>
-                  {trainers.map((t: typeof trainers[number]) => (
+                  {trainers.map((t: (typeof trainers)[number]) => (
                     <SelectItem key={t.id} value={String(t.id)}>
-                      {t.user?.name}
+                      {t.user.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -606,15 +688,18 @@ export function TrainersPage({ userRole }: TrainersPageProps) {
               <Label>Socio</Label>
               <Select
                 value={assignForm.memberId}
-                onValueChange={(v) => setAssignForm({ ...assignForm, memberId: v })}
+                onValueChange={(v) =>
+                  setAssignForm({ ...assignForm, memberId: v })
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar socio" />
                 </SelectTrigger>
                 <SelectContent>
-                  {membersList.map((m: typeof membersList[number]) => (
+                  {membersList.map((m: (typeof membersList)[number]) => (
                     <SelectItem key={m.id} value={String(m.id)}>
-                      {m.fullName} {m.documentNumber ? `(${m.documentNumber})` : ''}
+                      {m.fullName}{' '}
+                      {m.documentNumber ? `(${m.documentNumber})` : ''}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -622,10 +707,17 @@ export function TrainersPage({ userRole }: TrainersPageProps) {
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setAssignDialogOpen(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setAssignDialogOpen(false)}
+            >
               Cancelar
             </Button>
-            <Button onClick={handleAssignSubmit} disabled={assignMutation.isPending}>
+            <Button
+              onClick={handleAssignSubmit}
+              disabled={assignMutation.isPending}
+            >
               {assignMutation.isPending ? 'Asignando...' : 'Asignar'}
             </Button>
           </DialogFooter>
@@ -633,7 +725,12 @@ export function TrainersPage({ userRole }: TrainersPageProps) {
       </Dialog>
 
       {/* Trainer Detail Dialog */}
-      <Dialog open={!!detailTrainerId} onOpenChange={(open) => { if (!open) setDetailTrainerId(null) }}>
+      <Dialog
+        open={!!detailTrainerId}
+        onOpenChange={(open) => {
+          if (!open) setDetailTrainerId(null)
+        }}
+      >
         <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Detalle del Entrenador</DialogTitle>
@@ -646,35 +743,56 @@ export function TrainersPage({ userRole }: TrainersPageProps) {
               {/* Profile info */}
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <div>
-                  <Label className="text-xs text-muted-foreground">Nombre</Label>
-                  <p className="font-medium">{detailTrainer.user?.name || '-'}</p>
+                  <Label className="text-xs text-muted-foreground">
+                    Nombre
+                  </Label>
+                  <p className="font-medium">{detailTrainer.user.name}</p>
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground">Email</Label>
-                  <p className="font-medium">{detailTrainer.user?.email || '-'}</p>
+                  <p className="font-medium">{detailTrainer.user.email}</p>
                 </div>
                 <div>
-                  <Label className="text-xs text-muted-foreground">Estado</Label>
-                  <Badge variant={detailTrainer.isActive ? 'default' : 'secondary'} className="mt-0.5">
+                  <Label className="text-xs text-muted-foreground">
+                    Estado
+                  </Label>
+                  <Badge
+                    variant={detailTrainer.isActive ? 'default' : 'secondary'}
+                    className="mt-0.5"
+                  >
                     {detailTrainer.isActive ? 'Activo' : 'Inactivo'}
                   </Badge>
                 </div>
                 <div>
-                  <Label className="text-xs text-muted-foreground">Especialidad</Label>
-                  <p className="font-medium">{detailTrainer.specialty || '-'}</p>
+                  <Label className="text-xs text-muted-foreground">
+                    Especialidad
+                  </Label>
+                  <p className="font-medium">
+                    {detailTrainer.specialty || '-'}
+                  </p>
                 </div>
                 <div>
-                  <Label className="text-xs text-muted-foreground">Comisión</Label>
-                  <p className="font-medium">{detailTrainer.commissionRate || '0'}%</p>
+                  <Label className="text-xs text-muted-foreground">
+                    Comisión
+                  </Label>
+                  <p className="font-medium">
+                    {detailTrainer.commissionRate || '0'}%
+                  </p>
                 </div>
                 <div>
-                  <Label className="text-xs text-muted-foreground">Socios Asignados</Label>
-                  <p className="font-medium">{detailTrainer.assignments?.length || 0}</p>
+                  <Label className="text-xs text-muted-foreground">
+                    Socios Asignados
+                  </Label>
+                  <p className="font-medium">
+                    {detailTrainer.assignments.length}
+                  </p>
                 </div>
               </div>
               {detailTrainer.bio && (
                 <div>
-                  <Label className="text-xs text-muted-foreground">Biografía</Label>
+                  <Label className="text-xs text-muted-foreground">
+                    Biografía
+                  </Label>
                   <p className="text-sm mt-1">{detailTrainer.bio}</p>
                 </div>
               )}
@@ -686,29 +804,48 @@ export function TrainersPage({ userRole }: TrainersPageProps) {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleOpenAvailDialog(detailTrainer.id, (detailTrainer.availability || []).map((s) => ({ dayOfWeek: String(s.dayOfWeek), startTime: s.startTime, endTime: s.endTime })))}
+                    onClick={() =>
+                      handleOpenAvailDialog(
+                        detailTrainer.id,
+                        detailTrainer.availability.map((s) => ({
+                          dayOfWeek: String(s.dayOfWeek),
+                          startTime: s.startTime,
+                          endTime: s.endTime,
+                        })),
+                      )
+                    }
                   >
                     Editar Disponibilidad
                   </Button>
                 )}
               </div>
-              {(!detailTrainer.availability || detailTrainer.availability.length === 0) ? (
-                <p className="text-sm text-muted-foreground">Sin disponibilidad configurada.</p>
+              {detailTrainer.availability.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  Sin disponibilidad configurada.
+                </p>
               ) : (
                 <div className="flex flex-wrap gap-2">
-                  {detailTrainer.availability.map((s: NonNullable<typeof detailTrainer>['availability'][number]) => (
-                    <Badge key={s.id} variant="outline" className="gap-1">
-                      {DAY_NAMES[s.dayOfWeek]} {s.startTime}-{s.endTime}
-                    </Badge>
-                  ))}
+                  {detailTrainer.availability.map(
+                    (
+                      s: NonNullable<
+                        typeof detailTrainer
+                      >['availability'][number],
+                    ) => (
+                      <Badge key={s.id} variant="outline" className="gap-1">
+                        {DAY_NAMES[s.dayOfWeek]} {s.startTime}-{s.endTime}
+                      </Badge>
+                    ),
+                  )}
                 </div>
               )}
 
               {/* Assigned members */}
               <div>
                 <h3 className="text-lg font-semibold mb-3">Socios Asignados</h3>
-                {!detailTrainer.assignments || detailTrainer.assignments.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No tiene socios asignados.</p>
+                {detailTrainer.assignments.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    No tiene socios asignados.
+                  </p>
                 ) : (
                   <Table>
                     <TableHeader>
@@ -716,36 +853,48 @@ export function TrainersPage({ userRole }: TrainersPageProps) {
                         <TableHead>Nombre</TableHead>
                         <TableHead>Teléfono</TableHead>
                         <TableHead>Email</TableHead>
-                        {canWrite && <TableHead className="text-right">Acciones</TableHead>}
+                        {canWrite && (
+                          <TableHead className="text-right">Acciones</TableHead>
+                        )}
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {detailTrainer.assignments.map((a: NonNullable<typeof detailTrainer>['assignments'][number]) => (
-                        <TableRow key={a.id}>
-                          <TableCell className="font-medium">{a.member?.fullName || '-'}</TableCell>
-                          <TableCell>{a.member?.phone || '-'}</TableCell>
-                          <TableCell>{a.member?.email || '-'}</TableCell>
-                          {canWrite && (
-                            <TableCell className="text-right">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleUnassign(a.id)}
-                                title="Desasignar"
-                              >
-                                <X className="size-4 text-destructive" />
-                              </Button>
+                      {detailTrainer.assignments.map(
+                        (
+                          a: NonNullable<
+                            typeof detailTrainer
+                          >['assignments'][number],
+                        ) => (
+                          <TableRow key={a.id}>
+                            <TableCell className="font-medium">
+                              {a.member.fullName}
                             </TableCell>
-                          )}
-                        </TableRow>
-                      ))}
+                            <TableCell>{a.member.phone || '-'}</TableCell>
+                            <TableCell>{a.member.email || '-'}</TableCell>
+                            {canWrite && (
+                              <TableCell className="text-right">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleUnassign(a.id)}
+                                  title="Desasignar"
+                                >
+                                  <X className="size-4 text-destructive" />
+                                </Button>
+                              </TableCell>
+                            )}
+                          </TableRow>
+                        ),
+                      )}
                     </TableBody>
                   </Table>
                 )}
               </div>
             </div>
           ) : (
-            <div className="py-8 text-center text-muted-foreground">Cargando...</div>
+            <div className="py-8 text-center text-muted-foreground">
+              Cargando...
+            </div>
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setDetailTrainerId(null)}>
@@ -761,12 +910,16 @@ export function TrainersPage({ userRole }: TrainersPageProps) {
           <DialogHeader>
             <DialogTitle>Configurar Disponibilidad</DialogTitle>
             <DialogDescription>
-              Definí los horarios disponibles del entrenador para cada día de la semana.
+              Definí los horarios disponibles del entrenador para cada día de la
+              semana.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-2 max-h-60 overflow-y-auto">
             {availSlots.map((slot, i) => (
-              <div key={i} className="flex items-start gap-2 rounded-lg border p-3">
+              <div
+                key={i}
+                className="flex items-start gap-2 rounded-lg border p-3"
+              >
                 <div className="grid grid-cols-3 gap-2 flex-1">
                   <div className="grid gap-1">
                     <Label className="text-xs">Día</Label>
@@ -791,7 +944,9 @@ export function TrainersPage({ userRole }: TrainersPageProps) {
                     <Input
                       type="time"
                       value={slot.startTime}
-                      onChange={(e) => updateAvailSlot(i, 'startTime', e.target.value)}
+                      onChange={(e) =>
+                        updateAvailSlot(i, 'startTime', e.target.value)
+                      }
                     />
                   </div>
                   <div className="grid gap-1">
@@ -799,7 +954,9 @@ export function TrainersPage({ userRole }: TrainersPageProps) {
                     <Input
                       type="time"
                       value={slot.endTime}
-                      onChange={(e) => updateAvailSlot(i, 'endTime', e.target.value)}
+                      onChange={(e) =>
+                        updateAvailSlot(i, 'endTime', e.target.value)
+                      }
                     />
                   </div>
                 </div>
@@ -814,7 +971,12 @@ export function TrainersPage({ userRole }: TrainersPageProps) {
               </div>
             ))}
           </div>
-          <Button variant="outline" size="sm" onClick={addAvailSlot} className="w-full">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={addAvailSlot}
+            className="w-full"
+          >
             <Plus className="mr-2 size-4" />
             Agregar Bloque
           </Button>
@@ -822,7 +984,10 @@ export function TrainersPage({ userRole }: TrainersPageProps) {
             <Button variant="outline" onClick={() => setAvailDialogOpen(false)}>
               Cancelar
             </Button>
-            <LoadingButton onClick={handleSaveAvailability} isLoading={setAvailMutation.isPending}>
+            <LoadingButton
+              onClick={handleSaveAvailability}
+              isLoading={setAvailMutation.isPending}
+            >
               Guardar Disponibilidad
             </LoadingButton>
           </DialogFooter>

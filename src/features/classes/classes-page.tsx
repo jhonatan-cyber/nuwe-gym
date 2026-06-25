@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Edit2, Trash2, Calendar, Clock, X } from 'lucide-react'
+import { Plus, Edit2, Trash2, Calendar, Clock, X, BookOpen, ClipboardList, ChevronRight } from 'lucide-react'
 import { toast } from 'sonner'
+import { Link } from '@tanstack/react-router'
 import {
   getClasses,
   createClass,
@@ -15,10 +16,17 @@ import {
   markAttendance,
 } from '#/features/classes/server.ts'
 import { formatDate, formatDateTime } from '#/shared/lib/formatters.ts'
+import { cn } from '#/shared/lib/utils.ts'
+import { ModuleLayout } from '#/shared/components/layout/module-layout.tsx'
 
 import { Button } from '#/shared/components/ui/button'
 import { LoadingButton } from '#/shared/components/ui/loading-button'
-import { Card, CardContent, CardHeader, CardTitle } from '#/shared/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '#/shared/components/ui/card'
 import { Input } from '#/shared/components/ui/input'
 import { Label } from '#/shared/components/ui/label'
 import {
@@ -51,17 +59,37 @@ interface ClassesPageProps {
   userRole: string
 }
 
-const CLASS_COLORS = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316']
+const CLASS_COLORS = [
+  '#3b82f6',
+  '#ef4444',
+  '#10b981',
+  '#f59e0b',
+  '#8b5cf6',
+  '#ec4899',
+  '#06b6d4',
+  '#f97316',
+]
 
 const DAY_NAMES = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
-const DAY_LABELS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
+const DAY_LABELS = [
+  'Domingo',
+  'Lunes',
+  'Martes',
+  'Miércoles',
+  'Jueves',
+  'Viernes',
+  'Sábado',
+]
 
 const TIME_SLOTS = Array.from({ length: 17 }, (_, i) => {
   const hour = i + 6
   return `${hour.toString().padStart(2, '0')}:00`
 })
 
-const BOOKING_STATUS_COLORS: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
+const BOOKING_STATUS_COLORS: Record<
+  string,
+  'default' | 'secondary' | 'destructive' | 'outline'
+> = {
   CONFIRMED: 'default',
   CANCELLED: 'secondary',
   ATTENDED: 'outline',
@@ -82,13 +110,23 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
   const [activeTab, setActiveTab] = useState<Tab>('classes')
 
   const [classDialogOpen, setClassDialogOpen] = useState(false)
-  const [classForm, setClassForm] = useState({ name: '', description: '', color: '#3b82f6', capacity: 20 })
+  const [classForm, setClassForm] = useState({
+    name: '',
+    description: '',
+    color: '#3b82f6',
+    capacity: 20,
+  })
 
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [deletingClassId, setDeletingClassId] = useState<number | null>(null)
 
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false)
-  const [scheduleForm, setScheduleForm] = useState({ dayOfWeek: '1', startTime: '08:00', endTime: '09:00', room: '' })
+  const [scheduleForm, setScheduleForm] = useState({
+    dayOfWeek: '1',
+    startTime: '08:00',
+    endTime: '09:00',
+    room: '',
+  })
 
   const [bookingDialogOpen, setBookingDialogOpen] = useState(false)
 
@@ -105,9 +143,14 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
     queryFn: () => getWeeklySchedule(),
   })
 
-  const [editingClass, setEditingClass] = useState<typeof classesList[number] | null>(null)
-  const [scheduleClass, setScheduleClass] = useState<typeof classesList[number] | null>(null)
-  const [selectedScheduleForBookings, setSelectedScheduleForBookings] = useState<typeof weeklySchedule[number] | null>(null)
+  const [editingClass, setEditingClass] = useState<
+    (typeof classesList)[number] | null
+  >(null)
+  const [scheduleClass, setScheduleClass] = useState<
+    (typeof classesList)[number] | null
+  >(null)
+  const [selectedScheduleForBookings, setSelectedScheduleForBookings] =
+    useState<(typeof weeklySchedule)[number] | null>(null)
 
   const { data: bookings = [] } = useQuery({
     queryKey: ['bookings', filterClassId, filterStatus],
@@ -124,7 +167,9 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
     queryKey: ['schedule-bookings', selectedScheduleForBookings?.id],
     queryFn: () =>
       getBookings({ data: {} }).then((all) =>
-        all.filter((b) => b.classScheduleId === selectedScheduleForBookings!.id),
+        all.filter(
+          (b) => b.classScheduleId === selectedScheduleForBookings!.id,
+        ),
       ),
     enabled: !!selectedScheduleForBookings,
   })
@@ -165,7 +210,12 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
       queryClient.invalidateQueries({ queryKey: ['classes'] })
       queryClient.invalidateQueries({ queryKey: ['weekly-schedule'] })
       toast.success('Horario agregado')
-      setScheduleForm({ dayOfWeek: '1', startTime: '08:00', endTime: '09:00', room: '' })
+      setScheduleForm({
+        dayOfWeek: '1',
+        startTime: '08:00',
+        endTime: '09:00',
+        room: '',
+      })
     },
     onError: () => toast.error('Error al agregar horario'),
   })
@@ -200,7 +250,7 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
     onError: () => toast.error('Error al registrar asistencia'),
   })
 
-  function handleOpenClassDialog(classItem?: typeof classesList[number]) {
+  function handleOpenClassDialog(classItem?: (typeof classesList)[number]) {
     if (classItem) {
       setEditingClass(classItem)
       setClassForm({
@@ -211,7 +261,12 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
       })
     } else {
       setEditingClass(null)
-      setClassForm({ name: '', description: '', color: '#3b82f6', capacity: 20 })
+      setClassForm({
+        name: '',
+        description: '',
+        color: '#3b82f6',
+        capacity: 20,
+      })
     }
     setClassDialogOpen(true)
   }
@@ -219,7 +274,9 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
   function handleClassSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (editingClass) {
-      updateClassMutation.mutate({ data: { id: editingClass.id, ...classForm } })
+      updateClassMutation.mutate({
+        data: { id: editingClass.id, ...classForm },
+      })
     } else {
       createClassMutation.mutate({ data: classForm })
     }
@@ -231,7 +288,7 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
     }
   }
 
-  function handleOpenScheduleDialog(classItem: typeof classesList[number]) {
+  function handleOpenScheduleDialog(classItem: (typeof classesList)[number]) {
     setScheduleClass(classItem)
     setScheduleDialogOpen(true)
   }
@@ -255,53 +312,183 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
     }
   }
 
-  function handleOpenBookingDialog(schedule: typeof weeklySchedule[number]) {
+  function handleOpenBookingDialog(schedule: (typeof weeklySchedule)[number]) {
     setSelectedScheduleForBookings(schedule)
     setBookingDialogOpen(true)
   }
 
-  const tabs: { key: Tab; label: string }[] = [
-    { key: 'classes', label: 'Clases' },
-    { key: 'schedule', label: 'Horarios Semanal' },
-    { key: 'bookings', label: 'Reservas' },
-  ]
+
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Clases y Horarios</h1>
-        <p className="text-muted-foreground">Administrá las clases, horarios y reservas del gimnasio.</p>
-      </div>
+    <ModuleLayout
+      breadcrumb={
+        <>
+          <Link to="/dashboard" className="hover:text-foreground transition-colors">Dashboard</Link>
+          <ChevronRight className="size-3 mx-1 inline" />
+          <span className="dark:text-white/60 text-foreground/60">Clases</span>
+        </>
+      }
+      title={
+        activeTab === 'classes'
+          ? 'Gestión de Clases'
+          : activeTab === 'schedule'
+            ? 'Horario Semanal'
+            : 'Historial de Reservas'
+      }
+      headerActions={
+        activeTab === 'classes' && !isReadOnly && (
+          <Button onClick={() => handleOpenClassDialog()}>
+            <Plus className="mr-2 size-4" />
+            Nueva Clase
+          </Button>
+        )
+      }
+      leftPanel={
+        <div className="flex flex-col gap-6 z-10 w-full">
+          {/* Navigation menu */}
+          <div className="space-y-2">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">Sección</p>
+            <div className="flex flex-col gap-1.5">
+              <button
+                onClick={() => setActiveTab('classes')}
+                className={cn(
+                  "w-full text-left p-3.5 rounded-2xl flex items-center gap-3 transition-all duration-200 border",
+                  activeTab === 'classes'
+                    ? "bg-amber-500 border-amber-500 text-white shadow-lg shadow-amber-500/20"
+                    : "bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-foreground"
+                )}
+              >
+                <div className={cn(
+                  "size-8 rounded-xl flex items-center justify-center shrink-0",
+                  activeTab === 'classes' ? "bg-white/20" : "bg-black/5 dark:bg-white/5"
+                )}>
+                  <BookOpen className={cn("size-4", activeTab === 'classes' ? "text-white" : "text-muted-foreground")} />
+                </div>
+                <div>
+                  <p className="text-xs font-bold">Clases</p>
+                  <p className={cn("text-[9px] font-semibold uppercase tracking-wider", activeTab === 'classes' ? "text-white/60" : "text-muted-foreground")}>Lista y gestión</p>
+                </div>
+              </button>
 
-      <div className="flex gap-1 rounded-lg bg-muted p-1 w-fit">
-        {tabs.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-              activeTab === tab.key
-                ? 'bg-background text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+              <button
+                onClick={() => setActiveTab('schedule')}
+                className={cn(
+                  "w-full text-left p-3.5 rounded-2xl flex items-center gap-3 transition-all duration-200 border",
+                  activeTab === 'schedule'
+                    ? "bg-amber-500 border-amber-500 text-white shadow-lg shadow-amber-500/20"
+                    : "bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-foreground"
+                )}
+              >
+                <div className={cn(
+                  "size-8 rounded-xl flex items-center justify-center shrink-0",
+                  activeTab === 'schedule' ? "bg-white/20" : "bg-black/5 dark:bg-white/5"
+                )}>
+                  <Calendar className={cn("size-4", activeTab === 'schedule' ? "text-white" : "text-muted-foreground")} />
+                </div>
+                <div>
+                  <p className="text-xs font-bold">Horario Semanal</p>
+                  <p className={cn("text-[9px] font-semibold uppercase tracking-wider", activeTab === 'schedule' ? "text-white/60" : "text-muted-foreground")}>Calendario</p>
+                </div>
+              </button>
 
+              <button
+                onClick={() => setActiveTab('bookings')}
+                className={cn(
+                  "w-full text-left p-3.5 rounded-2xl flex items-center gap-3 transition-all duration-200 border",
+                  activeTab === 'bookings'
+                    ? "bg-amber-500 border-amber-500 text-white shadow-lg shadow-amber-500/20"
+                    : "bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-foreground"
+                )}
+              >
+                <div className={cn(
+                  "size-8 rounded-xl flex items-center justify-center shrink-0",
+                  activeTab === 'bookings' ? "bg-white/20" : "bg-black/5 dark:bg-white/5"
+                )}>
+                  <ClipboardList className={cn("size-4", activeTab === 'bookings' ? "text-white" : "text-muted-foreground")} />
+                </div>
+                <div>
+                  <p className="text-xs font-bold">Reservas</p>
+                  <p className={cn("text-[9px] font-semibold uppercase tracking-wider", activeTab === 'bookings' ? "text-white/60" : "text-muted-foreground")}>Historial</p>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          {/* Metrics */}
+          <div className="space-y-2">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">Métricas</p>
+            <div className="grid grid-cols-1 gap-2.5">
+              <div className="bg-muted p-4 rounded-2xl border border-border/10 flex items-center justify-between">
+                <div>
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Total Clases</p>
+                  <p className="text-xl font-black mt-0.5">{classesList.length}</p>
+                </div>
+              </div>
+              <div className="bg-muted p-4 rounded-2xl border border-border/10 flex items-center justify-between">
+                <div>
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Horarios</p>
+                  <p className="text-xl font-black text-amber-500 mt-0.5">{weeklySchedule.length}</p>
+                </div>
+              </div>
+              <div className="bg-muted p-4 rounded-2xl border border-border/10 flex items-center justify-between">
+                <div>
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Reservas Filtro</p>
+                  <p className="text-xl font-black text-emerald-500 mt-0.5">{bookings.length}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Filters (only visible when in bookings tab) */}
+          {activeTab === 'bookings' && (
+            <div className="space-y-3 pt-2 border-t dark:border-white/5 border-black/5">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">Filtros</p>
+              <div className="space-y-2">
+                <div className="grid gap-1">
+                  <Label className="text-[9px] uppercase tracking-wider text-muted-foreground">Clase</Label>
+                  <Select
+                    value={filterClassId}
+                    onValueChange={(v) => setFilterClassId(v)}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas las clases</SelectItem>
+                      {classesList.map((c) => (
+                        <SelectItem key={c.id} value={c.id.toString()}>
+                          {c.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid gap-1">
+                  <Label className="text-[9px] uppercase tracking-wider text-muted-foreground">Estado</Label>
+                  <Select
+                    value={filterStatus}
+                    onValueChange={(v) => setFilterStatus(v)}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos los estados</SelectItem>
+                      <SelectItem value="CONFIRMED">Confirmada</SelectItem>
+                      <SelectItem value="ATTENDED">Asistió</SelectItem>
+                      <SelectItem value="CANCELLED">Cancelada</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      }
+    >
       {activeTab === 'classes' && (
         <>
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">
-              {classesList.length} clase{classesList.length !== 1 ? 's' : ''} registrada{classesList.length !== 1 ? 's' : ''}
-            </p>
-            {!isReadOnly && (
-              <Button onClick={() => handleOpenClassDialog()}>
-                <Plus className="mr-2 size-4" />
-                Nueva Clase
-              </Button>
-            )}
-          </div>
 
           <Card className="transition-all duration-200">
             <CardContent className="p-0">
@@ -312,14 +499,16 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
                     <TableHead>Descripción</TableHead>
                     <TableHead>Capacidad</TableHead>
                     <TableHead>Horarios</TableHead>
-                    {!isReadOnly && <TableHead className="text-right">Acciones</TableHead>}
+                    {!isReadOnly && (
+                      <TableHead className="text-right">Acciones</TableHead>
+                    )}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {classesLoading ? (
                     Array.from({ length: 3 }).map((_, i) => (
                       <TableRow key={i}>
-                        {Array.from({ length: 5 }).map((_, j) => (
+                        {Array.from({ length: 5 }).map((_cell, j) => (
                           <TableCell key={j}>
                             <Skeleton className="h-4 w-full" />
                           </TableCell>
@@ -328,7 +517,10 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
                     ))
                   ) : classesList.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                      <TableCell
+                        colSpan={5}
+                        className="text-center py-8 text-muted-foreground"
+                      >
                         No hay clases registradas.
                       </TableCell>
                     </TableRow>
@@ -351,7 +543,8 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
                         <TableCell>
                           <Badge variant="outline" className="gap-1">
                             <Clock className="size-3" />
-                            {cls.schedules?.length || 0} horario{(cls.schedules?.length || 0) !== 1 ? 's' : ''}
+                            {cls.schedules.length} horario
+                            {cls.schedules.length !== 1 ? 's' : ''}
                           </Badge>
                         </TableCell>
                         {!isReadOnly && (
@@ -433,11 +626,17 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
                 ))}
                 <div className="absolute inset-0 pointer-events-none">
                   {weeklySchedule.map((schedule) => {
-                    const [startHour, startMin] = schedule.startTime.split(':').map(Number)
-                    const [endHour, endMin] = schedule.endTime.split(':').map(Number)
+                    const [startHour, startMin] = schedule.startTime
+                      .split(':')
+                      .map(Number)
+                    const [endHour, endMin] = schedule.endTime
+                      .split(':')
+                      .map(Number)
                     const topOffset = (startHour - 6) * 60 + startMin
-                    const height = (endHour - startHour) * 60 + (endMin - startMin)
-                    const colIndex = schedule.dayOfWeek === 0 ? 6 : schedule.dayOfWeek - 1
+                    const height =
+                      (endHour - startHour) * 60 + (endMin - startMin)
+                    const colIndex =
+                      schedule.dayOfWeek === 0 ? 6 : schedule.dayOfWeek - 1
                     return (
                       <button
                         key={schedule.id}
@@ -452,12 +651,16 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
                         }}
                         onClick={() => handleOpenBookingDialog(schedule)}
                       >
-                        <div className="font-medium truncate">{schedule.class.name}</div>
+                        <div className="font-medium truncate">
+                          {schedule.class.name}
+                        </div>
                         <div className="opacity-80 truncate">
                           {schedule.startTime} - {schedule.endTime}
                         </div>
                         {schedule.room && (
-                          <div className="opacity-60 truncate">Sala: {schedule.room}</div>
+                          <div className="opacity-60 truncate">
+                            Sala: {schedule.room}
+                          </div>
                         )}
                       </button>
                     )
@@ -471,41 +674,6 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
 
       {activeTab === 'bookings' && (
         <>
-          <div className="flex flex-wrap gap-4 items-center">
-            <div className="flex items-center gap-2">
-              <Label className="text-sm">Clase:</Label>
-              <Select value={filterClassId} onValueChange={setFilterClassId}>
-                <SelectTrigger className="w-40">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas</SelectItem>
-                  {classesList.map((cls) => (
-                    <SelectItem key={cls.id} value={String(cls.id)}>
-                      {cls.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-center gap-2">
-              <Label className="text-sm">Estado:</Label>
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="w-40">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="CONFIRMED">Confirmada</SelectItem>
-                  <SelectItem value="CANCELLED">Cancelada</SelectItem>
-                  <SelectItem value="ATTENDED">Asistió</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <p className="text-sm text-muted-foreground ml-auto">
-              {bookings.length} reserva{bookings.length !== 1 ? 's' : ''}
-            </p>
-          </div>
 
           <Card className="transition-all duration-200">
             <CardContent className="p-0">
@@ -517,13 +685,18 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
                     <TableHead>Horario</TableHead>
                     <TableHead>Fecha</TableHead>
                     <TableHead>Estado</TableHead>
-                    {!isReadOnly && <TableHead className="text-right">Acciones</TableHead>}
+                    {!isReadOnly && (
+                      <TableHead className="text-right">Acciones</TableHead>
+                    )}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {bookings.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                      <TableCell
+                        colSpan={6}
+                        className="text-center py-8 text-muted-foreground"
+                      >
                         No hay reservas con los filtros seleccionados.
                       </TableCell>
                     </TableRow>
@@ -531,18 +704,24 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
                     bookings.map((booking) => (
                       <TableRow key={booking.id}>
                         <TableCell className="font-medium">
-                          {booking.member?.fullName || 'Miembro #' + booking.memberId}
+                          {booking.member.fullName ||
+                            'Miembro #' + booking.memberId}
                         </TableCell>
-                        <TableCell>{booking.schedule?.class?.name || '-'}</TableCell>
                         <TableCell>
-                          {booking.schedule
-                            ? `${DAY_LABELS[booking.schedule.dayOfWeek]} ${booking.schedule.startTime} - ${booking.schedule.endTime}`
-                            : '-'}
+                          {booking.schedule.class.name || '-'}
+                        </TableCell>
+                        <TableCell>
+                          {`${DAY_LABELS[booking.schedule.dayOfWeek]} ${booking.schedule.startTime} - ${booking.schedule.endTime}`}
                         </TableCell>
                         <TableCell>{formatDate(booking.bookedAt)}</TableCell>
                         <TableCell>
-                          <Badge variant={BOOKING_STATUS_COLORS[booking.status] || 'outline'}>
-                            {BOOKING_STATUS_LABELS[booking.status] || booking.status}
+                          <Badge
+                            variant={
+                              BOOKING_STATUS_COLORS[booking.status]
+                            }
+                          >
+                            {BOOKING_STATUS_LABELS[booking.status] ||
+                              booking.status}
                           </Badge>
                         </TableCell>
                         {!isReadOnly && (
@@ -554,7 +733,9 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
                                     variant="ghost"
                                     size="sm"
                                     onClick={() =>
-                                      markAttendanceMutation.mutate({ data: { id: booking.id } })
+                                      markAttendanceMutation.mutate({
+                                        data: { id: booking.id },
+                                      })
                                     }
                                   >
                                     Asistió
@@ -564,7 +745,9 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
                                     size="sm"
                                     className="text-destructive"
                                     onClick={() =>
-                                      cancelBookingMutation.mutate({ data: { id: booking.id } })
+                                      cancelBookingMutation.mutate({
+                                        data: { id: booking.id },
+                                      })
                                     }
                                   >
                                     Cancelar
@@ -588,7 +771,9 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
         <DialogContent className="sm:max-w-lg">
           <form onSubmit={handleClassSubmit}>
             <DialogHeader>
-              <DialogTitle>{editingClass ? 'Editar Clase' : 'Nueva Clase'}</DialogTitle>
+              <DialogTitle>
+                {editingClass ? 'Editar Clase' : 'Nueva Clase'}
+              </DialogTitle>
               <DialogDescription>
                 {editingClass
                   ? 'Actualizá los datos de la clase.'
@@ -602,7 +787,9 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
                   id="name"
                   required
                   value={classForm.name}
-                  onChange={(e) => setClassForm({ ...classForm, name: e.target.value })}
+                  onChange={(e) =>
+                    setClassForm({ ...classForm, name: e.target.value })
+                  }
                   placeholder="Ej: Spinning"
                 />
               </div>
@@ -611,7 +798,9 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
                 <Input
                   id="desc"
                   value={classForm.description}
-                  onChange={(e) => setClassForm({ ...classForm, description: e.target.value })}
+                  onChange={(e) =>
+                    setClassForm({ ...classForm, description: e.target.value })
+                  }
                   placeholder="Descripción opcional"
                 />
               </div>
@@ -642,18 +831,27 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
                   required
                   value={classForm.capacity}
                   onChange={(e) =>
-                    setClassForm({ ...classForm, capacity: Number(e.target.value) })
+                    setClassForm({
+                      ...classForm,
+                      capacity: Number(e.target.value),
+                    })
                   }
                 />
               </div>
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setClassDialogOpen(false)}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setClassDialogOpen(false)}
+              >
                 Cancelar
               </Button>
               <LoadingButton
                 type="submit"
-                isLoading={createClassMutation.isPending || updateClassMutation.isPending}
+                isLoading={
+                  createClassMutation.isPending || updateClassMutation.isPending
+                }
               >
                 Guardar
               </LoadingButton>
@@ -667,12 +865,17 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
           <DialogHeader>
             <DialogTitle>Eliminar Clase</DialogTitle>
             <DialogDescription>
-              ¿Estás seguro de eliminar esta clase? Se eliminarán también todos sus horarios y reservas
-              asociadas. Esta acción no se puede deshacer.
+              ¿Estás seguro de eliminar esta clase? Se eliminarán también todos
+              sus horarios y reservas asociadas. Esta acción no se puede
+              deshacer.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setDeleteConfirmOpen(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setDeleteConfirmOpen(false)}
+            >
               Cancelar
             </Button>
             <Button
@@ -688,174 +891,207 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
 
       <Dialog open={scheduleDialogOpen} onOpenChange={setScheduleDialogOpen}>
         <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Horarios - {scheduleClass?.name}</DialogTitle>
-            <DialogDescription>Agregá o eliminá horarios para esta clase.</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2 max-h-48 overflow-y-auto">
-              {scheduleClass?.schedules?.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">
-                  No hay horarios configurados.
-                </p>
-              ) : (
-                scheduleClass?.schedules?.map((sched: NonNullable<typeof scheduleClass>['schedules'][number]) => (
-                  <div
-                    key={sched.id}
-                    className="flex items-center justify-between rounded-lg border p-3"
-                  >
-                    <div className="flex items-center gap-3">
+          {scheduleClass && (
+            <>
+              <DialogHeader>
+                <DialogTitle>Horarios - {scheduleClass.name}</DialogTitle>
+                <DialogDescription>
+                  Agregá o eliminá horarios para esta clase.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {scheduleClass.schedules.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      No hay horarios configurados.
+                    </p>
+                  ) : (
+                    scheduleClass.schedules.map((sched) => (
                       <div
-                        className="size-3 rounded-full shrink-0"
-                        style={{ backgroundColor: scheduleClass?.color }}
-                      />
-                      <div>
-                        <p className="text-sm font-medium">
-                          {DAY_LABELS[sched.dayOfWeek]} {sched.startTime} - {sched.endTime}
-                        </p>
-                        {sched.room && (
-                          <p className="text-xs text-muted-foreground">Sala: {sched.room}</p>
-                        )}
+                        key={sched.id}
+                        className="flex items-center justify-between rounded-lg border p-3"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div
+                            className="size-3 rounded-full shrink-0"
+                            style={{ backgroundColor: scheduleClass.color }}
+                          />
+                          <div>
+                            <p className="text-sm font-medium">
+                              {DAY_LABELS[sched.dayOfWeek]} {sched.startTime} -{' '}
+                              {sched.endTime}
+                            </p>
+                            {sched.room && (
+                              <p className="text-xs text-muted-foreground">
+                                Sala: {sched.room}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleRemoveSchedule(sched.id)}
+                        >
+                          <X className="size-4 text-destructive" />
+                        </Button>
                       </div>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleRemoveSchedule(sched.id)}
-                    >
-                      <X className="size-4 text-destructive" />
-                    </Button>
-                  </div>
-                ))
-              )}
-            </div>
+                    ))
+                  )}
+                </div>
 
-            <div className="border-t pt-4">
-              <p className="text-sm font-medium mb-3">Agregar Horario</p>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="grid gap-1.5">
-                  <Label className="text-xs">Día</Label>
-                  <Select
-                    value={scheduleForm.dayOfWeek}
-                    onValueChange={(v) => setScheduleForm({ ...scheduleForm, dayOfWeek: v })}
+                <div className="border-t pt-4">
+                  <p className="text-sm font-medium mb-3">Agregar Horario</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="grid gap-1.5">
+                      <Label className="text-xs">Día</Label>
+                      <Select
+                        value={scheduleForm.dayOfWeek}
+                        onValueChange={(v) =>
+                          setScheduleForm({ ...scheduleForm, dayOfWeek: v })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {DAY_LABELS.map((label, i) => (
+                            <SelectItem key={i} value={String(i)}>
+                              {label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="grid gap-1.5">
+                      <Label className="text-xs">Sala (opcional)</Label>
+                      <Input
+                        value={scheduleForm.room}
+                        onChange={(e) =>
+                          setScheduleForm({ ...scheduleForm, room: e.target.value })
+                        }
+                        placeholder="Ej: Sala A"
+                      />
+                    </div>
+                    <div className="grid gap-1.5">
+                      <Label className="text-xs">Inicio</Label>
+                      <Input
+                        type="time"
+                        value={scheduleForm.startTime}
+                        onChange={(e) =>
+                          setScheduleForm({
+                            ...scheduleForm,
+                            startTime: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                    <div className="grid gap-1.5">
+                      <Label className="text-xs">Fin</Label>
+                      <Input
+                        type="time"
+                        value={scheduleForm.endTime}
+                        onChange={(e) =>
+                          setScheduleForm({
+                            ...scheduleForm,
+                            endTime: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
+                  <Button
+                    className="mt-3 w-full"
+                    size="sm"
+                    onClick={handleAddSchedule}
+                    disabled={addScheduleMutation.isPending}
                   >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {DAY_LABELS.map((label, i) => (
-                        <SelectItem key={i} value={String(i)}>
-                          {label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid gap-1.5">
-                  <Label className="text-xs">Sala (opcional)</Label>
-                  <Input
-                    value={scheduleForm.room}
-                    onChange={(e) => setScheduleForm({ ...scheduleForm, room: e.target.value })}
-                    placeholder="Ej: Sala A"
-                  />
-                </div>
-                <div className="grid gap-1.5">
-                  <Label className="text-xs">Inicio</Label>
-                  <Input
-                    type="time"
-                    value={scheduleForm.startTime}
-                    onChange={(e) =>
-                      setScheduleForm({ ...scheduleForm, startTime: e.target.value })
-                    }
-                  />
-                </div>
-                <div className="grid gap-1.5">
-                  <Label className="text-xs">Fin</Label>
-                  <Input
-                    type="time"
-                    value={scheduleForm.endTime}
-                    onChange={(e) =>
-                      setScheduleForm({ ...scheduleForm, endTime: e.target.value })
-                    }
-                  />
+                    {addScheduleMutation.isPending
+                      ? 'Agregando...'
+                      : 'Agregar Horario'}
+                  </Button>
                 </div>
               </div>
-              <Button
-                className="mt-3 w-full"
-                size="sm"
-                onClick={handleAddSchedule}
-                disabled={addScheduleMutation.isPending}
-              >
-                {addScheduleMutation.isPending ? 'Agregando...' : 'Agregar Horario'}
-              </Button>
-            </div>
-          </div>
+            </>
+          )}
         </DialogContent>
       </Dialog>
 
       <Dialog open={bookingDialogOpen} onOpenChange={setBookingDialogOpen}>
         <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>
-              Reservas - {selectedScheduleForBookings?.class?.name}
-            </DialogTitle>
-            <DialogDescription>
-              {selectedScheduleForBookings
-                ? `${DAY_LABELS[selectedScheduleForBookings.dayOfWeek]} ${selectedScheduleForBookings.startTime} - ${selectedScheduleForBookings.endTime}`
-                : ''}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-2 max-h-80 overflow-y-auto">
-            {scheduleBookings.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">
-                No hay reservas para este horario.
-              </p>
-            ) : (
-              scheduleBookings.map((booking) => (
-                <div
-                  key={booking.id}
-                  className="flex items-center justify-between rounded-lg border p-3"
-                >
-                  <div>
-                    <p className="text-sm font-medium">{booking.member?.fullName}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {formatDateTime(booking.bookedAt)}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant={BOOKING_STATUS_COLORS[booking.status] || 'outline'}>
-                      {BOOKING_STATUS_LABELS[booking.status] || booking.status}
-                    </Badge>
-                    {booking.status === 'CONFIRMED' && (
-                      <>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() =>
-                            markAttendanceMutation.mutate({ data: { id: booking.id } })
+          {selectedScheduleForBookings && (
+            <>
+              <DialogHeader>
+                <DialogTitle>
+                  Reservas - {selectedScheduleForBookings.class.name}
+                </DialogTitle>
+                <DialogDescription>
+                  {`${DAY_LABELS[selectedScheduleForBookings.dayOfWeek]} ${selectedScheduleForBookings.startTime} - ${selectedScheduleForBookings.endTime}`}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-2 max-h-80 overflow-y-auto">
+                {scheduleBookings.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    No hay reservas para este horario.
+                  </p>
+                ) : (
+                  scheduleBookings.map((booking) => (
+                    <div
+                      key={booking.id}
+                      className="flex items-center justify-between rounded-lg border p-3"
+                    >
+                      <div>
+                        <p className="text-sm font-medium">
+                          {booking.member.fullName}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {formatDateTime(booking.bookedAt)}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          variant={
+                            BOOKING_STATUS_COLORS[booking.status]
                           }
                         >
-                          Asistió
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-destructive"
-                          onClick={() =>
-                            cancelBookingMutation.mutate({ data: { id: booking.id } })
-                          }
-                        >
-                          Cancelar
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
+                          {BOOKING_STATUS_LABELS[booking.status] || booking.status}
+                        </Badge>
+                        {booking.status === 'CONFIRMED' && (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() =>
+                                markAttendanceMutation.mutate({
+                                  data: { id: booking.id },
+                                })
+                              }
+                            >
+                              Asistió
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-destructive"
+                              onClick={() =>
+                                cancelBookingMutation.mutate({
+                                  data: { id: booking.id },
+                                })
+                              }
+                            >
+                              Cancelar
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </>
+          )}
         </DialogContent>
       </Dialog>
-    </div>
+    </ModuleLayout>
   )
 }

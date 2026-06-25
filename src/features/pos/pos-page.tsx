@@ -1,6 +1,15 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ShoppingBag, Search, Plus, Minus, Trash2, Tag, Landmark, Check } from 'lucide-react'
+import {
+  ShoppingBag,
+  Search,
+  Plus,
+  Minus,
+  Trash2,
+  Tag,
+  Landmark,
+  Check,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { getProducts, getCategories } from '#/features/products/server.ts'
 import { getMembers } from '#/features/members/server.ts'
@@ -8,7 +17,12 @@ import { createSale } from '#/features/sales/server.ts'
 import { getCurrentCashSession } from '#/features/cash-register/server.ts'
 import { Button } from '#/shared/components/ui/button'
 import { LoadingButton } from '#/shared/components/ui/loading-button'
-import { Card, CardContent, CardHeader, CardTitle } from '#/shared/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '#/shared/components/ui/card'
 import { Input } from '#/shared/components/ui/input'
 import { Badge } from '#/shared/components/ui/badge'
 import {
@@ -17,7 +31,6 @@ import {
   DialogDescription,
   DialogTitle,
 } from '#/shared/components/ui/dialog'
-
 
 interface CartItem {
   id: number
@@ -34,7 +47,7 @@ export function POSPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [debouncedProductSearch, setDebouncedProductSearch] = useState('')
   const [categoryIdFilter, setCategoryIdFilter] = useState('')
-  
+
   const [selectedMemberId, setSelectedMemberId] = useState<string>('')
   const [customerName, setCustomerName] = useState('')
   const [memberSearchTerm, setMemberSearchTerm] = useState('')
@@ -54,7 +67,9 @@ export function POSPage() {
     return () => clearTimeout(timer)
   }, [memberSearchTerm])
 
-  const [paymentMethod, setPaymentMethod] = useState<'CASH' | 'QR' | 'TRANSFER' | 'CARD'>('CASH')
+  const [paymentMethod, setPaymentMethod] = useState<
+    'CASH' | 'QR' | 'TRANSFER' | 'CARD'
+  >('CASH')
   const [discount, setDiscount] = useState('0')
 
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false)
@@ -93,7 +108,7 @@ export function POSPage() {
       queryClient.invalidateQueries({ queryKey: ['cash-session-details'] })
       setLastCompletedSale(data)
       setIsSuccessModalOpen(true)
-      
+
       setCart([])
       setSelectedMemberId('')
       setCustomerName('')
@@ -107,11 +122,13 @@ export function POSPage() {
     },
   })
 
-  const [lastCompletedSale, setLastCompletedSale] = useState<typeof saleMutation.data | null>(null)
+  const [lastCompletedSale, setLastCompletedSale] = useState<
+    typeof saleMutation.data | null
+  >(null)
 
   const isCashSessionOpen = !!cashSession
 
-  const addToCart = (product: typeof products[number]) => {
+  const addToCart = (product: (typeof products)[number]) => {
     if (product.stockCurrent <= 0) {
       toast.error('Producto sin stock disponible.')
       return
@@ -121,11 +138,15 @@ export function POSPage() {
       const existing = prev.find((item) => item.id === product.id)
       if (existing) {
         if (existing.quantity >= product.stockCurrent) {
-          toast.error(`No podés agregar más de ${product.stockCurrent} unidades.`)
+          toast.error(
+            `No podés agregar más de ${product.stockCurrent} unidades.`,
+          )
           return prev
         }
         return prev.map((item) =>
-          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item,
+          item.id === product.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item,
         )
       }
       return [
@@ -156,14 +177,17 @@ export function POSPage() {
           return item
         })
         .filter((item) => item.quantity > 0),
-    );
+    )
   }
 
   const removeFromCart = (id: number) => {
     setCart((prev) => prev.filter((item) => item.id !== id))
   }
 
-  const subtotal = cart.reduce((sum, item) => sum + Number(item.salePrice) * item.quantity, 0)
+  const subtotal = cart.reduce(
+    (sum, item) => sum + Number(item.salePrice) * item.quantity,
+    0,
+  )
   const discountVal = Number(discount) || 0
   const total = Math.max(0, subtotal - discountVal)
 
@@ -181,7 +205,9 @@ export function POSPage() {
     saleMutation.mutate({
       data: {
         memberId: selectedMemberId ? Number(selectedMemberId) : undefined,
-        customerName: selectedMemberId ? undefined : (customerName || 'Cliente General'),
+        customerName: selectedMemberId
+          ? undefined
+          : customerName || 'Cliente General',
         paymentMethod,
         discount,
         items: cart.map((item) => ({
@@ -194,7 +220,11 @@ export function POSPage() {
   }
 
   if (isLoadingSession) {
-    return <div className="text-center py-8 text-muted-foreground">Verificando estado de la caja...</div>
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        Verificando estado de la caja...
+      </div>
+    )
   }
 
   return (
@@ -210,7 +240,10 @@ export function POSPage() {
           </p>
         </div>
         {!isCashSessionOpen && (
-          <Badge variant="destructive" className="flex gap-1.5 py-1.5 px-3 bg-red-500/10 text-red-600 border-none">
+          <Badge
+            variant="destructive"
+            className="flex gap-1.5 py-1.5 px-3 bg-red-500/10 text-red-600 border-none"
+          >
             <Landmark className="size-4" />
             Caja Cerrada (Checkout Desactivado)
           </Badge>
@@ -235,58 +268,85 @@ export function POSPage() {
               className="w-full md:w-48 h-10 px-3 border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="">Todas las categorías</option>
-              {categories.map((cat: typeof categories[number]) => (
-                <option key={cat.id} value={cat.id}>{cat.name}</option>
+              {categories.map((cat: (typeof categories)[number]) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
               ))}
             </select>
           </div>
 
           <div className="flex-1 overflow-y-auto pr-1">
             {isLoadingProducts ? (
-              <div className="text-center py-12 text-muted-foreground">Cargando catálogo...</div>
+              <div className="text-center py-12 text-muted-foreground">
+                Cargando catálogo...
+              </div>
             ) : products.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">No hay productos disponibles.</div>
+              <div className="text-center py-12 text-muted-foreground">
+                No hay productos disponibles.
+              </div>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 pb-4">
-                {products.filter((p: typeof products[number]) => p.isActive).map((prod: typeof products[number]) => {
-                  const isOutOfStock = prod.stockCurrent <= 0
-                  return (
-                    <Card
-                      key={prod.id}
-                      onClick={() => !isOutOfStock && addToCart(prod)}
-                      className={`cursor-pointer overflow-hidden border transition-all duration-200 hover:shadow-md hover:border-primary/40 flex flex-col justify-between ${
-                        isOutOfStock ? 'opacity-60 cursor-not-allowed bg-muted/40' : ''
-                      }`}
-                    >
-                      <div className="p-3">
-                        {prod.imageUrl ? (
-                          <div className="aspect-square w-full rounded-md bg-muted overflow-hidden mb-2">
-                            <img src={prod.imageUrl} alt={prod.name} className="h-full w-full object-cover" />
+                {products
+                  .filter((p: (typeof products)[number]) => p.isActive)
+                  .map((prod: (typeof products)[number]) => {
+                    const isOutOfStock = prod.stockCurrent <= 0
+                    return (
+                      <Card
+                        key={prod.id}
+                        onClick={() => !isOutOfStock && addToCart(prod)}
+                        className={`cursor-pointer overflow-hidden border transition-all duration-200 hover:shadow-md hover:border-primary/40 flex flex-col justify-between ${
+                          isOutOfStock
+                            ? 'opacity-60 cursor-not-allowed bg-muted/40'
+                            : ''
+                        }`}
+                      >
+                        <div className="p-3">
+                          {prod.imageUrl ? (
+                            <div className="aspect-square w-full rounded-md bg-muted overflow-hidden mb-2">
+                              <img
+                                src={prod.imageUrl}
+                                alt={prod.name}
+                                className="h-full w-full object-cover"
+                              />
+                            </div>
+                          ) : (
+                            <div className="aspect-square w-full rounded-md bg-primary/5 text-primary flex items-center justify-center mb-2 text-2xl font-bold">
+                              {prod.name.substring(0, 2).toUpperCase()}
+                            </div>
+                          )}
+                          <h3 className="font-semibold text-sm line-clamp-2 min-h-8 mb-1 leading-snug">
+                            {prod.name}
+                          </h3>
+                          <div className="flex items-center justify-between text-xs text-muted-foreground">
+                            <span>Stock: {prod.stockCurrent}</span>
+                            {prod.stockCurrent <= prod.stockMinimum && (
+                              <Badge
+                                variant="destructive"
+                                className="py-0 px-1 text-[10px] bg-amber-500/10 text-amber-600 border-none font-bold"
+                              >
+                                Bajo
+                              </Badge>
+                            )}
                           </div>
-                        ) : (
-                          <div className="aspect-square w-full rounded-md bg-primary/5 text-primary flex items-center justify-center mb-2 text-2xl font-bold">
-                            {prod.name.substring(0, 2).toUpperCase()}
-                          </div>
-                        )}
-                        <h3 className="font-semibold text-sm line-clamp-2 min-h-8 mb-1 leading-snug">{prod.name}</h3>
-                        <div className="flex items-center justify-between text-xs text-muted-foreground">
-                          <span>Stock: {prod.stockCurrent}</span>
-                          {prod.stockCurrent <= prod.stockMinimum && (
-                            <Badge variant="destructive" className="py-0 px-1 text-[10px] bg-amber-500/10 text-amber-600 border-none font-bold">Bajo</Badge>
+                        </div>
+                        <div className="p-3 border-t bg-muted/30 flex items-center justify-between">
+                          <span className="font-bold text-primary text-base">
+                            ${prod.salePrice}
+                          </span>
+                          {!isOutOfStock && (
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="size-7 rounded-full bg-primary/10 text-primary hover:bg-primary/20"
+                            >
+                              <Plus className="size-4" />
+                            </Button>
                           )}
                         </div>
-                      </div>
-                      <div className="p-3 border-t bg-muted/30 flex items-center justify-between">
-                        <span className="font-bold text-primary text-base">${prod.salePrice}</span>
-                        {!isOutOfStock && (
-                          <Button size="icon" variant="ghost" className="size-7 rounded-full bg-primary/10 text-primary hover:bg-primary/20">
-                            <Plus className="size-4" />
-                          </Button>
-                        )}
-                      </div>
-                    </Card>
-                  )
-                })}
+                      </Card>
+                    )
+                  })}
               </div>
             )}
           </div>
@@ -304,27 +364,53 @@ export function POSPage() {
               <div className="h-full flex flex-col items-center justify-center text-muted-foreground gap-2">
                 <ShoppingBag className="size-12 stroke-[1.5]" />
                 <p className="text-sm">El carrito está vacío</p>
-                <p className="text-xs text-center px-4">Hacé click en los productos del catálogo para sumarlos.</p>
+                <p className="text-xs text-center px-4">
+                  Hacé click en los productos del catálogo para sumarlos.
+                </p>
               </div>
             ) : (
               <div className="space-y-3">
                 {cart.map((item) => (
-                  <div key={item.id} className="flex justify-between items-center border-b pb-2 last:border-0 last:pb-0">
+                  <div
+                    key={item.id}
+                    className="flex justify-between items-center border-b pb-2 last:border-0 last:pb-0"
+                  >
                     <div className="flex-1 min-w-0 pr-2">
-                      <h4 className="text-sm font-semibold truncate leading-tight">{item.name}</h4>
-                      <span className="text-xs text-muted-foreground block">${item.salePrice} c/u</span>
+                      <h4 className="text-sm font-semibold truncate leading-tight">
+                        {item.name}
+                      </h4>
+                      <span className="text-xs text-muted-foreground block">
+                        ${item.salePrice} c/u
+                      </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="flex items-center border rounded-md h-8 bg-background">
-                        <Button size="icon" variant="ghost" className="size-7 rounded-none" onClick={() => updateQuantity(item.id, -1)}>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="size-7 rounded-none"
+                          onClick={() => updateQuantity(item.id, -1)}
+                        >
                           <Minus className="size-3" />
                         </Button>
-                        <span className="w-8 text-center text-sm font-semibold">{item.quantity}</span>
-                        <Button size="icon" variant="ghost" className="size-7 rounded-none" onClick={() => updateQuantity(item.id, 1)}>
+                        <span className="w-8 text-center text-sm font-semibold">
+                          {item.quantity}
+                        </span>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="size-7 rounded-none"
+                          onClick={() => updateQuantity(item.id, 1)}
+                        >
                           <Plus className="size-3" />
                         </Button>
                       </div>
-                      <Button size="icon" variant="ghost" className="text-red-500 hover:text-red-600 size-8" onClick={() => removeFromCart(item.id)}>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="text-red-500 hover:text-red-600 size-8"
+                        onClick={() => removeFromCart(item.id)}
+                      >
                         <Trash2 className="size-4" />
                       </Button>
                     </div>
@@ -336,7 +422,9 @@ export function POSPage() {
 
           <div className="border-t p-4 bg-muted/20 space-y-4">
             <div className="space-y-2">
-              <label className="text-xs font-semibold block">Asociar Socio (Opcional)</label>
+              <label className="text-xs font-semibold block">
+                Asociar Socio (Opcional)
+              </label>
               <div className="space-y-2">
                 <Input
                   placeholder="Buscar socio por Nombre o DNI..."
@@ -349,7 +437,7 @@ export function POSPage() {
                 />
                 {members.length > 0 && memberSearchTerm.length >= 2 && (
                   <div className="border rounded-md max-h-24 overflow-y-auto bg-background text-xs">
-                    {members.map((m: typeof members[number]) => (
+                    {members.map((m: (typeof members)[number]) => (
                       <div
                         key={m.id}
                         onClick={() => {
@@ -357,11 +445,15 @@ export function POSPage() {
                           setMemberSearchTerm(m.fullName)
                         }}
                         className={`p-2 hover:bg-primary/5 cursor-pointer flex justify-between items-center ${
-                          selectedMemberId === m.id.toString() ? 'bg-primary/10 font-bold' : ''
+                          selectedMemberId === m.id.toString()
+                            ? 'bg-primary/10 font-bold'
+                            : ''
                         }`}
                       >
                         <span>{m.fullName}</span>
-                        <span className="text-[10px] text-muted-foreground">{m.documentNumber}</span>
+                        <span className="text-[10px] text-muted-foreground">
+                          {m.documentNumber}
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -378,7 +470,9 @@ export function POSPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-semibold block">Método de Pago</label>
+              <label className="text-xs font-semibold block">
+                Método de Pago
+              </label>
               <div className="grid grid-cols-4 gap-1.5">
                 {(['CASH', 'QR', 'TRANSFER', 'CARD'] as const).map((method) => (
                   <Button
@@ -399,7 +493,12 @@ export function POSPage() {
               <span className="text-xs font-semibold flex items-center gap-1">
                 <Tag className="size-3 text-muted-foreground" /> Descuento ($):
               </span>
-              <Input type="number" className="w-24 h-8 text-right text-xs" value={discount} onChange={(e) => setDiscount(e.target.value)} />
+              <Input
+                type="number"
+                className="w-24 h-8 text-right text-xs"
+                value={discount}
+                onChange={(e) => setDiscount(e.target.value)}
+              />
             </div>
 
             <div className="border-t pt-3 space-y-1.5 text-sm">
@@ -425,7 +524,9 @@ export function POSPage() {
               disabled={cart.length === 0 || !isCashSessionOpen}
               isLoading={saleMutation.isPending}
             >
-              {!isCashSessionOpen ? 'CAJA CERRADA' : `Cobrar $${total.toFixed(2)}`}
+              {!isCashSessionOpen
+                ? 'CAJA CERRADA'
+                : `Cobrar $${total.toFixed(2)}`}
             </LoadingButton>
           </div>
         </Card>
@@ -438,7 +539,9 @@ export function POSPage() {
               <Check className="size-8 stroke-[2.5]" />
             </div>
             <div className="space-y-1">
-              <DialogTitle className="text-xl font-bold text-center">¡Venta Completada!</DialogTitle>
+              <DialogTitle className="text-xl font-bold text-center">
+                ¡Venta Completada!
+              </DialogTitle>
               <DialogDescription className="text-center text-xs">
                 El comprobante se registró de forma exitosa.
               </DialogDescription>
@@ -461,7 +564,10 @@ export function POSPage() {
               </div>
             )}
 
-            <Button className="w-full py-4 text-sm font-semibold" onClick={() => setIsSuccessModalOpen(false)}>
+            <Button
+              className="w-full py-4 text-sm font-semibold"
+              onClick={() => setIsSuccessModalOpen(false)}
+            >
               Aceptar y Cerrar
             </Button>
           </div>

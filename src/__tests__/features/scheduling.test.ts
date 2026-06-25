@@ -1,7 +1,10 @@
 import { describe, it, expect, beforeAll } from 'vitest'
 import { db } from '#/shared/db/index.ts'
 import { classes } from '#/shared/db/schema/classes.ts'
-import { trainerProfiles, trainerAvailability } from '#/shared/db/schema/trainers.ts'
+import {
+  trainerProfiles,
+  trainerAvailability,
+} from '#/shared/db/schema/trainers.ts'
 import { eq, desc } from 'drizzle-orm'
 import {
   createClass,
@@ -59,10 +62,7 @@ describe('Classes', () => {
 
   it('should update class capacity', async () => {
     const cls = await createClass({ capacity: 15 })
-    await db
-      .update(classes)
-      .set({ capacity: 30 })
-      .where(eq(classes.id, cls.id))
+    await db.update(classes).set({ capacity: 30 }).where(eq(classes.id, cls.id))
 
     const updated = await db.query.classes.findFirst({
       where: eq(classes.id, cls.id),
@@ -89,7 +89,11 @@ describe('Trainers', () => {
     await createTestUser()
     const trainer = await db
       .insert(trainerProfiles)
-      .values({ userId: TEST_USER_ID, specialty: 'Yoga', bio: 'Yoga instructor' })
+      .values({
+        userId: TEST_USER_ID,
+        specialty: 'Yoga',
+        bio: 'Yoga instructor',
+      })
       .returning()
       .then((r) => r[0])
     expect(trainer.userId).toBe(TEST_USER_ID)
@@ -99,14 +103,33 @@ describe('Trainers', () => {
   it('should set trainer availability', async () => {
     const trainer = await db
       .insert(trainerProfiles)
-      .values({ userId: TEST_USER_ID, specialty: 'Pilates', bio: 'Pilates instructor' })
+      .values({
+        userId: TEST_USER_ID,
+        specialty: 'Pilates',
+        bio: 'Pilates instructor',
+      })
       .returning()
       .then((r) => r[0])
 
     await db.insert(trainerAvailability).values([
-      { trainerId: trainer.id, dayOfWeek: 1, startTime: '08:00', endTime: '12:00' },
-      { trainerId: trainer.id, dayOfWeek: 3, startTime: '08:00', endTime: '12:00' },
-      { trainerId: trainer.id, dayOfWeek: 5, startTime: '14:00', endTime: '18:00' },
+      {
+        trainerId: trainer.id,
+        dayOfWeek: 1,
+        startTime: '08:00',
+        endTime: '12:00',
+      },
+      {
+        trainerId: trainer.id,
+        dayOfWeek: 3,
+        startTime: '08:00',
+        endTime: '12:00',
+      },
+      {
+        trainerId: trainer.id,
+        dayOfWeek: 5,
+        startTime: '14:00',
+        endTime: '18:00',
+      },
     ])
 
     const availability = await db.query.trainerAvailability.findMany({
@@ -118,11 +141,20 @@ describe('Trainers', () => {
   it('should get trainer profile with availability', async () => {
     const trainer = await db
       .insert(trainerProfiles)
-      .values({ userId: TEST_USER_ID, specialty: 'Zumba', bio: 'Zumba instructor' })
+      .values({
+        userId: TEST_USER_ID,
+        specialty: 'Zumba',
+        bio: 'Zumba instructor',
+      })
       .returning()
       .then((r) => r[0])
     await db.insert(trainerAvailability).values([
-      { trainerId: trainer.id, dayOfWeek: 1, startTime: '09:00', endTime: '17:00' },
+      {
+        trainerId: trainer.id,
+        dayOfWeek: 1,
+        startTime: '09:00',
+        endTime: '17:00',
+      },
     ])
 
     const profile = await db.query.trainerProfiles.findFirst({
@@ -139,7 +171,11 @@ describe('Trainers', () => {
     await createTestUser()
     await db.insert(trainerProfiles).values([
       { userId: TEST_USER_ID, specialty: 'Yoga', bio: 'Profesor de yoga' },
-      { userId: TEST_USER_ID, specialty: 'Musculación', bio: 'Entrenador de pesas' },
+      {
+        userId: TEST_USER_ID,
+        specialty: 'Musculación',
+        bio: 'Entrenador de pesas',
+      },
     ])
 
     const yogaTrainers = await db.query.trainerProfiles.findMany({

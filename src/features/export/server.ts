@@ -43,7 +43,7 @@ export const exportMembers = createServerFn({ method: 'GET' })
     })
 
     const rows = result.map((m) => [
-      m.fullName ?? '',
+      m.fullName,
       m.email ?? '',
       m.phone ?? '',
       m.documentNumber ?? '',
@@ -80,9 +80,7 @@ export const exportSales = createServerFn({ method: 'GET' })
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
 
     const start = data.startDate ? new Date(data.startDate) : undefined
-    const end = data.endDate
-      ? new Date(data.endDate + 'T23:59:59')
-      : undefined
+    const end = data.endDate ? new Date(data.endDate + 'T23:59:59') : undefined
 
     const result = await db.query.sales.findMany({
       where: and(
@@ -121,7 +119,9 @@ export const exportSales = createServerFn({ method: 'GET' })
         formatDate(sale.soldAt),
         itemNames,
         sale.total,
-        paymentLabels[sale.paymentMethod ?? ''] ?? sale.paymentMethod ?? '',
+        sale.paymentMethod
+          ? (paymentLabels[sale.paymentMethod] ?? sale.paymentMethod)
+          : '-',
         statusLabels[sale.status] ?? sale.status,
       ]
     })
@@ -138,9 +138,7 @@ export const exportPayments = createServerFn({ method: 'GET' })
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
 
     const start = data.startDate ? new Date(data.startDate) : undefined
-    const end = data.endDate
-      ? new Date(data.endDate + 'T23:59:59')
-      : undefined
+    const end = data.endDate ? new Date(data.endDate + 'T23:59:59') : undefined
 
     const result = await db.query.membershipPayments.findMany({
       where: and(
@@ -190,9 +188,7 @@ export const exportCheckIns = createServerFn({ method: 'GET' })
     })
 
     const start = data.startDate ? new Date(data.startDate) : undefined
-    const end = data.endDate
-      ? new Date(data.endDate + 'T23:59:59')
-      : undefined
+    const end = data.endDate ? new Date(data.endDate + 'T23:59:59') : undefined
 
     const result = await db.query.checkIns.findMany({
       where: and(
@@ -219,8 +215,5 @@ export const exportCheckIns = createServerFn({ method: 'GET' })
       resultLabels[c.resultStatus] ?? c.resultStatus,
     ])
 
-    return toCSV(
-      ['Check-in ID', 'Date', 'Member Name', 'Result Status'],
-      rows,
-    )
+    return toCSV(['Check-in ID', 'Date', 'Member Name', 'Result Status'], rows)
   })

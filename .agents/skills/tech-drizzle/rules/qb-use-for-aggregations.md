@@ -11,7 +11,7 @@ The SQL-like query builder (`db.select`) is better for aggregations, GROUP BY, a
 **Correct (query builder for aggregations):**
 
 ```typescript
-import { count, sum, avg } from 'drizzle-orm';
+import { count, sum, avg } from 'drizzle-orm'
 
 // COUNT with GROUP BY
 const postCounts = await db
@@ -21,7 +21,7 @@ const postCounts = await db
   })
   .from(posts)
   .where(eq(posts.status, 'ACTIVE'))
-  .groupBy(posts.organizationId);
+  .groupBy(posts.organizationId)
 
 // SUM and AVG
 const stats = await db
@@ -32,7 +32,7 @@ const stats = await db
   })
   .from(orders)
   .where(gte(orders.createdAt, startOfMonth))
-  .groupBy(orders.organizationId);
+  .groupBy(orders.organizationId)
 
 // Multiple aggregations
 const userStats = await db
@@ -44,23 +44,24 @@ const userStats = await db
   })
   .from(users)
   .leftJoin(orders, eq(users.id, orders.userId))
-  .groupBy(users.id);
+  .groupBy(users.id)
 ```
 
 **Available aggregation functions:**
 
 ```typescript
 import {
-  count,    // COUNT(column)
+  count, // COUNT(column)
   countDistinct, // COUNT(DISTINCT column)
-  sum,      // SUM(column)
-  avg,      // AVG(column)
-  min,      // MIN(column)
-  max,      // MAX(column)
-} from 'drizzle-orm';
+  sum, // SUM(column)
+  avg, // AVG(column)
+  min, // MIN(column)
+  max, // MAX(column)
+} from 'drizzle-orm'
 ```
 
 **Why it matters:**
+
 - Relational queries don't support aggregations
 - Query builder provides full SQL flexibility
 - Type-safe aggregation results

@@ -13,17 +13,17 @@ Use `.prepare()` with `sql.placeholder()` to pre-compile queries and execute the
 ```typescript
 // BAD — query compiled every execution
 async function getUsersByRole(role: string, count: number) {
-  const results = [];
+  const results = []
   for (let i = 0; i < count; i++) {
     // Query parsed and compiled every iteration
     const users = await db
       .select()
       .from(users)
       .where(eq(users.role, role))
-      .limit(10);
-    results.push(...users);
+      .limit(10)
+    results.push(...users)
   }
-  return results;
+  return results
 }
 
 // ❌ 1000 iterations = 1000 compilations
@@ -32,7 +32,7 @@ async function getUsersByRole(role: string, count: number) {
 **Solution: prepare once, execute many times**
 
 ```typescript
-import { sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm'
 
 // GOOD — prepare once, execute many times
 const roleQuery = db
@@ -40,16 +40,16 @@ const roleQuery = db
   .from(users)
   .where(eq(users.role, sql.placeholder('role')))
   .limit(10)
-  .prepare();
+  .prepare()
 
 async function getUsersByRole(role: string, count: number) {
-  const results = [];
+  const results = []
   for (let i = 0; i < count; i++) {
     // Same precompiled query, only parameters change
-    const users = await roleQuery.execute({ role });
-    results.push(...users);
+    const users = await roleQuery.execute({ role })
+    results.push(...users)
   }
-  return results;
+  return results
 }
 
 // ✅ 1000 iterations = 1 compilation
@@ -58,8 +58,8 @@ async function getUsersByRole(role: string, count: number) {
 **Prepared statements with multiple placeholders:**
 
 ```typescript
-import { sql } from 'drizzle-orm';
-import { eq, gte, lte } from 'drizzle-orm';
+import { sql } from 'drizzle-orm'
+import { eq, gte, lte } from 'drizzle-orm'
 
 const invoiceQuery = db
   .select({
@@ -72,54 +72,53 @@ const invoiceQuery = db
   .where(
     sql`${invoices.createdAt} >= ${sql.placeholder('startDate')}
       and ${invoices.createdAt} <= ${sql.placeholder('endDate')}
-      and ${invoices.status} = ${sql.placeholder('status')}`
+      and ${invoices.status} = ${sql.placeholder('status')}`,
   )
-  .prepare();
+  .prepare()
 
 // Execute with different date ranges and statuses
 const q1 = await invoiceQuery.execute({
   startDate: new Date('2024-01-01'),
   endDate: new Date('2024-01-31'),
   status: 'paid',
-});
+})
 
 const q2 = await invoiceQuery.execute({
   startDate: new Date('2024-02-01'),
   endDate: new Date('2024-02-28'),
   status: 'pending',
-});
+})
 ```
 
 **Relational queries with prepared statements:**
 
 ```typescript
-import { sql, placeholder } from 'drizzle-orm';
+import { sql, placeholder } from 'drizzle-orm'
 
 const userWithPostsQuery = db.query.users
   .findMany({
     where: (users, { eq }) => eq(users.id, placeholder('userId')),
     with: {
       posts: {
-        where: (posts, { gte }) =>
-          gte(posts.createdAt, placeholder('since')),
+        where: (posts, { gte }) => gte(posts.createdAt, placeholder('since')),
         limit: placeholder('limit'),
       },
     },
   })
-  .prepare();
+  .prepare()
 
 // Execute for different users and date ranges
 const user1Posts = await userWithPostsQuery.execute({
   userId: 1,
   since: new Date('2024-01-01'),
   limit: 10,
-});
+})
 
 const user2Posts = await userWithPostsQuery.execute({
   userId: 2,
   since: new Date('2024-02-01'),
   limit: 5,
-});
+})
 ```
 
 **Batch insert with prepared statement:**
@@ -133,18 +132,18 @@ const insertUserQuery = db
     role: sql.placeholder('role'),
   })
   .returning()
-  .prepare();
+  .prepare()
 
 // Batch insert from array
 const newUsers = await Promise.all(
-  userDataArray.map(user =>
+  userDataArray.map((user) =>
     insertUserQuery.execute({
       email: user.email,
       name: user.name,
       role: user.role,
-    })
-  )
-);
+    }),
+  ),
+)
 ```
 
 **Prepared statement with named query (PostgreSQL specific):**
@@ -154,14 +153,15 @@ const getActiveUsersQuery = db
   .select()
   .from(users)
   .where(eq(users.active, true))
-  .prepare('get_active_users'); // Named for server-side caching
+  .prepare('get_active_users') // Named for server-side caching
 
 // Execute multiple times with server caching
-const batch1 = await getActiveUsersQuery.execute();
-const batch2 = await getActiveUsersQuery.execute();
+const batch1 = await getActiveUsersQuery.execute()
+const batch2 = await getActiveUsersQuery.execute()
 ```
 
 **Why it matters:**
+
 - Query compilation is expensive; prepared statements pre-compile once
 - Reusing prepared statements reduces CPU and memory overhead
 - Significant performance improvement for queries executed many times

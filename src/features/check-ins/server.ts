@@ -33,7 +33,9 @@ export type CreateCheckInData = z.infer<typeof createCheckInSchema>
 export const createCheckIn = createServerFn({ method: 'POST' })
   .inputValidator((data) => createCheckInSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
+    const session = await requireRole({
+      data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] },
+    })
 
     const [checkIn] = await db
       .insert(checkIns)
@@ -42,7 +44,7 @@ export const createCheckIn = createServerFn({ method: 'POST' })
         registeredByUserId: session.user.id,
         notes: data.notes,
         checkedInAt: new Date(),
-        resultStatus: 'ALLOWED'
+        resultStatus: 'ALLOWED',
       })
       .returning()
 

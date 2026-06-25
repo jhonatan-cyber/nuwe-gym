@@ -1,6 +1,20 @@
-import { pgTable, pgEnum, serial, text, integer, boolean, timestamp } from 'drizzle-orm/pg-core'
+import {
+  pgTable,
+  pgEnum,
+  serial,
+  text,
+  integer,
+  boolean,
+  timestamp,
+} from 'drizzle-orm/pg-core'
 
-export const notificationTypeEnum = pgEnum('notification_type', ['EXPIRATION', 'LOW_STOCK', 'RENEWAL', 'PAYMENT', 'SYSTEM'])
+export const notificationTypeEnum = pgEnum('notification_type', [
+  'EXPIRATION',
+  'LOW_STOCK',
+  'RENEWAL',
+  'PAYMENT',
+  'SYSTEM',
+])
 
 export const notifications = pgTable('notifications', {
   id: serial('id').primaryKey(),

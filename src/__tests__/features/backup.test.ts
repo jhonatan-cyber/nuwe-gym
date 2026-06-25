@@ -5,7 +5,9 @@ import { products } from '#/shared/db/schema/products.ts'
 import { count } from 'drizzle-orm'
 import { createMember, createProduct, cleanDatabase } from '../factories.ts'
 
-beforeAll(async () => { await cleanDatabase() })
+beforeAll(async () => {
+  await cleanDatabase()
+})
 
 describe('Backup — Table Counts', () => {
   it('should count records across tables', async () => {
@@ -15,8 +17,8 @@ describe('Backup — Table Counts', () => {
     const memberCount = await db.select({ count: count() }).from(members)
     const productCount = await db.select({ count: count() }).from(products)
 
-    expect(memberCount[0]!.count).toBeGreaterThanOrEqual(1)
-    expect(productCount[0]!.count).toBeGreaterThanOrEqual(1)
+    expect(memberCount[0].count).toBeGreaterThanOrEqual(1)
+    expect(productCount[0].count).toBeGreaterThanOrEqual(1)
   })
 
   it('should return non-zero counts for multiple tables', async () => {
@@ -27,7 +29,7 @@ describe('Backup — Table Counts', () => {
     const m = await db.select({ count: count() }).from(members)
     const p = await db.select({ count: count() }).from(products)
 
-    expect(m[0]!.count + p[0]!.count).toBeGreaterThan(1)
+    expect(m[0].count + p[0].count).toBeGreaterThan(1)
   })
 
   it('should list all members ordered by createdAt', async () => {

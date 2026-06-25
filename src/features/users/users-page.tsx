@@ -2,7 +2,12 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { UserCog, Plus, Trash2, Key, Mail, ShieldAlert } from 'lucide-react'
 import { toast } from 'sonner'
-import { getUsers, updateUserRole, createStaffUser, deleteUser } from '#/features/users/server.ts'
+import {
+  getUsers,
+  updateUserRole,
+  createStaffUser,
+  deleteUser,
+} from '#/features/users/server.ts'
 import { Button } from '#/shared/components/ui/button'
 import { Card, CardContent } from '#/shared/components/ui/card'
 import { Input } from '#/shared/components/ui/input'
@@ -35,7 +40,9 @@ export function AdminUsersPage({ currentUserId }: AdminUsersPageProps) {
 
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
-  const [role, setRole] = useState<'ADMIN' | 'RECEPTIONIST' | 'TRAINER'>('TRAINER')
+  const [role, setRole] = useState<'ADMIN' | 'RECEPTIONIST' | 'TRAINER'>(
+    'TRAINER',
+  )
   const [password, setPassword] = useState('')
 
   const { data: usersList = [], isLoading } = useQuery({
@@ -43,9 +50,12 @@ export function AdminUsersPage({ currentUserId }: AdminUsersPageProps) {
     queryFn: () => getUsers(),
   })
 
-  const filteredUsers = usersList.filter((u: typeof usersList[number]) => {
+  const filteredUsers = usersList.filter((u: (typeof usersList)[number]) => {
     const search = searchTerm.toLowerCase()
-    return u.name.toLowerCase().includes(search) || u.email.toLowerCase().includes(search)
+    return (
+      u.name.toLowerCase().includes(search) ||
+      u.email.toLowerCase().includes(search)
+    )
   })
 
   const createMutation = useMutation({
@@ -55,7 +65,8 @@ export function AdminUsersPage({ currentUserId }: AdminUsersPageProps) {
       toast.success('Usuario del staff creado con éxito')
       closeCreateModal()
     },
-    onError: (err: Error) => toast.error(err.message || 'Error al crear usuario'),
+    onError: (err: Error) =>
+      toast.error(err.message || 'Error al crear usuario'),
   })
 
   const updateRoleMutation = useMutation({
@@ -123,11 +134,23 @@ export function AdminUsersPage({ currentUserId }: AdminUsersPageProps) {
   const getRoleBadge = (r: string) => {
     switch (r) {
       case 'ADMIN':
-        return <Badge className="bg-red-500/10 text-red-600 border-none font-bold">ADMINISTRADOR</Badge>
+        return (
+          <Badge className="bg-red-500/10 text-red-600 border-none font-bold">
+            ADMINISTRADOR
+          </Badge>
+        )
       case 'RECEPTIONIST':
-        return <Badge className="bg-blue-500/10 text-blue-600 border-none font-bold">RECEPCIONISTA</Badge>
+        return (
+          <Badge className="bg-blue-500/10 text-blue-600 border-none font-bold">
+            RECEPCIONISTA
+          </Badge>
+        )
       case 'TRAINER':
-        return <Badge className="bg-amber-500/10 text-amber-600 border-none font-bold">ENTRENADOR</Badge>
+        return (
+          <Badge className="bg-amber-500/10 text-amber-600 border-none font-bold">
+            ENTRENADOR
+          </Badge>
+        )
       default:
         return <Badge variant="outline">{r}</Badge>
     }
@@ -142,7 +165,8 @@ export function AdminUsersPage({ currentUserId }: AdminUsersPageProps) {
             Gestión de Usuarios / Staff
           </h1>
           <p className="text-muted-foreground">
-            Registrá, modificá roles y administrá el acceso de los empleados al gimnasio.
+            Registrá, modificá roles y administrá el acceso de los empleados al
+            gimnasio.
           </p>
         </div>
         <Button onClick={openCreateModal} className="flex items-center gap-2">
@@ -165,9 +189,13 @@ export function AdminUsersPage({ currentUserId }: AdminUsersPageProps) {
       <Card>
         <CardContent className="p-0">
           {isLoading ? (
-            <div className="text-center py-8 text-muted-foreground">Cargando usuarios...</div>
+            <div className="text-center py-8 text-muted-foreground">
+              Cargando usuarios...
+            </div>
           ) : filteredUsers.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">No se encontraron usuarios.</div>
+            <div className="text-center py-8 text-muted-foreground">
+              No se encontraron usuarios.
+            </div>
           ) : (
             <Table>
               <TableHeader>
@@ -180,9 +208,11 @@ export function AdminUsersPage({ currentUserId }: AdminUsersPageProps) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredUsers.map((u: typeof filteredUsers[number]) => (
+                {filteredUsers.map((u: (typeof filteredUsers)[number]) => (
                   <TableRow key={u.id}>
-                    <TableCell className="font-semibold">{u.name} {u.id === currentUserId && '(Vos)'}</TableCell>
+                    <TableCell className="font-semibold">
+                      {u.name} {u.id === currentUserId && '(Vos)'}
+                    </TableCell>
                     <TableCell>{u.email}</TableCell>
                     <TableCell>{getRoleBadge(u.role)}</TableCell>
                     <TableCell>
@@ -224,18 +254,40 @@ export function AdminUsersPage({ currentUserId }: AdminUsersPageProps) {
           <form onSubmit={handleCreateSubmit} className="space-y-4">
             <div className="space-y-1">
               <label className="text-sm font-medium">Nombre Completo *</label>
-              <Input placeholder="Ej. Juan Pérez" value={name} onChange={(e) => setName(e.target.value)} required />
+              <Input
+                placeholder="Ej. Juan Pérez"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+              />
             </div>
             <div className="space-y-1">
               <label className="text-sm font-medium">Email / Acceso *</label>
-              <Input type="email" placeholder="Ej. juan@gimnasio.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              <Input
+                type="email"
+                placeholder="Ej. juan@gimnasio.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
                 <label className="text-sm font-medium">Rol *</label>
-                <select value={role} onChange={(e) => setRole(e.target.value as 'ADMIN' | 'RECEPTIONIST' | 'TRAINER')} className="w-full h-10 px-3 border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring" required>
+                <select
+                  value={role}
+                  onChange={(e) =>
+                    setRole(
+                      e.target.value as 'ADMIN' | 'RECEPTIONIST' | 'TRAINER',
+                    )
+                  }
+                  className="w-full h-10 px-3 border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                  required
+                >
                   <option value="ADMIN">ADMIN (Acceso Total)</option>
-                  <option value="RECEPTIONIST">RECEPTIONIST (Recepción y Caja)</option>
+                  <option value="RECEPTIONIST">
+                    RECEPTIONIST (Recepción y Caja)
+                  </option>
                   <option value="TRAINER">TRAINER (Solo Check-ins)</option>
                 </select>
               </div>
@@ -243,20 +295,36 @@ export function AdminUsersPage({ currentUserId }: AdminUsersPageProps) {
                 <label className="text-sm font-medium flex items-center gap-1">
                   Contraseña * <Key className="size-3.5" />
                 </label>
-                <Input type="text" placeholder="Min. 6 caracteres" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                <Input
+                  type="text"
+                  placeholder="Min. 6 caracteres"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
               </div>
             </div>
 
             <div className="bg-amber-500/10 p-3 rounded-lg flex gap-2 text-xs text-amber-800 border border-amber-500/20">
               <ShieldAlert className="size-5 shrink-0" />
               <span>
-                Nota: El personal ingresará al sistema con este correo y contraseña. Recomendamos pedirles que cambien su clave al ingresar por primera vez.
+                Nota: El personal ingresará al sistema con este correo y
+                contraseña. Recomendamos pedirles que cambien su clave al
+                ingresar por primera vez.
               </span>
             </div>
 
             <DialogFooter className="pt-4">
-              <Button type="button" variant="outline" onClick={closeCreateModal}>Cancelar</Button>
-              <Button type="submit" disabled={createMutation.isPending}>Registrar Empleado</Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={closeCreateModal}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={createMutation.isPending}>
+                Registrar Empleado
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>

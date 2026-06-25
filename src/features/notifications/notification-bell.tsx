@@ -40,7 +40,9 @@ export function NotificationBell({ userRole }: NotificationBellProps) {
   const markAllMutation = useMutation({
     mutationFn: markAllAsRead,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications-unread-count'] })
+      queryClient.invalidateQueries({
+        queryKey: ['notifications-unread-count'],
+      })
       queryClient.invalidateQueries({ queryKey: ['notifications-recent'] })
       queryClient.invalidateQueries({ queryKey: ['notifications'] })
     },
@@ -69,7 +71,9 @@ export function NotificationBell({ userRole }: NotificationBellProps) {
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">Notificaciones</span>
             {unreadCount > 0 && (
-              <span className="text-xs text-muted-foreground">{unreadCount} sin leer</span>
+              <span className="text-xs text-muted-foreground">
+                {unreadCount} sin leer
+              </span>
             )}
           </div>
         </DropdownMenuLabel>
@@ -81,15 +85,27 @@ export function NotificationBell({ userRole }: NotificationBellProps) {
         ) : (
           <>
             {recentNotifications.map((n) => (
-              <DropdownMenuItem key={n.id} className="flex flex-col items-start gap-0.5 py-2 px-3 cursor-default" disabled>
+              <DropdownMenuItem
+                key={n.id}
+                className="flex flex-col items-start gap-0.5 py-2 px-3 cursor-default"
+                disabled
+              >
                 <div className="flex items-center gap-2 w-full">
-                  <span className={`text-xs font-medium ${n.isRead ? '' : 'text-primary'}`}>
+                  <span
+                    className={`text-xs font-medium ${n.isRead ? '' : 'text-primary'}`}
+                  >
                     {n.title}
                   </span>
-                  {!n.isRead && <span className="size-1.5 rounded-full bg-primary shrink-0" />}
+                  {!n.isRead && (
+                    <span className="size-1.5 rounded-full bg-primary shrink-0" />
+                  )}
                 </div>
-                <span className="text-xs text-muted-foreground line-clamp-1">{n.message}</span>
-                <span className="text-[10px] text-muted-foreground">{formatRelativeTime(n.createdAt)}</span>
+                <span className="text-xs text-muted-foreground line-clamp-1">
+                  {n.message}
+                </span>
+                <span className="text-[10px] text-muted-foreground">
+                  {formatRelativeTime(n.createdAt)}
+                </span>
               </DropdownMenuItem>
             ))}
             <DropdownMenuSeparator />

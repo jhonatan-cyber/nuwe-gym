@@ -28,16 +28,26 @@ async function seed() {
   if (existingAdmin.length > 0) {
     const admin = existingAdmin[0]
     // Update existing admin + account instead of delete+reinsert (preserves FK refs)
-    await db.update(users).set({
-      name: 'Administrador',
-      emailVerified: true,
-      role: 'ADMIN',
-      updatedAt: new Date(),
-    }).where(eq(users.id, admin.id))
+    await db
+      .update(users)
+      .set({
+        name: 'Administrador',
+        emailVerified: true,
+        role: 'ADMIN',
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, admin.id))
 
-    const existingAccount = await db.select().from(accounts).where(eq(accounts.userId, admin.id)).limit(1)
+    const existingAccount = await db
+      .select()
+      .from(accounts)
+      .where(eq(accounts.userId, admin.id))
+      .limit(1)
     if (existingAccount.length > 0) {
-      await db.update(accounts).set({ password: passwordHash, updatedAt: new Date() }).where(eq(accounts.userId, admin.id))
+      await db
+        .update(accounts)
+        .set({ password: passwordHash, updatedAt: new Date() })
+        .where(eq(accounts.userId, admin.id))
     } else {
       await db.insert(accounts).values({
         id: crypto.randomUUID(),
@@ -54,25 +64,25 @@ async function seed() {
   } else {
     const adminId = crypto.randomUUID()
 
-  await db.insert(users).values({
-    id: adminId,
-    name: 'Administrador',
-    email: 'admin@gym.local',
-    emailVerified: true,
-    role: 'ADMIN',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  })
+    await db.insert(users).values({
+      id: adminId,
+      name: 'Administrador',
+      email: 'admin@gym.local',
+      emailVerified: true,
+      role: 'ADMIN',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
 
-  await db.insert(accounts).values({
-    id: crypto.randomUUID(),
-    accountId: adminId,
-    providerId: 'credential',
-    userId: adminId,
-    password: passwordHash,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  })
+    await db.insert(accounts).values({
+      id: crypto.randomUUID(),
+      accountId: adminId,
+      providerId: 'credential',
+      userId: adminId,
+      password: passwordHash,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
 
     console.log('✅ Admin user created: admin@gym.local / Admin123*')
   }

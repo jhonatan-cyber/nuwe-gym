@@ -58,7 +58,9 @@ export function DataTable<T>({
               ))}
             </div>
           ) : (
-            <div className="text-center py-8 text-muted-foreground">{loadingMessage}</div>
+            <div className="text-center py-8 text-muted-foreground">
+              {loadingMessage}
+            </div>
           )
         ) : data.length === 0 ? (
           <EmptyState description={emptyMessage} />

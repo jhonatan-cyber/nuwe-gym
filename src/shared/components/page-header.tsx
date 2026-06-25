@@ -9,9 +9,20 @@ interface PageHeaderProps {
   className?: string
 }
 
-export function PageHeader({ title, description, icon, action, className }: PageHeaderProps) {
+export function PageHeader({
+  title,
+  description,
+  icon,
+  action,
+  className,
+}: PageHeaderProps) {
   return (
-    <div className={cn('flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4', className)}>
+    <div
+      className={cn(
+        'flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4',
+        className,
+      )}
+    >
       <div>
         <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
           {icon}

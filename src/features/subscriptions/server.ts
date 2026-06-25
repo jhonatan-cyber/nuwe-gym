@@ -2,7 +2,10 @@ import { createServerFn } from '@tanstack/react-start'
 import { db } from '#/shared/db/index.ts'
 import { subscriptions } from '#/shared/db/schema/subscriptions.ts'
 import { membershipPayments } from '#/shared/db/schema/membership-payments.ts'
-import { cashRegisterSessions, cashMovements } from '#/shared/db/schema/cash-register.ts'
+import {
+  cashRegisterSessions,
+  cashMovements,
+} from '#/shared/db/schema/cash-register.ts'
 import { members } from '#/shared/db/schema/members.ts'
 import { eq, desc } from 'drizzle-orm'
 import { requireRole } from '#/shared/lib/server-utils.ts'
@@ -37,7 +40,9 @@ export type CreateSubscriptionData = z.infer<typeof createSubscriptionSchema>
 export const createSubscription = createServerFn({ method: 'POST' })
   .inputValidator((data) => createSubscriptionSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    const session = await requireRole({
+      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
+    })
     const userId = session.user.id
 
     const subscription = await db.transaction(async (tx) => {
@@ -46,10 +51,12 @@ export const createSubscription = createServerFn({ method: 'POST' })
       })
 
       if (!openSession) {
-        throw new Error('Debe abrir la caja antes de registrar una suscripción.')
+        throw new Error(
+          'Debe abrir la caja antes de registrar una suscripción.',
+        )
       }
 
-      const [subscription] = await tx
+      const [newSubscription] = await tx
         .insert(subscriptions)
         .values({
           memberId: data.memberId,
@@ -63,7 +70,7 @@ export const createSubscription = createServerFn({ method: 'POST' })
       const [payment] = await tx
         .insert(membershipPayments)
         .values({
-          subscriptionId: subscription.id,
+          subscriptionId: newSubscription.id,
           memberId: data.memberId,
           amount: data.amountPaid,
           paymentMethod: data.paymentMethod,
@@ -85,10 +92,10 @@ export const createSubscription = createServerFn({ method: 'POST' })
         sourceId: payment.id,
         amount: data.amountPaid,
         paymentMethod: data.paymentMethod,
-        description: `Pago de membresía - Socio: ${memberName} (Sub: #${subscription.id})`,
+        description: `Pago de membresía - Socio: ${memberName} (Sub: #${newSubscription.id})`,
       })
 
-      return subscription
+      return newSubscription
     })
 
     createAuditLog({
@@ -105,7 +112,9 @@ export const createSubscription = createServerFn({ method: 'POST' })
 export const cancelSubscription = createServerFn({ method: 'POST' })
   .inputValidator((id) => z.number().parse(id))
   .handler(async ({ data: id }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    const session = await requireRole({
+      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
+    })
 
     const [subscription] = await db
       .update(subscriptions)

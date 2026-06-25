@@ -42,11 +42,25 @@ export const getAuditLogs = createServerFn({ method: 'GET' })
     await requireRole({ data: { roles: ['ADMIN'] } })
 
     const conditions = []
-    if (data.action) conditions.push(eq(auditLogs.action, data.action as typeof auditLogs.action.enumValues[number]))
-    if (data.entityType) conditions.push(eq(auditLogs.entityType, data.entityType as typeof auditLogs.entityType.enumValues[number]))
+    if (data.action)
+      conditions.push(
+        eq(
+          auditLogs.action,
+          data.action as (typeof auditLogs.action.enumValues)[number],
+        ),
+      )
+    if (data.entityType)
+      conditions.push(
+        eq(
+          auditLogs.entityType,
+          data.entityType as (typeof auditLogs.entityType.enumValues)[number],
+        ),
+      )
     if (data.userId) conditions.push(eq(auditLogs.userId, data.userId))
-    if (data.dateFrom) conditions.push(gte(auditLogs.createdAt, new Date(data.dateFrom)))
-    if (data.dateTo) conditions.push(gte(auditLogs.createdAt, new Date(data.dateTo)))
+    if (data.dateFrom)
+      conditions.push(gte(auditLogs.createdAt, new Date(data.dateFrom)))
+    if (data.dateTo)
+      conditions.push(gte(auditLogs.createdAt, new Date(data.dateTo)))
 
     const where = conditions.length > 0 ? and(...conditions) : undefined
     const offset = (data.page - 1) * data.pageSize
@@ -59,10 +73,7 @@ export const getAuditLogs = createServerFn({ method: 'GET' })
         .orderBy(desc(auditLogs.createdAt))
         .limit(data.pageSize)
         .offset(offset),
-      db
-        .select({ total: count() })
-        .from(auditLogs)
-        .where(where),
+      db.select({ total: count() }).from(auditLogs).where(where),
     ])
 
     const total = totalResult[0]?.total ?? 0
@@ -78,14 +89,19 @@ export const getAuditLog = createServerFn({ method: 'GET' })
   .handler(async ({ data: id }) => {
     await requireRole({ data: { roles: ['ADMIN'] } })
 
-    const [log] = await db.select().from(auditLogs).where(eq(auditLogs.id, id)).limit(1)
-    if (!log) throw new Error('Audit log not found')
+    const result = await db
+      .select()
+      .from(auditLogs)
+      .where(eq(auditLogs.id, id))
+      .limit(1)
+    if (result.length === 0) throw new Error('Audit log not found')
+    const log = result[0]
 
     return serializeRow(log)
   })
 
-export const getAuditStats = createServerFn({ method: 'GET' })
-  .handler(async () => {
+export const getAuditStats = createServerFn({ method: 'GET' }).handler(
+  async () => {
     await requireRole({ data: { roles: ['ADMIN'] } })
 
     const thirtyDaysAgo = new Date()
@@ -102,26 +118,40 @@ export const getAuditStats = createServerFn({ method: 'GET' })
       .orderBy(auditLogs.action)
 
     return rows
-  })
+  },
+)
 
-export const getAuditSummary = createServerFn({ method: 'GET' })
-  .handler(async () => {
+export const getAuditSummary = createServerFn({ method: 'GET' }).handler(
+  async () => {
     const session = await getSession()
-    const role = session?.user?.role
+    const role = session?.user.role
     if (!role || role !== 'ADMIN') {
       return { today: 0, week: 0, month: 0 }
     }
 
     const now = new Date()
-    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const startOfDay = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+    )
     const startOfWeek = new Date(startOfDay)
     startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay())
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
 
     const [todayResult, weekResult, monthResult] = await Promise.all([
-      db.select({ total: count() }).from(auditLogs).where(gte(auditLogs.createdAt, startOfDay)),
-      db.select({ total: count() }).from(auditLogs).where(gte(auditLogs.createdAt, startOfWeek)),
-      db.select({ total: count() }).from(auditLogs).where(gte(auditLogs.createdAt, startOfMonth)),
+      db
+        .select({ total: count() })
+        .from(auditLogs)
+        .where(gte(auditLogs.createdAt, startOfDay)),
+      db
+        .select({ total: count() })
+        .from(auditLogs)
+        .where(gte(auditLogs.createdAt, startOfWeek)),
+      db
+        .select({ total: count() })
+        .from(auditLogs)
+        .where(gte(auditLogs.createdAt, startOfMonth)),
     ])
 
     return {
@@ -129,4 +159,5 @@ export const getAuditSummary = createServerFn({ method: 'GET' })
       week: weekResult[0]?.total ?? 0,
       month: monthResult[0]?.total ?? 0,
     }
-  })
+  },
+)

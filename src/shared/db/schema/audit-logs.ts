@@ -1,14 +1,49 @@
-import { pgEnum, pgTable, serial, text, integer, timestamp, jsonb } from 'drizzle-orm/pg-core'
+import {
+  pgEnum,
+  pgTable,
+  serial,
+  text,
+  integer,
+  timestamp,
+  jsonb,
+} from 'drizzle-orm/pg-core'
 
 export const actionEnum = pgEnum('action_type', [
-  'CREATE', 'UPDATE', 'DELETE', 'LOGIN', 'LOGOUT', 'EXPORT', 'PRINT', 'RENEW', 'FREEZE', 'RESUME',
+  'CREATE',
+  'UPDATE',
+  'DELETE',
+  'LOGIN',
+  'LOGOUT',
+  'EXPORT',
+  'PRINT',
+  'RENEW',
+  'FREEZE',
+  'RESUME',
 ])
 
 export const entityEnum = pgEnum('entity_type', [
-  'MEMBER', 'SUBSCRIPTION', 'PLAN', 'PAYMENT', 'PRODUCT', 'CATEGORY', 'SUPPLIER',
-  'PURCHASE', 'SALE', 'CHECK_IN', 'CASH_REGISTER', 'INVENTORY', 'USER',
-  'SETTING', 'CLASS', 'SCHEDULE', 'BOOKING', 'TRAINER', 'NOTIFICATION', 'FREEZE',
+  'MEMBER',
+  'SUBSCRIPTION',
+  'PLAN',
+  'PAYMENT',
+  'PRODUCT',
+  'CATEGORY',
+  'SUPPLIER',
+  'PURCHASE',
+  'SALE',
+  'CHECK_IN',
+  'CASH_REGISTER',
+  'INVENTORY',
+  'USER',
+  'SETTING',
+  'CLASS',
+  'SCHEDULE',
+  'BOOKING',
+  'TRAINER',
+  'NOTIFICATION',
+  'FREEZE',
   'BRANCH',
+  'PACKAGE',
 ])
 
 export const auditLogs = pgTable('audit_logs', {

@@ -7,16 +7,22 @@ import { requireRole } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 
-export const getBranches = createServerFn({ method: 'GET' }).handler(async () => {
-  await requireRole({ data: { roles: ['ADMIN'] } })
-  return await db.select().from(branches).orderBy(desc(branches.createdAt))
-})
+export const getBranches = createServerFn({ method: 'GET' }).handler(
+  async () => {
+    await requireRole({ data: { roles: ['ADMIN'] } })
+    return await db.select().from(branches).orderBy(desc(branches.createdAt))
+  },
+)
 
 export const getBranch = createServerFn({ method: 'GET' })
   .inputValidator((id: unknown) => z.number().parse(id))
   .handler(async ({ data: id }) => {
-    const [branch] = await db.select().from(branches).where(eq(branches.id, id)).limit(1)
-    return branch ?? null
+    const result = await db
+      .select()
+      .from(branches)
+      .where(eq(branches.id, id))
+      .limit(1)
+    return result.length > 0 ? result[0] : null
   })
 
 const createBranchSchema = z.object({
@@ -73,32 +79,38 @@ export const updateBranch = createServerFn({ method: 'POST' })
     return branch
   })
 
-export const getUserBranches = createServerFn({ method: 'GET' }).handler(async () => {
-  const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
-
-  const rows = await db
-    .select({
-      id: branches.id,
-      name: branches.name,
-      address: branches.address,
-      phone: branches.phone,
-      email: branches.email,
-      isActive: branches.isActive,
-      openingTime: branches.openingTime,
-      closingTime: branches.closingTime,
-      isDefault: userBranches.isDefault,
+export const getUserBranches = createServerFn({ method: 'GET' }).handler(
+  async () => {
+    const session = await requireRole({
+      data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] },
     })
-    .from(userBranches)
-    .innerJoin(branches, eq(userBranches.branchId, branches.id))
-    .where(eq(userBranches.userId, session.user.id))
 
-  return rows
-})
+    const rows = await db
+      .select({
+        id: branches.id,
+        name: branches.name,
+        address: branches.address,
+        phone: branches.phone,
+        email: branches.email,
+        isActive: branches.isActive,
+        openingTime: branches.openingTime,
+        closingTime: branches.closingTime,
+        isDefault: userBranches.isDefault,
+      })
+      .from(userBranches)
+      .innerJoin(branches, eq(userBranches.branchId, branches.id))
+      .where(eq(userBranches.userId, session.user.id))
+
+    return rows
+  },
+)
 
 export const setDefaultBranch = createServerFn({ method: 'POST' })
   .inputValidator((data) => z.object({ branchId: z.number() }).parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
+    const session = await requireRole({
+      data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] },
+    })
 
     await db
       .update(userBranches)
@@ -126,23 +138,27 @@ export const setDefaultBranch = createServerFn({ method: 'POST' })
     return { success: true }
   })
 
-export const getSessionBranch = createServerFn({ method: 'GET' }).handler(async () => {
-  const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
-
-  const [row] = await db
-    .select({
-      id: branches.id,
-      name: branches.name,
+export const getSessionBranch = createServerFn({ method: 'GET' }).handler(
+  async () => {
+    const session = await requireRole({
+      data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] },
     })
-    .from(userBranches)
-    .innerJoin(branches, eq(userBranches.branchId, branches.id))
-    .where(
-      and(
-        eq(userBranches.userId, session.user.id),
-        eq(userBranches.isDefault, true),
-      ),
-    )
-    .limit(1)
 
-  return row ?? null
-})
+    const result = await db
+      .select({
+        id: branches.id,
+        name: branches.name,
+      })
+      .from(userBranches)
+      .innerJoin(branches, eq(userBranches.branchId, branches.id))
+      .where(
+        and(
+          eq(userBranches.userId, session.user.id),
+          eq(userBranches.isDefault, true),
+        ),
+      )
+      .limit(1)
+
+    return result.length > 0 ? result[0] : null
+  },
+)

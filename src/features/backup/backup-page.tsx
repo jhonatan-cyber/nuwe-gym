@@ -50,7 +50,9 @@ import {
 } from '#/features/backup/server.ts'
 
 function downloadJSON(data: unknown, filename: string) {
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+  const blob = new Blob([JSON.stringify(data, null, 2)], {
+    type: 'application/json',
+  })
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.setAttribute('href', url)
@@ -130,7 +132,7 @@ function ExportSection() {
           <div className="rounded-lg border p-3 space-y-2 text-sm">
             <div className="flex items-center gap-2 text-muted-foreground">
               <HardDrive className="size-4" />
-              <span>Tamaño estimado: {info.dbSize ?? 'Desconocido'}</span>
+              <span>Tamaño estimado: {info.dbSize}</span>
             </div>
             <div className="flex items-center gap-2 text-muted-foreground">
               <Table className="size-4" />
@@ -139,8 +141,10 @@ function ExportSection() {
             <div className="flex items-center gap-2 text-muted-foreground">
               <Database className="size-4" />
               <span>
-                {Object.values(info.counts).reduce((a, b) => a + b, 0).toLocaleString()} registros
-                totales
+                {Object.values(info.counts)
+                  .reduce((a, b) => a + b, 0)
+                  .toLocaleString()}{' '}
+                registros totales
               </span>
             </div>
           </div>
@@ -167,13 +171,16 @@ function ImportSection() {
   const fileRef = useRef<HTMLInputElement>(null)
 
   const mutation = useMutation({
-    mutationFn: (data: Parameters<typeof importDatabase>[0]) => importDatabase(data),
+    mutationFn: (data: Parameters<typeof importDatabase>[0]) =>
+      importDatabase(data),
     onSuccess: (counts) => {
       const lines = Object.entries(counts)
         .filter(([, c]) => c > 0)
         .map(([table, c]) => `${TABLE_LABELS[table] ?? table}: ${c}`)
         .join('\n')
-      toast.success(`Backup importado correctamente\n${lines}`, { duration: 6000 })
+      toast.success(`Backup importado correctamente\n${lines}`, {
+        duration: 6000,
+      })
       setFile(null)
       setPreview(null)
       if (fileRef.current) fileRef.current.value = ''
@@ -257,7 +264,9 @@ function ImportSection() {
             <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
               {Object.entries(preview).map(([table, count]) => (
                 <div key={table} className="flex justify-between">
-                  <span className="text-muted-foreground">{TABLE_LABELS[table] ?? table}</span>
+                  <span className="text-muted-foreground">
+                    {TABLE_LABELS[table] ?? table}
+                  </span>
                   <Badge variant="outline" className="text-xs font-mono">
                     {count}
                   </Badge>
@@ -289,19 +298,23 @@ function ImportSection() {
                 ¿Confirmar importación?
               </DialogTitle>
               <DialogDescription>
-                Esta acción reemplazará TODOS los datos existentes con los datos del backup.
-                Esta operación no se puede deshacer.
+                Esta acción reemplazará TODOS los datos existentes con los datos
+                del backup. Esta operación no se puede deshacer.
               </DialogDescription>
             </DialogHeader>
             {preview && (
               <div className="rounded-lg bg-muted p-3 text-sm space-y-1">
                 <p className="font-medium">Se importarán:</p>
-                {Object.entries(preview).filter(([, c]) => c > 0).map(([table, c]) => (
-                  <div key={table} className="flex justify-between text-xs">
-                    <span>{TABLE_LABELS[table] ?? table}</span>
-                    <span className="font-mono">{c.toLocaleString()} registros</span>
-                  </div>
-                ))}
+                {Object.entries(preview)
+                  .filter(([, c]) => c > 0)
+                  .map(([table, c]) => (
+                    <div key={table} className="flex justify-between text-xs">
+                      <span>{TABLE_LABELS[table] ?? table}</span>
+                      <span className="font-mono">
+                        {c.toLocaleString()} registros
+                      </span>
+                    </div>
+                  ))}
               </div>
             )}
             <DialogFooter>
@@ -330,7 +343,8 @@ function AutoBackupSection() {
   const [loaded, setLoaded] = useState(false)
 
   const mutation = useMutation({
-    mutationFn: (data: Parameters<typeof saveBackupSettings>[0]) => saveBackupSettings(data),
+    mutationFn: (data: Parameters<typeof saveBackupSettings>[0]) =>
+      saveBackupSettings(data),
     onSuccess: () => {
       toast.success('Preferencias de backup guardadas')
     },
@@ -345,7 +359,10 @@ function AutoBackupSection() {
 
   function handleSave() {
     mutation.mutate({
-      data: { backupEnabled: enabled, backupFrequency: frequency as 'daily' | 'weekly' | 'monthly' },
+      data: {
+        backupEnabled: enabled,
+        backupFrequency: frequency as 'daily' | 'weekly' | 'monthly',
+      },
     })
   }
 
@@ -396,14 +413,20 @@ function AutoBackupSection() {
               </div>
             )}
 
-            <LoadingButton className="w-full" onClick={handleSave} isLoading={mutation.isPending} loadingText="Guardando...">
+            <LoadingButton
+              className="w-full"
+              onClick={handleSave}
+              isLoading={mutation.isPending}
+              loadingText="Guardando..."
+            >
               <Save className="size-4" />
               Guardar preferencias
             </LoadingButton>
 
             <p className="text-xs text-muted-foreground">
-              Nota: Esta configuración solo almacena la preferencia. Para que los backups
-              automáticos funcionen, se debe configurar una tarea cron en el servidor.
+              Nota: Esta configuración solo almacena la preferencia. Para que
+              los backups automáticos funcionen, se debe configurar una tarea
+              cron en el servidor.
             </p>
           </>
         )}
@@ -433,7 +456,10 @@ export function BackupPage() {
             .sort(([, a], [, b]) => b - a)
             .slice(0, 8)
             .map(([table, c]) => (
-              <Card key={table} className="transition-all duration-200 hover:shadow-md">
+              <Card
+                key={table}
+                className="transition-all duration-200 hover:shadow-md"
+              >
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground truncate">
                     {TABLE_LABELS[table] ?? table}

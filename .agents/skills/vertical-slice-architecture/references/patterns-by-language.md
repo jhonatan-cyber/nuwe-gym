@@ -76,6 +76,7 @@ func main() {
 ```
 
 ### Key Go Idioms
+
 - Handler struct is **unexported** (`handler`, not `Handler`)
 - Repository interface defined **inside the slice**, not in a shared package
 - Entry point name varies by convention: `Setup()`, `RegisterRoute()`, etc. — the role matters, not the name
@@ -166,6 +167,7 @@ ListOrdersEndpoint.Map(app);
 ```
 
 ### Key .NET Idioms
+
 - MediatR is popular but NOT required — Minimal APIs work fine without it
 - FluentValidation for request validation inside the slice
 - Each endpoint class has a static `Map()` method (single entry point)
@@ -232,6 +234,7 @@ public class CreateOrderController {
 ```
 
 ### Key Java/Kotlin Idioms
+
 - Spring's component scan auto-discovers controllers — this IS the entry point mechanism (no explicit `Setup()` function needed)
 - The `@RestController` class itself is the entry point; its package is the slice boundary
 - Each feature package is self-contained
@@ -266,14 +269,14 @@ app.ts                            # Composition root
 
 ```typescript
 // create-order.route.ts
-import { Router } from 'express';
-import { createOrderHandler } from './create-order.handler';
+import { Router } from 'express'
+import { createOrderHandler } from './create-order.handler'
 
 export function setup(router: Router, db: Database): void {
   router.post('/orders', async (req, res) => {
-    const result = await createOrderHandler(db, req.body);
-    res.status(201).json(result);
-  });
+    const result = await createOrderHandler(db, req.body)
+    res.status(201).json(result)
+  })
 }
 ```
 
@@ -281,15 +284,15 @@ export function setup(router: Router, db: Database): void {
 
 ```typescript
 // app.ts
-import * as createOrder from './features/orders/create-order/create-order.route';
-import * as getOrder from './features/orders/get-order/get-order.route';
+import * as createOrder from './features/orders/create-order/create-order.route'
+import * as getOrder from './features/orders/get-order/get-order.route'
 
-const router = express.Router();
-const db = new Database(config.dbUrl);
+const router = express.Router()
+const db = new Database(config.dbUrl)
 
-createOrder.setup(router, db);
-getOrder.setup(router, db);
-app.use('/api/v1', router);
+createOrder.setup(router, db)
+getOrder.setup(router, db)
+app.use('/api/v1', router)
 ```
 
 ---
@@ -342,6 +345,7 @@ def setup(router: APIRouter, db: Database) -> None:
 ```
 
 ### Key Python Idioms
+
 - FastAPI's `Depends()` is the idiomatic DI mechanism — use it for DB sessions, auth, etc.
 - Explicit param passing (closure pattern) also works for simpler cases
 - Pydantic models for request/response validation (built into FastAPI)

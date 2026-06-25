@@ -3,6 +3,7 @@
 ## Core Testing Principle
 
 The primary test for each feature exercises it **end-to-end through its single entry point**:
+
 1. Calls the feature's Setup/Register/Map function with real or test infrastructure
 2. Sends an HTTP request (or invokes the handler directly)
 3. Verifies **outcomes**: database state, API calls made, responses returned
@@ -26,6 +27,7 @@ This is a **feature integration test** that exercises the full slice. Unit tests
 ## Go
 
 ### Libraries
+
 - **testcontainers-go**: Real database/service containers for integration tests
 - **testify**: Assertions (`assert`, `require`) and mock verification (`mock.Mock`)
 - **net/http/httptest**: HTTP test server from stdlib
@@ -105,6 +107,7 @@ func TestCreateOrder_CallsPaymentAPI(t *testing.T) {
 ```
 
 ### Key Go Testing Idioms
+
 - Test file lives next to handler: `handler.go` + `handler_test.go`
 - Package: `_test` suffix for black-box testing (`create_test`, not `create`)
 - Use `t.Cleanup()` for testcontainer teardown
@@ -116,6 +119,7 @@ func TestCreateOrder_CallsPaymentAPI(t *testing.T) {
 ## .NET / C#
 
 ### Libraries
+
 - **Testcontainers.NET**: Real database containers
 - **WebApplicationFactory**: In-memory test server (Microsoft.AspNetCore.Mvc.Testing)
 - **NSubstitute** or **Moq**: Mock verification
@@ -192,6 +196,7 @@ public async Task CreateOrder_CallsPaymentService()
 ## Java / Kotlin (Spring Boot)
 
 ### Libraries
+
 - **Testcontainers**: Real database/service containers
 - **Spring Boot Test**: `@SpringBootTest` + `TestRestTemplate`/`WebTestClient`
 - **Mockito**: Mock verification (`verify`, `when`)
@@ -256,6 +261,7 @@ class CreateOrderTest {
 ## TypeScript / Node.js
 
 ### Libraries
+
 - **testcontainers** (npm): Real containers
 - **supertest**: HTTP assertions
 - **jest** or **vitest**: Test runner + mocking
@@ -264,51 +270,53 @@ class CreateOrderTest {
 ### Pattern: Integration Test
 
 ```typescript
-import { GenericContainer, StartedTestContainer } from 'testcontainers';
-import request from 'supertest';
-import { createApp } from '../app';
+import { GenericContainer, StartedTestContainer } from 'testcontainers'
+import request from 'supertest'
+import { createApp } from '../app'
 
 describe('POST /api/v1/orders', () => {
-  let container: StartedTestContainer;
-  let app: Express;
-  let db: Database;
+  let container: StartedTestContainer
+  let app: Express
+  let db: Database
 
   beforeAll(async () => {
     container = await new GenericContainer('postgres:16-alpine')
       .withExposedPorts(5432)
-      .start();
+      .start()
 
-    db = await connectDB(container.getConnectionUri());
-    app = createApp(db);
-  });
+    db = await connectDB(container.getConnectionUri())
+    app = createApp(db)
+  })
 
-  afterAll(() => container.stop());
+  afterAll(() => container.stop())
 
   it('persists order to database', async () => {
     const res = await request(app)
       .post('/api/v1/orders')
-      .send({ product: 'Widget', qty: 5 });
+      .send({ product: 'Widget', qty: 5 })
 
-    expect(res.status).toBe(201);
+    expect(res.status).toBe(201)
 
-    const rows = await db.query('SELECT * FROM orders WHERE product = $1', ['Widget']);
-    expect(rows).toHaveLength(1);
-  });
-});
+    const rows = await db.query('SELECT * FROM orders WHERE product = $1', [
+      'Widget',
+    ])
+    expect(rows).toHaveLength(1)
+  })
+})
 ```
 
 ### Mock Verification
 
 ```typescript
 it('calls payment API', async () => {
-  const paymentMock = { charge: vi.fn().mockResolvedValue({ ok: true }) };
-  const app = createApp(db, paymentMock);
+  const paymentMock = { charge: vi.fn().mockResolvedValue({ ok: true }) }
+  const app = createApp(db, paymentMock)
 
-  await request(app).post('/api/v1/orders').send(orderReq);
+  await request(app).post('/api/v1/orders').send(orderReq)
 
-  expect(paymentMock.charge).toHaveBeenCalledWith(500);
-  expect(paymentMock.charge).toHaveBeenCalledTimes(1);
-});
+  expect(paymentMock.charge).toHaveBeenCalledWith(500)
+  expect(paymentMock.charge).toHaveBeenCalledTimes(1)
+})
 ```
 
 ---
@@ -316,6 +324,7 @@ it('calls payment API', async () => {
 ## Python (FastAPI)
 
 ### Libraries
+
 - **testcontainers-python**: Real containers
 - **httpx** + **pytest**: Async test client
 - **unittest.mock** / **pytest-mock**: Mock verification
@@ -359,18 +368,19 @@ async def test_create_order_persists(app, db):
 
 ### What to Test Per Feature
 
-| Aspect | How | Example |
-|--------|-----|---------|
-| **Happy path** | Full request → verify response + DB state | POST creates record, returns 201 |
-| **Validation errors** | Invalid input → verify 400 + no side effects | Missing field returns 400, DB unchanged |
-| **Not found** | Missing resource → verify 404 | GET nonexistent ID returns 404 |
-| **External API calls** | Mock dependency → verify calls | Payment API called with correct amount |
-| **Error handling** | Simulate failure → verify graceful degradation | DB timeout returns 503, no partial state |
-| **Idempotency** | Repeat same request → verify same outcome | Duplicate POST returns same result |
+| Aspect                 | How                                            | Example                                  |
+| ---------------------- | ---------------------------------------------- | ---------------------------------------- |
+| **Happy path**         | Full request → verify response + DB state      | POST creates record, returns 201         |
+| **Validation errors**  | Invalid input → verify 400 + no side effects   | Missing field returns 400, DB unchanged  |
+| **Not found**          | Missing resource → verify 404                  | GET nonexistent ID returns 404           |
+| **External API calls** | Mock dependency → verify calls                 | Payment API called with correct amount   |
+| **Error handling**     | Simulate failure → verify graceful degradation | DB timeout returns 503, no partial state |
+| **Idempotency**        | Repeat same request → verify same outcome      | Duplicate POST returns same result       |
 
 ### Test Naming Convention
 
 Name tests by behavior, not implementation:
+
 ```
 GOOD: TestCreateOrder_PersistsToDatabase
 GOOD: TestCreateOrder_Returns400_WhenProductEmpty
@@ -401,12 +411,12 @@ Beyond feature integration tests, platform components benefit from their own con
 
 ### What to Test in Platform
 
-| Component | What to Verify | Example |
-|-----------|---------------|---------|
-| **Idempotency middleware** | Duplicate requests return same result, no side effects | POST same idempotency key twice → 200, single DB row |
-| **Operation queue** | Jobs enqueue, execute, retry on failure | Enqueue job → verify execution, simulate failure → verify retry |
-| **Circuit breaker** | Opens after N failures, half-opens after timeout | Fail N requests → verify open, wait → verify half-open |
-| **Auth middleware** | Valid token passes, invalid/expired rejects | Valid JWT → 200, expired → 401, missing → 401 |
-| **Error handler** | Maps domain errors to HTTP status codes | NotFound → 404, ValidationError → 400, unknown → 500 |
+| Component                  | What to Verify                                         | Example                                                         |
+| -------------------------- | ------------------------------------------------------ | --------------------------------------------------------------- |
+| **Idempotency middleware** | Duplicate requests return same result, no side effects | POST same idempotency key twice → 200, single DB row            |
+| **Operation queue**        | Jobs enqueue, execute, retry on failure                | Enqueue job → verify execution, simulate failure → verify retry |
+| **Circuit breaker**        | Opens after N failures, half-opens after timeout       | Fail N requests → verify open, wait → verify half-open          |
+| **Auth middleware**        | Valid token passes, invalid/expired rejects            | Valid JWT → 200, expired → 401, missing → 401                   |
+| **Error handler**          | Maps domain errors to HTTP status codes                | NotFound → 404, ValidationError → 400, unknown → 500            |
 
 These tests live in `platform/{component}/{component}_test` and use the same testcontainers/test-server approach as feature tests.

@@ -1,30 +1,44 @@
 import { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  Plus,
   Edit2,
-  User,
-  Phone,
-  Mail,
-  CalendarDays,
   Eye,
   RefreshCw,
   Receipt,
   Camera,
   Upload,
+  Filter,
+  List,
+  ChevronRight,
+  User,
+  Users,
+  CheckCircle2,
+  Clock,
+  Mail,
+  Calendar,
+  Heart,
+  MapPin,
+  Phone,
+  Plus,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { getMembers, createMember, updateMember, getMemberById, uploadMemberPhoto } from '#/features/members/server.ts'
+import { Link } from '@tanstack/react-router'
+import {
+  getMembers,
+  updateMember,
+  getMemberById,
+  uploadMemberPhoto,
+} from '#/features/members/server.ts'
 import { getMemberRenewalHistory } from '#/features/renewals/server.ts'
 import { formatCurrency, formatDate } from '#/shared/lib/formatters.ts'
 
 import { Button } from '#/shared/components/ui/button'
+import { ToggleGroup, ToggleGroupItem } from '#/shared/components/ui/toggle-group'
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '#/shared/components/ui/tooltip'
 import { LoadingButton } from '#/shared/components/ui/loading-button'
-import { Card } from '#/shared/components/ui/card'
 import { Input } from '#/shared/components/ui/input'
 import { Label } from '#/shared/components/ui/label'
 import { Textarea } from '#/shared/components/ui/textarea'
-import { PageHeader } from '#/shared/components/page-header'
 import { SearchInput } from '#/shared/components/search-input'
 import { DataTable } from '#/shared/components/data-table'
 import {
@@ -35,6 +49,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from '#/shared/components/ui/dialog'
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '#/shared/components/ui/select'
 import {
   Table,
   TableBody,
@@ -44,11 +66,38 @@ import {
   TableRow,
 } from '#/shared/components/ui/table'
 import { Badge } from '#/shared/components/ui/badge'
-
+import { Separator } from '#/shared/components/ui/separator'
+import { cn } from '#/shared/lib/utils.ts'
+import { MemberEnrollmentWizard } from '#/features/members/member-enrollment-wizard.tsx'
+import { ModuleLayout } from '#/shared/components/layout/module-layout.tsx'
 
 interface MembersPageProps {
   userRole: string
 }
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function isExpiringThisWeek(dateStr: string | Date | null): boolean {
+  if (!dateStr) return false
+  const date = new Date(dateStr)
+  const now = new Date()
+  const nextWeek = new Date()
+  nextWeek.setDate(now.getDate() + 7)
+  return date >= now && date <= nextWeek
+}
+
+function isExpired(dateStr: string | Date | null): boolean {
+  if (!dateStr) return false
+  return new Date(dateStr) < new Date()
+}
+
+function getFirstSubscription<T extends { subscriptions: any[] }>(
+  member: T,
+): T['subscriptions'][number] | undefined {
+  return member.subscriptions[0]
+}
+
+type StatusFilter = 'ALL' | 'ACTIVE' | 'INACTIVE' | 'NO_SUBSCRIPTION'
 
 export function MembersPage({ userRole }: MembersPageProps) {
   const queryClient = useQueryClient()
@@ -56,9 +105,25 @@ export function MembersPage({ userRole }: MembersPageProps) {
 
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [editingMember, setEditingMember] = useState<typeof membersList[number] | null>(null)
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL')
+  const [activeView, setActiveView] = useState<'enroll' | 'list'>('enroll')
+  const [editingMember, setEditingMember] = useState<
+    (typeof membersList)[number] | null
+  >(null)
   const [viewMemberId, setViewMemberId] = useState<number | null>(null)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 300)
+    return () => clearTimeout(timer)
+  }, [search])
+
+  // ── Queries ────────────────────────────────────────────────────────────
+
+  const { data: membersList = [], isLoading } = useQuery({
+    queryKey: ['members', debouncedSearch],
+    queryFn: () => getMembers({ data: { search: debouncedSearch } }),
+    enabled: true,
+  })
 
   const { data: memberDetail, isLoading: loadingDetail } = useQuery({
     queryKey: ['member-detail', viewMemberId],
@@ -68,9 +133,45 @@ export function MembersPage({ userRole }: MembersPageProps) {
 
   const { data: renewalHistory = [] } = useQuery({
     queryKey: ['member-renewal-history', viewMemberId],
-    queryFn: () => getMemberRenewalHistory({ data: { memberId: viewMemberId! } }),
+    queryFn: () =>
+      getMemberRenewalHistory({ data: { memberId: viewMemberId! } }),
     enabled: !!viewMemberId,
   })
+
+  // ── Stats ──────────────────────────────────────────────────────────────
+
+  const totalMembers = membersList.length
+  const activeNow = membersList.filter((m) => {
+    const sub = getFirstSubscription(m)
+    return sub && sub.status === 'ACTIVE' && !isExpired(sub.endDate)
+  }).length
+  const expiringThisWeek = membersList.filter((m) => {
+    const sub = getFirstSubscription(m)
+    return sub && sub.status === 'ACTIVE' && isExpiringThisWeek(sub.endDate)
+  }).length
+
+  // ── Filters ────────────────────────────────────────────────────────────
+
+  const filteredMembers = membersList.filter((m) => {
+    if (statusFilter === 'ALL') return true
+    if (statusFilter === 'ACTIVE') {
+      const sub = getFirstSubscription(m)
+      return sub?.status === 'ACTIVE' && !isExpired(sub.endDate)
+    }
+    if (statusFilter === 'INACTIVE') {
+      const sub = getFirstSubscription(m)
+      return (
+        m.status !== 'ACTIVE' ||
+        !sub ||
+        sub.status !== 'ACTIVE' ||
+        isExpired(sub.endDate)
+      )
+    }
+    // statusFilter has to be 'NO_SUBSCRIPTION' here:
+    return m.subscriptions.length === 0
+  })
+
+  // ── Photo upload ───────────────────────────────────────────────────────
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
@@ -91,10 +192,14 @@ export function MembersPage({ userRole }: MembersPageProps) {
     reader.onload = (event) => {
       const base64 = event.target?.result as string
       setPhotoPreview(base64)
-      photoMutation.mutate({ data: { memberId: editingMember.id, photoBase64: base64 } })
+      photoMutation.mutate({
+        data: { memberId: editingMember.id, photoBase64: base64 },
+      })
     }
     reader.readAsDataURL(file)
   }
+
+  // ── Edit form ──────────────────────────────────────────────────────────
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -108,201 +213,343 @@ export function MembersPage({ userRole }: MembersPageProps) {
     status: 'ACTIVE' as 'ACTIVE' | 'INACTIVE',
   })
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(search)
-    }, 300)
-
-    return () => clearTimeout(timer)
-  }, [search])
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(e.target.value)
-  }
-
-  const { data: membersList = [], isLoading } = useQuery({
-    queryKey: ['members', debouncedSearch],
-    queryFn: () => getMembers({ data: { search: debouncedSearch } }),
-  })
-
-  const createMutation = useMutation({
-    mutationFn: createMember,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['members'] })
-      setIsModalOpen(false)
-      toast.success('Socio registrado exitosamente')
-    },
-    onError: () => toast.error('Error al registrar el socio'),
-  })
-
   const updateMutation = useMutation({
     mutationFn: updateMember,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['members'] })
-      setIsModalOpen(false)
+      setIsEditModalOpen(false)
       toast.success('Datos del socio actualizados')
     },
     onError: () => toast.error('Error al actualizar el socio'),
   })
 
-  const handleOpenModal = (member?: typeof membersList[number]) => {
-    if (member) {
-      setEditingMember(member)
-      setFormData({
-        fullName: member.fullName,
-        documentNumber: member.documentNumber || '',
-        email: member.email || '',
-        phone: member.phone || '',
-        birthDate: member.birthDate ? new Date(member.birthDate).toISOString().split('T')[0] : '',
-        emergencyContactName: member.emergencyContactName || '',
-        emergencyContactPhone: member.emergencyContactPhone || '',
-        address: member.address || '',
-        status: member.status === 'SUSPENDED' ? 'INACTIVE' : member.status,
-      })
-    } else {
-      setEditingMember(null)
-      setFormData({
-        fullName: '',
-        documentNumber: '',
-        email: '',
-        phone: '',
-        birthDate: '',
-        emergencyContactName: '',
-        emergencyContactPhone: '',
-        address: '',
-        status: 'ACTIVE',
-      })
-    }
-    setIsModalOpen(true)
+  const handleOpenEditModal = (member: (typeof membersList)[number]) => {
+    setEditingMember(member)
+    setFormData({
+      fullName: member.fullName,
+      documentNumber: member.documentNumber || '',
+      email: member.email || '',
+      phone: member.phone || '',
+      birthDate: member.birthDate
+        ? new Date(member.birthDate).toISOString().split('T')[0]
+        : '',
+      emergencyContactName: member.emergencyContactName || '',
+      emergencyContactPhone: member.emergencyContactPhone || '',
+      address: member.address || '',
+      status: member.status === 'SUSPENDED' ? 'INACTIVE' : member.status,
+    })
+    setPhotoPreview(null)
+    setViewMemberId(null)
+    setIsEditModalOpen(true)
   }
+
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (editingMember) {
       updateMutation.mutate({ data: { ...formData, id: editingMember.id } })
-    } else {
-      createMutation.mutate({ data: formData })
     }
   }
 
-  return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Socios"
-        description="Gestión de miembros del gimnasio, datos personales y estado."
-        action={!isReadOnly && <Button onClick={() => handleOpenModal()}><Plus className="mr-2 size-4" /> Nuevo Socio</Button>}
-      />
+  if (activeView === 'enroll') {
+    return (
+      <div className="w-full h-full">
+        {/* Wizard */}
+        <MemberEnrollmentWizard
+          variant="inline"
+          isOpen={true}
+          onClose={() => {
+            queryClient.invalidateQueries({ queryKey: ['members'] })
+            setActiveView('list')
+          }}
+        />
+      </div>
+    )
+  }
 
-      <Card>
-        <div className="p-4 border-b">
-          <SearchInput
-            placeholder="Buscar por nombre, DNI, email..."
-            value={search}
-            onChange={handleSearchChange}
-            className="max-w-sm"
+  return (
+    <>
+      <ModuleLayout
+        breadcrumb={
+          <div className="flex items-center gap-1">
+            <span className="text-muted-foreground">Socios</span>
+            <ChevronRight className="size-3 text-muted-foreground/50" />
+            <span className="text-foreground">Listado</span>
+          </div>
+        }
+        title="Listado"
+        leftPanel={
+          <div className="flex flex-col gap-6 z-10 w-full">
+            {/* View Toggle */}
+            {!isReadOnly && (
+              <ToggleGroup
+                type="single"
+                value="list"
+                onValueChange={(v) => {
+                  if (v === 'enroll') setActiveView('enroll')
+                }}
+              >
+                <ToggleGroupItem value="list">
+                  <List className="size-3.5" /> Listado
+                </ToggleGroupItem>
+                <ToggleGroupItem value="enroll">
+                  <Plus className="size-3.5" /> Inscripción
+                </ToggleGroupItem>
+              </ToggleGroup>
+            )}
+            {/* Stats */}
+            <div className="space-y-3">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">
+                Métricas
+              </p>
+              <div className="grid grid-cols-1 gap-3">
+                {/* Total Members */}
+                <div className="relative overflow-hidden bg-muted/60 p-4.5 rounded-[1.25rem] border border-border/10 shadow-sm hover:shadow-md transition-all duration-300 flex items-center justify-between group">
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground group-hover:text-foreground transition-colors">
+                      Total Socios
+                    </p>
+                    <p className="text-2xl font-black tracking-tight">
+                      {totalMembers}
+                    </p>
+                  </div>
+                  <div className="size-10 rounded-xl dark:bg-white/5 bg-black/5 flex items-center justify-center dark:group-hover:bg-white/10 group-hover:bg-black/10 transition-all duration-300 shrink-0">
+                    <Users className="size-5 text-muted-foreground group-hover:scale-110 transition-transform duration-300" />
+                  </div>
+                </div>
+
+                {/* Active Now */}
+                <div className="relative overflow-hidden bg-muted/60 p-4.5 rounded-[1.25rem] border border-border/10 shadow-sm hover:shadow-md transition-all duration-300 flex items-center justify-between group">
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                      Activos
+                    </p>
+                    <p className="text-2xl font-black text-emerald-500 tracking-tight">
+                      {activeNow}
+                    </p>
+                  </div>
+                  <div className="size-10 rounded-xl bg-emerald-500/10 flex items-center justify-center group-hover:scale-105 transition-all duration-300 shrink-0">
+                    <CheckCircle2 className="size-5 text-emerald-500 group-hover:rotate-12 transition-transform duration-300" />
+                  </div>
+                </div>
+
+                {/* Expiring This Week */}
+                <div className="relative overflow-hidden bg-muted/60 p-4.5 rounded-[1.25rem] border border-border/10 shadow-sm hover:shadow-md transition-all duration-300 flex items-center justify-between group">
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                      Vencen pronto
+                    </p>
+                    <p className="text-2xl font-black text-foreground tracking-tight">
+                      {expiringThisWeek}
+                    </p>
+                  </div>
+                  <div className="size-10 rounded-xl bg-foreground/10 flex items-center justify-center group-hover:scale-105 transition-all duration-300 shrink-0">
+                    <Clock className="size-5 text-foreground group-hover:-rotate-12 transition-transform duration-300" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Filters */}
+            <div className="space-y-3 pt-2 border-t dark:border-white/5 border-black/5">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">
+                Filtros
+              </p>
+              <div className="space-y-2">
+                <SearchInput
+                  placeholder="Buscar por DNI, nombre..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full"
+                />
+                <Select
+                  value={statusFilter}
+                  onValueChange={(v) => setStatusFilter(v as StatusFilter)}
+                >
+                  <SelectTrigger className="w-full">
+                    <Filter className="size-3 mr-1" />
+                    <SelectValue placeholder="Estado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">Todos los Estados</SelectItem>
+                    <SelectItem value="ACTIVE">Activos</SelectItem>
+                    <SelectItem value="INACTIVE">Inactivos</SelectItem>
+                    <SelectItem value="NO_SUBSCRIPTION">Sin plan</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+        }
+      >
+        <div className="bg-card p-5 rounded-[2rem] border border-border/10 shadow-xl flex-1 flex flex-col min-w-0">
+          <DataTable
+            columns={[
+              {
+                key: 'member',
+                label: 'Socio',
+                render: (member: (typeof membersList)[number]) => (
+                  <div className="flex items-center gap-3">
+                    {member.photoUrl ? (
+                      <div className="relative size-9 rounded-full ring-2 ring-foreground/10 overflow-hidden shrink-0">
+                        <img
+                          src={member.photoUrl}
+                          alt=""
+                          className="size-full object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="size-9 rounded-full bg-gradient-to-br from-foreground/10 to-foreground/5 border border-foreground/10 flex items-center justify-center font-bold text-xs uppercase shrink-0 text-foreground tracking-wider shadow-inner">
+                        {member.fullName
+                          .split(' ')
+                          .map((n) => n[0])
+                          .slice(0, 2)
+                          .join('')}
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="font-bold text-sm dark:text-white text-foreground leading-tight truncate">
+                        {member.fullName}
+                      </p>
+                      <p className="text-[10px] font-semibold text-muted-foreground">
+                        DNI: {member.documentNumber || '—'}
+                      </p>
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                key: 'plan',
+                label: 'Plan',
+                render: (member: (typeof membersList)[number]) => {
+                  const sub = getFirstSubscription(member)
+                  if (!sub)
+                    return (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )
+                  const expired = isExpired(sub.endDate)
+                  return (
+                    <Badge
+                      className={cn(
+                        'text-[10px] font-bold',
+                        expired
+                          ? 'bg-red-500/10 text-red-500 border-red-500/20 hover:bg-red-500/15'
+                          : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 hover:bg-emerald-500/15',
+                      )}
+                    >
+                      {sub.plan.name}
+                    </Badge>
+                  )
+                },
+              },
+              {
+                key: 'status',
+                label: '',
+                render: (member: (typeof membersList)[number]) => {
+                  const sub = getFirstSubscription(member)
+                  const expired = sub && isExpired(sub.endDate)
+                  if (!sub) return null
+                  if (expired)
+                    return (
+                      <Badge
+                        variant="destructive"
+                        className="text-[10px] font-bold"
+                      >
+                        Vencido
+                      </Badge>
+                    )
+                  if (sub.status === 'ACTIVE') {
+                    return (
+                      <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 text-[10px] font-bold">
+                        Activo
+                      </Badge>
+                    )
+                  }
+                  return null
+                },
+              },
+              ...(!isReadOnly
+                ? [
+                    {
+                      key: 'actions' as string,
+                      label: '',
+                      className: 'text-right',
+                      render: (member: (typeof membersList)[number]) => (
+                        <div className="flex justify-end gap-0.5">
+                          <TooltipProvider delayDuration={200}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon-xs"
+                                  onClick={() => setViewMemberId(member.id)}
+                                >
+                                  <Eye className="size-3.5" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent side="bottom">
+                                <p>Ver detalle</p>
+                              </TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon-xs"
+                                  onClick={() => handleOpenEditModal(member)}
+                                >
+                                  <Edit2 className="size-3.5" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent side="bottom">
+                                <p>Editar</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
+                      ),
+                    },
+                  ]
+                : []),
+            ]}
+            data={filteredMembers}
+            isLoading={isLoading}
+            loadingMessage="Cargando..."
+            emptyMessage="No se encontraron socios."
+            keyExtractor={(member: (typeof membersList)[number]) => member.id}
+            skeletonRows={5}
           />
         </div>
-        <DataTable
-          columns={[
-            { key: 'member', label: 'Socio', render: (member: typeof membersList[number]) => (
-              <div className="flex items-center gap-2">
-                {member.photoUrl ? (
-                  <img src={member.photoUrl} alt="" className="hidden size-8 rounded-full object-cover sm:block" />
-                ) : (
-                  <div className="hidden size-8 bg-primary/10 text-primary rounded-full sm:flex items-center justify-center font-bold text-xs uppercase">
-                    {member.fullName.substring(0, 2)}
-                  </div>
-                )}
-                <div>
-                  <p className="font-medium">{member.fullName}</p>
-                  <div className="flex items-center text-xs text-muted-foreground gap-1">
-                    <User className="size-3" /> DNI: {member.documentNumber}
-                  </div>
-                </div>
-              </div>
-            )},
-            { key: 'contact', label: 'Contacto', render: (member: typeof membersList[number]) => (
-              <div className="space-y-1">
-                {member.phone && (
-                  <div className="flex items-center text-xs text-muted-foreground gap-1">
-                    <Phone className="size-3" /> {member.phone}
-                  </div>
-                )}
-                {member.email && (
-                  <div className="flex items-center text-xs text-muted-foreground gap-1">
-                    <Mail className="size-3" /> {member.email}
-                  </div>
-                )}
-              </div>
-            )},
-            { key: 'subscription', label: 'Suscripción Actual', render: (member: typeof membersList[number]) => {
-              const hasSub = member.subscriptions.length > 0
-              const activeSub = member.subscriptions[0]
-              return hasSub ? (
-                <div className="space-y-1">
-                  <Badge variant="default" className="bg-emerald-500/15 text-emerald-600 hover:bg-emerald-500/25 border-emerald-500/20">
-                    {activeSub.plan.name}
-                  </Badge>
-                  <div className="flex items-center text-xs text-muted-foreground gap-1">
-                    <CalendarDays className="size-3" /> Hasta {formatDate(activeSub.endDate)}
-                  </div>
-                </div>
-              ) : (
-                <Badge variant="secondary">Sin suscripción activa</Badge>
-              )
-            }},
-            { key: 'status', label: 'Estado Perfil', render: (member: typeof membersList[number]) => (
-              <Badge variant={member.status === 'ACTIVE' ? 'default' : 'destructive'}>
-                {member.status === 'ACTIVE' ? 'Activo' : 'Inactivo'}
-              </Badge>
-            )},
-            ...(!isReadOnly ? [{
-              key: 'actions' as string, label: 'Acciones', className: 'text-right' as string, render: (member: typeof membersList[number]) => (
-                <>
-                  <Button variant="ghost" size="icon" onClick={() => setViewMemberId(member.id)} title="Ver detalle">
-                    <Eye className="size-4" />
-                  </Button>
-                  <Button variant="ghost" size="icon" onClick={() => handleOpenModal(member)}>
-                    <Edit2 className="size-4" />
-                  </Button>
-                </>
-              ),
-            }] : []),
-          ]}
-          data={membersList}
-          isLoading={isLoading}
-          loadingMessage="Cargando socios..."
-          emptyMessage="No se encontraron socios."
-          keyExtractor={(member: typeof membersList[number]) => member.id}
-        />
-      </Card>
+      </ModuleLayout>
 
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+      {/* ── Edit Dialog ───────────────────────────────────────────────── */}
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
         <DialogContent className="max-w-2xl">
           <form onSubmit={handleSubmit}>
             <DialogHeader>
-              <DialogTitle>
-                {editingMember ? 'Editar Socio' : 'Nuevo Socio'}
-              </DialogTitle>
+              <DialogTitle>Editar Socio</DialogTitle>
               <DialogDescription>
-                Ingresá los datos personales y de contacto del miembro.
+                Actualizá los datos personales y de contacto del miembro.
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto px-1">
               <div className="grid grid-cols-1 gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="fullName">Nombre Completo</Label>
+                  <Label htmlFor="edit-fullName">Nombre Completo</Label>
                   <Input
-                    id="fullName"
+                    id="edit-fullName"
                     required
                     value={formData.fullName}
-                    onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, fullName: e.target.value })
+                    }
                   />
                 </div>
               </div>
 
               {editingMember && (
-                <div className="flex items-center gap-4 p-3 border rounded-lg">
+                <div className="flex items-center gap-4 p-3 border rounded-2xl dark:border-white/5 border-black/5">
                   {photoPreview || editingMember.photoUrl ? (
                     <img
                       src={photoPreview || editingMember.photoUrl || ''}
@@ -310,13 +557,15 @@ export function MembersPage({ userRole }: MembersPageProps) {
                       className="size-16 rounded-full object-cover"
                     />
                   ) : (
-                    <div className="size-16 rounded-full bg-primary/10 text-primary flex items-center justify-center">
-                      <Camera className="size-6" />
+                    <div className="size-16 rounded-full dark:bg-white/5 bg-black/5 flex items-center justify-center">
+                      <Camera className="size-6 text-muted-foreground" />
                     </div>
                   )}
                   <div className="flex-1">
-                    <Label htmlFor="photo" className="text-sm font-medium">Foto del Socio</Label>
-                    <p className="text-xs text-muted-foreground mb-2">JPG o PNG, max 2MB</p>
+                    <Label className="text-sm font-bold">Foto del Socio</Label>
+                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-2">
+                      JPG o PNG, max 2MB
+                    </p>
                     <Button
                       type="button"
                       variant="outline"
@@ -329,7 +578,6 @@ export function MembersPage({ userRole }: MembersPageProps) {
                     </Button>
                     <input
                       ref={fileInputRef}
-                      id="photo"
                       type="file"
                       accept="image/*"
                       className="hidden"
@@ -341,9 +589,9 @@ export function MembersPage({ userRole }: MembersPageProps) {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="documentNumber">DNI / Documento</Label>
+                  <Label htmlFor="edit-documentNumber">DNI / Documento</Label>
                   <Input
-                    id="documentNumber"
+                    id="edit-documentNumber"
                     required
                     value={formData.documentNumber}
                     onChange={(e) =>
@@ -355,9 +603,9 @@ export function MembersPage({ userRole }: MembersPageProps) {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="birthDate">Fecha de Nacimiento</Label>
+                  <Label htmlFor="edit-birthDate">Fecha de Nacimiento</Label>
                   <Input
-                    id="birthDate"
+                    id="edit-birthDate"
                     type="date"
                     value={formData.birthDate}
                     onChange={(e) =>
@@ -369,9 +617,9 @@ export function MembersPage({ userRole }: MembersPageProps) {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="phone">Teléfono</Label>
+                  <Label htmlFor="edit-phone">Teléfono</Label>
                   <Input
-                    id="phone"
+                    id="edit-phone"
                     type="tel"
                     value={formData.phone}
                     onChange={(e) =>
@@ -380,9 +628,9 @@ export function MembersPage({ userRole }: MembersPageProps) {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="edit-email">Email</Label>
                   <Input
-                    id="email"
+                    id="edit-email"
                     type="email"
                     value={formData.email}
                     onChange={(e) =>
@@ -392,13 +640,15 @@ export function MembersPage({ userRole }: MembersPageProps) {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 border-t pt-4 mt-2">
+              <Separator />
+
+              <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="emergencyContactName">
+                  <Label htmlFor="edit-emergencyContactName">
                     Contacto de Emergencia
                   </Label>
                   <Input
-                    id="emergencyContactName"
+                    id="edit-emergencyContactName"
                     value={formData.emergencyContactName}
                     onChange={(e) =>
                       setFormData({
@@ -409,11 +659,11 @@ export function MembersPage({ userRole }: MembersPageProps) {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="emergencyContactPhone">
+                  <Label htmlFor="edit-emergencyContactPhone">
                     Teléfono de Emergencia
                   </Label>
                   <Input
-                    id="emergencyContactPhone"
+                    id="edit-emergencyContactPhone"
                     type="tel"
                     value={formData.emergencyContactPhone}
                     onChange={(e) =>
@@ -427,58 +677,69 @@ export function MembersPage({ userRole }: MembersPageProps) {
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="address" className="flex items-center gap-2">
-                  Dirección
-                </Label>
+                <Label htmlFor="edit-address">Dirección</Label>
                 <Textarea
-                  id="address"
+                  id="edit-address"
                   placeholder="Calle, Ciudad, Provincia"
                   value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, address: e.target.value })
+                  }
                 />
               </div>
 
-              {editingMember && (
-                <div className="grid gap-2 border-t pt-4 mt-2">
-                  <Label htmlFor="status">Estado del Perfil</Label>
-                  <select
-                    id="status"
-                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    value={formData.status}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        status: e.target.value as 'ACTIVE' | 'INACTIVE',
-                      })
-                    }
-                  >
-                    <option value="ACTIVE">Activo</option>
-                    <option value="INACTIVE">Inactivo (Suspendido)</option>
-                  </select>
-                </div>
-              )}
+              <Separator />
+
+              <div className="grid gap-2">
+                <Label htmlFor="edit-status">Estado del Perfil</Label>
+                <Select
+                  value={formData.status}
+                  onValueChange={(value) =>
+                    setFormData({
+                      ...formData,
+                      status: value as 'ACTIVE' | 'INACTIVE',
+                    })
+                  }
+                >
+                  <SelectTrigger id="edit-status" className="w-full">
+                    <SelectValue placeholder="Estado del perfil" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ACTIVE">Activo</SelectItem>
+                    <SelectItem value="INACTIVE">
+                      Inactivo (Suspendido)
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <DialogFooter>
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setIsModalOpen(false)}
+                onClick={() => setIsEditModalOpen(false)}
               >
                 Cancelar
               </Button>
               <LoadingButton
                 type="submit"
-                isLoading={createMutation.isPending || updateMutation.isPending}
+                isLoading={updateMutation.isPending}
                 loadingText="Guardando..."
               >
-                Guardar Socio
+                Guardar Cambios
               </LoadingButton>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!viewMemberId} onOpenChange={(open) => { if (!open) setViewMemberId(null) }}>
+      {/* ── View Detail Dialog ────────────────────────────────────────── */}
+      <Dialog
+        open={!!viewMemberId}
+        onOpenChange={(open) => {
+          if (!open) setViewMemberId(null)
+        }}
+      >
         <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Detalle del Socio</DialogTitle>
@@ -488,98 +749,274 @@ export function MembersPage({ userRole }: MembersPageProps) {
           </DialogHeader>
 
           {loadingDetail ? (
-            <div className="py-8 text-center text-muted-foreground">Cargando...</div>
+            <div className="py-8 text-center text-muted-foreground flex items-center justify-center gap-2">
+              <RefreshCw className="size-4 animate-spin text-primary" />
+              <span>Cargando datos del socio...</span>
+            </div>
           ) : memberDetail ? (
-            <div className="space-y-6 py-4">
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                <div>
-                  <Label className="text-xs text-muted-foreground">Nombre</Label>
-                  <p className="font-medium">{memberDetail.fullName}</p>
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">Documento</Label>
-                  <p className="font-medium">{memberDetail.documentNumber || '—'}</p>
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">Estado</Label>
-                  <Badge variant={memberDetail.status === 'ACTIVE' ? 'default' : 'destructive'} className="mt-0.5">
-                    {memberDetail.status === 'ACTIVE' ? 'Activo' : 'Inactivo'}
-                  </Badge>
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">Teléfono</Label>
-                  <p className="font-medium">{memberDetail.phone || '—'}</p>
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">Email</Label>
-                  <p className="font-medium">{memberDetail.email || '—'}</p>
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">Miembro desde</Label>
-                  <p className="font-medium">{formatDate(memberDetail.createdAt)}</p>
+            <div className="space-y-6 py-2">
+              {/* Encabezado VIP */}
+              <div className="relative overflow-hidden p-6 rounded-[2rem] border dark:border-white/[0.04] border-black/[0.04] bg-gradient-to-r from-foreground/[0.04] to-transparent flex flex-col sm:flex-row sm:items-center gap-5">
+                {memberDetail.photoUrl ? (
+                  <div className="relative size-16 rounded-full ring-4 ring-foreground/10 overflow-hidden shrink-0 shadow-md">
+                    <img
+                      src={memberDetail.photoUrl}
+                      alt=""
+                      className="size-full object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="size-16 rounded-full bg-gradient-to-br from-foreground/10 to-foreground/5 border border-foreground/10 flex items-center justify-center font-black text-lg uppercase shrink-0 text-foreground tracking-wider shadow-inner">
+                    {memberDetail.fullName
+                      .split(' ')
+                      .map((n) => n[0])
+                      .slice(0, 2)
+                      .join('')}
+                  </div>
+                )}
+                <div className="space-y-1">
+                  <div className="flex items-center flex-wrap gap-2.5">
+                    <p className="text-xl font-black dark:text-white text-foreground tracking-tight leading-none">
+                      {memberDetail.fullName}
+                    </p>
+                    <Badge
+                      className={cn(
+                        'font-bold text-[10px] py-0.5 px-2.5 rounded-full select-none',
+                        memberDetail.status === 'ACTIVE'
+                          ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 hover:bg-emerald-500/15'
+                          : 'bg-red-500/10 text-red-500 border-red-500/20 hover:bg-red-500/15',
+                      )}
+                    >
+                      {memberDetail.status === 'ACTIVE' ? 'Activo' : 'Inactivo'}
+                    </Badge>
+                  </div>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none pt-0.5">
+                    Socio desde el {formatDate(memberDetail.createdAt)}
+                  </p>
                 </div>
               </div>
 
-              <div>
-                <h3 className="text-lg font-semibold flex items-center gap-2 mb-3">
-                  <RefreshCw className="size-4 text-primary" />
-                  Renovaciones
-                </h3>
+              {/* Datos Personales */}
+              <div className="space-y-3">
+                <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-1.5 px-1">
+                  <User className="size-3.5 text-primary" /> Datos Personales
+                </h4>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {/* DNI */}
+                  <div className="bg-muted/60 p-3.5 rounded-2xl border border-border/10 flex items-start gap-3">
+                    <div className="size-8 rounded-lg dark:bg-white/5 bg-black/5 flex items-center justify-center shrink-0">
+                      <User className="size-4 text-muted-foreground" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
+                        Documento / DNI
+                      </p>
+                      <p className="font-bold text-sm mt-0.5 truncate">
+                        {memberDetail.documentNumber || '—'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Teléfono */}
+                  <div className="bg-muted/60 p-3.5 rounded-2xl border border-border/10 flex items-start gap-3">
+                    <div className="size-8 rounded-lg dark:bg-white/5 bg-black/5 flex items-center justify-center shrink-0">
+                      <Phone className="size-4 text-muted-foreground" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
+                        Teléfono
+                      </p>
+                      <p className="font-bold text-sm mt-0.5 truncate">
+                        {memberDetail.phone || '—'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Email */}
+                  <div className="bg-muted/60 p-3.5 rounded-2xl border border-border/10 flex items-start gap-3">
+                    <div className="size-8 rounded-lg dark:bg-white/5 bg-black/5 flex items-center justify-center shrink-0">
+                      <Mail className="size-4 text-muted-foreground" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
+                        Email
+                      </p>
+                      <p className="font-bold text-sm mt-0.5 truncate break-all">
+                        {memberDetail.email || '—'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Fecha Nacimiento */}
+                  <div className="bg-muted/60 p-3.5 rounded-2xl border border-border/10 flex items-start gap-3">
+                    <div className="size-8 rounded-lg dark:bg-white/5 bg-black/5 flex items-center justify-center shrink-0">
+                      <Calendar className="size-4 text-muted-foreground" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
+                        Fecha de Nac.
+                      </p>
+                      <p className="font-bold text-sm mt-0.5 truncate">
+                        {memberDetail.birthDate
+                          ? formatDate(memberDetail.birthDate)
+                          : '—'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Contacto Emergencia */}
+                  <div className="bg-muted/60 p-3.5 rounded-2xl border border-border/10 flex items-start gap-3">
+                    <div className="size-8 rounded-lg dark:bg-white/5 bg-black/5 flex items-center justify-center shrink-0">
+                      <Heart className="size-4 text-muted-foreground" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
+                        Contacto de Emerg.
+                      </p>
+                      <p className="font-bold text-sm mt-0.5 truncate">
+                        {memberDetail.emergencyContactName || '—'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Tel. Emergencia */}
+                  <div className="bg-muted/60 p-3.5 rounded-2xl border border-border/10 flex items-start gap-3">
+                    <div className="size-8 rounded-lg dark:bg-white/5 bg-black/5 flex items-center justify-center shrink-0">
+                      <Phone className="size-4 text-muted-foreground" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
+                        Tel. Emergencia
+                      </p>
+                      <p className="font-bold text-sm mt-0.5 truncate">
+                        {memberDetail.emergencyContactPhone || '—'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Dirección */}
+              {memberDetail.address && (
+                <div className="space-y-2 pt-1">
+                  <div className="bg-muted/60 p-4 rounded-2xl border border-border/10 flex items-start gap-3.5">
+                    <div className="size-8 rounded-lg dark:bg-white/5 bg-black/5 flex items-center justify-center shrink-0">
+                      <MapPin className="size-4 text-muted-foreground" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
+                        Dirección
+                      </p>
+                      <p className="font-bold text-sm mt-0.5 leading-relaxed">
+                        {memberDetail.address}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <Separator />
+
+              {/* Historial de Membresías */}
+              <div className="space-y-3 pt-1">
+                <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-1.5 px-1">
+                  <RefreshCw className="size-3.5 text-primary" /> Historial de
+                  Membresías
+                </h4>
                 {renewalHistory.length === 0 ? (
-                  <p className="text-sm text-muted-foreground py-4">
+                  <div className="bg-muted/60 p-8 rounded-2xl border border-border/10 text-center text-sm text-muted-foreground">
                     Este socio no tiene membresías registradas.
-                  </p>
+                  </div>
                 ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Plan</TableHead>
-                        <TableHead>Inicio</TableHead>
-                        <TableHead>Fin</TableHead>
-                        <TableHead>Estado</TableHead>
-                        <TableHead>Pago</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {renewalHistory.map((sub) => {
-                        const lastPayment = sub.payments?.[0]
-                        return (
-                          <TableRow key={sub.id}>
-                            <TableCell className="font-medium">{sub.plan.name}</TableCell>
-                            <TableCell>{formatDate(sub.startDate)}</TableCell>
-                            <TableCell>{formatDate(sub.endDate)}</TableCell>
-                            <TableCell>
-                              <Badge
-                                variant={
-                                  sub.status === 'ACTIVE' ? 'default' : sub.status === 'EXPIRED' ? 'destructive' : 'secondary'
-                                }
-                              >
-                                {sub.status === 'ACTIVE' ? 'Activa' : sub.status === 'EXPIRED' ? 'Vencida' : sub.status}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              {lastPayment ? (
-                                <div className="flex items-center gap-1 text-sm">
-                                  <Receipt className="size-3 text-muted-foreground" />
-                                  <span>{formatCurrency(lastPayment.amount)}</span>
+                  <div className="rounded-2xl border dark:border-white/[0.04] border-black/[0.04] overflow-hidden">
+                    <Table>
+                      <TableHeader className="bg-black/[0.02] dark:bg-white/[0.02]">
+                        <TableRow>
+                          <TableHead className="text-[9px] font-bold uppercase tracking-widest py-3">
+                            Plan
+                          </TableHead>
+                          <TableHead className="text-[9px] font-bold uppercase tracking-widest py-3">
+                            Inicio
+                          </TableHead>
+                          <TableHead className="text-[9px] font-bold uppercase tracking-widest py-3">
+                            Fin
+                          </TableHead>
+                          <TableHead className="text-[9px] font-bold uppercase tracking-widest py-3">
+                            Estado
+                          </TableHead>
+                          <TableHead className="text-[9px] font-bold uppercase tracking-widest py-3">
+                            Pago
+                          </TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {renewalHistory.map((sub) => {
+                          const hasPayment = sub.payments.length > 0
+                          const lastPayment = sub.payments[0]
+                          const active = sub.status === 'ACTIVE'
+                          const expired = sub.status === 'EXPIRED'
+                          return (
+                            <TableRow
+                              key={sub.id}
+                              className="hover:bg-black/[0.01] dark:hover:bg-white/[0.01] transition-colors"
+                            >
+                              <TableCell className="font-bold py-3.5">
+                                {sub.plan.name}
+                              </TableCell>
+                              <TableCell className="py-3.5">
+                                {formatDate(sub.startDate)}
+                              </TableCell>
+                              <TableCell className="py-3.5">
+                                {formatDate(sub.endDate)}
+                              </TableCell>
+                              <TableCell className="py-3.5">
+                                <Badge
+                                  className={cn(
+                                    'font-bold text-[9px] py-0.5 px-2 rounded-full select-none',
+                                    active
+                                      ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+                                      : expired
+                                        ? 'bg-red-500/10 text-red-500 border-red-500/20'
+                                        : 'bg-muted-foreground/10 text-muted-foreground border-muted-foreground/20',
+                                  )}
+                                >
+                                  {active
+                                    ? 'Activa'
+                                    : expired
+                                      ? 'Vencida'
+                                      : sub.status}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="py-3.5">
+                                {hasPayment ? (
+                                  <div className="flex items-center gap-1.5 text-xs">
+                                    <Receipt className="size-3.5 text-muted-foreground shrink-0" />
+                                    <span className="font-semibold">
+                                      {formatCurrency(lastPayment.amount)}
+                                    </span>
+                                    <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
+                                      ({lastPayment.paymentMethod})
+                                    </span>
+                                  </div>
+                                ) : (
                                   <span className="text-xs text-muted-foreground">
-                                    ({lastPayment.paymentMethod})
+                                    —
                                   </span>
-                                </div>
-                              ) : (
-                                <span className="text-sm text-muted-foreground">—</span>
-                              )}
-                            </TableCell>
-                          </TableRow>
-                        )
-                      })}
-                    </TableBody>
-                  </Table>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          )
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
                 )}
               </div>
             </div>
           ) : (
-            <div className="py-8 text-center text-destructive">Error al cargar el socio</div>
+            <div className="py-8 text-center text-destructive">
+              Error al cargar el socio
+            </div>
           )}
 
           <DialogFooter>
@@ -589,6 +1026,6 @@ export function MembersPage({ userRole }: MembersPageProps) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   )
 }

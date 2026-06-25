@@ -4,7 +4,9 @@ import { productCategories } from '#/shared/db/schema/product-categories.ts'
 import { eq } from 'drizzle-orm'
 import { createCategory, cleanDatabase } from '../factories.ts'
 
-beforeAll(async () => { await cleanDatabase() })
+beforeAll(async () => {
+  await cleanDatabase()
+})
 
 describe('Product Categories', () => {
   it('should create and verify', async () => {
@@ -14,8 +16,13 @@ describe('Product Categories', () => {
 
   it('should update name and isActive', async () => {
     const cat = await createCategory({ name: 'Original' })
-    await db.update(productCategories).set({ name: 'Modificado', isActive: false }).where(eq(productCategories.id, cat.id))
-    const updated = await db.query.productCategories.findFirst({ where: eq(productCategories.id, cat.id) })
+    await db
+      .update(productCategories)
+      .set({ name: 'Modificado', isActive: false })
+      .where(eq(productCategories.id, cat.id))
+    const updated = await db.query.productCategories.findFirst({
+      where: eq(productCategories.id, cat.id),
+    })
     expect(updated!.name).toBe('Modificado')
     expect(updated!.isActive).toBe(false)
   })
@@ -28,7 +35,10 @@ describe('Product Categories', () => {
   })
 
   it('should create with description', async () => {
-    const cat = await createCategory({ name: 'Cat Desc', description: 'una descripcion' })
+    const cat = await createCategory({
+      name: 'Cat Desc',
+      description: 'una descripcion',
+    })
     expect(cat.description).toBe('una descripcion')
   })
 })

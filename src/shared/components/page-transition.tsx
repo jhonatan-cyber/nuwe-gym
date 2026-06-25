@@ -9,10 +9,7 @@ export function PageTransition({ children }: PageTransitionProps) {
   const { pathname } = useLocation()
 
   return (
-    <div
-      key={pathname}
-      className="animate-in fade-in duration-500"
-    >
+    <div key={pathname} className="animate-in fade-in duration-500">
       {children}
     </div>
   )

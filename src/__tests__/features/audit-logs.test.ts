@@ -10,15 +10,18 @@ beforeAll(async () => {
 
 describe('Audit Logs', () => {
   it('should create a log entry and verify', async () => {
-    const [log] = await db.insert(auditLogs).values({
-      action: 'CREATE',
-      entityType: 'MEMBER',
-      entityId: 1,
-      description: 'Creó un nuevo miembro',
-      userId: TEST_USER_ID,
-      userName: 'Admin',
-      userRole: 'ADMIN',
-    }).returning()
+    const [log] = await db
+      .insert(auditLogs)
+      .values({
+        action: 'CREATE',
+        entityType: 'MEMBER',
+        entityId: 1,
+        description: 'Creó un nuevo miembro',
+        userId: TEST_USER_ID,
+        userName: 'Admin',
+        userRole: 'ADMIN',
+      })
+      .returning()
 
     expect(log).toBeDefined()
     expect(log.action).toBe('CREATE')
@@ -28,9 +31,27 @@ describe('Audit Logs', () => {
 
   it('should filter logs by action type', async () => {
     await db.insert(auditLogs).values([
-      { action: 'CREATE', entityType: 'PRODUCT', entityId: 1, description: 'crear', userId: TEST_USER_ID },
-      { action: 'UPDATE', entityType: 'PRODUCT', entityId: 1, description: 'actualizar', userId: TEST_USER_ID },
-      { action: 'DELETE', entityType: 'PRODUCT', entityId: 1, description: 'eliminar', userId: TEST_USER_ID },
+      {
+        action: 'CREATE',
+        entityType: 'PRODUCT',
+        entityId: 1,
+        description: 'crear',
+        userId: TEST_USER_ID,
+      },
+      {
+        action: 'UPDATE',
+        entityType: 'PRODUCT',
+        entityId: 1,
+        description: 'actualizar',
+        userId: TEST_USER_ID,
+      },
+      {
+        action: 'DELETE',
+        entityType: 'PRODUCT',
+        entityId: 1,
+        description: 'eliminar',
+        userId: TEST_USER_ID,
+      },
     ])
 
     const creates = await db.query.auditLogs.findMany({
@@ -57,7 +78,7 @@ describe('Audit Logs', () => {
 
     expect(all.length).toBeGreaterThanOrEqual(1)
     for (let i = 1; i < all.length; i++) {
-      expect(all[i - 1]!.createdAt >= all[i]!.createdAt).toBe(true)
+      expect(all[i - 1].createdAt >= all[i].createdAt).toBe(true)
     }
   })
 
@@ -84,6 +105,6 @@ describe('Audit Logs', () => {
       .from(auditLogs)
       .where(gte(auditLogs.createdAt, last24h))
 
-    expect(recent[0]!.count).toBeGreaterThanOrEqual(1)
+    expect(recent[0].count).toBeGreaterThanOrEqual(1)
   })
 })

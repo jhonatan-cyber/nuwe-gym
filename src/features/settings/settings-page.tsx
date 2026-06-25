@@ -1,8 +1,21 @@
 import { useState, useEffect } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { Settings, DollarSign, Bell, Clock, Upload, AlertCircle } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '#/shared/components/ui/card'
+import {
+  Settings,
+  DollarSign,
+  Bell,
+  Clock,
+  Upload,
+  AlertCircle,
+} from 'lucide-react'
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '#/shared/components/ui/card'
 import { Button } from '#/shared/components/ui/button'
 import { LoadingButton } from '#/shared/components/ui/loading-button'
 import { Input } from '#/shared/components/ui/input'
@@ -13,7 +26,11 @@ import { getSettings, updateSettings } from '#/features/settings/server.ts'
 
 type TabId = 'general' | 'billing' | 'notifications' | 'hours'
 
-const tabs: { id: TabId; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+const tabs: {
+  id: TabId
+  label: string
+  icon: React.ComponentType<{ className?: string }>
+}[] = [
   { id: 'general', label: 'General', icon: Settings },
   { id: 'billing', label: 'Facturación', icon: DollarSign },
   { id: 'hours', label: 'Horarios', icon: Clock },
@@ -55,7 +72,11 @@ interface SettingsForm {
   sundayOpen: boolean
 }
 
-function useServerData<T>(fetcher: () => Promise<T>): { data: T | null; error: string | null; loading: boolean } {
+function useServerData<T>(fetcher: () => Promise<T>): {
+  data: T | null
+  error: string | null
+  loading: boolean
+} {
   const [data, setData] = useState<T | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -70,13 +91,16 @@ function useServerData<T>(fetcher: () => Promise<T>): { data: T | null; error: s
         if (!cancelled) setData(result)
       })
       .catch((e) => {
-        if (!cancelled) setError(e instanceof Error ? e.message : 'Error desconocido')
+        if (!cancelled)
+          setError(e instanceof Error ? e.message : 'Error desconocido')
       })
       .finally(() => {
         if (!cancelled) setLoading(false)
       })
 
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   return { data, error, loading }
@@ -84,7 +108,11 @@ function useServerData<T>(fetcher: () => Promise<T>): { data: T | null; error: s
 
 export function SettingsPage() {
   const [activeTab, setActiveTab] = useState<TabId>('general')
-  const { data: initialData, error, loading } = useServerData(() => getSettings())
+  const {
+    data: initialData,
+    error,
+    loading,
+  } = useServerData(() => getSettings())
 
   const [form, setForm] = useState<SettingsForm>({
     gymName: '',
@@ -114,7 +142,7 @@ export function SettingsPage() {
   useEffect(() => {
     if (initialData) {
       setForm({
-        gymName: initialData.gymName ?? '',
+        gymName: initialData.gymName,
         gymAddress: initialData.gymAddress ?? '',
         gymPhone: initialData.gymPhone ?? '',
         gymEmail: initialData.gymEmail ?? '',
@@ -150,7 +178,10 @@ export function SettingsPage() {
     },
   })
 
-  function handleChange(field: keyof SettingsForm, value: string | number | boolean) {
+  function handleChange(
+    field: keyof SettingsForm,
+    value: string | number | boolean,
+  ) {
     setForm((prev) => ({ ...prev, [field]: value }))
   }
 
@@ -193,7 +224,9 @@ export function SettingsPage() {
         <Card className="transition-all duration-200">
           <CardContent className="flex flex-col items-center justify-center py-12">
             <AlertCircle className="size-12 text-destructive mb-4" />
-            <p className="text-lg font-medium text-destructive">Error al cargar configuración</p>
+            <p className="text-lg font-medium text-destructive">
+              Error al cargar configuración
+            </p>
             <p className="text-sm text-muted-foreground">{error}</p>
           </CardContent>
         </Card>
@@ -266,7 +299,10 @@ export function SettingsPage() {
             </div>
             <Separator />
             <div className="flex justify-end">
-              <LoadingButton onClick={handleSave} isLoading={updateMutation.isPending}>
+              <LoadingButton
+                onClick={handleSave}
+                isLoading={updateMutation.isPending}
+              >
                 Guardar cambios
               </LoadingButton>
             </div>
@@ -278,14 +314,18 @@ export function SettingsPage() {
         <Card className="transition-all duration-200">
           <CardHeader>
             <CardTitle>Facturación</CardTitle>
-            <CardDescription>Configuración de moneda e impuestos</CardDescription>
+            <CardDescription>
+              Configuración de moneda e impuestos
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Símbolo de moneda">
                 <Input
                   value={form.currencySymbol}
-                  onChange={(e) => handleChange('currencySymbol', e.target.value)}
+                  onChange={(e) =>
+                    handleChange('currencySymbol', e.target.value)
+                  }
                   placeholder="$"
                 />
               </Field>
@@ -314,13 +354,18 @@ export function SettingsPage() {
                   min="0"
                   max="10"
                   value={form.decimalPlaces}
-                  onChange={(e) => handleChange('decimalPlaces', Number(e.target.value))}
+                  onChange={(e) =>
+                    handleChange('decimalPlaces', Number(e.target.value))
+                  }
                 />
               </Field>
             </div>
             <Separator />
             <div className="flex justify-end">
-              <LoadingButton onClick={handleSave} isLoading={updateMutation.isPending}>
+              <LoadingButton
+                onClick={handleSave}
+                isLoading={updateMutation.isPending}
+              >
                 Guardar cambios
               </LoadingButton>
             </div>
@@ -333,7 +378,9 @@ export function SettingsPage() {
           <Card className="transition-all duration-200">
             <CardHeader>
               <CardTitle>Logo del Gimnasio</CardTitle>
-              <CardDescription>Imagen que se mostrará en los reportes y recibos</CardDescription>
+              <CardDescription>
+                Imagen que se mostrará en los reportes y recibos
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center gap-4">
@@ -385,7 +432,9 @@ export function SettingsPage() {
           <Card className="transition-all duration-200">
             <CardHeader>
               <CardTitle>Horario de Atención</CardTitle>
-              <CardDescription>Configurá los días y horarios de apertura del gimnasio</CardDescription>
+              <CardDescription>
+                Configurá los días y horarios de apertura del gimnasio
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
@@ -393,14 +442,18 @@ export function SettingsPage() {
                   <Input
                     type="time"
                     value={form.openingTime}
-                    onChange={(e) => handleChange('openingTime', e.target.value)}
+                    onChange={(e) =>
+                      handleChange('openingTime', e.target.value)
+                    }
                   />
                 </Field>
                 <Field label="Hora de cierre">
                   <Input
                     type="time"
                     value={form.closingTime}
-                    onChange={(e) => handleChange('closingTime', e.target.value)}
+                    onChange={(e) =>
+                      handleChange('closingTime', e.target.value)
+                    }
                   />
                 </Field>
               </div>
@@ -416,10 +469,12 @@ export function SettingsPage() {
                     <button
                       type="button"
                       role="switch"
-                      aria-checked={form[day.key as keyof SettingsForm] as boolean}
+                      aria-checked={
+                        form[day.key as keyof SettingsForm] as boolean
+                      }
                       onClick={() =>
                         handleChange(
-                          day.key as keyof SettingsForm,
+                          day.key,
                           !(form[day.key as keyof SettingsForm] as boolean),
                         )
                       }
@@ -443,7 +498,10 @@ export function SettingsPage() {
             </CardContent>
           </Card>
           <div className="lg:col-span-2 flex justify-end">
-            <LoadingButton onClick={handleSave} isLoading={updateMutation.isPending}>
+            <LoadingButton
+              onClick={handleSave}
+              isLoading={updateMutation.isPending}
+            >
               Guardar cambios
             </LoadingButton>
           </div>
@@ -454,7 +512,9 @@ export function SettingsPage() {
         <Card className="transition-all duration-200">
           <CardHeader>
             <CardTitle>Notificaciones</CardTitle>
-            <CardDescription>Alertas y recordatorios automáticos</CardDescription>
+            <CardDescription>
+              Alertas y recordatorios automáticos
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
@@ -463,7 +523,9 @@ export function SettingsPage() {
                   type="number"
                   min="0"
                   value={form.lowStockThreshold}
-                  onChange={(e) => handleChange('lowStockThreshold', Number(e.target.value))}
+                  onChange={(e) =>
+                    handleChange('lowStockThreshold', Number(e.target.value))
+                  }
                 />
               </Field>
               <Field label="Días para recordatorio de membresía">
@@ -471,7 +533,12 @@ export function SettingsPage() {
                   type="number"
                   min="0"
                   value={form.membershipReminderDays}
-                  onChange={(e) => handleChange('membershipReminderDays', Number(e.target.value))}
+                  onChange={(e) =>
+                    handleChange(
+                      'membershipReminderDays',
+                      Number(e.target.value),
+                    )
+                  }
                 />
               </Field>
             </div>
@@ -481,7 +548,9 @@ export function SettingsPage() {
                   type="number"
                   min="0"
                   value={form.checkInWindowMinutes}
-                  onChange={(e) => handleChange('checkInWindowMinutes', Number(e.target.value))}
+                  onChange={(e) =>
+                    handleChange('checkInWindowMinutes', Number(e.target.value))
+                  }
                 />
               </Field>
               <Field label="Renovación automática">
@@ -489,16 +558,23 @@ export function SettingsPage() {
                   <input
                     type="checkbox"
                     checked={form.enableAutoRenew}
-                    onChange={(e) => handleChange('enableAutoRenew', e.target.checked)}
+                    onChange={(e) =>
+                      handleChange('enableAutoRenew', e.target.checked)
+                    }
                     className="size-4 rounded border-input accent-primary"
                   />
-                  <span className="text-sm text-muted-foreground">Activar renovación automática de membresías</span>
+                  <span className="text-sm text-muted-foreground">
+                    Activar renovación automática de membresías
+                  </span>
                 </label>
               </Field>
             </div>
             <Separator />
             <div className="flex justify-end">
-              <LoadingButton onClick={handleSave} isLoading={updateMutation.isPending}>
+              <LoadingButton
+                onClick={handleSave}
+                isLoading={updateMutation.isPending}
+              >
                 Guardar cambios
               </LoadingButton>
             </div>
@@ -509,7 +585,15 @@ export function SettingsPage() {
   )
 }
 
-function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
+function Field({
+  label,
+  required,
+  children,
+}: {
+  label: string
+  required?: boolean
+  children: React.ReactNode
+}) {
   return (
     <div className="space-y-1.5">
       <Label>

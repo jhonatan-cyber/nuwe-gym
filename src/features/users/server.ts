@@ -47,7 +47,7 @@ export const createStaffUser = createServerFn({ method: 'POST' })
   .inputValidator((data) => createStaffUserSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
-    
+
     const baRole = data.role === 'ADMIN' ? 'admin' : 'user'
     const user = await auth.api.createUser({
       headers: new Headers(),
@@ -59,7 +59,10 @@ export const createStaffUser = createServerFn({ method: 'POST' })
       },
     })
 
-    await db.update(users).set({ role: data.role, emailVerified: true }).where(eq(users.id, user.user.id))
+    await db
+      .update(users)
+      .set({ role: data.role, emailVerified: true })
+      .where(eq(users.id, user.user.id))
 
     createAuditLog({
       ...getAuditContext(session),
@@ -67,7 +70,7 @@ export const createStaffUser = createServerFn({ method: 'POST' })
       entityType: 'USER',
       description: `Creó usuario ${data.name}`,
     })
-    
+
     return user
   })
 
@@ -75,7 +78,7 @@ export const deleteUser = createServerFn({ method: 'POST' })
   .inputValidator((userId) => z.string().parse(userId))
   .handler(async ({ data: userId }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
-    
+
     await db.delete(users).where(eq(users.id, userId))
 
     createAuditLog({

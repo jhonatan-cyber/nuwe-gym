@@ -31,11 +31,11 @@ git commit -m "Add invitations table"
 
 **When to use each:**
 
-| Command | When | Creates File |
-|---------|------|--------------|
-| `db:push` | Local development, experimenting | No |
-| `db:generate` | Ready to commit, before PR | Yes |
-| `db:migrate` | Staging/production deployment | No (runs existing) |
+| Command       | When                             | Creates File       |
+| ------------- | -------------------------------- | ------------------ |
+| `db:push`     | Local development, experimenting | No                 |
+| `db:generate` | Ready to commit, before PR       | Yes                |
+| `db:migrate`  | Staging/production deployment    | No (runs existing) |
 
 **Why separate:**
 
@@ -45,6 +45,7 @@ git commit -m "Add invitations table"
 - Migration history stays meaningful
 
 **Why it matters:**
+
 - Clean migration history
 - Faster local development
 - Migrations represent intentional schema changes

@@ -44,7 +44,9 @@ export function QRCodesPage({ userRole }: QRCodesPageProps) {
     queryFn: () => getMembersWithQR({ data: { search: debouncedSearch } }),
   })
 
-  const [selectedMember, setSelectedMember] = useState<typeof membersList[number] | null>(null)
+  const [selectedMember, setSelectedMember] = useState<
+    (typeof membersList)[number] | null
+  >(null)
 
   const generateMutation = useMutation({
     mutationFn: generateMemberQR,
@@ -61,7 +63,7 @@ export function QRCodesPage({ userRole }: QRCodesPageProps) {
     onError: () => toast.error('Error al generar código QR'),
   })
 
-  const handleGenerateQR = async (member: typeof membersList[number]) => {
+  const handleGenerateQR = async (member: (typeof membersList)[number]) => {
     setSelectedMember(member)
     if (member.qrCode) {
       const dataUrl = await QRCode.toDataURL(member.qrCode, {
@@ -133,44 +135,78 @@ export function QRCodesPage({ userRole }: QRCodesPageProps) {
 
       <DataTable
         columns={[
-          { key: 'member', label: 'Socio', render: (member: typeof membersList[number]) => (
-            <div className="flex items-center gap-2">
-              {member.photoUrl ? (
-                <img src={member.photoUrl} alt="" className="size-8 rounded-full object-cover" />
+          {
+            key: 'member',
+            label: 'Socio',
+            render: (member: (typeof membersList)[number]) => (
+              <div className="flex items-center gap-2">
+                {member.photoUrl ? (
+                  <img
+                    src={member.photoUrl}
+                    alt=""
+                    className="size-8 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="size-8 bg-primary/10 text-primary rounded-full flex items-center justify-center font-bold text-xs uppercase">
+                    {member.fullName.substring(0, 2)}
+                  </div>
+                )}
+                <span className="font-medium">{member.fullName}</span>
+              </div>
+            ),
+          },
+          {
+            key: 'document',
+            label: 'Documento',
+            render: (member: (typeof membersList)[number]) => (
+              <span className="text-muted-foreground">
+                {member.documentNumber || '—'}
+              </span>
+            ),
+          },
+          {
+            key: 'qr',
+            label: 'QR',
+            render: (member: (typeof membersList)[number]) =>
+              member.qrCode ? (
+                <Badge
+                  variant="default"
+                  className="bg-emerald-500/15 text-emerald-600 border-emerald-500/20"
+                >
+                  Generado
+                </Badge>
               ) : (
-                <div className="size-8 bg-primary/10 text-primary rounded-full flex items-center justify-center font-bold text-xs uppercase">
-                  {member.fullName.substring(0, 2)}
-                </div>
-              )}
-              <span className="font-medium">{member.fullName}</span>
-            </div>
-          )},
-          { key: 'document', label: 'Documento', render: (member: typeof membersList[number]) => <span className="text-muted-foreground">{member.documentNumber || '—'}</span> },
-          { key: 'qr', label: 'QR', render: (member: typeof membersList[number]) => (
-            member.qrCode
-              ? <Badge variant="default" className="bg-emerald-500/15 text-emerald-600 border-emerald-500/20">Generado</Badge>
-              : <Badge variant="secondary">Pendiente</Badge>
-          )},
-          { key: 'actions', label: 'Acciones', className: 'text-right', render: (member: typeof membersList[number]) => !isReadOnly && (
-            <Button variant="outline" size="sm" onClick={() => handleGenerateQR(member)}>
-              <QrCode className="size-4 mr-1" />
-              {member.qrCode ? 'Ver QR' : 'Generar'}
-            </Button>
-          )},
+                <Badge variant="secondary">Pendiente</Badge>
+              ),
+          },
+          {
+            key: 'actions',
+            label: 'Acciones',
+            className: 'text-right',
+            render: (member: (typeof membersList)[number]) =>
+              !isReadOnly && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleGenerateQR(member)}
+                >
+                  <QrCode className="size-4 mr-1" />
+                  {member.qrCode ? 'Ver QR' : 'Generar'}
+                </Button>
+              ),
+          },
         ]}
         data={membersList}
         isLoading={isLoading}
         emptyMessage="No se encontraron socios."
-        keyExtractor={(member: typeof membersList[number]) => member.id}
+        keyExtractor={(member: (typeof membersList)[number]) => member.id}
       />
 
       <Dialog open={isQrDialogOpen} onOpenChange={setIsQrDialogOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle>Código QR</DialogTitle>
-            <DialogDescription>
-              {selectedMember?.fullName}
-            </DialogDescription>
+            <DialogDescription>{selectedMember?.fullName}</DialogDescription>
           </DialogHeader>
           <div className="flex flex-col items-center gap-4 py-4">
             {qrDataUrl ? (

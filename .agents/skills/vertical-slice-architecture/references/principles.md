@@ -39,6 +39,7 @@ repositories/                         handler, request, response
 ### 3. Single Entry Point per Feature
 
 Every feature exposes ONE setup/registration function that:
+
 - Receives the router/framework handle and all required dependencies (as interfaces)
 - Registers its own routes/commands/event subscriptions
 - Wires its internal handler to the dependencies
@@ -48,6 +49,7 @@ This is the ONLY public API of a feature. Internal types (handler struct, helper
 ### 4. Start Simple, Refactor When Needed
 
 Begin each slice as a simple handler (Transaction Script). Only extract patterns when code smells emerge:
+
 - Duplicate logic across 3+ slices → extract to shared helper or domain object
 - Complex business rules → push into domain entities
 - Cross-cutting concerns → middleware or interceptors
@@ -55,11 +57,13 @@ Begin each slice as a simple handler (Transaction Script). Only extract patterns
 ### 5. No Premature Abstractions
 
 Do NOT create:
+
 - A generic `Repository<T>` interface "just in case"
 - A `BaseHandler` with shared logic for 2 handlers
 - A `ServiceLayer` that just delegates to the data access
 
 DO create shared code when:
+
 - Genuine duplication emerges across multiple slices (the "3+ slices" heuristic is guidance, not a hard rule — use judgment)
 - The shared code represents a real domain concept
 - Cross-cutting concerns need consistent behavior (auth, logging, metrics)
@@ -67,6 +71,7 @@ DO create shared code when:
 ### 6. Cross-Cutting Concerns Live in Platform/Infrastructure
 
 Middleware, interceptors, and shared infrastructure go in a separate `platform/` or `infrastructure/` package:
+
 - Authentication/authorization middleware
 - Request logging and metrics
 - Error handling and response formatting
@@ -89,6 +94,7 @@ main.go / Program.cs / Application.java
 ### 8. CQRS is Natural
 
 VSA naturally separates commands (mutations) from queries (reads):
+
 - Commands: create-order/, update-user/, delete-product/
 - Queries: get-order/, list-products/, search-users/
 
@@ -97,12 +103,14 @@ Each can use different data access strategies (ORM for writes, raw SQL for reads
 ## When to Use VSA
 
 **Good fit:**
+
 - Feature-rich APIs with many distinct use cases
 - Teams working on separate features in parallel
 - Systems where use cases vary significantly in complexity
 - Microservices or modular monoliths
 
 **Less ideal:**
+
 - Extremely CRUD-heavy apps with uniform operations
 - Very small apps with <5 features
 - Teams unfamiliar with refactoring patterns
@@ -110,6 +118,7 @@ Each can use different data access strategies (ORM for writes, raw SQL for reads
 ## Shared Domain Models
 
 When multiple slices operate on the same domain entity (e.g., `Order`):
+
 1. **Prefer slice-local definitions first** — each slice defines only the fields it needs
 2. **Extract to `features/{domain}/model`** when a shared type genuinely represents a domain concept used across slices
 3. **Never put domain types in `platform/`** — platform is for infrastructure, not business concepts
@@ -127,11 +136,11 @@ When multiple slices operate on the same domain entity (e.g., `Order`):
 
 ## Anti-Patterns
 
-| Anti-Pattern | Why It's Bad | Fix |
-|---|---|---|
-| God handler | Single handler grows to 500+ lines | Extract domain logic, split into sub-steps |
-| Shared service layer | Defeats the purpose of slices | Let each slice own its logic |
-| Cross-slice imports | Creates hidden coupling | Extract to shared domain or platform |
-| Premature DRY | Abstractions before real duplication | Wait for genuine duplication to emerge |
-| Feature-flag inside slice | Slices should be one use case | Create separate slices per variant |
-| Platform imports features | Reverse dependency direction | Move shared types to domain or accept as documented tradeoff |
+| Anti-Pattern              | Why It's Bad                         | Fix                                                          |
+| ------------------------- | ------------------------------------ | ------------------------------------------------------------ |
+| God handler               | Single handler grows to 500+ lines   | Extract domain logic, split into sub-steps                   |
+| Shared service layer      | Defeats the purpose of slices        | Let each slice own its logic                                 |
+| Cross-slice imports       | Creates hidden coupling              | Extract to shared domain or platform                         |
+| Premature DRY             | Abstractions before real duplication | Wait for genuine duplication to emerge                       |
+| Feature-flag inside slice | Slices should be one use case        | Create separate slices per variant                           |
+| Platform imports features | Reverse dependency direction         | Move shared types to domain or accept as documented tradeoff |
