@@ -66,6 +66,10 @@ export const subscriptionsRelations = relations(
       fields: [subscriptions.planId],
       references: [membershipPlans.id],
     }),
+    package: one(packages, {
+      fields: [subscriptions.packageId],
+      references: [packages.id],
+    }),
     payments: many(membershipPayments),
     freezes: many(membershipFreezes),
   }),
@@ -302,6 +306,7 @@ export const userBranchesRelations = relations(userBranches, ({ one }) => ({
 // Package relations
 export const packagesRelations = relations(packages, ({ many }) => ({
   items: many(packageItems),
+  subscriptions: many(subscriptions),
 }))
 
 export const packageItemsRelations = relations(packageItems, ({ one }) => ({

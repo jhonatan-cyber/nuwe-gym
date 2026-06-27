@@ -26,8 +26,8 @@ import { Route as AuthedProfileRouteImport } from './routes/_authed/profile'
 import { Route as AuthedProductsRouteImport } from './routes/_authed/products'
 import { Route as AuthedProductCategoriesRouteImport } from './routes/_authed/product-categories'
 import { Route as AuthedPosRouteImport } from './routes/_authed/pos'
+import { Route as AuthedPackagesRouteImport } from './routes/_authed/packages'
 import { Route as AuthedNotificationsRouteImport } from './routes/_authed/notifications'
-import { Route as AuthedMembershipPlansRouteImport } from './routes/_authed/membership-plans'
 import { Route as AuthedMembershipPaymentsRouteImport } from './routes/_authed/membership-payments'
 import { Route as AuthedMembershipFreezesRouteImport } from './routes/_authed/membership-freezes'
 import { Route as AuthedMembersRouteImport } from './routes/_authed/members'
@@ -127,14 +127,14 @@ const AuthedPosRoute = AuthedPosRouteImport.update({
   path: '/pos',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedPackagesRoute = AuthedPackagesRouteImport.update({
+  id: '/packages',
+  path: '/packages',
+  getParentRoute: () => AuthedRoute,
+} as any)
 const AuthedNotificationsRoute = AuthedNotificationsRouteImport.update({
   id: '/notifications',
   path: '/notifications',
-  getParentRoute: () => AuthedRoute,
-} as any)
-const AuthedMembershipPlansRoute = AuthedMembershipPlansRouteImport.update({
-  id: '/membership-plans',
-  path: '/membership-plans',
   getParentRoute: () => AuthedRoute,
 } as any)
 const AuthedMembershipPaymentsRoute =
@@ -225,8 +225,8 @@ export interface FileRoutesByFullPath {
   '/members': typeof AuthedMembersRoute
   '/membership-freezes': typeof AuthedMembershipFreezesRoute
   '/membership-payments': typeof AuthedMembershipPaymentsRoute
-  '/membership-plans': typeof AuthedMembershipPlansRoute
   '/notifications': typeof AuthedNotificationsRoute
+  '/packages': typeof AuthedPackagesRoute
   '/pos': typeof AuthedPosRoute
   '/product-categories': typeof AuthedProductCategoriesRoute
   '/products': typeof AuthedProductsRoute
@@ -259,8 +259,8 @@ export interface FileRoutesByTo {
   '/members': typeof AuthedMembersRoute
   '/membership-freezes': typeof AuthedMembershipFreezesRoute
   '/membership-payments': typeof AuthedMembershipPaymentsRoute
-  '/membership-plans': typeof AuthedMembershipPlansRoute
   '/notifications': typeof AuthedNotificationsRoute
+  '/packages': typeof AuthedPackagesRoute
   '/pos': typeof AuthedPosRoute
   '/product-categories': typeof AuthedProductCategoriesRoute
   '/products': typeof AuthedProductsRoute
@@ -295,8 +295,8 @@ export interface FileRoutesById {
   '/_authed/members': typeof AuthedMembersRoute
   '/_authed/membership-freezes': typeof AuthedMembershipFreezesRoute
   '/_authed/membership-payments': typeof AuthedMembershipPaymentsRoute
-  '/_authed/membership-plans': typeof AuthedMembershipPlansRoute
   '/_authed/notifications': typeof AuthedNotificationsRoute
+  '/_authed/packages': typeof AuthedPackagesRoute
   '/_authed/pos': typeof AuthedPosRoute
   '/_authed/product-categories': typeof AuthedProductCategoriesRoute
   '/_authed/products': typeof AuthedProductsRoute
@@ -331,8 +331,8 @@ export interface FileRouteTypes {
     | '/members'
     | '/membership-freezes'
     | '/membership-payments'
-    | '/membership-plans'
     | '/notifications'
+    | '/packages'
     | '/pos'
     | '/product-categories'
     | '/products'
@@ -365,8 +365,8 @@ export interface FileRouteTypes {
     | '/members'
     | '/membership-freezes'
     | '/membership-payments'
-    | '/membership-plans'
     | '/notifications'
+    | '/packages'
     | '/pos'
     | '/product-categories'
     | '/products'
@@ -400,8 +400,8 @@ export interface FileRouteTypes {
     | '/_authed/members'
     | '/_authed/membership-freezes'
     | '/_authed/membership-payments'
-    | '/_authed/membership-plans'
     | '/_authed/notifications'
+    | '/_authed/packages'
     | '/_authed/pos'
     | '/_authed/product-categories'
     | '/_authed/products'
@@ -548,18 +548,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedPosRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/packages': {
+      id: '/_authed/packages'
+      path: '/packages'
+      fullPath: '/packages'
+      preLoaderRoute: typeof AuthedPackagesRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/notifications': {
       id: '/_authed/notifications'
       path: '/notifications'
       fullPath: '/notifications'
       preLoaderRoute: typeof AuthedNotificationsRouteImport
-      parentRoute: typeof AuthedRoute
-    }
-    '/_authed/membership-plans': {
-      id: '/_authed/membership-plans'
-      path: '/membership-plans'
-      fullPath: '/membership-plans'
-      preLoaderRoute: typeof AuthedMembershipPlansRouteImport
       parentRoute: typeof AuthedRoute
     }
     '/_authed/membership-payments': {
@@ -676,8 +676,8 @@ interface AuthedRouteChildren {
   AuthedMembersRoute: typeof AuthedMembersRoute
   AuthedMembershipFreezesRoute: typeof AuthedMembershipFreezesRoute
   AuthedMembershipPaymentsRoute: typeof AuthedMembershipPaymentsRoute
-  AuthedMembershipPlansRoute: typeof AuthedMembershipPlansRoute
   AuthedNotificationsRoute: typeof AuthedNotificationsRoute
+  AuthedPackagesRoute: typeof AuthedPackagesRoute
   AuthedPosRoute: typeof AuthedPosRoute
   AuthedProductCategoriesRoute: typeof AuthedProductCategoriesRoute
   AuthedProductsRoute: typeof AuthedProductsRoute
@@ -707,8 +707,8 @@ const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedMembersRoute: AuthedMembersRoute,
   AuthedMembershipFreezesRoute: AuthedMembershipFreezesRoute,
   AuthedMembershipPaymentsRoute: AuthedMembershipPaymentsRoute,
-  AuthedMembershipPlansRoute: AuthedMembershipPlansRoute,
   AuthedNotificationsRoute: AuthedNotificationsRoute,
+  AuthedPackagesRoute: AuthedPackagesRoute,
   AuthedPosRoute: AuthedPosRoute,
   AuthedProductCategoriesRoute: AuthedProductCategoriesRoute,
   AuthedProductsRoute: AuthedProductsRoute,

@@ -1,7 +1,7 @@
 import { pgTable, text, timestamp, boolean } from 'drizzle-orm/pg-core'
 import { userRoleEnum } from './enums.ts'
 
-export const users = pgTable('user', {
+export const users = pgTable('user', { banned: boolean('banned'), 
   id: text('id').primaryKey(),
   name: text('name').notNull(),
   email: text('email').notNull().unique(),

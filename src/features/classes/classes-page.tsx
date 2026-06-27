@@ -54,6 +54,8 @@ import {
 } from '#/shared/components/ui/table'
 import { Badge } from '#/shared/components/ui/badge'
 import { Skeleton } from '#/shared/components/ui/skeleton'
+import { EmptyState } from '#/shared/components/ui/empty-state'
+import { ConfirmDialog } from '#/shared/components/ui/confirm-dialog'
 
 interface ClassesPageProps {
   userRole: string
@@ -129,6 +131,7 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
   })
 
   const [bookingDialogOpen, setBookingDialogOpen] = useState(false)
+  const [deletingScheduleId, setDeletingScheduleId] = useState<number | null>(null)
 
   const [filterClassId, setFilterClassId] = useState<string>('all')
   const [filterStatus, setFilterStatus] = useState<string>('all')
@@ -307,8 +310,13 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
   }
 
   function handleRemoveSchedule(scheduleId: number) {
-    if (confirm('¿Eliminar este horario?')) {
-      removeScheduleMutation.mutate({ data: { id: scheduleId } })
+    setDeletingScheduleId(scheduleId)
+  }
+
+  function handleConfirmRemoveSchedule() {
+    if (deletingScheduleId !== null) {
+      removeScheduleMutation.mutate({ data: { id: deletingScheduleId } })
+      setDeletingScheduleId(null)
     }
   }
 
@@ -517,11 +525,12 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
                     ))
                   ) : classesList.length === 0 ? (
                     <TableRow>
-                      <TableCell
-                        colSpan={5}
-                        className="text-center py-8 text-muted-foreground"
-                      >
-                        No hay clases registradas.
+                      <TableCell colSpan={5} className="py-0">
+                        <EmptyState
+                          icon={BookOpen}
+                          title="Sin clases"
+                          description="No hay clases registradas."
+                        />
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -693,11 +702,12 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
                 <TableBody>
                   {bookings.length === 0 ? (
                     <TableRow>
-                      <TableCell
-                        colSpan={6}
-                        className="text-center py-8 text-muted-foreground"
-                      >
-                        No hay reservas con los filtros seleccionados.
+                      <TableCell colSpan={6} className="py-0">
+                        <EmptyState
+                          icon={ClipboardList}
+                          title="Sin reservas"
+                          description="No hay reservas con los filtros seleccionados."
+                        />
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -860,34 +870,25 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Eliminar Clase</DialogTitle>
-            <DialogDescription>
-              ¿Estás seguro de eliminar esta clase? Se eliminarán también todos
-              sus horarios y reservas asociadas. Esta acción no se puede
-              deshacer.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setDeleteConfirmOpen(false)}
-            >
-              Cancelar
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDeleteClass}
-              disabled={deleteClassMutation.isPending}
-            >
-              {deleteClassMutation.isPending ? 'Eliminando...' : 'Eliminar'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        title="Eliminar Clase"
+        description="¿Estás seguro de eliminar esta clase? Se eliminarán también todos sus horarios y reservas asociadas. Esta acción no se puede deshacer."
+        confirmText="Eliminar"
+        variant="destructive"
+        onConfirm={handleDeleteClass}
+      />
+
+      <ConfirmDialog
+        open={deletingScheduleId !== null}
+        onOpenChange={() => setDeletingScheduleId(null)}
+        title="Eliminar Horario"
+        description="¿Eliminar este horario?"
+        confirmText="Eliminar"
+        variant="destructive"
+        onConfirm={handleConfirmRemoveSchedule}
+      />
 
       <Dialog open={scheduleDialogOpen} onOpenChange={setScheduleDialogOpen}>
         <DialogContent className="max-w-lg">

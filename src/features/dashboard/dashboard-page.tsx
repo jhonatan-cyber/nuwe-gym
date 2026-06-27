@@ -159,7 +159,7 @@ export function DashboardPage() {
             </div>
             <div>
               <p className="font-bold text-xs dark:text-white text-foreground">Tiempo Real de Asistencia</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">Por horarios VOUS</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Por horarios TRAINIX</p>
             </div>
           </div>
           <ArrowRight className="size-4 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
@@ -275,7 +275,7 @@ export function DashboardPage() {
                   <path d="M12 14s1.5 2 4 2" />
                 </svg>
               </div>
-              <span className="text-[10px] font-bold dark:text-indigo-300/70 text-indigo-900/60 dark:bg-white/10 bg-white/50 backdrop-blur-md dark:border-white/10 border-white/60 border px-2.5 py-1 rounded-full">VOUS</span>
+              <span className="text-[10px] font-bold dark:text-indigo-300/70 text-indigo-900/60 dark:bg-white/10 bg-white/50 backdrop-blur-md dark:border-white/10 border-white/60 border px-2.5 py-1 rounded-full">TRAINIX</span>
             </div>
             <div className="z-10">
               <div className="text-xl font-black dark:text-white text-indigo-950 tracking-tight leading-tight">Control<br />Facial</div>

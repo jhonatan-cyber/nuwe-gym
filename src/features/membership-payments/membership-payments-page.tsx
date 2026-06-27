@@ -113,9 +113,9 @@ export function MembershipPaymentsPage() {
           },
           {
             key: 'plan',
-            label: 'Plan',
+            label: 'Paquete',
             render: (pay: (typeof filteredPayments)[number]) =>
-              pay.subscription.plan.name,
+              pay.subscription.package?.name || pay.subscription.plan?.name || 'N/A',
           },
           {
             key: 'method',

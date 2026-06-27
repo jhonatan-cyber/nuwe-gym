@@ -98,6 +98,12 @@ export const markAllAsRead = createServerFn({ method: 'POST' })
     return { success: true }
   })
 
+const EXPIRATION_TIERS = [
+  { days: 1, label: 'mañana', urgency: 'urgent' },
+  { days: 3, label: 'en 3 días', urgency: 'warning' },
+  { days: 7, label: 'en una semana', urgency: 'info' },
+] as const
+
 export const generateNotifications = createServerFn({ method: 'POST' })
   .inputValidator(() => ({}))
   .handler(async () => {
@@ -107,39 +113,83 @@ export const generateNotifications = createServerFn({ method: 'POST' })
     const reminderDays = gymSettings?.membershipReminderDays ?? 7
 
     const now = new Date()
-    const futureDate = new Date(
+    const maxFutureDate = new Date(
       now.getTime() + reminderDays * 24 * 60 * 60 * 1000,
     )
 
     const newNotifications: (typeof notifications.$inferInsert)[] = []
 
-    const expiringSubs = await db.query.subscriptions.findMany({
+    // ── Tiered expiration alerts (1, 3, 7 days) ──
+    const activeSubs = await db.query.subscriptions.findMany({
       where: and(
         eq(subscriptions.status, 'ACTIVE'),
-        lte(subscriptions.endDate, futureDate),
+        lte(subscriptions.endDate, maxFutureDate),
         gte(subscriptions.endDate, now),
       ),
       with: { member: true },
     })
 
-    for (const sub of expiringSubs) {
+    for (const sub of activeSubs) {
+      const msUntilExpiry = new Date(sub.endDate).getTime() - now.getTime()
+      const daysUntilExpiry = Math.ceil(msUntilExpiry / (1000 * 60 * 60 * 24))
+
+      for (const tier of EXPIRATION_TIERS) {
+        if (daysUntilExpiry <= tier.days) {
+          const titleSuffix = tier.urgency === 'urgent'
+            ? '⚠️ Urgente'
+            : tier.urgency === 'warning'
+              ? '🔔 Aviso'
+              : '📋 Recordatorio'
+          const existing = await db.query.notifications.findFirst({
+            where: and(
+              eq(notifications.type, 'EXPIRATION'),
+              eq(notifications.referenceId, sub.id),
+              eq(notifications.title, `${titleSuffix} Suscripción vence ${tier.label}`),
+            ),
+          })
+          if (!existing) {
+            newNotifications.push({
+              type: 'EXPIRATION',
+              title: `${titleSuffix} Suscripción vence ${tier.label}`,
+              message: `La membresía de ${sub.member.fullName} vence el ${new Date(sub.endDate).toLocaleDateString('es-AR')}. Quedan ${daysUntilExpiry} día${daysUntilExpiry !== 1 ? 's' : ''}.`,
+              referenceId: sub.id,
+              referenceType: 'subscription',
+            })
+          }
+          break // only fire the most urgent matching tier
+        }
+      }
+    }
+
+    // ── Actually expired subscriptions ──
+    const expiredSubs = await db.query.subscriptions.findMany({
+      where: eq(subscriptions.status, 'EXPIRED'),
+      with: { member: true },
+    })
+
+    for (const sub of expiredSubs) {
       const existing = await db.query.notifications.findFirst({
         where: and(
           eq(notifications.type, 'EXPIRATION'),
           eq(notifications.referenceId, sub.id),
+          sql`${notifications.title} LIKE '%Expiró%'`,
         ),
       })
       if (!existing) {
+        const daysOverdue = Math.ceil(
+          (now.getTime() - new Date(sub.endDate).getTime()) / (1000 * 60 * 60 * 24),
+        )
         newNotifications.push({
           type: 'EXPIRATION',
-          title: 'Suscripción próxima a vencer',
-          message: `La suscripción de ${sub.member.fullName} vence el ${sub.endDate.toLocaleDateString('es-AR')}`,
+          title: '🚨 Suscripción expiró',
+          message: `La membresía de ${sub.member.fullName} expiró hace ${daysOverdue} día${daysOverdue !== 1 ? 's' : ''}. Renová lo antes posible.`,
           referenceId: sub.id,
           referenceType: 'subscription',
         })
       }
     }
 
+    // ── Low stock products ──
     const lowStockProducts = await db
       .select()
       .from(products)

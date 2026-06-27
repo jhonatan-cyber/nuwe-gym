@@ -3,7 +3,7 @@ import { drizzle } from 'drizzle-orm/node-postgres'
 import pg from 'pg'
 import { eq } from 'drizzle-orm'
 import { users, accounts } from './schema/auth.ts'
-import { membershipPlans } from './schema/membership-plans.ts'
+import { packages } from './schema/packages.ts'
 import { productCategories } from './schema/product-categories.ts'
 import { settings } from './schema/settings.ts'
 import { hashPassword } from '@better-auth/utils/password'
@@ -87,38 +87,46 @@ async function seed() {
     console.log('✅ Admin user created: admin@gym.local / Admin123*')
   }
 
-  // Seed membership plans
-  const existingPlans = await db.select().from(membershipPlans).limit(1)
-  if (existingPlans.length === 0) {
-    await db.insert(membershipPlans).values([
+  // Seed packages
+  const existingPackages = await db.select().from(packages).limit(1)
+  if (existingPackages.length === 0) {
+    await db.insert(packages).values([
       {
         name: 'Mensual',
         description: 'Acceso completo por 30 días',
         durationDays: 30,
         price: '15000.00',
+        type: 'PACKAGE',
+        isActive: true,
       },
       {
         name: 'Trimestral',
         description: 'Acceso completo por 90 días',
         durationDays: 90,
         price: '38000.00',
+        type: 'PACKAGE',
+        isActive: true,
       },
       {
         name: 'Semestral',
         description: 'Acceso completo por 180 días',
         durationDays: 180,
         price: '68000.00',
+        type: 'PACKAGE',
+        isActive: true,
       },
       {
         name: 'Anual',
         description: 'Acceso completo por 365 días',
         durationDays: 365,
         price: '120000.00',
+        type: 'PACKAGE',
+        isActive: true,
       },
     ])
-    console.log('✅ Membership plans created')
+    console.log('✅ Packages created')
   } else {
-    console.log('ℹ️ Membership plans already exist')
+    console.log('ℹ️ Packages already exist')
   }
 
   // Seed product categories

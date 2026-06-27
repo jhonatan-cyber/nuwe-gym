@@ -33,6 +33,7 @@ export const getMembers = createServerFn({ method: 'GET' })
           where: (subscriptions) => eq(subscriptions.status, 'ACTIVE'),
           with: {
             plan: true,
+            package: true,
           },
         },
       },
@@ -49,6 +50,7 @@ export const getMemberById = createServerFn({ method: 'GET' })
         subscriptions: {
           with: {
             plan: true,
+            package: true,
           },
           orderBy: (subscriptions) => [desc(subscriptions.endDate)],
         },
@@ -72,9 +74,7 @@ export type CreateMemberData = z.infer<typeof createMemberSchema>
 export const createMember = createServerFn({ method: 'POST' })
   .inputValidator((data) => createMemberSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({
-      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
-    })
+    const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
 
     const [member] = await db
       .insert(members)
@@ -116,9 +116,7 @@ const uploadPhotoSchema = z.object({
 export const uploadMemberPhoto = createServerFn({ method: 'POST' })
   .inputValidator((data) => uploadPhotoSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({
-      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
-    })
+    const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
 
     const [member] = await db
       .update(members)
@@ -140,9 +138,7 @@ export const uploadMemberPhoto = createServerFn({ method: 'POST' })
 export const updateMember = createServerFn({ method: 'POST' })
   .inputValidator((data) => updateMemberSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({
-      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
-    })
+    const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
 
     const [member] = await db
       .update(members)

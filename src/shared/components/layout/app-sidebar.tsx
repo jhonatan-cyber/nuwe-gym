@@ -49,7 +49,7 @@ const navItems: NavItem[] = [
   { title: 'Socios', url: '/members', icon: Users, permission: 'members:read' },
   {
     title: 'Paquetes',
-    url: '/membership-plans',
+    url: '/packages',
     icon: Package,
     permission: 'plans:read',
   },

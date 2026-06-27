@@ -16,7 +16,7 @@ export function ModuleLayout({
   children,
 }: ModuleLayoutProps) {
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-5 dark:text-white text-foreground min-h-[calc(100vh-10rem)]">
+    <div className="grid grid-cols-1 lg:grid-cols-[3fr_7fr] gap-5 dark:text-white text-foreground min-h-[calc(100vh-10rem)]">
       {/* ── LEFT PANEL ─────────────────────────────────────── */}
       <div className="bg-card p-5 rounded-[2rem] border border-border/10 shadow-xl flex flex-col gap-5 select-none relative overflow-hidden self-start lg:sticky lg:top-0">
         {/* ambient glow */}

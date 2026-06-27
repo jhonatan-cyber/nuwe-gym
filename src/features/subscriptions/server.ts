@@ -21,6 +21,7 @@ export const getSubscriptions = createServerFn({ method: 'GET' }).handler(
       with: {
         member: true,
         plan: true,
+        package: true,
       },
     })
   },
@@ -28,7 +29,7 @@ export const getSubscriptions = createServerFn({ method: 'GET' }).handler(
 
 const createSubscriptionSchema = z.object({
   memberId: z.number(),
-  planId: z.number(),
+  packageId: z.number(),
   startDate: z.string(),
   endDate: z.string(),
   amountPaid: z.string(),
@@ -60,12 +61,14 @@ export const createSubscription = createServerFn({ method: 'POST' })
         .insert(subscriptions)
         .values({
           memberId: data.memberId,
-          planId: data.planId,
+          planId: null,
+          packageId: data.packageId,
           startDate: new Date(data.startDate),
           endDate: new Date(data.endDate),
           status: 'ACTIVE',
         })
         .returning()
+
 
       const [payment] = await tx
         .insert(membershipPayments)

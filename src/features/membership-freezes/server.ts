@@ -20,6 +20,7 @@ export const getFreezes = createServerFn({ method: 'GET' }).handler(
           with: {
             member: true,
             plan: true,
+            package: true,
           },
         },
         member: true,
@@ -40,7 +41,10 @@ export const getMemberFreezes = createServerFn({ method: 'GET' })
       orderBy: [desc(membershipFreezes.createdAt)],
       with: {
         subscription: {
-          with: { plan: true },
+          with: {
+            plan: true,
+            package: true,
+          },
         },
       },
     })
@@ -220,6 +224,7 @@ export const getFrozenSubscriptions = createServerFn({ method: 'GET' }).handler(
           with: {
             member: true,
             plan: true,
+            package: true,
           },
         },
         member: true,

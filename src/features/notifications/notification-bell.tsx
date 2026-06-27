@@ -1,10 +1,12 @@
 import { Bell } from 'lucide-react'
+import { useEffect } from 'react'
 import { useRouter } from '@tanstack/react-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   getUnreadCount,
   getNotifications,
   markAllAsRead,
+  generateNotifications,
 } from '#/features/notifications/server.ts'
 import { formatRelativeTime } from '#/shared/lib/formatters.ts'
 import {
@@ -31,6 +33,22 @@ export function NotificationBell({ userRole }: NotificationBellProps) {
     queryFn: () => getUnreadCount(),
     refetchInterval: 30000,
   })
+
+  // Auto-generate notifications on mount (admin only)
+  const generateMutation = useMutation({
+    mutationFn: generateNotifications,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications-unread-count'] })
+      queryClient.invalidateQueries({ queryKey: ['notifications-recent'] })
+    },
+    onError: () => {} // silently ignore for non-admin users
+  })
+
+  useEffect(() => {
+    if (isAdmin) {
+      generateMutation.mutate({})
+    }
+  }, [])
 
   const { data: recentData } = useQuery({
     queryKey: ['notifications-recent'],

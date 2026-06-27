@@ -190,7 +190,7 @@ export function MembershipFreezesPage({
               <TableHeader>
                 <TableRow>
                   <TableHead>Socio</TableHead>
-                  <TableHead>Plan</TableHead>
+                  <TableHead>Paquete</TableHead>
                   <TableHead>Congelado desde</TableHead>
                   <TableHead>Finaliza</TableHead>
                   <TableHead>Días rest.</TableHead>
@@ -214,7 +214,7 @@ export function MembershipFreezesPage({
                       </TableCell>
                       <TableCell>
                         <span className="font-medium text-primary">
-                          {f.subscription.plan.name}
+                          {f.subscription.package?.name || f.subscription.plan?.name || 'N/A'}
                         </span>
                       </TableCell>
                       <TableCell>{formatDate(f.startDate)}</TableCell>
@@ -285,10 +285,10 @@ export function MembershipFreezesPage({
             },
             {
               key: 'plan',
-              label: 'Plan',
+              label: 'Paquete',
               render: (f: (typeof freezes)[number]) => (
                 <span className="font-medium text-primary">
-                  {f.subscription.plan.name}
+                  {f.subscription.package?.name || f.subscription.plan?.name || 'N/A'}
                 </span>
               ),
             },
@@ -404,7 +404,7 @@ export function MembershipFreezesPage({
                   </option>
                   {activeSubs.map((s) => (
                     <option key={s.id} value={s.id}>
-                      {s.member.fullName} — {s.plan.name} (vence:{' '}
+                      {s.member.fullName} — {s.package?.name || s.plan?.name || 'N/A'} (vence:{' '}
                       {formatDate(s.endDate)})
                     </option>
                   ))}

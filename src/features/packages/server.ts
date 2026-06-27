@@ -1,6 +1,7 @@
 import { createServerFn } from '@tanstack/react-start'
 import { db } from '#/shared/db/index.ts'
 import { packages, packageItems } from '#/shared/db/schema/packages.ts'
+import { subscriptions } from '#/shared/db/schema/subscriptions.ts'
 import { eq, desc } from 'drizzle-orm'
 import { requireRole } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
@@ -28,7 +29,7 @@ export const getActivePackages = createServerFn({ method: 'GET' }).handler(
 
 const packageItemSchema = z.object({
   description: z.string().min(1),
-  sortOrder: z.number().default(0),
+  sortOrder: z.number().optional(),
 })
 
 const createPackageSchema = z.object({
@@ -145,6 +146,16 @@ export const deletePackage = createServerFn({ method: 'POST' })
     const session = await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST'] },
     })
+
+    const existing = await db
+      .select({ id: subscriptions.id })
+      .from(subscriptions)
+      .where(eq(subscriptions.packageId, data.id))
+      .limit(1)
+
+    if (existing.length > 0) {
+      throw new Error('El plan tiene socios que están o estuvieron en el plan')
+    }
 
     const [pkg] = await db
       .delete(packages)

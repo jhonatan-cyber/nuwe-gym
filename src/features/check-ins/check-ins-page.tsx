@@ -18,6 +18,10 @@ import {
 } from '#/shared/components/ui/card'
 import { Input } from '#/shared/components/ui/input'
 import { Badge } from '#/shared/components/ui/badge'
+import { LoadingSpinner } from '#/shared/components/ui/loading-spinner'
+import { EmptyState } from '#/shared/components/ui/empty-state'
+import { MemberAvatar } from '#/shared/components/ui/member-avatar'
+import { ConfirmDialog } from '#/shared/components/ui/confirm-dialog'
 
 export function CheckInsPage() {
   const queryClient = useQueryClient()
@@ -53,17 +57,21 @@ export function CheckInsPage() {
     onError: () => toast.error('Error al registrar el ingreso'),
   })
 
+  const [pendingMemberId, setPendingMemberId] = useState<number | null>(null)
+
   const handleCheckIn = (memberId: number, hasAccess: boolean) => {
     if (!hasAccess) {
-      if (
-        !confirm(
-          'El socio NO TIENE una suscripción activa. ¿Permitir el ingreso de todas formas?',
-        )
-      ) {
-        return
-      }
+      setPendingMemberId(memberId)
+      return
     }
     createMutation.mutate({ data: { memberId } })
+  }
+
+  const handleConfirmCheckIn = () => {
+    if (pendingMemberId !== null) {
+      createMutation.mutate({ data: { memberId: pendingMemberId } })
+      setPendingMemberId(null)
+    }
   }
 
   return (
@@ -73,7 +81,7 @@ export function CheckInsPage() {
           Control de Ingresos
         </h1>
         <p className="text-muted-foreground">
-          Buscá socios por DNI o nombre para registrar su acceso al gimnasio.
+          Buscá socios por CI o nombre para registrar su acceso al gimnasio.
         </p>
       </div>
 
@@ -84,7 +92,7 @@ export function CheckInsPage() {
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
                 <Input
-                  placeholder="Escaneá el código o ingresá DNI / Nombre del socio..."
+                  placeholder="Escaneá el código o ingresá CI / Nombre del socio..."
                   className="pl-10 h-12 text-lg"
                   value={searchQuery}
                   onChange={handleSearchChange}
@@ -98,13 +106,13 @@ export function CheckInsPage() {
                     Resultados de búsqueda
                   </h3>
                   {isSearching ? (
-                    <div className="text-center py-4 text-sm text-muted-foreground">
-                      Buscando...
-                    </div>
+                    <LoadingSpinner size="sm" label="Buscando..." />
                   ) : searchResults.length === 0 ? (
-                    <div className="text-center py-4 text-sm text-muted-foreground">
-                      No se encontraron socios.
-                    </div>
+                    <EmptyState
+                      icon={Search}
+                      title="Sin resultados"
+                      description="No se encontraron socios."
+                    />
                   ) : (
                     <div className="grid gap-3">
                       {searchResults.map((member) => {
@@ -119,23 +127,17 @@ export function CheckInsPage() {
                             className="flex items-center justify-between p-4 rounded-xl border bg-card hover:border-primary/50 transition-colors"
                           >
                             <div className="flex items-center gap-3">
-                              {member.photoUrl ? (
-                                <img
-                                  src={member.photoUrl}
-                                  alt=""
-                                  className="size-12 rounded-full object-cover"
-                                />
-                              ) : (
-                                <div className="size-12 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm uppercase shrink-0">
-                                  {member.fullName.substring(0, 2)}
-                                </div>
-                              )}
+                              <MemberAvatar
+                                name={member.fullName}
+                                photoUrl={member.photoUrl}
+                                size={12}
+                              />
                               <div className="flex flex-col">
                                 <span className="font-semibold text-lg">
                                   {member.fullName}
                                 </span>
                                 <span className="text-sm text-muted-foreground">
-                                  DNI: {member.documentNumber}
+                                  CI: {member.documentNumber}
                                 </span>
                                 <div className="mt-1">
                                   {isSubActive ? (
@@ -185,13 +187,13 @@ export function CheckInsPage() {
             </CardHeader>
             <CardContent>
               {isLoadingCheckIns ? (
-                <div className="text-center py-4 text-sm text-muted-foreground">
-                  Cargando...
-                </div>
+                <LoadingSpinner size="sm" label="Cargando..." />
               ) : checkInsList.length === 0 ? (
-                <div className="text-center py-4 text-sm text-muted-foreground">
-                  No hay ingresos recientes.
-                </div>
+                <EmptyState
+                  icon={Clock}
+                  title="Sin ingresos"
+                  description="No hay ingresos recientes."
+                />
               ) : (
                 <div className="space-y-4">
                   {checkInsList.map((checkIn) => (
@@ -200,17 +202,11 @@ export function CheckInsPage() {
                       className="flex items-start justify-between border-b pb-3 last:border-0 last:pb-0"
                     >
                       <div className="flex items-center gap-2">
-                        {checkIn.member.photoUrl ? (
-                          <img
-                            src={checkIn.member.photoUrl}
-                            alt=""
-                            className="size-8 rounded-full object-cover shrink-0"
-                          />
-                        ) : (
-                          <div className="size-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs uppercase shrink-0">
-                            {checkIn.member.fullName.substring(0, 2)}
-                          </div>
-                        )}
+                        <MemberAvatar
+                          name={checkIn.member.fullName}
+                          photoUrl={checkIn.member.photoUrl}
+                          size={8}
+                        />
                         <div className="flex flex-col gap-0.5">
                           <span className="font-medium text-sm">
                             {checkIn.member.fullName}
@@ -233,6 +229,15 @@ export function CheckInsPage() {
           </Card>
         </div>
       </div>
+      <ConfirmDialog
+        open={pendingMemberId !== null}
+        onOpenChange={() => setPendingMemberId(null)}
+        title="Ingreso sin suscripción activa"
+        description="El socio NO TIENE una suscripción activa. ¿Permitir el ingreso de todas formas?"
+        confirmText="Permitir Ingreso"
+        variant="default"
+        onConfirm={handleConfirmCheckIn}
+      />
     </div>
   )
 }

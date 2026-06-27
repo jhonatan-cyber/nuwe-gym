@@ -22,6 +22,7 @@ export const getMembershipPayments = createServerFn({ method: 'GET' }).handler(
         subscription: {
           with: {
             plan: true,
+            package: true,
           },
         },
         createdBy: true,

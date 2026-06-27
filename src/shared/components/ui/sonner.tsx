@@ -1,39 +1,81 @@
-import {
-  CircleCheckIcon,
-  InfoIcon,
-  Loader2Icon,
-  OctagonXIcon,
-  TriangleAlertIcon,
-} from 'lucide-react'
-import { useTheme } from 'next-themes'
-import { Toaster as Sonner } from 'sonner'
-import type { ToasterProps } from 'sonner'
+import { sileo, Toaster as SileoToaster } from 'sileo'
+import type { SileoPosition, SileoOptions } from 'sileo'
+import 'sileo/styles.css'
+import React from 'react'
 
-const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = 'system' } = useTheme()
-
-  return (
-    <Sonner
-      theme={theme as ToasterProps['theme']}
-      className="toaster group"
-      icons={{
-        success: <CircleCheckIcon className="size-4" />,
-        info: <InfoIcon className="size-4" />,
-        warning: <TriangleAlertIcon className="size-4" />,
-        error: <OctagonXIcon className="size-4" />,
-        loading: <Loader2Icon className="size-4 animate-spin" />,
-      }}
-      style={
-        {
-          '--normal-bg': 'var(--popover)',
-          '--normal-text': 'var(--popover-foreground)',
-          '--normal-border': 'var(--border)',
-          '--border-radius': 'var(--radius)',
-        } as React.CSSProperties
-      }
-      {...props}
-    />
-  )
+interface ToastOptions {
+  description?: string | React.ReactNode
+  duration?: number
+  position?: SileoPosition
 }
 
-export { Toaster }
+const mapOptions = (message: string | React.ReactNode, options?: ToastOptions): SileoOptions => {
+  const opts: SileoOptions = {}
+  
+  if (typeof message === 'string') {
+    opts.title = message
+  } else {
+    opts.title = ''
+    opts.description = message
+  }
+
+  if (options) {
+    if (options.description) {
+      opts.description = options.description
+    }
+    if (options.duration !== undefined) {
+      opts.duration = options.duration
+    }
+    if (options.position) {
+      opts.position = options.position
+    }
+  }
+
+  return opts
+}
+
+export const toast = {
+  success: (message: string | React.ReactNode, options?: ToastOptions) => {
+    return sileo.success(mapOptions(message, options))
+  },
+  error: (message: string | React.ReactNode, options?: ToastOptions) => {
+    return sileo.error(mapOptions(message, options))
+  },
+  info: (message: string | React.ReactNode, options?: ToastOptions) => {
+    return sileo.info(mapOptions(message, options))
+  },
+  warning: (message: string | React.ReactNode, options?: ToastOptions) => {
+    return sileo.warning(mapOptions(message, options))
+  },
+  custom: (message: string | React.ReactNode, options?: ToastOptions) => {
+    return sileo.show(mapOptions(message, options))
+  },
+  dismiss: (id?: string) => {
+    if (id) {
+      sileo.dismiss(id)
+    } else {
+      sileo.clear()
+    }
+  },
+}
+
+// Fallback for calling toast("message") directly
+const toastFunction = (message: string | React.ReactNode, options?: ToastOptions) => {
+  return toast.custom(message, options)
+}
+
+Object.assign(toastFunction, toast)
+
+export default toastFunction as typeof toastFunction & typeof toast
+
+export const Toaster = ({
+  position,
+  theme,
+}: {
+  position?: SileoPosition
+  theme?: 'light' | 'dark' | 'system'
+  richColors?: boolean
+  [key: string]: any
+}) => {
+  return <SileoToaster position={position} theme={theme} />
+}

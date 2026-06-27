@@ -104,7 +104,7 @@ describe('Members', () => {
     expect(found).toBeDefined()
     expect(found!.subscriptions.length).toBe(1)
     expect(found!.subscriptions[0].status).toBe('ACTIVE')
-    expect(found!.subscriptions[0].plan.name).toBeDefined()
+    expect(found!.subscriptions[0].plan?.name).toBeDefined()
   })
 
   it('should get all members ordered by creation date', async () => {
@@ -141,7 +141,7 @@ describe('Subscriptions', () => {
       (s) => s.member.fullName === 'Suscripto Activo',
     )
     expect(found).toBeDefined()
-    expect(found!.plan.name).toBe('Premium')
+    expect(found!.plan?.name).toBe('Premium')
   })
 
   it('should expire a subscription', async () => {
@@ -232,7 +232,7 @@ describe('Membership Payments', () => {
     })
     expect(payments.length).toBeGreaterThanOrEqual(1)
     expect(payments[0].member.fullName).toBe(member.fullName)
-    expect(payments[0].subscription.plan.name).toBe('Plan Test')
+    expect(payments[0].subscription.plan?.name).toBe('Plan Test')
     expect(payments[0].paymentMethod).toBe('CASH')
   })
 

@@ -25,6 +25,8 @@ import {
 } from '#/shared/components/ui/card'
 import { Input } from '#/shared/components/ui/input'
 import { Badge } from '#/shared/components/ui/badge'
+import { LoadingSpinner } from '#/shared/components/ui/loading-spinner'
+import { EmptyState } from '#/shared/components/ui/empty-state'
 import {
   Dialog,
   DialogContent,
@@ -220,11 +222,7 @@ export function POSPage() {
   }
 
   if (isLoadingSession) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        Verificando estado de la caja...
-      </div>
-    )
+    return <LoadingSpinner label="Verificando estado de la caja..." />
   }
 
   return (
@@ -278,13 +276,13 @@ export function POSPage() {
 
           <div className="flex-1 overflow-y-auto pr-1">
             {isLoadingProducts ? (
-              <div className="text-center py-12 text-muted-foreground">
-                Cargando catálogo...
-              </div>
+              <LoadingSpinner size="lg" label="Cargando catálogo..." />
             ) : products.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                No hay productos disponibles.
-              </div>
+              <EmptyState
+                icon={ShoppingBag}
+                title="Sin productos"
+                description="No hay productos disponibles."
+              />
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 pb-4">
                 {products
@@ -361,13 +359,11 @@ export function POSPage() {
 
           <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
             {cart.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-muted-foreground gap-2">
-                <ShoppingBag className="size-12 stroke-[1.5]" />
-                <p className="text-sm">El carrito está vacío</p>
-                <p className="text-xs text-center px-4">
-                  Hacé click en los productos del catálogo para sumarlos.
-                </p>
-              </div>
+              <EmptyState
+                icon={ShoppingBag}
+                title="El carrito está vacío"
+                description="Hacé click en los productos del catálogo para sumarlos."
+              />
             ) : (
               <div className="space-y-3">
                 {cart.map((item) => (
@@ -427,7 +423,7 @@ export function POSPage() {
               </label>
               <div className="space-y-2">
                 <Input
-                  placeholder="Buscar socio por Nombre o DNI..."
+                  placeholder="Buscar socio por Nombre o CI..."
                   value={memberSearchTerm}
                   onChange={(e) => {
                     setMemberSearchTerm(e.target.value)

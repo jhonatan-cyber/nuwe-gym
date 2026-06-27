@@ -12,6 +12,9 @@ import { Button } from '#/shared/components/ui/button'
 import { Card, CardContent } from '#/shared/components/ui/card'
 import { Input } from '#/shared/components/ui/input'
 import { Badge } from '#/shared/components/ui/badge'
+import { LoadingSpinner } from '#/shared/components/ui/loading-spinner'
+import { EmptyState } from '#/shared/components/ui/empty-state'
+import { ConfirmDialog } from '#/shared/components/ui/confirm-dialog'
 import {
   Dialog,
   DialogContent,
@@ -37,6 +40,7 @@ export function AdminUsersPage({ currentUserId }: AdminUsersPageProps) {
 
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null)
 
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -126,8 +130,13 @@ export function AdminUsersPage({ currentUserId }: AdminUsersPageProps) {
       toast.error('No podés eliminar tu propia cuenta.')
       return
     }
-    if (confirm('¿Estás seguro de que deseas eliminar este usuario?')) {
-      deleteMutation.mutate({ data: userId })
+    setDeletingUserId(userId)
+  }
+
+  const handleConfirmDeleteUser = () => {
+    if (deletingUserId !== null) {
+      deleteMutation.mutate({ data: deletingUserId })
+      setDeletingUserId(null)
     }
   }
 
@@ -189,13 +198,13 @@ export function AdminUsersPage({ currentUserId }: AdminUsersPageProps) {
       <Card>
         <CardContent className="p-0">
           {isLoading ? (
-            <div className="text-center py-8 text-muted-foreground">
-              Cargando usuarios...
-            </div>
+            <LoadingSpinner label="Cargando usuarios..." />
           ) : filteredUsers.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              No se encontraron usuarios.
-            </div>
+            <EmptyState
+              icon={UserCog}
+              title="Sin resultados"
+              description="No se encontraron usuarios."
+            />
           ) : (
             <Table>
               <TableHeader>
@@ -329,6 +338,16 @@ export function AdminUsersPage({ currentUserId }: AdminUsersPageProps) {
           </form>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={deletingUserId !== null}
+        onOpenChange={() => setDeletingUserId(null)}
+        title="Eliminar Usuario"
+        description="¿Estás seguro de que deseas eliminar este usuario?"
+        confirmText="Eliminar"
+        variant="destructive"
+        onConfirm={handleConfirmDeleteUser}
+      />
     </div>
   )
 }

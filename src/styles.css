@@ -7,6 +7,7 @@
 
 :root {
   --background: radial-gradient(circle at 50% 30%, #fafafa 0%, #f0f0f5 100%);
+  --surface: #f5f5f8;
   --foreground: #030303;
   --card: #ffffff;
   --card-foreground: #1b1b1b;
@@ -38,6 +39,7 @@
 
 .dark {
   --background: radial-gradient(circle at 50% 30%, #212128 0%, #0c0c0e 100%);
+  --surface: #18181d;
   --foreground: #f2f2f2;
   --card: #1b1b1b;
   --card-foreground: #f2f2f2;
@@ -152,4 +154,11 @@ a {
   * {
     @apply border-border outline-ring/50;
   }
+}
+
+/* Dialog / Modal background fix:
+   --background es un gradient y background-color no acepta gradients.
+   Usamos background (shorthand) via esta clase utilitaria. */
+.dialog-bg {
+  background: var(--surface);
 }

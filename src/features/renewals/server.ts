@@ -1,7 +1,7 @@
 import { createServerFn } from '@tanstack/react-start'
 import { db } from '#/shared/db/index.ts'
 import { subscriptions } from '#/shared/db/schema/subscriptions.ts'
-import { membershipPlans } from '#/shared/db/schema/membership-plans.ts'
+import { packages } from '#/shared/db/schema/packages.ts'
 import { membershipPayments } from '#/shared/db/schema/membership-payments.ts'
 import {
   cashRegisterSessions,
@@ -36,6 +36,7 @@ export const getExpiringSubscriptions = createServerFn({ method: 'GET' })
       with: {
         member: true,
         plan: true,
+        package: true,
       },
     })
   })
@@ -51,13 +52,14 @@ export const getExpiredSubscriptions = createServerFn({
     with: {
       member: true,
       plan: true,
+      package: true,
     },
   })
 })
 
 const renewSubscriptionSchema = z.object({
   memberId: z.number(),
-  planId: z.number(),
+  packageId: z.number(),
   paymentMethod: z.enum(['CASH', 'CARD', 'TRANSFER', 'QR']),
   amount: z.string(),
   notes: z.string().optional(),
@@ -82,23 +84,24 @@ export const renewSubscription = createServerFn({ method: 'POST' })
         throw new Error('Debe abrir la caja antes de renovar una suscripción.')
       }
 
-      const plan = await tx.query.membershipPlans.findFirst({
-        where: eq(membershipPlans.id, data.planId),
+      const pkg = await tx.query.packages.findFirst({
+        where: eq(packages.id, data.packageId),
       })
 
-      if (!plan) {
-        throw new Error('Plan no encontrado.')
+      if (!pkg) {
+        throw new Error('Paquete no encontrado.')
       }
 
       const startDate = new Date()
       const endDate = new Date()
-      endDate.setDate(endDate.getDate() + plan.durationDays)
+      endDate.setDate(endDate.getDate() + pkg.durationDays)
 
       const [newSubscription] = await tx
         .insert(subscriptions)
         .values({
           memberId: data.memberId,
-          planId: data.planId,
+          planId: null,
+          packageId: data.packageId,
           startDate,
           endDate,
           status: 'ACTIVE',
@@ -171,7 +174,7 @@ export const processAutoRenewals = createServerFn({ method: 'POST' }).handler(
         eq(subscriptions.status, 'ACTIVE'),
         lte(subscriptions.endDate, oneDayFromNow),
       ),
-      with: { member: true, plan: true },
+      with: { member: true, plan: true, package: true },
     })
 
     if (toRenew.length === 0) {
@@ -187,15 +190,19 @@ export const processAutoRenewals = createServerFn({ method: 'POST' }).handler(
             where: eq(cashRegisterSessions.status, 'OPEN'),
           })
 
+          const durationDays = sub.package ? sub.package.durationDays : (sub.plan?.durationDays || 30)
+          const amount = sub.package ? sub.package.price : (sub.plan?.price || '0')
+
           const startDate = new Date()
           const endDate = new Date()
-          endDate.setDate(endDate.getDate() + sub.plan.durationDays)
+          endDate.setDate(endDate.getDate() + durationDays)
 
           const [newSubscription] = await tx
             .insert(subscriptions)
             .values({
               memberId: sub.memberId,
               planId: sub.planId,
+              packageId: sub.packageId,
               startDate,
               endDate,
               status: 'ACTIVE',
@@ -208,7 +215,7 @@ export const processAutoRenewals = createServerFn({ method: 'POST' }).handler(
             .values({
               subscriptionId: newSubscription.id,
               memberId: sub.memberId,
-              amount: sub.plan.price,
+              amount: amount,
               paymentMethod: 'CASH',
               paymentDate: new Date(),
               notes: 'Renovación automática',
@@ -223,7 +230,7 @@ export const processAutoRenewals = createServerFn({ method: 'POST' }).handler(
               movementType: 'INCOME',
               sourceType: 'MEMBERSHIP_PAYMENT',
               sourceId: payment.id,
-              amount: sub.plan.price,
+              amount: amount,
               paymentMethod: 'CASH',
               description: `Renovación automática - Socio: ${sub.member.fullName} (Sub: #${newSubscription.id})`,
             })
@@ -261,6 +268,7 @@ export const getMemberRenewalHistory = createServerFn({ method: 'GET' })
       orderBy: [desc(subscriptions.startDate)],
       with: {
         plan: true,
+        package: true,
         payments: {
           orderBy: [desc(membershipPayments.paymentDate)],
         },
