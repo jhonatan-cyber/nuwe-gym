@@ -435,7 +435,8 @@ export async function cleanDatabase() {
      BEGIN
        FOR tbl IN
          SELECT tablename FROM pg_catalog.pg_tables
-         WHERE schemaname = 'public' AND tablename != 'drizzle_migrations'
+         WHERE schemaname = 'public' 
+           AND tablename NOT IN ('drizzle_migrations', '__drizzle_migrations', 'roles')
        LOOP
          EXECUTE 'TRUNCATE TABLE ' || quote_ident(tbl) || ' CASCADE';
        END LOOP;

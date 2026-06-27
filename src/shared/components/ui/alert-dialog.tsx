@@ -3,20 +3,26 @@ import { AlertDialog as AlertDialogPrimitive } from 'radix-ui'
 
 import { cn } from '#/shared/lib/utils.ts'
 
-function AlertDialog({ ...props }: React.ComponentProps<typeof AlertDialogPrimitive.Root>) {
+function AlertDialog({
+  ...props
+}: React.ComponentProps<typeof AlertDialogPrimitive.Root>) {
   return <AlertDialogPrimitive.Root data-slot="alert-dialog" {...props} />
 }
 
 function AlertDialogTrigger({
   ...props
 }: React.ComponentProps<typeof AlertDialogPrimitive.Trigger>) {
-  return <AlertDialogPrimitive.Trigger data-slot="alert-dialog-trigger" {...props} />
+  return (
+    <AlertDialogPrimitive.Trigger data-slot="alert-dialog-trigger" {...props} />
+  )
 }
 
 function AlertDialogPortal({
   ...props
 }: React.ComponentProps<typeof AlertDialogPrimitive.Portal>) {
-  return <AlertDialogPrimitive.Portal data-slot="alert-dialog-portal" {...props} />
+  return (
+    <AlertDialogPrimitive.Portal data-slot="alert-dialog-portal" {...props} />
+  )
 }
 
 function AlertDialogOverlay({
@@ -54,15 +60,30 @@ function AlertDialogContent({
   )
 }
 
-function AlertDialogHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+function AlertDialogHeader({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn('flex flex-col gap-1 text-center sm:text-left', className)} {...props} />
+    <div
+      className={cn('flex flex-col gap-1 text-center sm:text-left', className)}
+      {...props}
+    />
   )
 }
 
-function AlertDialogFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+function AlertDialogFooter({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn('flex flex-col-reverse sm:flex-row sm:justify-end gap-2', className)} {...props} />
+    <div
+      className={cn(
+        'flex flex-col-reverse sm:flex-row sm:justify-end gap-2',
+        className,
+      )}
+      {...props}
+    />
   )
 }
 
@@ -95,13 +116,25 @@ function AlertDialogDescription({
 function AlertDialogAction({
   ...props
 }: React.ComponentProps<typeof AlertDialogPrimitive.Action>) {
-  return <AlertDialogPrimitive.Action data-slot="alert-dialog-action" asChild {...props} />
+  return (
+    <AlertDialogPrimitive.Action
+      data-slot="alert-dialog-action"
+      asChild
+      {...props}
+    />
+  )
 }
 
 function AlertDialogCancel({
   ...props
 }: React.ComponentProps<typeof AlertDialogPrimitive.Cancel>) {
-  return <AlertDialogPrimitive.Cancel data-slot="alert-dialog-cancel" asChild {...props} />
+  return (
+    <AlertDialogPrimitive.Cancel
+      data-slot="alert-dialog-cancel"
+      asChild
+      {...props}
+    />
+  )
 }
 
 export {

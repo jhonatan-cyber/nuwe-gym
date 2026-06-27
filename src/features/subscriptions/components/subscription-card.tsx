@@ -13,7 +13,11 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
 } from '#/shared/components/ui/alert-dialog'
-import { getInitials, getSubscriptionProgress, getSubscriptionStatus } from '../utils.ts'
+import {
+  getInitials,
+  getSubscriptionProgress,
+  getSubscriptionStatus,
+} from '../utils.ts'
 import type { Subscription } from '../types.ts'
 
 interface SubscriptionCardProps {
@@ -25,10 +29,20 @@ interface SubscriptionCardProps {
 function StatusBadge({ status, endDate }: { status: string; endDate: Date }) {
   const now = new Date()
   if (status === 'CANCELLED' || status === 'CANCELED')
-    return <Badge variant="destructive" className="font-bold text-[10px] uppercase tracking-wider">Cancelada</Badge>
+    return (
+      <Badge
+        variant="destructive"
+        className="font-bold text-[10px] uppercase tracking-wider"
+      >
+        Cancelada
+      </Badge>
+    )
   if (new Date(endDate) < now)
     return (
-      <Badge variant="secondary" className="bg-orange-500/15 text-orange-600 font-bold text-[10px] uppercase tracking-wider border-orange-500/10">
+      <Badge
+        variant="secondary"
+        className="bg-orange-500/15 text-orange-600 font-bold text-[10px] uppercase tracking-wider border-orange-500/10"
+      >
         Vencida
       </Badge>
     )
@@ -39,23 +53,35 @@ function StatusBadge({ status, endDate }: { status: string; endDate: Date }) {
   )
 }
 
-export function SubscriptionCard({ sub, isReadOnly, onCancel }: SubscriptionCardProps) {
+export function SubscriptionCard({
+  sub,
+  isReadOnly,
+  onCancel,
+}: SubscriptionCardProps) {
   const status = getSubscriptionStatus(sub)
-  const { daysRemaining, daysExpired, percent, progressColor } = getSubscriptionProgress(sub)
+  const { daysRemaining, daysExpired, percent, progressColor } =
+    getSubscriptionProgress(sub)
 
   return (
     <div className="group relative rounded-3xl border dark:border-white/8 border-black/8 p-5 flex flex-col justify-between gap-4.5 bg-card hover:shadow-xl hover:border-foreground/20 transition-all duration-300 min-h-[220px]">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
           {sub.member.photoUrl ? (
-            <img src={sub.member.photoUrl} alt={sub.member.fullName} className="size-10 rounded-full object-cover shrink-0 border border-primary/10 shadow-sm" />
+            <img
+              src={sub.member.photoUrl}
+              alt={sub.member.fullName}
+              className="size-10 rounded-full object-cover shrink-0 border border-primary/10 shadow-sm"
+            />
           ) : (
             <div className="size-10 rounded-full bg-linear-to-br from-primary/10 to-primary/5 dark:from-primary/25 dark:to-primary/5 border border-primary/10 flex items-center justify-center font-bold text-xs uppercase text-primary shrink-0 shadow-inner">
               {getInitials(sub.member.fullName)}
             </div>
           )}
           <div className="min-w-0">
-            <h3 className="font-bold text-sm leading-tight text-foreground truncate" title={sub.member.fullName}>
+            <h3
+              className="font-bold text-sm leading-tight text-foreground truncate"
+              title={sub.member.fullName}
+            >
               {sub.member.fullName}
             </h3>
             <p className="text-[10px] font-semibold text-muted-foreground mt-0.5">
@@ -71,8 +97,13 @@ export function SubscriptionCard({ sub, isReadOnly, onCancel }: SubscriptionCard
       <div className="space-y-2.5">
         <div className="flex items-end justify-between gap-2">
           <div className="min-w-0">
-            <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">Paquete de membresía</p>
-            <p className="text-xs font-black text-foreground mt-0.5 truncate" title={sub.package?.name || sub.plan?.name || 'N/A'}>
+            <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">
+              Paquete de membresía
+            </p>
+            <p
+              className="text-xs font-black text-foreground mt-0.5 truncate"
+              title={sub.package?.name || sub.plan?.name || 'N/A'}
+            >
               {sub.package?.name || sub.plan?.name || 'N/A'}
             </p>
           </div>
@@ -89,7 +120,8 @@ export function SubscriptionCard({ sub, isReadOnly, onCancel }: SubscriptionCard
               daysRemaining <= 5 ? (
                 <span className="text-amber-500 flex items-center gap-1">
                   <AlertTriangle className="size-3 shrink-0" />
-                  ¡Vence pronto! Quedan {daysRemaining} {daysRemaining === 1 ? 'día' : 'días'}
+                  ¡Vence pronto! Quedan {daysRemaining}{' '}
+                  {daysRemaining === 1 ? 'día' : 'días'}
                 </span>
               ) : (
                 <span className="text-emerald-500 flex items-center gap-1">
@@ -108,10 +140,15 @@ export function SubscriptionCard({ sub, isReadOnly, onCancel }: SubscriptionCard
                 Suscripción cancelada
               </span>
             )}
-            <span className="text-muted-foreground/60">{Math.round(percent)}%</span>
+            <span className="text-muted-foreground/60">
+              {Math.round(percent)}%
+            </span>
           </div>
           <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
-            <div className={`h-full rounded-full transition-all duration-500 ${progressColor}`} style={{ width: `${percent}%` }} />
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${progressColor}`}
+              style={{ width: `${percent}%` }}
+            />
           </div>
         </div>
       </div>
@@ -131,23 +168,36 @@ export function SubscriptionCard({ sub, isReadOnly, onCancel }: SubscriptionCard
         <div className="absolute inset-0 bg-background/80 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center p-4 z-10">
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="destructive" className="rounded-full flex items-center gap-1.5 h-10 px-5 shadow-lg transform translate-y-2 group-hover:translate-y-0 transition-all duration-300 font-bold text-xs">
-                <XCircle className="size-4 animate-pulse" /> Cancelar Suscripción
+              <Button
+                variant="destructive"
+                className="rounded-full flex items-center gap-1.5 h-10 px-5 shadow-lg transform translate-y-2 group-hover:translate-y-0 transition-all duration-300 font-bold text-xs"
+              >
+                <XCircle className="size-4 animate-pulse" /> Cancelar
+                Suscripción
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent className="rounded-3xl">
               <AlertDialogHeader>
-                <AlertDialogTitle className="font-black">Cancelar Suscripción</AlertDialogTitle>
+                <AlertDialogTitle className="font-black">
+                  Cancelar Suscripción
+                </AlertDialogTitle>
                 <AlertDialogDescription className="text-xs font-semibold leading-relaxed">
-                  ¿Está seguro de cancelar esta suscripción? El socio perderá el acceso inmediatamente.
+                  ¿Está seguro de cancelar esta suscripción? El socio perderá el
+                  acceso inmediatamente.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter className="gap-2">
                 <AlertDialogCancel asChild>
-                  <Button className="rounded-full h-10 px-5 border">Volver</Button>
+                  <Button className="rounded-full h-10 px-5 border">
+                    Volver
+                  </Button>
                 </AlertDialogCancel>
                 <AlertDialogAction asChild>
-                  <Button variant="destructive" onClick={() => onCancel(sub.id)} className="rounded-full h-10 px-5">
+                  <Button
+                    variant="destructive"
+                    onClick={() => onCancel(sub.id)}
+                    className="rounded-full h-10 px-5"
+                  >
                     Confirmar Cancelación
                   </Button>
                 </AlertDialogAction>

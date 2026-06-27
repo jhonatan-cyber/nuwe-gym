@@ -1,4 +1,5 @@
-import { useState, type ReactNode } from 'react'
+import { useState  } from 'react'
+import type {ReactNode} from 'react';
 import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
 import { Card, CardContent } from '#/shared/components/ui/card.tsx'
 import { Skeleton } from '#/shared/components/ui/skeleton.tsx'
@@ -77,10 +78,15 @@ export function DataTable<T>({
   })
 
   function SortIcon({ colKey }: { colKey: string }) {
-    if (sortKey !== colKey) return <ArrowUpDown className="size-3 ml-1 opacity-30 group-hover:opacity-60 transition-opacity" />
-    return sortDir === 'asc'
-      ? <ArrowUp className="size-3 ml-1 text-primary" />
-      : <ArrowDown className="size-3 ml-1 text-primary" />
+    if (sortKey !== colKey)
+      return (
+        <ArrowUpDown className="size-3 ml-1 opacity-30 group-hover:opacity-60 transition-opacity" />
+      )
+    return sortDir === 'asc' ? (
+      <ArrowUp className="size-3 ml-1 text-primary" />
+    ) : (
+      <ArrowDown className="size-3 ml-1 text-primary" />
+    )
   }
 
   return (

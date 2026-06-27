@@ -1,4 +1,7 @@
-import type { getRecentSales, getDailySalesSummary } from '#/features/sales/server.ts'
+import type {
+  getRecentSales,
+  getDailySalesSummary,
+} from '#/features/sales/server.ts'
 
 export type Sale = Awaited<ReturnType<typeof getRecentSales>>[number]
 

@@ -1,7 +1,21 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { CreditCard, DollarSign, Wallet, Calendar, Users, Package, User, FileText } from 'lucide-react'
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '#/shared/components/ui/tooltip'
+import {
+  CreditCard,
+  DollarSign,
+  Wallet,
+  Calendar,
+  Users,
+  Package,
+  User,
+  FileText,
+} from 'lucide-react'
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+  TooltipProvider,
+} from '#/shared/components/ui/tooltip'
 import { getMembershipPayments } from '#/features/membership-payments/server.ts'
 import { Card, CardContent } from '#/shared/components/ui/card'
 import { Badge } from '#/shared/components/ui/badge'
@@ -97,101 +111,157 @@ export function MembershipPaymentsPage() {
       </div>
 
       <TooltipProvider delayDuration={200}>
-      <DataTable
-        columns={[
-          {
-            key: 'date',
-            label: <Tooltip><TooltipTrigger asChild><span className="cursor-default">Fecha / Hora</span></TooltipTrigger><TooltipContent side="bottom"><p>Fecha y hora en que se registró el pago</p></TooltipContent></Tooltip>,
-            sortable: true,
-            sortValue: (pay: (typeof filteredPayments)[number]) => pay.createdAt.getTime(),
-            render: (pay: (typeof filteredPayments)[number]) => (
-              <span className="inline-flex items-center gap-1.5 text-xs">
-                <Calendar className="size-3 text-muted-foreground" />
-                {formatDateTime(pay.createdAt)}
-              </span>
-            ),
-          },
-          {
-            key: 'member',
-            label: 'Socio',
-            sortable: true,
-            sortValue: (pay: (typeof filteredPayments)[number]) => pay.member.fullName,
-            render: (pay: (typeof filteredPayments)[number]) => (
-              <span className="inline-flex items-center gap-1.5 font-medium">
-                <Users className="size-3 text-muted-foreground" />
-                {pay.member.fullName}
-              </span>
-            ),
-          },
-          {
-            key: 'plan',
-            label: <Tooltip><TooltipTrigger asChild><span className="cursor-default">Paquete</span></TooltipTrigger><TooltipContent side="bottom"><p>Plan o paquete de suscripción asociado al pago</p></TooltipContent></Tooltip>,
-            sortable: true,
-            sortValue: (pay: (typeof filteredPayments)[number]) => pay.subscription.package?.name || pay.subscription.plan?.name || '',
-            render: (pay: (typeof filteredPayments)[number]) => (
-              <span className="inline-flex items-center gap-1.5">
-                <Package className="size-3 text-muted-foreground" />
-                {pay.subscription.package?.name || pay.subscription.plan?.name || 'N/A'}
-              </span>
-            ),
-          },
-          {
-            key: 'method',
-            label: <Tooltip><TooltipTrigger asChild><span className="cursor-default">Método de Pago</span></TooltipTrigger><TooltipContent side="bottom"><p>Método utilizado para realizar el pago</p></TooltipContent></Tooltip>,
-            sortable: true,
-            sortValue: (pay: (typeof filteredPayments)[number]) => pay.paymentMethod,
-            render: (pay: (typeof filteredPayments)[number]) => (
-              <Badge
-                variant="outline"
-                className="flex w-fit items-center gap-1"
-              >
-                <Wallet className="size-3" /> {pay.paymentMethod}
-              </Badge>
-            ),
-          },
-          {
-            key: 'amount',
-            label: <Tooltip><TooltipTrigger asChild><span className="cursor-default">Monto</span></TooltipTrigger><TooltipContent side="bottom"><p>Monto pagado por la cuota</p></TooltipContent></Tooltip>,
-            sortable: true,
-            sortValue: (pay: (typeof filteredPayments)[number]) => Number(pay.amount),
-            render: (pay: (typeof filteredPayments)[number]) => (
-              <span className="inline-flex items-center gap-1.5 font-semibold text-primary">
-                <DollarSign className="size-3 text-muted-foreground" />
-                ${Number(pay.amount).toFixed(2)}
-              </span>
-            ),
-          },
-          {
-            key: 'receivedBy',
-            label: <Tooltip><TooltipTrigger asChild><span className="cursor-default">Recibido por</span></TooltipTrigger><TooltipContent side="bottom"><p>Usuario que registró el pago en el sistema</p></TooltipContent></Tooltip>,
-            sortable: true,
-            sortValue: (pay: (typeof filteredPayments)[number]) => pay.createdBy.name,
-            render: (pay: (typeof filteredPayments)[number]) => (
-              <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                <User className="size-3 text-muted-foreground" />
-                {pay.createdBy.name}
-              </span>
-            ),
-          },
-          {
-            key: 'notes',
-            label: 'Notas',
-            sortable: true,
-            sortValue: (pay: (typeof filteredPayments)[number]) => pay.notes || '',
-            render: (pay: (typeof filteredPayments)[number]) => (
-              <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground max-w-[120px] truncate">
-                <FileText className="size-3 text-muted-foreground shrink-0" />
-                <span className="truncate">{pay.notes || '-'}</span>
-              </span>
-            ),
-          },
-        ]}
-        data={filteredPayments}
-        isLoading={isLoading}
-        loadingMessage="Cargando pagos..."
-        emptyMessage="No se encontraron pagos."
-        keyExtractor={(pay: (typeof filteredPayments)[number]) => pay.id}
-      />
+        <DataTable
+          columns={[
+            {
+              key: 'date',
+              label: (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="cursor-default">Fecha / Hora</span>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    <p>Fecha y hora en que se registró el pago</p>
+                  </TooltipContent>
+                </Tooltip>
+              ),
+              sortable: true,
+              sortValue: (pay: (typeof filteredPayments)[number]) =>
+                pay.createdAt.getTime(),
+              render: (pay: (typeof filteredPayments)[number]) => (
+                <span className="inline-flex items-center gap-1.5 text-xs">
+                  <Calendar className="size-3 text-muted-foreground" />
+                  {formatDateTime(pay.createdAt)}
+                </span>
+              ),
+            },
+            {
+              key: 'member',
+              label: 'Socio',
+              sortable: true,
+              sortValue: (pay: (typeof filteredPayments)[number]) =>
+                pay.member.fullName,
+              render: (pay: (typeof filteredPayments)[number]) => (
+                <span className="inline-flex items-center gap-1.5 font-medium">
+                  <Users className="size-3 text-muted-foreground" />
+                  {pay.member.fullName}
+                </span>
+              ),
+            },
+            {
+              key: 'plan',
+              label: (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="cursor-default">Paquete</span>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    <p>Plan o paquete de suscripción asociado al pago</p>
+                  </TooltipContent>
+                </Tooltip>
+              ),
+              sortable: true,
+              sortValue: (pay: (typeof filteredPayments)[number]) =>
+                pay.subscription.package?.name ||
+                pay.subscription.plan?.name ||
+                '',
+              render: (pay: (typeof filteredPayments)[number]) => (
+                <span className="inline-flex items-center gap-1.5">
+                  <Package className="size-3 text-muted-foreground" />
+                  {pay.subscription.package?.name ||
+                    pay.subscription.plan?.name ||
+                    'N/A'}
+                </span>
+              ),
+            },
+            {
+              key: 'method',
+              label: (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="cursor-default">Método de Pago</span>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    <p>Método utilizado para realizar el pago</p>
+                  </TooltipContent>
+                </Tooltip>
+              ),
+              sortable: true,
+              sortValue: (pay: (typeof filteredPayments)[number]) =>
+                pay.paymentMethod,
+              render: (pay: (typeof filteredPayments)[number]) => (
+                <Badge
+                  variant="outline"
+                  className="flex w-fit items-center gap-1"
+                >
+                  <Wallet className="size-3" /> {pay.paymentMethod}
+                </Badge>
+              ),
+            },
+            {
+              key: 'amount',
+              label: (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="cursor-default">Monto</span>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    <p>Monto pagado por la cuota</p>
+                  </TooltipContent>
+                </Tooltip>
+              ),
+              sortable: true,
+              sortValue: (pay: (typeof filteredPayments)[number]) =>
+                Number(pay.amount),
+              render: (pay: (typeof filteredPayments)[number]) => (
+                <span className="inline-flex items-center gap-1.5 font-semibold text-primary">
+                  <DollarSign className="size-3 text-muted-foreground" />$
+                  {Number(pay.amount).toFixed(2)}
+                </span>
+              ),
+            },
+            {
+              key: 'receivedBy',
+              label: (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="cursor-default">Recibido por</span>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    <p>Usuario que registró el pago en el sistema</p>
+                  </TooltipContent>
+                </Tooltip>
+              ),
+              sortable: true,
+              sortValue: (pay: (typeof filteredPayments)[number]) =>
+                pay.createdBy.name,
+              render: (pay: (typeof filteredPayments)[number]) => (
+                <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <User className="size-3 text-muted-foreground" />
+                  {pay.createdBy.name}
+                </span>
+              ),
+            },
+            {
+              key: 'notes',
+              label: 'Notas',
+              sortable: true,
+              sortValue: (pay: (typeof filteredPayments)[number]) =>
+                pay.notes || '',
+              render: (pay: (typeof filteredPayments)[number]) => (
+                <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground max-w-[120px] truncate">
+                  <FileText className="size-3 text-muted-foreground shrink-0" />
+                  <span className="truncate">{pay.notes || '-'}</span>
+                </span>
+              ),
+            },
+          ]}
+          data={filteredPayments}
+          isLoading={isLoading}
+          loadingMessage="Cargando pagos..."
+          emptyMessage="No se encontraron pagos."
+          keyExtractor={(pay: (typeof filteredPayments)[number]) => pay.id}
+        />
       </TooltipProvider>
     </div>
   )

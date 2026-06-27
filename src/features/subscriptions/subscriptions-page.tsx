@@ -6,9 +6,15 @@ import { FilterBar } from '#/shared/components/ui/filter-bar'
 import { LoadingSpinner } from '#/shared/components/ui/loading-spinner'
 import { EmptyState } from '#/shared/components/ui/empty-state'
 import { toast } from 'sonner'
-import { getSubscriptions, cancelSubscription } from '#/features/subscriptions/server.ts'
+import {
+  getSubscriptions,
+  cancelSubscription,
+} from '#/features/subscriptions/server.ts'
 import { ModuleLayout } from '#/shared/components/layout/module-layout.tsx'
-import { ToggleGroup, ToggleGroupItem } from '#/shared/components/ui/toggle-group'
+import {
+  ToggleGroup,
+  ToggleGroupItem,
+} from '#/shared/components/ui/toggle-group'
 import { SubscriptionCard } from '#/features/subscriptions/components/subscription-card.tsx'
 import { SubscriptionForm } from '#/features/subscriptions/components/subscription-form.tsx'
 import { getSubscriptionStatus } from '#/features/subscriptions/utils.ts'
@@ -47,7 +53,11 @@ export function SubscriptionsPage({ userRole }: SubscriptionsPageProps) {
     if (search) {
       const q = search.toLowerCase()
       const memberName = sub.member.fullName.toLowerCase()
-      const packageName = (sub.package?.name || sub.plan?.name || '').toLowerCase()
+      const packageName = (
+        sub.package?.name ||
+        sub.plan?.name ||
+        ''
+      ).toLowerCase()
       return memberName.includes(q) || packageName.includes(q)
     }
     return true
@@ -55,20 +65,30 @@ export function SubscriptionsPage({ userRole }: SubscriptionsPageProps) {
 
   const totalSubscriptions = subsList.length
   const activeSubscriptions = subsList.filter(
-    (s) => s.status === 'ACTIVE' && new Date(s.endDate) >= new Date()
+    (s) => s.status === 'ACTIVE' && new Date(s.endDate) >= new Date(),
   ).length
   const expiredSubscriptions = subsList.filter(
-    (s) => s.status === 'ACTIVE' && new Date(s.endDate) < new Date()
+    (s) => s.status === 'ACTIVE' && new Date(s.endDate) < new Date(),
   ).length
 
   const statusLabel =
-    filterStatus === 'ALL' ? 'Todos los Estados'
-    : filterStatus === 'ACTIVE' ? 'Activas'
-    : filterStatus === 'EXPIRED' ? 'Vencidas'
-    : 'Canceladas'
+    filterStatus === 'ALL'
+      ? 'Todos los Estados'
+      : filterStatus === 'ACTIVE'
+        ? 'Activas'
+        : filterStatus === 'EXPIRED'
+          ? 'Vencidas'
+          : 'Canceladas'
 
   if (activeView === 'form') {
-    return <SubscriptionForm onBack={() => { setActiveView('list'); queryClient.invalidateQueries({ queryKey: ['subscriptions'] }) }} />
+    return (
+      <SubscriptionForm
+        onBack={() => {
+          setActiveView('list')
+          queryClient.invalidateQueries({ queryKey: ['subscriptions'] })
+        }}
+      />
+    )
   }
 
   return (
@@ -84,17 +104,44 @@ export function SubscriptionsPage({ userRole }: SubscriptionsPageProps) {
       leftPanel={
         <div className="flex flex-col gap-6 z-10 w-full">
           {!isReadOnly && (
-            <ToggleGroup type="single" value="list" onValueChange={(v) => { if (v === 'form') setActiveView('form') }}>
-              <ToggleGroupItem value="list"><List className="size-3.5" /> Listado</ToggleGroupItem>
-              <ToggleGroupItem value="form"><Plus className="size-3.5" /> Nuevo</ToggleGroupItem>
+            <ToggleGroup
+              type="single"
+              value="list"
+              onValueChange={(v) => {
+                if (v === 'form') setActiveView('form')
+              }}
+            >
+              <ToggleGroupItem value="list">
+                <List className="size-3.5" /> Listado
+              </ToggleGroupItem>
+              <ToggleGroupItem value="form">
+                <Plus className="size-3.5" /> Nuevo
+              </ToggleGroupItem>
             </ToggleGroup>
           )}
           <div className="space-y-3">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">Metricas</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">
+              Metricas
+            </p>
             <div className="grid grid-cols-1 gap-3">
-              <StatCard label="Total Suscripciones" value={totalSubscriptions} icon={CreditCard} variant="default" />
-              <StatCard label="Activas" value={activeSubscriptions} icon={CreditCard} variant="emerald" />
-              <StatCard label="Vencidas" value={expiredSubscriptions} icon={CreditCard} variant="orange" />
+              <StatCard
+                label="Total Suscripciones"
+                value={totalSubscriptions}
+                icon={CreditCard}
+                variant="default"
+              />
+              <StatCard
+                label="Activas"
+                value={activeSubscriptions}
+                icon={CreditCard}
+                variant="emerald"
+              />
+              <StatCard
+                label="Vencidas"
+                value={expiredSubscriptions}
+                icon={CreditCard}
+                variant="orange"
+              />
             </div>
           </div>
           <FilterBar
@@ -119,7 +166,9 @@ export function SubscriptionsPage({ userRole }: SubscriptionsPageProps) {
           <p className="text-sm font-black tracking-tight">
             {filtered.length} suscripcion{filtered.length !== 1 ? 'es' : ''}
           </p>
-          <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">{statusLabel}</p>
+          <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">
+            {statusLabel}
+          </p>
         </div>
 
         {isLoading ? (
@@ -133,7 +182,12 @@ export function SubscriptionsPage({ userRole }: SubscriptionsPageProps) {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
             {filtered.map((sub) => (
-              <SubscriptionCard key={sub.id} sub={sub} isReadOnly={isReadOnly} onCancel={(id) => cancelMutation.mutate({ data: id })} />
+              <SubscriptionCard
+                key={sub.id}
+                sub={sub}
+                isReadOnly={isReadOnly}
+                onCancel={(id) => cancelMutation.mutate({ data: id })}
+              />
             ))}
           </div>
         )}

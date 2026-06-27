@@ -11,7 +11,9 @@ export interface RenewalFormData {
   notes: string
 }
 
-export type MemberWithSubscriptions = Awaited<ReturnType<typeof getMembers>>[number] & {
+export type MemberWithSubscriptions = Awaited<
+  ReturnType<typeof getMembers>
+>[number] & {
   subscriptions?: Array<{
     id: number
     status: string

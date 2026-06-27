@@ -1,9 +1,12 @@
-import { uuid, pgTable,
+import {
+  uuid,
+  pgTable,
   integer,
   text,
   numeric,
   timestamp,
-  index, } from 'drizzle-orm/pg-core'
+  index,
+} from 'drizzle-orm/pg-core'
 import { saleStatusEnum, paymentMethodEnum } from './enums.ts'
 import { users } from './auth.ts'
 import { members } from './members.ts'

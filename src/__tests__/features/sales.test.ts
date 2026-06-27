@@ -158,9 +158,7 @@ describe('Sales Integration', () => {
       for (let i = 1; i < recentSales.length; i++) {
         expect(
           new Date(recentSales[i - 1].soldAt).getTime(),
-        ).toBeGreaterThanOrEqual(
-          new Date(recentSales[i].soldAt).getTime(),
-        )
+        ).toBeGreaterThanOrEqual(new Date(recentSales[i].soldAt).getTime())
       }
     })
   })
@@ -180,7 +178,7 @@ describe('Sales Integration', () => {
       })
       expect(found).toBeDefined()
       // total should be 2 * 7500.50 = 15001.00
-      expect(Number(found!.total)).toBe(15001.00)
+      expect(Number(found!.total)).toBe(15001.0)
     })
 
     it('should store different payment methods', async () => {
@@ -199,9 +197,9 @@ describe('Sales Integration', () => {
 
     it('should require a userId', async () => {
       const product = await createProduct({ name: 'User Required' })
-      const sale = await createSale(
-        [{ productId: product.id, quantity: 1, unitPrice: '1000.00' }],
-      )
+      const sale = await createSale([
+        { productId: product.id, quantity: 1, unitPrice: '1000.00' },
+      ])
       expect(sale.userId).toBeTruthy()
     })
   })
@@ -231,14 +229,10 @@ describe('Sales Integration', () => {
       const p1 = await createProduct({ name: 'Top Product A' })
       const p2 = await createProduct({ name: 'Top Product B' })
 
-      // Sell 5 of product A
-      await createSale([
-        { productId: p1.id, quantity: 5, unitPrice: '500.00' },
-      ])
+      // Sell 10 of product A
+      await createSale([{ productId: p1.id, quantity: 10, unitPrice: '500.00' }])
       // Sell 2 of product B
-      await createSale([
-        { productId: p2.id, quantity: 2, unitPrice: '500.00' },
-      ])
+      await createSale([{ productId: p2.id, quantity: 2, unitPrice: '500.00' }])
 
       const topProducts = await db
         .select({
@@ -255,9 +249,9 @@ describe('Sales Integration', () => {
         .limit(5)
 
       expect(topProducts.length).toBeGreaterThanOrEqual(2)
-      // Product A (5 sold) should be ranked higher than Product B (2 sold)
+      // Product A (10 sold) should be ranked higher than Product B (2 sold)
       expect(topProducts[0].productId).toBe(p1.id)
-      expect(Number(topProducts[0].quantity)).toBe(5)
+      expect(Number(topProducts[0].quantity)).toBe(10)
     })
   })
 })

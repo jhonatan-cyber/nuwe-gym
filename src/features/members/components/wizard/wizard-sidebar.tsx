@@ -4,7 +4,6 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from '#/shared/components/ui/toggle-group'
-import { useTheme } from 'next-themes'
 
 const STEPS = [
   {
@@ -43,8 +42,6 @@ export function WizardSidebar({
   onClose,
   insideLayout = false,
 }: WizardSidebarProps) {
-  const { theme } = useTheme()
-  const isDark = theme === 'dark'
 
   const content = (
     <>
@@ -78,9 +75,14 @@ export function WizardSidebar({
       </div>
       <div className="flex justify-center z-10 w-full">
         <img
-          src={isDark ? '/logo-dark.png' : '/logo-ligth.png'}
+          src="/logo-ligth.png"
           alt="Trainix Logo"
-          className="h-32 w-auto object-contain select-none pointer-events-none"
+          className="h-32 w-auto object-contain select-none pointer-events-none dark:hidden block"
+        />
+        <img
+          src="/logo-dark.png"
+          alt="Trainix Logo"
+          className="h-32 w-auto object-contain select-none pointer-events-none hidden dark:block"
         />
       </div>
       <nav className="flex-1 space-y-5 z-10">

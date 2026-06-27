@@ -1,7 +1,4 @@
-import { uuid, pgTable,
-  text,
-  timestamp,
-  index, } from 'drizzle-orm/pg-core'
+import { uuid, pgTable, text, timestamp, index } from 'drizzle-orm/pg-core'
 import { subscriptions } from './subscriptions.ts'
 import { members } from './members.ts'
 

@@ -1,13 +1,26 @@
 import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { Check, User, Mail, Shield, Key, Info, Phone, MapPin, IdCard } from 'lucide-react'
+import {
+  Check,
+  User,
+  Mail,
+  Shield,
+  Key,
+  Info,
+  Phone,
+  MapPin,
+  IdCard,
+} from 'lucide-react'
 import { createStaffUser } from '#/features/users/server.ts'
 import { Button } from '#/shared/components/ui/button'
 import { Input } from '#/shared/components/ui/input'
 import { Label } from '#/shared/components/ui/label'
 import { LoadingButton } from '#/shared/components/ui/loading-button'
-import { ToggleGroup, ToggleGroupItem } from '#/shared/components/ui/toggle-group'
+import {
+  ToggleGroup,
+  ToggleGroupItem,
+} from '#/shared/components/ui/toggle-group'
 import type { UserRole } from '#/features/users/types.ts'
 
 interface UserCreationWizardProps {
@@ -38,7 +51,12 @@ export function UserCreationWizard({ onClose }: UserCreationWizardProps) {
   const queryClient = useQueryClient()
   const [form, setForm] = useState<StaffFormState>(defaultFormState)
   const [errors, setErrors] = useState<Record<string, string>>({})
-  const [created, setCreated] = useState<{ name: string; email: string; ci: string; role: string } | null>(null)
+  const [created, setCreated] = useState<{
+    name: string
+    email: string
+    ci: string
+    role: string
+  } | null>(null)
 
   const createMutation = useMutation({
     mutationFn: createStaffUser,
@@ -60,10 +78,14 @@ export function UserCreationWizard({ onClose }: UserCreationWizardProps) {
       })
       toast.success('Usuario del staff creado con éxito')
     },
-    onError: (err: Error) => toast.error(err.message || 'Error al crear usuario'),
+    onError: (err: Error) =>
+      toast.error(err.message || 'Error al crear usuario'),
   })
 
-  const updateField = <TKey extends keyof StaffFormState>(key: TKey, value: StaffFormState[TKey]) => {
+  const updateField = <TKey extends keyof StaffFormState>(
+    key: TKey,
+    value: StaffFormState[TKey],
+  ) => {
     setForm((prev) => ({ ...prev, [key]: value }))
     if (errors[key]) {
       setErrors((prev) => {
@@ -87,7 +109,8 @@ export function UserCreationWizard({ onClose }: UserCreationWizardProps) {
       newErrors.phone = 'Formato de teléfono inválido'
     }
     if (!form.email.trim()) newErrors.email = 'El email es obligatorio'
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) newErrors.email = 'Email inválido'
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
+      newErrors.email = 'Email inválido'
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -127,17 +150,22 @@ export function UserCreationWizard({ onClose }: UserCreationWizardProps) {
               ¡Registro Exitoso!
             </h2>
             <p className="text-xs text-muted-foreground text-center max-w-xs mb-6">
-              El usuario ha sido creado correctamente y ya puede acceder al sistema.
+              El usuario ha sido creado correctamente y ya puede acceder al
+              sistema.
             </p>
 
             <div className="w-full bg-foreground/5 rounded-2xl p-4 border border-foreground/10 space-y-3 mb-6">
               <div className="flex items-center gap-3">
                 <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                  <span className="text-sm font-bold text-primary">{created.name.charAt(0).toUpperCase()}</span>
+                  <span className="text-sm font-bold text-primary">
+                    {created.name.charAt(0).toUpperCase()}
+                  </span>
                 </div>
                 <div>
                   <p className="font-bold text-sm">{created.name}</p>
-                  <p className="text-[10px] text-muted-foreground">{created.email}</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {created.email}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-2 text-xs text-muted-foreground pt-2 border-t border-foreground/10">
@@ -149,13 +177,17 @@ export function UserCreationWizard({ onClose }: UserCreationWizardProps) {
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <Shield className="size-3.5" />
                 <span>
-                  Rol: <strong className="text-foreground">{created.role}</strong>
+                  Rol:{' '}
+                  <strong className="text-foreground">{created.role}</strong>
                 </span>
               </div>
               <div className="flex items-center gap-2 text-xs text-muted-foreground pt-2 border-t border-foreground/10">
                 <Key className="size-3.5" />
                 <span>
-                  Contraseña inicial: <strong className="text-foreground font-mono">{created.ci}</strong>
+                  Contraseña inicial:{' '}
+                  <strong className="text-foreground font-mono">
+                    {created.ci}
+                  </strong>
                 </span>
               </div>
             </div>
@@ -177,7 +209,9 @@ export function UserCreationWizard({ onClose }: UserCreationWizardProps) {
             <div className="flex flex-col items-center mb-5">
               <div className="size-20 rounded-full bg-foreground/5 flex items-center justify-center mb-3 ring-4 ring-foreground/5">
                 <span className="text-4xl font-black text-foreground tracking-tight">
-                  {form.firstName ? form.firstName.charAt(0).toUpperCase() : 'S'}
+                  {form.firstName
+                    ? form.firstName.charAt(0).toUpperCase()
+                    : 'S'}
                 </span>
               </div>
               <h2 className="text-xl font-black tracking-tight dark:text-white text-foreground">
@@ -192,25 +226,33 @@ export function UserCreationWizard({ onClose }: UserCreationWizardProps) {
               {/* CI */}
               <div className="grid gap-1.5">
                 <Label className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
-                  CI / Cédula de Identidad <span className="size-1.5 rounded-full bg-muted-foreground/50 inline-block" />
+                  CI / Cédula de Identidad{' '}
+                  <span className="size-1.5 rounded-full bg-muted-foreground/50 inline-block" />
                 </Label>
                 <div className="relative">
                   <IdCard className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
                   <Input
                     placeholder="Ej. 1234567"
                     value={form.documentNumber}
-                    onChange={(e) => updateField('documentNumber', e.target.value)}
+                    onChange={(e) =>
+                      updateField('documentNumber', e.target.value)
+                    }
                     className={`pl-8 text-sm ${errors.documentNumber ? 'border-destructive' : ''}`}
                   />
                 </div>
-                {errors.documentNumber && <p className="text-[10px] font-semibold text-destructive">{errors.documentNumber}</p>}
+                {errors.documentNumber && (
+                  <p className="text-[10px] font-semibold text-destructive">
+                    {errors.documentNumber}
+                  </p>
+                )}
               </div>
 
               {/* Nombre y Apellido */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="grid gap-1.5">
                   <Label className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
-                    Nombre <span className="size-1.5 rounded-full bg-muted-foreground/50 inline-block" />
+                    Nombre{' '}
+                    <span className="size-1.5 rounded-full bg-muted-foreground/50 inline-block" />
                   </Label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
@@ -221,11 +263,16 @@ export function UserCreationWizard({ onClose }: UserCreationWizardProps) {
                       className={`pl-8 text-sm ${errors.firstName ? 'border-destructive' : ''}`}
                     />
                   </div>
-                  {errors.firstName && <p className="text-[10px] font-semibold text-destructive">{errors.firstName}</p>}
+                  {errors.firstName && (
+                    <p className="text-[10px] font-semibold text-destructive">
+                      {errors.firstName}
+                    </p>
+                  )}
                 </div>
                 <div className="grid gap-1.5">
                   <Label className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
-                    Apellidos <span className="size-1.5 rounded-full bg-muted-foreground/50 inline-block" />
+                    Apellidos{' '}
+                    <span className="size-1.5 rounded-full bg-muted-foreground/50 inline-block" />
                   </Label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
@@ -236,7 +283,11 @@ export function UserCreationWizard({ onClose }: UserCreationWizardProps) {
                       className={`pl-8 text-sm ${errors.lastName ? 'border-destructive' : ''}`}
                     />
                   </div>
-                  {errors.lastName && <p className="text-[10px] font-semibold text-destructive">{errors.lastName}</p>}
+                  {errors.lastName && (
+                    <p className="text-[10px] font-semibold text-destructive">
+                      {errors.lastName}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -270,14 +321,19 @@ export function UserCreationWizard({ onClose }: UserCreationWizardProps) {
                       className={`pl-8 text-sm ${errors.phone ? 'border-destructive' : ''}`}
                     />
                   </div>
-                  {errors.phone && <p className="text-[10px] font-semibold text-destructive">{errors.phone}</p>}
+                  {errors.phone && (
+                    <p className="text-[10px] font-semibold text-destructive">
+                      {errors.phone}
+                    </p>
+                  )}
                 </div>
               </div>
 
               {/* Email */}
               <div className="grid gap-1.5">
                 <Label className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
-                  Correo Electrónico <span className="size-1.5 rounded-full bg-muted-foreground/50 inline-block" />
+                  Correo Electrónico{' '}
+                  <span className="size-1.5 rounded-full bg-muted-foreground/50 inline-block" />
                 </Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
@@ -289,23 +345,39 @@ export function UserCreationWizard({ onClose }: UserCreationWizardProps) {
                     className={`pl-8 text-sm ${errors.email ? 'border-destructive' : ''}`}
                   />
                 </div>
-                {errors.email && <p className="text-[10px] font-semibold text-destructive">{errors.email}</p>}
+                {errors.email && (
+                  <p className="text-[10px] font-semibold text-destructive">
+                    {errors.email}
+                  </p>
+                )}
               </div>
 
               {/* Rol */}
               <div className="grid gap-1.5">
                 <Label className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
-                  Rol <span className="size-1.5 rounded-full bg-muted-foreground/50 inline-block" />
+                  Rol{' '}
+                  <span className="size-1.5 rounded-full bg-muted-foreground/50 inline-block" />
                 </Label>
                 <ToggleGroup
                   type="single"
                   value={form.role}
-                  onValueChange={(v) => { if (v) updateField('role', v as UserRole) }}
+                  onValueChange={(v) => {
+                    if (v) updateField('role', v as UserRole)
+                  }}
                   className="w-full"
                 >
-                  <ToggleGroupItem value="TRAINER" className="flex-1 text-xs">Entrenador</ToggleGroupItem>
-                  <ToggleGroupItem value="RECEPTIONIST" className="flex-1 text-xs">Recepcionista</ToggleGroupItem>
-                  <ToggleGroupItem value="ADMIN" className="flex-1 text-xs">Admin</ToggleGroupItem>
+                  <ToggleGroupItem value="TRAINER" className="flex-1 text-xs">
+                    Entrenador
+                  </ToggleGroupItem>
+                  <ToggleGroupItem
+                    value="RECEPTIONIST"
+                    className="flex-1 text-xs"
+                  >
+                    Recepcionista
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="ADMIN" className="flex-1 text-xs">
+                    Admin
+                  </ToggleGroupItem>
                 </ToggleGroup>
               </div>
 
@@ -313,10 +385,13 @@ export function UserCreationWizard({ onClose }: UserCreationWizardProps) {
               <div className="bg-amber-500/10 p-3 rounded-lg flex gap-2 text-xs text-amber-800 border border-amber-500/20">
                 <Key className="size-5 shrink-0" />
                 <div>
-                  <p className="font-semibold mb-0.5">Contraseña generada automáticamente</p>
+                  <p className="font-semibold mb-0.5">
+                    Contraseña generada automáticamente
+                  </p>
                   <p>
-                    La contraseña inicial será el <strong>número de CI</strong> del empleado.
-                    Al ingresar por primera vez, el sistema le pedirá cambiarla.
+                    La contraseña inicial será el <strong>número de CI</strong>{' '}
+                    del empleado. Al ingresar por primera vez, el sistema le
+                    pedirá cambiarla.
                   </p>
                 </div>
               </div>
@@ -326,7 +401,11 @@ export function UserCreationWizard({ onClose }: UserCreationWizardProps) {
                 <Info className="size-5 shrink-0" />
                 <div>
                   <p className="font-semibold mb-0.5">
-                    {form.role === 'ADMIN' ? 'Acceso Total' : form.role === 'RECEPTIONIST' ? 'Recepción y Caja' : 'Solo Check-ins'}
+                    {form.role === 'ADMIN'
+                      ? 'Acceso Total'
+                      : form.role === 'RECEPTIONIST'
+                        ? 'Recepción y Caja'
+                        : 'Solo Check-ins'}
                   </p>
                   <p>
                     {form.role === 'ADMIN'

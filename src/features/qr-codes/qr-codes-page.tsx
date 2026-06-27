@@ -1,7 +1,12 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { QrCode, Printer, X, IdCard } from 'lucide-react'
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '#/shared/components/ui/tooltip'
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+  TooltipProvider,
+} from '#/shared/components/ui/tooltip'
 import { toast } from 'sonner'
 import {
   generateMemberQR,
@@ -83,7 +88,7 @@ export function QRCodesPage({ userRole }: QRCodesPageProps) {
     const printWindow = window.open('', '_blank')
     if (!printWindow || !selectedMember || !qrDataUrl) return
 
-    const gymName = 'GymManager'
+    const gymName = 'Trainix'
     const memberName = selectedMember.fullName.toUpperCase()
 
     printWindow.document.write(`
@@ -135,88 +140,113 @@ export function QRCodesPage({ userRole }: QRCodesPageProps) {
       </div>
 
       <TooltipProvider delayDuration={200}>
-      <DataTable
-        columns={[
-          {
-            key: 'member',
-            label: 'Socio',
-            sortable: true,
-            sortValue: (member: (typeof membersList)[number]) => member.fullName,
-            render: (member: (typeof membersList)[number]) => (
-              <div className="flex items-center gap-2">
-                {member.photoUrl ? (
-                  <img
-                    src={member.photoUrl}
-                    alt=""
-                    className="size-8 rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="size-8 bg-primary/10 text-primary rounded-full flex items-center justify-center font-bold text-xs uppercase">
-                    {member.fullName.substring(0, 2)}
-                  </div>
-                )}
-                <span className="font-medium">{member.fullName}</span>
-              </div>
-            ),
-          },
-          {
-            key: 'document',
-            label: <Tooltip><TooltipTrigger asChild><span className="cursor-default">Documento</span></TooltipTrigger><TooltipContent side="bottom"><p>Número de documento de identidad del socio</p></TooltipContent></Tooltip>,
-            sortable: true,
-            sortValue: (member: (typeof membersList)[number]) => member.documentNumber || '',
-            render: (member: (typeof membersList)[number]) => (
-              <span className="inline-flex items-center gap-1.5 text-muted-foreground">
-                <IdCard className="size-3 text-muted-foreground" />
-                {member.documentNumber || '—'}
-              </span>
-            ),
-          },
-          {
-            key: 'qr',
-            label: <Tooltip><TooltipTrigger asChild><span className="cursor-default">QR</span></TooltipTrigger><TooltipContent side="bottom"><p>Estado del código QR de acceso</p></TooltipContent></Tooltip>,
-            sortable: true,
-            sortValue: (member: (typeof membersList)[number]) => member.qrCode ? 1 : 0,
-            render: (member: (typeof membersList)[number]) =>
-              member.qrCode ? (
-                <Badge
-                  variant="default"
-                  className="bg-emerald-500/15 text-emerald-600 border-emerald-500/20"
-                >
-                  Generado
-                </Badge>
-              ) : (
-                <Badge variant="secondary">Pendiente</Badge>
+        <DataTable
+          columns={[
+            {
+              key: 'member',
+              label: 'Socio',
+              sortable: true,
+              sortValue: (member: (typeof membersList)[number]) =>
+                member.fullName,
+              render: (member: (typeof membersList)[number]) => (
+                <div className="flex items-center gap-2">
+                  {member.photoUrl ? (
+                    <img
+                      src={member.photoUrl}
+                      alt=""
+                      className="size-8 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="size-8 bg-primary/10 text-primary rounded-full flex items-center justify-center font-bold text-xs uppercase">
+                      {member.fullName.substring(0, 2)}
+                    </div>
+                  )}
+                  <span className="font-medium">{member.fullName}</span>
+                </div>
               ),
-          },
-          {
-            key: 'actions',
-            label: 'Acciones',
-            className: 'text-right',
-            render: (member: (typeof membersList)[number]) =>
-              !isReadOnly && (
+            },
+            {
+              key: 'document',
+              label: (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleGenerateQR(member)}
-                    >
-                      <QrCode className="size-4 mr-1" />
-                      {member.qrCode ? 'Ver QR' : 'Generar'}
-                    </Button>
+                    <span className="cursor-default">Documento</span>
                   </TooltipTrigger>
                   <TooltipContent side="bottom">
-                    <p>{member.qrCode ? 'Ver código QR del socio' : 'Generar código QR para el socio'}</p>
+                    <p>Número de documento de identidad del socio</p>
                   </TooltipContent>
                 </Tooltip>
               ),
-          },
-        ]}
-        data={membersList}
-        isLoading={isLoading}
-        emptyMessage="No se encontraron socios."
-        keyExtractor={(member: (typeof membersList)[number]) => member.id}
-      />
+              sortable: true,
+              sortValue: (member: (typeof membersList)[number]) =>
+                member.documentNumber || '',
+              render: (member: (typeof membersList)[number]) => (
+                <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                  <IdCard className="size-3 text-muted-foreground" />
+                  {member.documentNumber || '—'}
+                </span>
+              ),
+            },
+            {
+              key: 'qr',
+              label: (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="cursor-default">QR</span>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    <p>Estado del código QR de acceso</p>
+                  </TooltipContent>
+                </Tooltip>
+              ),
+              sortable: true,
+              sortValue: (member: (typeof membersList)[number]) =>
+                member.qrCode ? 1 : 0,
+              render: (member: (typeof membersList)[number]) =>
+                member.qrCode ? (
+                  <Badge
+                    variant="default"
+                    className="bg-emerald-500/15 text-emerald-600 border-emerald-500/20"
+                  >
+                    Generado
+                  </Badge>
+                ) : (
+                  <Badge variant="secondary">Pendiente</Badge>
+                ),
+            },
+            {
+              key: 'actions',
+              label: 'Acciones',
+              className: 'text-right',
+              render: (member: (typeof membersList)[number]) =>
+                !isReadOnly && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleGenerateQR(member)}
+                      >
+                        <QrCode className="size-4 mr-1" />
+                        {member.qrCode ? 'Ver QR' : 'Generar'}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      <p>
+                        {member.qrCode
+                          ? 'Ver código QR del socio'
+                          : 'Generar código QR para el socio'}
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                ),
+            },
+          ]}
+          data={membersList}
+          isLoading={isLoading}
+          emptyMessage="No se encontraron socios."
+          keyExtractor={(member: (typeof membersList)[number]) => member.id}
+        />
       </TooltipProvider>
 
       <Dialog open={isQrDialogOpen} onOpenChange={setIsQrDialogOpen}>

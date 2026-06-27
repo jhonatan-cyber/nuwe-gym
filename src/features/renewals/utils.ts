@@ -12,14 +12,41 @@ export interface PaymentMethodOption {
 }
 
 export const PAYMENT_METHODS: PaymentMethodOption[] = [
-  { value: 'CASH', label: 'Efectivo', icon: Coins, description: 'Pago físico en efectivo' },
-  { value: 'CARD', label: 'Tarjeta', icon: CreditCard, description: 'Débito o crédito' },
-  { value: 'TRANSFER', label: 'Transferencia', icon: Building2, description: 'Banco o transferencia directa' },
+  {
+    value: 'CASH',
+    label: 'Efectivo',
+    icon: Coins,
+    description: 'Pago físico en efectivo',
+  },
+  {
+    value: 'CARD',
+    label: 'Tarjeta',
+    icon: CreditCard,
+    description: 'Débito o crédito',
+  },
+  {
+    value: 'TRANSFER',
+    label: 'Transferencia',
+    icon: Building2,
+    description: 'Banco o transferencia directa',
+  },
   { value: 'QR', label: 'QR', icon: QrCode, description: 'QR / Mercado Pago' },
 ]
 
 export const STEPS = [
-  { id: 1 as const, label: 'Seleccion de Persona', sublabel: 'Registre los datos de la persona' },
-  { id: 2 as const, label: 'Selección de Plan', sublabel: 'Elija un plan de inscripción' },
-  { id: 3 as const, label: 'Pago de Inscripción', sublabel: 'Seleccione un método de pago' },
+  {
+    id: 1 as const,
+    label: 'Seleccion de Persona',
+    sublabel: 'Registre los datos de la persona',
+  },
+  {
+    id: 2 as const,
+    label: 'Selección de Plan',
+    sublabel: 'Elija un plan de inscripción',
+  },
+  {
+    id: 3 as const,
+    label: 'Pago de Inscripción',
+    sublabel: 'Seleccione un método de pago',
+  },
 ]

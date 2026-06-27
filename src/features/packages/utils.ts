@@ -13,16 +13,22 @@ export function getDurationLabel(days: number): string {
 
 export function getTypeIcon(type: string) {
   switch (type) {
-    case 'PROMOTION': return Tag
-    case 'SPECIAL': return Sparkles
-    default: return Package
+    case 'PROMOTION':
+      return Tag
+    case 'SPECIAL':
+      return Sparkles
+    default:
+      return Package
   }
 }
 
 export function getTypeLabel(type: string) {
   switch (type) {
-    case 'PROMOTION': return 'Promocion'
-    case 'SPECIAL': return 'Especial'
-    default: return 'Paquete'
+    case 'PROMOTION':
+      return 'Promocion'
+    case 'SPECIAL':
+      return 'Especial'
+    default:
+      return 'Paquete'
   }
 }

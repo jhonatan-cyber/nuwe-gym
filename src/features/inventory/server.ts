@@ -49,11 +49,11 @@ export const getStockSnapshots = createServerFn({ method: 'GET' })
       .from(inventoryMovements)
       .innerJoin(
         sql`"products"`,
-        sql`"products"."id" = ${inventoryMovements.productId}`
+        sql`"products"."id" = ${inventoryMovements.productId}`,
       )
       .innerJoin(
         sql`"product_categories"`,
-        sql`"product_categories"."id" = "products"."category_id"`
+        sql`"product_categories"."id" = "products"."category_id"`,
       )
       .groupBy(
         inventoryMovements.productId,
@@ -73,14 +73,17 @@ export const getStockSnapshots = createServerFn({ method: 'GET' })
       .where(sql`${inventoryMovements.createdAt} <= ${cutoffDate}`)
       .groupBy(inventoryMovements.productId)
 
-    const lastStockMap = new Map(lastMovements.map((m) => [m.productId, m.lastStock]))
+    const lastStockMap = new Map(
+      lastMovements.map((m) => [m.productId, m.lastStock]),
+    )
 
     const snapshots: StockSnapshot[] = []
 
     for (const item of productsList) {
       const prevStock = lastStockMap.get(item.id) ?? item.currentStock
       const change = item.currentStock - prevStock
-      const changePercent = prevStock > 0 ? Math.round((change / prevStock) * 100) : 0
+      const changePercent =
+        prevStock > 0 ? Math.round((change / prevStock) * 100) : 0
 
       snapshots.push({
         productId: item.id,

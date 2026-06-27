@@ -40,12 +40,16 @@ export function Step4FacialEnrollment({
 
   return (
     <div className="flex flex-col items-center justify-center py-6 text-center max-w-md mx-auto">
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
         @keyframes scan {
           0%, 100% { top: 10%; }
           50% { top: 90%; }
         }
-      `}} />
+      `,
+        }}
+      />
       <div className="size-16 rounded-2xl bg-indigo-500/10 dark:bg-indigo-500/20 border border-indigo-500/20 flex items-center justify-center mb-4">
         <Scan className="size-8 text-indigo-600 dark:text-indigo-400" />
       </div>
@@ -59,7 +63,9 @@ export function Step4FacialEnrollment({
       <div className="flex w-full max-w-xs bg-gray-100 dark:bg-white/5 rounded-xl p-1 mb-6 border border-gray-200 dark:border-white/5">
         <button
           type="button"
-          onClick={() => { onModeChange('CAMERA') }}
+          onClick={() => {
+            onModeChange('CAMERA')
+          }}
           className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
             enrollmentMode === 'CAMERA'
               ? 'bg-white dark:bg-white/10 text-gray-900 dark:text-white shadow-sm'
@@ -70,7 +76,9 @@ export function Step4FacialEnrollment({
         </button>
         <button
           type="button"
-          onClick={() => { onModeChange('BIOMETRIC') }}
+          onClick={() => {
+            onModeChange('BIOMETRIC')
+          }}
           className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
             enrollmentMode === 'BIOMETRIC'
               ? 'bg-white dark:bg-white/10 text-gray-900 dark:text-white shadow-sm'
@@ -84,11 +92,21 @@ export function Step4FacialEnrollment({
       <div className="relative rounded-2xl border border-gray-200 dark:border-white/10 p-2 w-full max-w-xs mb-5 bg-gray-50 dark:bg-white/[0.02]">
         <div className="relative aspect-square w-full rounded-xl overflow-hidden bg-black flex items-center justify-center border border-gray-200 dark:border-white/5 shadow-inner">
           {photoBase64 ? (
-            <img src={photoBase64} alt="Captured face" className="w-full h-full object-cover animate-in fade-in duration-300" />
+            <img
+              src={photoBase64}
+              alt="Captured face"
+              className="w-full h-full object-cover animate-in fade-in duration-300"
+            />
           ) : enrollmentMode === 'CAMERA' ? (
             isCameraActive ? (
               <>
-                <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover scale-x-[-1]" />
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className="w-full h-full object-cover scale-x-[-1]"
+                />
                 <div className="absolute inset-4 border border-indigo-500/30 rounded-full pointer-events-none flex items-center justify-center">
                   <div className="absolute inset-0 border-2 border-dashed border-indigo-500/20 rounded-full animate-spin [animation-duration:15s]" />
                   <div className="size-48 border border-indigo-500/40 rounded-full" />
@@ -120,31 +138,43 @@ export function Step4FacialEnrollment({
             <div className="flex flex-col items-center justify-center p-6 text-center text-gray-400 dark:text-white/30">
               <Scan className="size-12 mb-2 opacity-50 text-indigo-400" />
               <p className="text-xs font-semibold">Listo para conectar</p>
-              <p className="text-[9px] mt-1 text-gray-500 uppercase tracking-wider">Lector IP: {readerIp}</p>
+              <p className="text-[9px] mt-1 text-gray-500 uppercase tracking-wider">
+                Lector IP: {readerIp}
+              </p>
             </div>
           )}
         </div>
       </div>
 
-      {enrollmentMode === 'BIOMETRIC' && !photoBase64 && !isConnectingDevice && (
-        <div className="grid gap-1.5 w-full max-w-xs mb-4 text-left">
-          <Label htmlFor="reader-ip" className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
-            IP del Lector Biométrico
-          </Label>
-          <Input
-            id="reader-ip"
-            type="text"
-            value={readerIp}
-            onChange={(e) => onReaderIpChange(e.target.value)}
-            placeholder="Ej: 192.168.1.201"
-            className="h-9 text-xs"
-          />
-        </div>
-      )}
+      {enrollmentMode === 'BIOMETRIC' &&
+        !photoBase64 &&
+        !isConnectingDevice && (
+          <div className="grid gap-1.5 w-full max-w-xs mb-4 text-left">
+            <Label
+              htmlFor="reader-ip"
+              className="text-[10px] font-bold uppercase tracking-wider text-gray-400"
+            >
+              IP del Lector Biométrico
+            </Label>
+            <Input
+              id="reader-ip"
+              type="text"
+              value={readerIp}
+              onChange={(e) => onReaderIpChange(e.target.value)}
+              placeholder="Ej: 192.168.1.201"
+              className="h-9 text-xs"
+            />
+          </div>
+        )}
 
       <div className="flex flex-col gap-2 w-full max-w-xs">
         {photoBase64 ? (
-          <Button type="button" variant="outline" onClick={onRecapture} className="w-full font-bold border-gray-300 dark:border-white/20 dark:text-white">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onRecapture}
+            className="w-full font-bold border-gray-300 dark:border-white/20 dark:text-white"
+          >
             <RefreshCw className="size-4 mr-2" /> Recapturar Foto
           </Button>
         ) : enrollmentMode === 'CAMERA' ? (

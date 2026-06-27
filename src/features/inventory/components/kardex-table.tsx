@@ -25,7 +25,11 @@ interface KardexTableProps {
   isLoading: boolean
 }
 
-export function KardexTable({ movements, searchTerm, isLoading }: KardexTableProps) {
+export function KardexTable({
+  movements,
+  searchTerm,
+  isLoading,
+}: KardexTableProps) {
   const filtered = movements.filter((move) =>
     move.product.name.toLowerCase().includes(searchTerm.toLowerCase()),
   )
@@ -34,7 +38,9 @@ export function KardexTable({ movements, searchTerm, isLoading }: KardexTablePro
     <div className="bg-card rounded-4xl border border-border/10 shadow-xl p-5 flex flex-col gap-4 min-h-[60vh]">
       <div className="flex items-center justify-between">
         <ResultsCount count={filtered.length} label="movimiento" />
-        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">Historial de Stock</p>
+        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">
+          Historial de Stock
+        </p>
       </div>
 
       {isLoading ? (
@@ -42,7 +48,11 @@ export function KardexTable({ movements, searchTerm, isLoading }: KardexTablePro
       ) : filtered.length === 0 ? (
         <EmptyState
           icon={BarChart3}
-          title={searchTerm ? 'No se encontraron movimientos' : 'No hay movimientos registrados'}
+          title={
+            searchTerm
+              ? 'No se encontraron movimientos'
+              : 'No hay movimientos registrados'
+          }
           description="Los movimientos aparecen cuando se ajusta stock, se compra o se vende."
         />
       ) : (
@@ -50,14 +60,30 @@ export function KardexTable({ movements, searchTerm, isLoading }: KardexTablePro
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border/10">
-                <th className="text-left py-3 px-3 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Fecha</th>
-                <th className="text-left py-3 px-3 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Producto</th>
-                <th className="text-left py-3 px-3 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Tipo</th>
-                <th className="text-center py-3 px-3 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Cant.</th>
-                <th className="text-center py-3 px-3 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Stock Prev.</th>
-                <th className="text-center py-3 px-3 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Stock Post.</th>
-                <th className="text-left py-3 px-3 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Operador</th>
-                <th className="text-left py-3 px-3 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Detalle</th>
+                <th className="text-left py-3 px-3 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                  Fecha
+                </th>
+                <th className="text-left py-3 px-3 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                  Producto
+                </th>
+                <th className="text-left py-3 px-3 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                  Tipo
+                </th>
+                <th className="text-center py-3 px-3 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                  Cant.
+                </th>
+                <th className="text-center py-3 px-3 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                  Stock Prev.
+                </th>
+                <th className="text-center py-3 px-3 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                  Stock Post.
+                </th>
+                <th className="text-left py-3 px-3 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                  Operador
+                </th>
+                <th className="text-left py-3 px-3 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                  Detalle
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -65,9 +91,16 @@ export function KardexTable({ movements, searchTerm, isLoading }: KardexTablePro
                 const qty = Number(move.quantity)
                 const isPositive = qty > 0
                 return (
-                  <tr key={move.id} className="border-b border-border/5 hover:bg-background/50 transition-colors">
-                    <td className="py-3 px-3 text-xs text-muted-foreground whitespace-nowrap">{formatDateTime(move.createdAt)}</td>
-                    <td className="py-3 px-3 font-semibold text-xs">{move.product.name}</td>
+                  <tr
+                    key={move.id}
+                    className="border-b border-border/5 hover:bg-background/50 transition-colors"
+                  >
+                    <td className="py-3 px-3 text-xs text-muted-foreground whitespace-nowrap">
+                      {formatDateTime(move.createdAt)}
+                    </td>
+                    <td className="py-3 px-3 font-semibold text-xs">
+                      {move.product.name}
+                    </td>
                     <td className="py-3 px-3">
                       <div className="flex items-center gap-1.5">
                         {getMovementIcon(move.movementType)}
@@ -75,16 +108,31 @@ export function KardexTable({ movements, searchTerm, isLoading }: KardexTablePro
                       </div>
                     </td>
                     <td className="py-3 px-3 text-center">
-                      <span className={`inline-flex items-center gap-0.5 font-bold text-xs ${isPositive ? 'text-emerald-600' : 'text-red-600'}`}>
-                        {isPositive ? <ArrowUpRight className="size-3" /> : <ArrowDownLeft className="size-3" />}
+                      <span
+                        className={`inline-flex items-center gap-0.5 font-bold text-xs ${isPositive ? 'text-emerald-600' : 'text-red-600'}`}
+                      >
+                        {isPositive ? (
+                          <ArrowUpRight className="size-3" />
+                        ) : (
+                          <ArrowDownLeft className="size-3" />
+                        )}
                         {isPositive ? `+${qty}` : qty}
                       </span>
                     </td>
-                    <td className="py-3 px-3 text-center text-xs text-muted-foreground font-mono">{move.previousStock}</td>
-                    <td className="py-3 px-3 text-center text-xs font-mono font-semibold">{move.newStock}</td>
-                    <td className="py-3 px-3 text-xs text-muted-foreground">{move.createdBy.name}</td>
+                    <td className="py-3 px-3 text-center text-xs text-muted-foreground font-mono">
+                      {move.previousStock}
+                    </td>
+                    <td className="py-3 px-3 text-center text-xs font-mono font-semibold">
+                      {move.newStock}
+                    </td>
+                    <td className="py-3 px-3 text-xs text-muted-foreground">
+                      {move.createdBy.name}
+                    </td>
                     <td className="py-3 px-3 text-xs text-muted-foreground max-w-[200px] truncate">
-                      {move.notes || (move.referenceType ? `${move.referenceType} #${move.referenceId}` : '-')}
+                      {move.notes ||
+                        (move.referenceType
+                          ? `${move.referenceType} #${move.referenceId}`
+                          : '-')}
                     </td>
                   </tr>
                 )

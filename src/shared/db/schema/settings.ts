@@ -1,10 +1,13 @@
-import { uuid, pgTable,
+import {
+  uuid,
+  pgTable,
   integer,
   text,
   numeric,
   boolean,
   timestamp,
-  check, } from 'drizzle-orm/pg-core'
+  check,
+} from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
 
 export const settings = pgTable(
@@ -38,5 +41,10 @@ export const settings = pgTable(
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
-  (table) => [check('settings_single_row', sql`${table.id} = '00000000-0000-0000-0000-000000000000'::uuid`)],
+  (table) => [
+    check(
+      'settings_single_row',
+      sql`${table.id} = '00000000-0000-0000-0000-000000000000'::uuid`,
+    ),
+  ],
 )

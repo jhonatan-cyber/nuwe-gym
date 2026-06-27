@@ -45,7 +45,6 @@ export const entityEnum = pgEnum('entity_type', [
   'PACKAGE',
 ])
 
-
 export const auditLogs = pgTable('audit_logs', {
   id: uuid('id').defaultRandom().primaryKey(),
   userId: text('user_id'),
@@ -59,4 +58,3 @@ export const auditLogs = pgTable('audit_logs', {
   ipAddress: text('ip_address'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })
-

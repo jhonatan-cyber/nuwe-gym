@@ -9,7 +9,12 @@ interface WizardFooterProps {
   onNext: () => void
 }
 
-export function WizardFooter({ step, ready, onBack, onNext }: WizardFooterProps) {
+export function WizardFooter({
+  step,
+  ready,
+  onBack,
+  onNext,
+}: WizardFooterProps) {
   return (
     <div className="flex justify-between items-center pt-6 border-t dark:border-white/5 border-black/5 mt-6 shrink-0">
       <Button

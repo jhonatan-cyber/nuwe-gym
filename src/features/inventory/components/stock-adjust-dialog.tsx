@@ -1,5 +1,11 @@
 import { useState } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '#/shared/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '#/shared/components/ui/dialog'
 import { Input } from '#/shared/components/ui/input'
 import { Textarea } from '#/shared/components/ui/textarea'
 import { Button } from '#/shared/components/ui/button'
@@ -10,12 +16,24 @@ interface StockAdjustDialogProps {
   onOpenChange: (open: boolean) => void
   productName: string
   isPending: boolean
-  onSubmit: (data: { quantity: number; movementType: 'MANUAL_ADJUSTMENT' | 'LOSS' | 'RETURN'; notes: string }) => void
+  onSubmit: (data: {
+    quantity: number
+    movementType: 'MANUAL_ADJUSTMENT' | 'LOSS' | 'RETURN'
+    notes: string
+  }) => void
 }
 
-export function StockAdjustDialog({ isOpen, onOpenChange, productName, isPending, onSubmit }: StockAdjustDialogProps) {
+export function StockAdjustDialog({
+  isOpen,
+  onOpenChange,
+  productName,
+  isPending,
+  onSubmit,
+}: StockAdjustDialogProps) {
   const [adjustQty, setAdjustQty] = useState('1')
-  const [adjustType, setAdjustType] = useState<'MANUAL_ADJUSTMENT' | 'LOSS' | 'RETURN'>('MANUAL_ADJUSTMENT')
+  const [adjustType, setAdjustType] = useState<
+    'MANUAL_ADJUSTMENT' | 'LOSS' | 'RETURN'
+  >('MANUAL_ADJUSTMENT')
   const [adjustNotes, setAdjustNotes] = useState('')
 
   function handleSubmit(e: React.FormEvent) {
@@ -35,19 +53,32 @@ export function StockAdjustDialog({ isOpen, onOpenChange, productName, isPending
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="rounded-2xl">
         <DialogHeader>
-          <DialogTitle className="font-black">Ajustar Stock — {productName}</DialogTitle>
+          <DialogTitle className="font-black">
+            Ajustar Stock — {productName}
+          </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
               <label className="text-sm font-bold">Cantidad</label>
-              <Input type="number" min="1" value={adjustQty} onChange={(e) => setAdjustQty(e.target.value)} required className="rounded-xl" />
+              <Input
+                type="number"
+                min="1"
+                value={adjustQty}
+                onChange={(e) => setAdjustQty(e.target.value)}
+                required
+                className="rounded-xl"
+              />
             </div>
             <div className="space-y-1">
               <label className="text-sm font-bold">Tipo de Ajuste</label>
               <select
                 value={adjustType}
-                onChange={(e) => setAdjustType(e.target.value as 'MANUAL_ADJUSTMENT' | 'LOSS' | 'RETURN')}
+                onChange={(e) =>
+                  setAdjustType(
+                    e.target.value as 'MANUAL_ADJUSTMENT' | 'LOSS' | 'RETURN',
+                  )
+                }
                 className="w-full h-10 px-3 border rounded-xl bg-background focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                 required
               >
@@ -69,8 +100,21 @@ export function StockAdjustDialog({ isOpen, onOpenChange, productName, isPending
             />
           </div>
           <DialogFooter className="pt-4">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="rounded-xl">Cancelar</Button>
-            <LoadingButton type="submit" isLoading={isPending} className="rounded-xl font-bold">Registrar Ajuste</LoadingButton>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              className="rounded-xl"
+            >
+              Cancelar
+            </Button>
+            <LoadingButton
+              type="submit"
+              isLoading={isPending}
+              className="rounded-xl font-bold"
+            >
+              Registrar Ajuste
+            </LoadingButton>
           </DialogFooter>
         </form>
       </DialogContent>

@@ -21,7 +21,9 @@ export function EmptyState({
         <Icon className="size-8 text-muted-foreground" />
       </div>
       <p className="text-sm font-bold text-muted-foreground">{title}</p>
-      {description && <p className="text-xs text-muted-foreground mt-1">{description}</p>}
+      {description && (
+        <p className="text-xs text-muted-foreground mt-1">{description}</p>
+      )}
       {action && <div className="mt-4">{action}</div>}
     </div>
   )

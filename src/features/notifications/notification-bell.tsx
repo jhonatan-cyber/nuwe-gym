@@ -38,10 +38,12 @@ export function NotificationBell({ userRole }: NotificationBellProps) {
   const generateMutation = useMutation({
     mutationFn: generateNotifications,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications-unread-count'] })
+      queryClient.invalidateQueries({
+        queryKey: ['notifications-unread-count'],
+      })
       queryClient.invalidateQueries({ queryKey: ['notifications-recent'] })
     },
-    onError: () => {} // silently ignore for non-admin users
+    onError: () => {}, // silently ignore for non-admin users
   })
 
   useEffect(() => {

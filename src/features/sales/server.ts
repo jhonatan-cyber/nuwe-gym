@@ -7,17 +7,7 @@ import {
   cashRegisterSessions,
   cashMovements,
 } from '#/shared/db/schema/cash-register.ts'
-import {
-  eq,
-  desc,
-  inArray,
-  gte,
-  lte,
-  count,
-  sum,
-  sql,
-  and,
-} from 'drizzle-orm'
+import { eq, desc, inArray, gte, lte, count, sum, sql, and } from 'drizzle-orm'
 import { requireRole } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
@@ -37,8 +27,24 @@ interface DateRanges {
 
 function getDateRanges(): DateRanges {
   const now = new Date()
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0)
-  const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999)
+  const todayStart = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+    0,
+    0,
+    0,
+    0,
+  )
+  const todayEnd = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+    23,
+    59,
+    59,
+    999,
+  )
 
   const thirtyDaysAgo = new Date(todayStart)
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29)
@@ -54,18 +60,36 @@ function getDateRanges(): DateRanges {
   lastWeekEnd.setDate(lastWeekEnd.getDate() - 1)
   lastWeekEnd.setHours(23, 59, 59, 999)
 
-  return { todayStart, todayEnd, thirtyDaysAgo, thisWeekStart, lastWeekStart, lastWeekEnd, daysSinceMonday }
+  return {
+    todayStart,
+    todayEnd,
+    thirtyDaysAgo,
+    thisWeekStart,
+    lastWeekStart,
+    lastWeekEnd,
+    daysSinceMonday,
+  }
 }
 
 function completedSalesFilter(start: Date, end: Date) {
-  return and(gte(sales.soldAt, start), lte(sales.soldAt, end), eq(sales.status, 'COMPLETED'))
+  return and(
+    gte(sales.soldAt, start),
+    lte(sales.soldAt, end),
+    eq(sales.status, 'COMPLETED'),
+  )
 }
 
 // ── Aggregation helpers ───────────────────────────────────────────
 
-interface CountRevenue { total: number; revenue: number }
+interface CountRevenue {
+  total: number
+  revenue: number
+}
 
-async function getTodayStats(start: Date, end: Date): Promise<CountRevenue & { avgTicket: number }> {
+async function getTodayStats(
+  start: Date,
+  end: Date,
+): Promise<CountRevenue & { avgTicket: number }> {
   const [res] = await db
     .select({ total: count(), revenue: sum(sales.total) })
     .from(sales)
@@ -78,7 +102,11 @@ async function getTodayStats(start: Date, end: Date): Promise<CountRevenue & { a
   return { total, revenue, avgTicket }
 }
 
-interface DailyRow { date: string; total: number; revenue: number }
+interface DailyRow {
+  date: string
+  total: number
+  revenue: number
+}
 
 async function getDailySales(start: Date, end: Date): Promise<DailyRow[]> {
   const res = await db
@@ -99,11 +127,22 @@ async function getDailySales(start: Date, end: Date): Promise<DailyRow[]> {
   }))
 }
 
-interface PaymentMethodRow { method: string; total: number; revenue: number }
+interface PaymentMethodRow {
+  method: string
+  total: number
+  revenue: number
+}
 
-async function getPaymentMethodBreakdown(start: Date, end: Date): Promise<PaymentMethodRow[]> {
+async function getPaymentMethodBreakdown(
+  start: Date,
+  end: Date,
+): Promise<PaymentMethodRow[]> {
   const res = await db
-    .select({ method: sales.paymentMethod, total: count(), revenue: sum(sales.total) })
+    .select({
+      method: sales.paymentMethod,
+      total: count(),
+      revenue: sum(sales.total),
+    })
     .from(sales)
     .where(completedSalesFilter(start, end))
     .groupBy(sales.paymentMethod)
@@ -115,7 +154,12 @@ async function getPaymentMethodBreakdown(start: Date, end: Date): Promise<Paymen
   }))
 }
 
-interface ProductRow { id: string; name: string; quantity: number; revenue: number }
+interface ProductRow {
+  id: string
+  name: string
+  quantity: number
+  revenue: number
+}
 
 async function getTopProducts(start: Date, end: Date): Promise<ProductRow[]> {
   const res = await db
@@ -141,7 +185,11 @@ async function getTopProducts(start: Date, end: Date): Promise<ProductRow[]> {
   }))
 }
 
-interface HourRow { hour: string; total: number; revenue: number }
+interface HourRow {
+  hour: string
+  total: number
+  revenue: number
+}
 
 async function getHourlySales(start: Date, end: Date): Promise<HourRow[]> {
   const res = await db
@@ -157,7 +205,10 @@ async function getHourlySales(start: Date, end: Date): Promise<HourRow[]> {
 
   const hourMap = new Map<number, { total: number; revenue: number }>()
   for (const r of res) {
-    hourMap.set(Number(r.hour), { total: Number(r.total), revenue: Number(r.revenue ?? 0) })
+    hourMap.set(Number(r.hour), {
+      total: Number(r.total),
+      revenue: Number(r.revenue ?? 0),
+    })
   }
 
   const byHour: HourRow[] = []
@@ -190,8 +241,16 @@ interface WeeklyComparisonResult {
   }
 }
 
-async function getWeeklyComparison(ranges: DateRanges): Promise<WeeklyComparisonResult> {
-  const { thisWeekStart, lastWeekStart, lastWeekEnd, todayEnd, daysSinceMonday } = ranges
+async function getWeeklyComparison(
+  ranges: DateRanges,
+): Promise<WeeklyComparisonResult> {
+  const {
+    thisWeekStart,
+    lastWeekStart,
+    lastWeekEnd,
+    todayEnd,
+    daysSinceMonday,
+  } = ranges
 
   const queryWeek = async (start: Date, end: Date) => {
     const res = await db
@@ -225,7 +284,10 @@ async function getWeeklyComparison(ranges: DateRanges): Promise<WeeklyComparison
 
   const dayNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
   const days: WeeklyDayRow[] = []
-  let tWTotal = 0, tWRev = 0, lWTotal = 0, lWRev = 0
+  let tWTotal = 0,
+    tWRev = 0,
+    lWTotal = 0,
+    lWRev = 0
 
   for (let d = 0; d <= daysSinceMonday; d++) {
     const cur = new Date(thisWeekStart)
@@ -239,8 +301,10 @@ async function getWeeklyComparison(ranges: DateRanges): Promise<WeeklyComparison
     const tw = thisWeekMap.get(curStr) ?? { total: 0, revenue: 0 }
     const lw = lastWeekMap.get(prevStr) ?? { total: 0, revenue: 0 }
 
-    tWTotal += tw.total; tWRev += tw.revenue
-    lWTotal += lw.total; lWRev += lw.revenue
+    tWTotal += tw.total
+    tWRev += tw.revenue
+    lWTotal += lw.total
+    lWRev += lw.revenue
 
     days.push({
       dayName: dayNames[cur.getDay()],
@@ -262,7 +326,10 @@ async function getWeeklyComparison(ranges: DateRanges): Promise<WeeklyComparison
   }
 }
 
-export function calcPercentChange(previous: number, current: number): number | null {
+export function calcPercentChange(
+  previous: number,
+  current: number,
+): number | null {
   if (previous > 0) return ((current - previous) / previous) * 100
   if (current > 0) return 100
   return null
@@ -277,15 +344,21 @@ export const getDailySalesSummary = createServerFn({ method: 'GET' }).handler(
     const ranges = getDateRanges()
     const { todayStart, todayEnd, thirtyDaysAgo } = ranges
 
-    const [todayStats, dailySales, byPaymentMethod, topProducts, byHour, weekly] =
-      await Promise.all([
-        getTodayStats(todayStart, todayEnd),
-        getDailySales(thirtyDaysAgo, todayEnd),
-        getPaymentMethodBreakdown(todayStart, todayEnd),
-        getTopProducts(todayStart, todayEnd),
-        getHourlySales(todayStart, todayEnd),
-        getWeeklyComparison(ranges),
-      ])
+    const [
+      todayStats,
+      dailySales,
+      byPaymentMethod,
+      topProducts,
+      byHour,
+      weekly,
+    ] = await Promise.all([
+      getTodayStats(todayStart, todayEnd),
+      getDailySales(thirtyDaysAgo, todayEnd),
+      getPaymentMethodBreakdown(todayStart, todayEnd),
+      getTopProducts(todayStart, todayEnd),
+      getHourlySales(todayStart, todayEnd),
+      getWeeklyComparison(ranges),
+    ])
 
     return {
       todayStats,

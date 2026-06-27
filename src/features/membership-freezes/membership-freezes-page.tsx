@@ -1,7 +1,19 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Snowflake, Play, Users, Search, Calendar, FileText } from 'lucide-react'
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '#/shared/components/ui/tooltip'
+import {
+  Snowflake,
+  Play,
+  Users,
+  Search,
+  Calendar,
+  FileText,
+} from 'lucide-react'
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+  TooltipProvider,
+} from '#/shared/components/ui/tooltip'
 import { toast } from 'sonner'
 import {
   getFreezes,
@@ -215,7 +227,9 @@ export function MembershipFreezesPage({
                       </TableCell>
                       <TableCell>
                         <span className="font-medium text-primary">
-                          {f.subscription.package?.name || f.subscription.plan?.name || 'N/A'}
+                          {f.subscription.package?.name ||
+                            f.subscription.plan?.name ||
+                            'N/A'}
                         </span>
                       </TableCell>
                       <TableCell>{formatDate(f.startDate)}</TableCell>
@@ -266,126 +280,173 @@ export function MembershipFreezesPage({
           </CardDescription>
         </CardHeader>
         <TooltipProvider delayDuration={200}>
-        <DataTable
-          columns={[
-            {
-            key: 'member',
-            label: 'Socio',
-            sortable: true,
-            sortValue: (f: (typeof freezes)[number]) => f.member.fullName,
-            render: (f: (typeof freezes)[number]) => (
-                <div className="flex items-center gap-2">
-                  <Users className="size-4 text-muted-foreground shrink-0" />
-                  <div>
-                    <div className="font-medium">{f.member.fullName}</div>
-                    {f.subscription.member.email && (
-                      <div className="text-xs text-muted-foreground">
-                        {f.subscription.member.email}
-                      </div>
-                    )}
+          <DataTable
+            columns={[
+              {
+                key: 'member',
+                label: 'Socio',
+                sortable: true,
+                sortValue: (f: (typeof freezes)[number]) => f.member.fullName,
+                render: (f: (typeof freezes)[number]) => (
+                  <div className="flex items-center gap-2">
+                    <Users className="size-4 text-muted-foreground shrink-0" />
+                    <div>
+                      <div className="font-medium">{f.member.fullName}</div>
+                      {f.subscription.member.email && (
+                        <div className="text-xs text-muted-foreground">
+                          {f.subscription.member.email}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ),
-            },
-            {
-            key: 'plan',
-            label: 'Paquete',
-            sortable: true,
-            sortValue: (f: (typeof freezes)[number]) => f.subscription.package?.name || f.subscription.plan?.name || '',
-            render: (f: (typeof freezes)[number]) => (
-                <span className="font-medium text-primary">
-                  {f.subscription.package?.name || f.subscription.plan?.name || 'N/A'}
-                </span>
-              ),
-            },
-            {
-            key: 'start',
-            label: <Tooltip><TooltipTrigger asChild><span className="cursor-default">Inicio</span></TooltipTrigger><TooltipContent side="bottom"><p>Fecha de inicio del congelamiento</p></TooltipContent></Tooltip>,
-            sortable: true,
-            sortValue: (f: (typeof freezes)[number]) => f.startDate.getTime(),
-              render: (f: (typeof freezes)[number]) => (
-              <span className="inline-flex items-center gap-1.5 text-xs">
-                <Calendar className="size-3 text-muted-foreground" />
-                {formatDate(f.startDate)}
-              </span>
-            ),
-            },
-            {
-            key: 'end',
-            label: <Tooltip><TooltipTrigger asChild><span className="cursor-default">Fin</span></TooltipTrigger><TooltipContent side="bottom"><p>Fecha de fin del congelamiento</p></TooltipContent></Tooltip>,
-            sortable: true,
-            sortValue: (f: (typeof freezes)[number]) => f.endDate.getTime(),
-              render: (f: (typeof freezes)[number]) => (
-              <span className="inline-flex items-center gap-1.5 text-xs">
-                <Calendar className="size-3 text-muted-foreground" />
-                {formatDate(f.endDate)}
-              </span>
-            ),
-            },
-            {
-            key: 'reason',
-            label: <Tooltip><TooltipTrigger asChild><span className="cursor-default">Motivo</span></TooltipTrigger><TooltipContent side="bottom"><p>Razón del congelamiento de membresía</p></TooltipContent></Tooltip>,
-            sortable: true,
-            sortValue: (f: (typeof freezes)[number]) => f.reason || '',
-            render: (f: (typeof freezes)[number]) => (
-              <span className="inline-flex items-center gap-1.5 max-w-[200px] truncate">
-                <FileText className="size-3 text-muted-foreground shrink-0" />
-                <span className="truncate">{f.reason || '—'}</span>
-              </span>
-            ),
-            },
-            {
-            key: 'status',
-            label: <Tooltip><TooltipTrigger asChild><span className="cursor-default">Estado</span></TooltipTrigger><TooltipContent side="bottom"><p>Estado actual del congelamiento</p></TooltipContent></Tooltip>,
-            sortable: true,
-            sortValue: (f: (typeof freezes)[number]) => f.resumedAt ? 2 : (f.endDate ? (new Date(f.endDate).getTime()) : 0),
-              render: (f: (typeof freezes)[number]) => getFreezeStatus(f),
-            },
-            ...(isAdmin
-              ? [
-                  {
-                    key: 'actions' as string,
-                    label: 'Acciones',
-                    className: 'text-right' as string,
-                    render: (f: (typeof freezes)[number]) => {
-                      const remaining = daysRemaining(f.endDate)
-                      return !f.resumedAt && remaining > 0 ? (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                if (
-                                  confirm(
-                                    '¿Reanudar esta suscripción anticipadamente?',
-                                  )
-                                ) {
-                                  resumeMutation.mutate({
-                                    data: { freezeId: f.id },
-                                  })
-                                }
-                              }}
-                            >
-                              <Play className="size-3.5 mr-1" /> Reanudar
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent side="bottom">
-                            <p>Reanudar suscripción anticipadamente</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      ) : null
+                ),
+              },
+              {
+                key: 'plan',
+                label: 'Paquete',
+                sortable: true,
+                sortValue: (f: (typeof freezes)[number]) =>
+                  f.subscription.package?.name ||
+                  f.subscription.plan?.name ||
+                  '',
+                render: (f: (typeof freezes)[number]) => (
+                  <span className="font-medium text-primary">
+                    {f.subscription.package?.name ||
+                      f.subscription.plan?.name ||
+                      'N/A'}
+                  </span>
+                ),
+              },
+              {
+                key: 'start',
+                label: (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="cursor-default">Inicio</span>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      <p>Fecha de inicio del congelamiento</p>
+                    </TooltipContent>
+                  </Tooltip>
+                ),
+                sortable: true,
+                sortValue: (f: (typeof freezes)[number]) =>
+                  f.startDate.getTime(),
+                render: (f: (typeof freezes)[number]) => (
+                  <span className="inline-flex items-center gap-1.5 text-xs">
+                    <Calendar className="size-3 text-muted-foreground" />
+                    {formatDate(f.startDate)}
+                  </span>
+                ),
+              },
+              {
+                key: 'end',
+                label: (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="cursor-default">Fin</span>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      <p>Fecha de fin del congelamiento</p>
+                    </TooltipContent>
+                  </Tooltip>
+                ),
+                sortable: true,
+                sortValue: (f: (typeof freezes)[number]) => f.endDate.getTime(),
+                render: (f: (typeof freezes)[number]) => (
+                  <span className="inline-flex items-center gap-1.5 text-xs">
+                    <Calendar className="size-3 text-muted-foreground" />
+                    {formatDate(f.endDate)}
+                  </span>
+                ),
+              },
+              {
+                key: 'reason',
+                label: (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="cursor-default">Motivo</span>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      <p>Razón del congelamiento de membresía</p>
+                    </TooltipContent>
+                  </Tooltip>
+                ),
+                sortable: true,
+                sortValue: (f: (typeof freezes)[number]) => f.reason || '',
+                render: (f: (typeof freezes)[number]) => (
+                  <span className="inline-flex items-center gap-1.5 max-w-[200px] truncate">
+                    <FileText className="size-3 text-muted-foreground shrink-0" />
+                    <span className="truncate">{f.reason || '—'}</span>
+                  </span>
+                ),
+              },
+              {
+                key: 'status',
+                label: (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="cursor-default">Estado</span>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      <p>Estado actual del congelamiento</p>
+                    </TooltipContent>
+                  </Tooltip>
+                ),
+                sortable: true,
+                sortValue: (f: (typeof freezes)[number]) =>
+                  f.resumedAt
+                    ? 2
+                    : f.endDate
+                      ? new Date(f.endDate).getTime()
+                      : 0,
+                render: (f: (typeof freezes)[number]) => getFreezeStatus(f),
+              },
+              ...(isAdmin
+                ? [
+                    {
+                      key: 'actions' as string,
+                      label: 'Acciones',
+                      className: 'text-right' as string,
+                      render: (f: (typeof freezes)[number]) => {
+                        const remaining = daysRemaining(f.endDate)
+                        return !f.resumedAt && remaining > 0 ? (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  if (
+                                    confirm(
+                                      '¿Reanudar esta suscripción anticipadamente?',
+                                    )
+                                  ) {
+                                    resumeMutation.mutate({
+                                      data: { freezeId: f.id },
+                                    })
+                                  }
+                                }}
+                              >
+                                <Play className="size-3.5 mr-1" /> Reanudar
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom">
+                              <p>Reanudar suscripción anticipadamente</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        ) : null
+                      },
                     },
-                  },
-                ]
-              : []),
-          ]}
-          data={freezes}
-          isLoading={isLoading}
-          loadingMessage="Cargando congelamientos..."
-          emptyMessage="No hay congelamientos registrados."
-          keyExtractor={(f: (typeof freezes)[number]) => f.id}
-        />
+                  ]
+                : []),
+            ]}
+            data={freezes}
+            isLoading={isLoading}
+            loadingMessage="Cargando congelamientos..."
+            emptyMessage="No hay congelamientos registrados."
+            keyExtractor={(f: (typeof freezes)[number]) => f.id}
+          />
         </TooltipProvider>
       </Card>
 
@@ -437,7 +498,8 @@ export function MembershipFreezesPage({
                   </option>
                   {activeSubs.map((s) => (
                     <option key={s.id} value={s.id}>
-                      {s.member.fullName} — {s.package?.name || s.plan?.name || 'N/A'} (vence:{' '}
+                      {s.member.fullName} —{' '}
+                      {s.package?.name || s.plan?.name || 'N/A'} (vence:{' '}
                       {formatDate(s.endDate)})
                     </option>
                   ))}

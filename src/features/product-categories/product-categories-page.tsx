@@ -1,7 +1,20 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Tags, Plus, Edit2, CheckCircle2, XCircle, Tag, FileText } from 'lucide-react'
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '#/shared/components/ui/tooltip'
+import {
+  Tags,
+  Plus,
+  Edit2,
+  CheckCircle2,
+  XCircle,
+  Tag,
+  FileText,
+} from 'lucide-react'
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+  TooltipProvider,
+} from '#/shared/components/ui/tooltip'
 import { toast } from 'sonner'
 import {
   getCategories,
@@ -121,97 +134,122 @@ export function ProductCategoriesPage() {
       />
 
       <TooltipProvider delayDuration={200}>
-      <DataTable
-        columns={[
-          {
-            key: 'name',
-            label: <Tooltip><TooltipTrigger asChild><span className="cursor-default">Nombre</span></TooltipTrigger><TooltipContent side="bottom"><p>Nombre de la categoría de producto</p></TooltipContent></Tooltip>,
-            sortable: true,
-            sortValue: (cat: (typeof categories)[number]) => cat.name,
-            render: (cat: (typeof categories)[number]) => (
-              <span className="inline-flex items-center gap-1.5 font-semibold">
-                <Tag className="size-3 text-muted-foreground" />
-                {cat.name}
-              </span>
-            ),
-          },
-          {
-            key: 'description',
-            label: <Tooltip><TooltipTrigger asChild><span className="cursor-default">Descripción</span></TooltipTrigger><TooltipContent side="bottom"><p>Descripción detallada de la categoría</p></TooltipContent></Tooltip>,
-            sortable: true,
-            sortValue: (cat: (typeof categories)[number]) => cat.description || '',
-            render: (cat: (typeof categories)[number]) => (
-              <span className="inline-flex items-center gap-1.5 text-muted-foreground max-w-xs truncate">
-                <FileText className="size-3 text-muted-foreground shrink-0" />
-                <span className="truncate">{cat.description || '-'}</span>
-              </span>
-            ),
-          },
-          {
-            key: 'status',
-            label: 'Estado',
-            sortable: true,
-            sortValue: (cat: (typeof categories)[number]) => cat.isActive ? 1 : 0,
-            render: (cat: (typeof categories)[number]) =>
-              cat.isActive ? (
-                <Badge className="bg-emerald-500/10 text-emerald-600 border-none">
-                  Activo
-                </Badge>
-              ) : (
-                <Badge variant="secondary">Inactivo</Badge>
+        <DataTable
+          columns={[
+            {
+              key: 'name',
+              label: (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="cursor-default">Nombre</span>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    <p>Nombre de la categoría de producto</p>
+                  </TooltipContent>
+                </Tooltip>
               ),
-          },
-          {
-            key: 'actions',
-            label: 'Acciones',
-            className: 'text-right',
-            render: (cat: (typeof categories)[number]) => (                <div className="flex justify-end gap-2">
+              sortable: true,
+              sortValue: (cat: (typeof categories)[number]) => cat.name,
+              render: (cat: (typeof categories)[number]) => (
+                <span className="inline-flex items-center gap-1.5 font-semibold">
+                  <Tag className="size-3 text-muted-foreground" />
+                  {cat.name}
+                </span>
+              ),
+            },
+            {
+              key: 'description',
+              label: (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => openEditModal(cat)}
-                    >
-                      <Edit2 className="size-4" />
-                    </Button>
+                    <span className="cursor-default">Descripción</span>
                   </TooltipTrigger>
                   <TooltipContent side="bottom">
-                    <p>Editar categoría</p>
+                    <p>Descripción detallada de la categoría</p>
                   </TooltipContent>
                 </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className={
-                        cat.isActive
-                          ? 'text-red-500 hover:text-red-600'
-                          : 'text-emerald-500 hover:text-emerald-600'
-                      }
-                      onClick={() => toggleStatus(cat)}
-                    >
-                      {cat.isActive ? (
-                        <XCircle className="size-4" />
-                      ) : (
-                        <CheckCircle2 className="size-4" />
-                      )}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">
-                    <p>{cat.isActive ? 'Desactivar categoría' : 'Activar categoría'}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-            ),
-          },
-        ]}
-        data={categories}
-        isLoading={isLoading}
-        emptyMessage="No hay categorías registradas."
-        keyExtractor={(cat: (typeof categories)[number]) => cat.id}
-      />
+              ),
+              sortable: true,
+              sortValue: (cat: (typeof categories)[number]) =>
+                cat.description || '',
+              render: (cat: (typeof categories)[number]) => (
+                <span className="inline-flex items-center gap-1.5 text-muted-foreground max-w-xs truncate">
+                  <FileText className="size-3 text-muted-foreground shrink-0" />
+                  <span className="truncate">{cat.description || '-'}</span>
+                </span>
+              ),
+            },
+            {
+              key: 'status',
+              label: 'Estado',
+              sortable: true,
+              sortValue: (cat: (typeof categories)[number]) =>
+                cat.isActive ? 1 : 0,
+              render: (cat: (typeof categories)[number]) =>
+                cat.isActive ? (
+                  <Badge className="bg-emerald-500/10 text-emerald-600 border-none">
+                    Activo
+                  </Badge>
+                ) : (
+                  <Badge variant="secondary">Inactivo</Badge>
+                ),
+            },
+            {
+              key: 'actions',
+              label: 'Acciones',
+              className: 'text-right',
+              render: (cat: (typeof categories)[number]) => (
+                <div className="flex justify-end gap-2">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => openEditModal(cat)}
+                      >
+                        <Edit2 className="size-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      <p>Editar categoría</p>
+                    </TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className={
+                          cat.isActive
+                            ? 'text-red-500 hover:text-red-600'
+                            : 'text-emerald-500 hover:text-emerald-600'
+                        }
+                        onClick={() => toggleStatus(cat)}
+                      >
+                        {cat.isActive ? (
+                          <XCircle className="size-4" />
+                        ) : (
+                          <CheckCircle2 className="size-4" />
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      <p>
+                        {cat.isActive
+                          ? 'Desactivar categoría'
+                          : 'Activar categoría'}
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+              ),
+            },
+          ]}
+          data={categories}
+          isLoading={isLoading}
+          emptyMessage="No hay categorías registradas."
+          keyExtractor={(cat: (typeof categories)[number]) => cat.id}
+        />
       </TooltipProvider>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>

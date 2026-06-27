@@ -1,6 +1,5 @@
 import { pgEnum } from 'drizzle-orm/pg-core'
 
-
 export const memberStatusEnum = pgEnum('member_status', [
   'ACTIVE',
   'INACTIVE',

@@ -2,9 +2,16 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { ChevronRight, List, PackageIcon, Plus } from 'lucide-react'
 import { toast } from 'sonner'
-import { getPackages, deletePackage, updatePackage } from '#/features/packages/server.ts'
+import {
+  getPackages,
+  deletePackage,
+  updatePackage,
+} from '#/features/packages/server.ts'
 import { ModuleLayout } from '#/shared/components/layout/module-layout.tsx'
-import { ToggleGroup, ToggleGroupItem } from '#/shared/components/ui/toggle-group'
+import {
+  ToggleGroup,
+  ToggleGroupItem,
+} from '#/shared/components/ui/toggle-group'
 import { PackageCard } from '#/features/packages/components/package-card.tsx'
 import { PackageForm } from '#/features/packages/components/package-form.tsx'
 import { StatCard } from '#/shared/components/ui/stat-card'
@@ -39,7 +46,9 @@ export function PackagesPage({ userRole }: PackagesPageProps) {
       toast.success('Paquete eliminado')
     },
     onError: (err: Error) => {
-      toast.error(err.message || 'Error al eliminar el paquete', { position: 'top-center' })
+      toast.error(err.message || 'Error al eliminar el paquete', {
+        position: 'top-center',
+      })
     },
   })
 
@@ -71,7 +80,10 @@ export function PackagesPage({ userRole }: PackagesPageProps) {
         durationDays: pkg.durationDays,
         type: pkg.type,
         isActive: !pkg.isActive,
-        items: pkg.items.map((i) => ({ description: i.description, sortOrder: i.sortOrder })),
+        items: pkg.items.map((i) => ({
+          description: i.description,
+          sortOrder: i.sortOrder,
+        })),
       },
     })
   }
@@ -88,7 +100,12 @@ export function PackagesPage({ userRole }: PackagesPageProps) {
   }
 
   if (activeView === 'form' && !isReadOnly) {
-    return <PackageForm editingPackageId={editingPackageId} onBack={handleBackToList} />
+    return (
+      <PackageForm
+        editingPackageId={editingPackageId}
+        onBack={handleBackToList}
+      />
+    )
   }
 
   return (
@@ -111,15 +128,31 @@ export function PackagesPage({ userRole }: PackagesPageProps) {
                 if (v === 'form') handleOpenForm()
               }}
             >
-              <ToggleGroupItem value="list"><List className="size-3.5" /> Listado</ToggleGroupItem>
-              <ToggleGroupItem value="form"><Plus className="size-3.5" /> Nuevo</ToggleGroupItem>
+              <ToggleGroupItem value="list">
+                <List className="size-3.5" /> Listado
+              </ToggleGroupItem>
+              <ToggleGroupItem value="form">
+                <Plus className="size-3.5" /> Nuevo
+              </ToggleGroupItem>
             </ToggleGroup>
           )}
           <div className="space-y-3">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">Metricas</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">
+              Metricas
+            </p>
             <div className="grid grid-cols-1 gap-3">
-              <StatCard label="Total Paquetes" value={totalPackages} icon={PackageIcon} variant="default" />
-              <StatCard label="Activos" value={activePackages} icon={PackageIcon} variant="emerald" />
+              <StatCard
+                label="Total Paquetes"
+                value={totalPackages}
+                icon={PackageIcon}
+                variant="default"
+              />
+              <StatCard
+                label="Activos"
+                value={activePackages}
+                icon={PackageIcon}
+                variant="emerald"
+              />
             </div>
           </div>
           <FilterBar

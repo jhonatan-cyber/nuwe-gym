@@ -29,14 +29,19 @@ import { WizardFooter } from '#/features/renewals/wizard-footer.tsx'
 import { MemberHeaderCard } from '#/features/renewals/components/member-header-card.tsx'
 import { PlanSummaryCard } from '#/features/renewals/components/plan-summary-card.tsx'
 import { PAYMENT_METHODS } from '#/features/renewals/utils.ts'
-import type { Step, PaymentMethod, MemberWithSubscriptions } from '#/features/renewals/types.ts'
+import type {
+  Step,
+  PaymentMethod,
+  MemberWithSubscriptions,
+} from '#/features/renewals/types.ts'
 
 export function RenewalsPage() {
   const queryClient = useQueryClient()
 
   const [step, setStep] = useState<Step>(1)
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedMember, setSelectedMember] = useState<MemberWithSubscriptions | null>(null)
+  const [selectedMember, setSelectedMember] =
+    useState<MemberWithSubscriptions | null>(null)
   const [isChangingPlan, setIsChangingPlan] = useState(false)
 
   const [formData, setFormData] = useState({
@@ -57,15 +62,17 @@ export function RenewalsPage() {
     queryFn: () => getActivePackages(),
   })
 
-  const { data: memberSearchResults = [], isLoading: searchingMembers } = useQuery({
-    queryKey: ['member-search', searchQuery],
-    queryFn: () => getMembers({ data: { search: searchQuery } }),
-    enabled: searchQuery.length >= 2,
-  })
+  const { data: memberSearchResults = [], isLoading: searchingMembers } =
+    useQuery({
+      queryKey: ['member-search', searchQuery],
+      queryFn: () => getMembers({ data: { search: searchQuery } }),
+      enabled: searchQuery.length >= 2,
+    })
 
   const { data: renewalHistory = [], isLoading: loadingHistory } = useQuery({
     queryKey: ['member-renewal-history', selectedMember?.id],
-    queryFn: () => getMemberRenewalHistory({ data: { memberId: selectedMember!.id } }),
+    queryFn: () =>
+      getMemberRenewalHistory({ data: { memberId: selectedMember!.id } }),
     enabled: !!selectedMember?.id,
   })
 
@@ -136,7 +143,12 @@ export function RenewalsPage() {
     <ModuleLayout
       breadcrumb={
         <div className="flex items-center gap-1">
-          <span className="text-muted-foreground hover:underline cursor-pointer" onClick={handleReset}>Renovación</span>
+          <span
+            className="text-muted-foreground hover:underline cursor-pointer"
+            onClick={handleReset}
+          >
+            Renovación
+          </span>
           <ChevronRight className="size-3 text-muted-foreground/50" />
           <span className="text-foreground">Asistente</span>
         </div>
@@ -161,9 +173,12 @@ export function RenewalsPage() {
             <div className="size-16 rounded-3xl dark:bg-white/5 bg-black/5 flex items-center justify-center mb-5 animate-pulse">
               <User className="size-8 text-muted-foreground" />
             </div>
-            <p className="text-sm font-bold text-foreground">Asistente de Renovación de Membresía</p>
+            <p className="text-sm font-bold text-foreground">
+              Asistente de Renovación de Membresía
+            </p>
             <p className="text-xs text-muted-foreground mt-1 max-w-[280px] text-center leading-normal">
-              Por favor, busque y seleccione un socio en el panel izquierdo para comenzar con el proceso de renovación.
+              Por favor, busque y seleccione un socio en el panel izquierdo para
+              comenzar con el proceso de renovación.
             </p>
           </div>
         )}
@@ -237,8 +252,12 @@ function Step2Content({
         <MemberHeaderCard member={selectedMember} />
 
         <div className="text-center">
-          <h3 className="text-xl font-black tracking-tight text-foreground">Selecciona un Plan</h3>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mt-0.5">TRAINIX</p>
+          <h3 className="text-xl font-black tracking-tight text-foreground">
+            Selecciona un Plan
+          </h3>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mt-0.5">
+            TRAINIX
+          </p>
         </div>
 
         <div className="flex items-center justify-center gap-3">
@@ -281,7 +300,9 @@ function Step2Content({
         {isChangingPlan ? (
           <div className="space-y-3 pt-2">
             <div className="flex items-center justify-between">
-              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Seleccione un Paquete</p>
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                Seleccione un Paquete
+              </p>
               {renewalHistory.length > 0 && (
                 <Button
                   onClick={() => {
@@ -290,7 +311,8 @@ function Step2Content({
                       setFormData((prev: any) => ({
                         ...prev,
                         packageId: lastSub.packageId!,
-                        amount: lastSub.package?.price || lastSub.plan?.price || '',
+                        amount:
+                          lastSub.package?.price || lastSub.plan?.price || '',
                       }))
                     }
                     setIsChangingPlan(false)
@@ -307,7 +329,11 @@ function Step2Content({
                 <div
                   key={pkg.id}
                   onClick={() => {
-                    setFormData((prev: any) => ({ ...prev, packageId: pkg.id, amount: pkg.price }))
+                    setFormData((prev: any) => ({
+                      ...prev,
+                      packageId: pkg.id,
+                      amount: pkg.price,
+                    }))
                     setIsChangingPlan(false)
                   }}
                   className={`p-3.5 rounded-2xl border transition-all duration-300 cursor-pointer select-none flex justify-between items-center ${
@@ -318,10 +344,14 @@ function Step2Content({
                 >
                   <div className="min-w-0">
                     <p className="font-bold text-xs truncate">{pkg.name}</p>
-                    <p className="text-[9px] text-muted-foreground font-semibold mt-1">Duración: {pkg.durationDays} días</p>
+                    <p className="text-[9px] text-muted-foreground font-semibold mt-1">
+                      Duración: {pkg.durationDays} días
+                    </p>
                   </div>
                   <div className="text-right shrink-0">
-                    <p className="font-black text-xs text-primary">{formatCurrency(pkg.price)}</p>
+                    <p className="font-black text-xs text-primary">
+                      {formatCurrency(pkg.price)}
+                    </p>
                   </div>
                 </div>
               ))}
@@ -339,7 +369,11 @@ function Step2Content({
               <PlanSummaryCard
                 title={`Último Paquete | ${lastSub.package?.name || lastSub.plan?.name || 'Suscripción'}`}
                 price={lastSub.package?.price || lastSub.plan?.price || '0'}
-                durationDays={lastSub.package?.durationDays || lastSub.plan?.durationDays || 30}
+                durationDays={
+                  lastSub.package?.durationDays ||
+                  lastSub.plan?.durationDays ||
+                  30
+                }
                 startDate={new Date(lastSub.startDate)}
                 endDate={new Date(lastSub.endDate)}
               />
@@ -351,14 +385,25 @@ function Step2Content({
             price={selectedPkg.price}
             durationDays={selectedPkg.durationDays}
             startDate={new Date()}
-            endDate={new Date(Date.now() + selectedPkg.durationDays * 24 * 60 * 60 * 1000)}
+            endDate={
+              new Date(
+                Date.now() + selectedPkg.durationDays * 24 * 60 * 60 * 1000,
+              )
+            }
           />
         ) : (
-          <p className="text-xs text-muted-foreground text-center py-6">Por favor seleccione un plan.</p>
+          <p className="text-xs text-muted-foreground text-center py-6">
+            Por favor seleccione un plan.
+          </p>
         )}
       </div>
 
-      <WizardFooter step={2} ready={!!formData.packageId} onBack={onBack} onNext={onNext} />
+      <WizardFooter
+        step={2}
+        ready={!!formData.packageId}
+        onBack={onBack}
+        onNext={onNext}
+      />
     </div>
   )
 }
@@ -368,7 +413,12 @@ function Step2Content({
 interface Step3Props {
   selectedMember: MemberWithSubscriptions
   selectedPkg: any
-  formData: { packageId: string; paymentMethod: PaymentMethod; amount: string; notes: string }
+  formData: {
+    packageId: string
+    paymentMethod: PaymentMethod
+    amount: string
+    notes: string
+  }
   setFormData: (v: any) => void
   isCashRegisterOpen: boolean
   isLoadingSession: boolean
@@ -389,12 +439,20 @@ function Step3Content({
   onBack,
 }: Step3Props) {
   return (
-    <form onSubmit={onSubmit} className="p-6 flex-1 flex flex-col min-w-0 justify-between mx-auto w-full max-w-xl animate-in fade-in duration-300">
+    <form
+      onSubmit={onSubmit}
+      className="p-6 flex-1 flex flex-col min-w-0 justify-between mx-auto w-full max-w-xl animate-in fade-in duration-300"
+    >
       <div className="space-y-6">
-        <MemberHeaderCard member={selectedMember} extraInfo={`Paquete: ${selectedPkg.name}`} />
+        <MemberHeaderCard
+          member={selectedMember}
+          extraInfo={`Paquete: ${selectedPkg.name}`}
+        />
 
         <div>
-          <h3 className="text-xl font-black tracking-tight text-foreground">Pago de Inscripción</h3>
+          <h3 className="text-xl font-black tracking-tight text-foreground">
+            Pago de Inscripción
+          </h3>
           <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mt-0.5">
             Seleccione un método de pago
           </p>
@@ -406,7 +464,8 @@ function Step3Content({
             <div className="space-y-1">
               <p className="text-xs font-bold text-destructive">Caja Cerrada</p>
               <p className="text-[10px] text-destructive/85 font-medium leading-normal">
-                Debe abrir la caja en el módulo de Caja antes de poder confirmar la renovación.
+                Debe abrir la caja en el módulo de Caja antes de poder confirmar
+                la renovación.
               </p>
             </div>
           </div>
@@ -419,7 +478,9 @@ function Step3Content({
             return (
               <div
                 key={pm.value}
-                onClick={() => setFormData({ ...formData, paymentMethod: pm.value })}
+                onClick={() =>
+                  setFormData({ ...formData, paymentMethod: pm.value })
+                }
                 className={`p-4 rounded-2xl border transition-all duration-300 cursor-pointer select-none flex flex-col justify-between h-28 group relative ${
                   isSelected
                     ? 'bg-primary/5 border-primary shadow-sm'
@@ -427,9 +488,13 @@ function Step3Content({
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <div className={`size-10 rounded-xl flex items-center justify-center transition-colors ${
-                    isSelected ? 'bg-primary text-primary-foreground' : 'bg-muted-foreground/10 text-muted-foreground group-hover:bg-muted-foreground/20'
-                  }`}>
+                  <div
+                    className={`size-10 rounded-xl flex items-center justify-center transition-colors ${
+                      isSelected
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted-foreground/10 text-muted-foreground group-hover:bg-muted-foreground/20'
+                    }`}
+                  >
                     <Icon className="size-5" />
                   </div>
                   {isSelected && (
@@ -440,7 +505,9 @@ function Step3Content({
                 </div>
                 <div>
                   <p className="font-bold text-xs leading-none">{pm.label}</p>
-                  <p className="text-[9px] text-muted-foreground font-semibold mt-1">{pm.description}</p>
+                  <p className="text-[9px] text-muted-foreground font-semibold mt-1">
+                    {pm.description}
+                  </p>
                 </div>
               </div>
             )
@@ -452,14 +519,32 @@ function Step3Content({
             <Label htmlFor="amount" className="text-xs font-bold">
               Monto <span className="text-destructive">*</span>
             </Label>
-            <Input id="amount" type="number" step="0.01" min="0" required value={formData.amount}
-              onChange={(e) => setFormData({ ...formData, amount: e.target.value })} className="h-10 rounded-xl" />
+            <Input
+              id="amount"
+              type="number"
+              step="0.01"
+              min="0"
+              required
+              value={formData.amount}
+              onChange={(e) =>
+                setFormData({ ...formData, amount: e.target.value })
+              }
+              className="h-10 rounded-xl"
+            />
           </div>
           <div className="grid gap-1.5">
-            <Label htmlFor="notes" className="text-xs font-bold">Notas (opcional)</Label>
-            <Input id="notes" value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              placeholder="Notas de renovación..." className="h-10 rounded-xl" />
+            <Label htmlFor="notes" className="text-xs font-bold">
+              Notas (opcional)
+            </Label>
+            <Input
+              id="notes"
+              value={formData.notes}
+              onChange={(e) =>
+                setFormData({ ...formData, notes: e.target.value })
+              }
+              placeholder="Notas de renovación..."
+              className="h-10 rounded-xl"
+            />
           </div>
         </div>
 
@@ -468,18 +553,27 @@ function Step3Content({
             <Receipt className="size-5" />
             <span className="text-sm">Total</span>
           </div>
-          <div className="text-2xl font-black text-primary">{formatCurrency(formData.amount || 0)}</div>
+          <div className="text-2xl font-black text-primary">
+            {formatCurrency(formData.amount || 0)}
+          </div>
         </div>
       </div>
 
       <div className="flex justify-between items-center pt-6 border-t dark:border-white/5 border-black/5 mt-6 shrink-0">
-        <Button type="button" onClick={onBack}
-          className="h-10 px-5 rounded-full text-xs font-bold bg-foreground text-primary-foreground hover:bg-foreground/90 gap-1.5">
+        <Button
+          type="button"
+          onClick={onBack}
+          className="h-10 px-5 rounded-full text-xs font-bold bg-foreground text-primary-foreground hover:bg-foreground/90 gap-1.5"
+        >
           <ArrowLeft className="size-3.5" />
           Atrás
         </Button>
-        <LoadingButton type="submit" isLoading={isPending} disabled={!formData.amount || !isCashRegisterOpen}
-          className="h-10 px-5 rounded-full text-xs font-bold bg-foreground text-primary-foreground hover:bg-foreground/90 disabled:opacity-50">
+        <LoadingButton
+          type="submit"
+          isLoading={isPending}
+          disabled={!formData.amount || !isCashRegisterOpen}
+          className="h-10 px-5 rounded-full text-xs font-bold bg-foreground text-primary-foreground hover:bg-foreground/90 disabled:opacity-50"
+        >
           Confirmar Renovación
         </LoadingButton>
       </div>

@@ -1,6 +1,8 @@
 import type { getMembers } from '#/features/members/server.ts'
 
-export type MemberWithSubscriptions = Awaited<ReturnType<typeof getMembers>>[number]
+export type MemberWithSubscriptions = Awaited<
+  ReturnType<typeof getMembers>
+>[number]
 
 export interface SubscriptionRow {
   id: number

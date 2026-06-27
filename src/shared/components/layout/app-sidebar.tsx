@@ -171,20 +171,18 @@ export function AppSidebar({ role }: { role: UserRole }) {
       <div className="flex flex-col items-center gap-6 w-full">
         <Link
           to="/dashboard"
-          className="dark:text-white text-foreground hover:opacity-85 transition-opacity"
+          className="hover:opacity-85 transition-opacity px-1"
         >
-          <svg
-            className="size-8"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="m3 9 9 7 9-7" />
-            <path d="M12 22V16" />
-          </svg>
+          <img
+            src="/logo-ligth.png"
+            alt="Trainix Logo"
+            className="size-11 object-contain select-none pointer-events-none dark:hidden block"
+          />
+          <img
+            src="/logo-dark.png"
+            alt="Trainix Logo"
+            className="size-11 object-contain select-none pointer-events-none hidden dark:block"
+          />
         </Link>
         <div className="w-8 h-px dark:bg-white/10 bg-black/10" />
       </div>

@@ -1,18 +1,48 @@
-import { Package, ShoppingCart, Wrench, TrendingDown, RotateCcw, ArrowUpDown, Minus, AlertTriangle, Box } from 'lucide-react'
+import {
+  Package,
+  ShoppingCart,
+  Wrench,
+  TrendingDown,
+  RotateCcw,
+  ArrowUpDown,
+  Minus,
+  AlertTriangle,
+  Box,
+} from 'lucide-react'
 import { Badge } from '#/shared/components/ui/badge'
 
 export function getMovementBadge(type: string) {
   switch (type) {
     case 'PURCHASE':
-      return <Badge className="bg-emerald-500/10 text-emerald-600 border-none font-bold">COMPRA</Badge>
+      return (
+        <Badge className="bg-emerald-500/10 text-emerald-600 border-none font-bold">
+          COMPRA
+        </Badge>
+      )
     case 'SALE':
-      return <Badge className="bg-blue-500/10 text-blue-600 border-none font-bold">VENTA</Badge>
+      return (
+        <Badge className="bg-blue-500/10 text-blue-600 border-none font-bold">
+          VENTA
+        </Badge>
+      )
     case 'MANUAL_ADJUSTMENT':
-      return <Badge variant="outline" className="text-muted-foreground font-bold">AJUSTE</Badge>
+      return (
+        <Badge variant="outline" className="text-muted-foreground font-bold">
+          AJUSTE
+        </Badge>
+      )
     case 'LOSS':
-      return <Badge className="bg-red-500/10 text-red-600 border-none font-bold">PÉRDIDA</Badge>
+      return (
+        <Badge className="bg-red-500/10 text-red-600 border-none font-bold">
+          PÉRDIDA
+        </Badge>
+      )
     case 'RETURN':
-      return <Badge className="bg-teal-500/10 text-teal-600 border-none font-bold">DEVOLUCIÓN</Badge>
+      return (
+        <Badge className="bg-teal-500/10 text-teal-600 border-none font-bold">
+          DEVOLUCIÓN
+        </Badge>
+      )
     default:
       return <Badge variant="secondary">{type}</Badge>
   }
@@ -35,7 +65,10 @@ export function getMovementIcon(type: string) {
   }
 }
 
-export function getStockBadge(product: { stockCurrent: number; stockMinimum: number }) {
+export function getStockBadge(product: {
+  stockCurrent: number
+  stockMinimum: number
+}) {
   if (product.stockCurrent <= 0) {
     return (
       <Badge className="bg-red-500/10 text-red-600 border-none font-bold gap-0.5">

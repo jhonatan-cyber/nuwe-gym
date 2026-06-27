@@ -1,8 +1,11 @@
-import { uuid, pgTable,
+import {
+  uuid,
+  pgTable,
   text,
   boolean,
   timestamp,
-  uniqueIndex, } from 'drizzle-orm/pg-core'
+  uniqueIndex,
+} from 'drizzle-orm/pg-core'
 
 export const productCategories = pgTable(
   'product_categories',

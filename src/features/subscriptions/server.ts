@@ -69,7 +69,6 @@ export const createSubscription = createServerFn({ method: 'POST' })
         })
         .returning()
 
-
       const [payment] = await tx
         .insert(membershipPayments)
         .values({

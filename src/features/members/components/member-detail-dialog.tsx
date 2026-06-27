@@ -1,5 +1,14 @@
 import { useQuery } from '@tanstack/react-query'
-import { RefreshCw, User, Phone, Mail, Calendar, Heart, MapPin, CreditCard } from 'lucide-react'
+import {
+  RefreshCw,
+  User,
+  Phone,
+  Mail,
+  Calendar,
+  Heart,
+  MapPin,
+  CreditCard,
+} from 'lucide-react'
 import { getMemberById } from '#/features/members/server.ts'
 import { getMemberRenewalHistory } from '#/features/renewals/server.ts'
 import { formatCurrency, formatDate } from '#/shared/lib/formatters.ts'
@@ -17,7 +26,10 @@ interface MemberDetailDialogProps {
   onOpenChange: (open: boolean) => void
 }
 
-export function MemberDetailDialog({ memberId, onOpenChange }: MemberDetailDialogProps) {
+export function MemberDetailDialog({
+  memberId,
+  onOpenChange,
+}: MemberDetailDialogProps) {
   const { data: memberDetail, isLoading: loadingDetail } = useQuery({
     queryKey: ['member-detail', memberId],
     queryFn: () => getMemberById({ data: memberId! }),
@@ -33,10 +45,11 @@ export function MemberDetailDialog({ memberId, onOpenChange }: MemberDetailDialo
   return (
     <Dialog
       open={!!memberId}
-      onOpenChange={(open) => { if (!open) onOpenChange(false) }}
+      onOpenChange={(open) => {
+        if (!open) onOpenChange(false)
+      }}
     >
       <DialogContent className="max-w-2xl max-h-[88vh] overflow-x-hidden overflow-y-auto scrollbar-none p-0 gap-0">
-
         {loadingDetail ? (
           <div className="py-16 flex items-center justify-center gap-2 text-muted-foreground">
             <RefreshCw className="size-4 animate-spin text-primary" />
@@ -51,11 +64,19 @@ export function MemberDetailDialog({ memberId, onOpenChange }: MemberDetailDialo
                 {/* Avatar */}
                 {memberDetail.photoUrl ? (
                   <div className="size-14 rounded-2xl ring-2 ring-foreground/10 overflow-hidden shrink-0 shadow">
-                    <img src={memberDetail.photoUrl} alt="" className="size-full object-cover" />
+                    <img
+                      src={memberDetail.photoUrl}
+                      alt=""
+                      className="size-full object-cover"
+                    />
                   </div>
                 ) : (
                   <div className="size-14 rounded-2xl bg-gradient-to-br from-foreground/10 to-foreground/5 border border-foreground/10 flex items-center justify-center font-black text-base uppercase shrink-0 text-foreground tracking-wider shadow-inner select-none">
-                    {memberDetail.fullName.split(' ').map((n: string) => n[0]).slice(0, 2).join('')}
+                    {memberDetail.fullName
+                      .split(' ')
+                      .map((n: string) => n[0])
+                      .slice(0, 2)
+                      .join('')}
                   </div>
                 )}
 
@@ -85,20 +106,51 @@ export function MemberDetailDialog({ memberId, onOpenChange }: MemberDetailDialo
 
             {/* ── Body ── */}
             <div className="px-6 py-5 space-y-6">
-
               {/* Datos personales */}
               <section>
                 <SectionTitle icon={User} label="Datos personales" />
                 <div className="grid grid-cols-2 gap-x-6 gap-y-4 mt-3">
-                  <DataRow icon={User} label="CI / Documento" value={memberDetail.documentNumber || '—'} />
-                  <DataRow icon={Calendar} label="Fecha de nac." value={memberDetail.birthDate ? formatDate(memberDetail.birthDate) : '—'} />
-                  <DataRow icon={Phone} label="Teléfono" value={memberDetail.phone || '—'} />
-                  <DataRow icon={Mail} label="Email" value={memberDetail.email || '—'} />
-                  <DataRow icon={Heart} label="Contacto emerg." value={memberDetail.emergencyContactName || '—'} />
-                  <DataRow icon={Phone} label="Tel. emergencia" value={memberDetail.emergencyContactPhone || '—'} />
+                  <DataRow
+                    icon={User}
+                    label="CI / Documento"
+                    value={memberDetail.documentNumber || '—'}
+                  />
+                  <DataRow
+                    icon={Calendar}
+                    label="Fecha de nac."
+                    value={
+                      memberDetail.birthDate
+                        ? formatDate(memberDetail.birthDate)
+                        : '—'
+                    }
+                  />
+                  <DataRow
+                    icon={Phone}
+                    label="Teléfono"
+                    value={memberDetail.phone || '—'}
+                  />
+                  <DataRow
+                    icon={Mail}
+                    label="Email"
+                    value={memberDetail.email || '—'}
+                  />
+                  <DataRow
+                    icon={Heart}
+                    label="Contacto emerg."
+                    value={memberDetail.emergencyContactName || '—'}
+                  />
+                  <DataRow
+                    icon={Phone}
+                    label="Tel. emergencia"
+                    value={memberDetail.emergencyContactPhone || '—'}
+                  />
                   {memberDetail.address && (
                     <div className="col-span-2">
-                      <DataRow icon={MapPin} label="Dirección" value={memberDetail.address} />
+                      <DataRow
+                        icon={MapPin}
+                        label="Dirección"
+                        value={memberDetail.address}
+                      />
                     </div>
                   )}
                 </div>
@@ -106,77 +158,100 @@ export function MemberDetailDialog({ memberId, onOpenChange }: MemberDetailDialo
 
               {/* Historial de membresías */}
               <section>
-                <SectionTitle icon={RefreshCw} label="Historial de membresías" />
+                <SectionTitle
+                  icon={RefreshCw}
+                  label="Historial de membresías"
+                />
                 <div className="mt-3 grid grid-cols-2 gap-2">
                   {renewalHistory.length === 0 ? (
                     <div className="col-span-2 py-8 rounded-2xl border dark:border-white/[0.04] border-black/[0.04] bg-muted/40 text-center text-sm text-muted-foreground">
                       Sin membresías registradas.
                     </div>
-                  ) : renewalHistory.map((sub: any) => {
-                    const hasPayment = sub.payments.length > 0
-                    const lastPayment = sub.payments[0]
-                    const active = sub.status === 'ACTIVE'
-                    const expired = sub.status === 'EXPIRED'
-                    return (
-                      <div
-                        key={sub.id}
-                        className="flex flex-col gap-2 px-4 py-3 rounded-xl border dark:border-white/[0.04] border-black/[0.04] bg-foreground/[0.015] hover:bg-foreground/[0.03] transition-colors"
-                      >
-                        {/* Nombre + dot */}
-                        <div className="flex items-center gap-2">
-                          <div className={cn(
-                            'size-1.5 rounded-full shrink-0',
-                            active ? 'bg-emerald-500' : expired ? 'bg-red-400' : 'bg-muted-foreground/40',
-                          )} />
-                          <p className="font-bold text-sm truncate flex-1">
-                            {sub.package?.name || sub.plan?.name || 'N/A'}
+                  ) : (
+                    renewalHistory.map((sub: any) => {
+                      const hasPayment = sub.payments.length > 0
+                      const lastPayment = sub.payments[0]
+                      const active = sub.status === 'ACTIVE'
+                      const expired = sub.status === 'EXPIRED'
+                      return (
+                        <div
+                          key={sub.id}
+                          className="flex flex-col gap-2 px-4 py-3 rounded-xl border dark:border-white/[0.04] border-black/[0.04] bg-foreground/[0.015] hover:bg-foreground/[0.03] transition-colors"
+                        >
+                          {/* Nombre + dot */}
+                          <div className="flex items-center gap-2">
+                            <div
+                              className={cn(
+                                'size-1.5 rounded-full shrink-0',
+                                active
+                                  ? 'bg-emerald-500'
+                                  : expired
+                                    ? 'bg-red-400'
+                                    : 'bg-muted-foreground/40',
+                              )}
+                            />
+                            <p className="font-bold text-sm truncate flex-1">
+                              {sub.package?.name || sub.plan?.name || 'N/A'}
+                            </p>
+                          </div>
+
+                          {/* Período */}
+                          <p className="text-[11px] text-muted-foreground pl-3.5">
+                            {formatDate(sub.startDate)}
+                            <span className="mx-1 opacity-30">→</span>
+                            {formatDate(sub.endDate)}
                           </p>
-                        </div>
 
-                        {/* Período */}
-                        <p className="text-[11px] text-muted-foreground pl-3.5">
-                          {formatDate(sub.startDate)}
-                          <span className="mx-1 opacity-30">→</span>
-                          {formatDate(sub.endDate)}
-                        </p>
-
-                        {/* Pago + Badge */}
-                        <div className="flex items-center justify-between pl-3.5 gap-2">
-                          {hasPayment ? (
-                            <div className="flex items-center gap-1 text-[11px] text-muted-foreground min-w-0">
-                              <CreditCard className="size-3 shrink-0" />
-                              <span className="font-semibold text-foreground">{formatCurrency(lastPayment.amount)}</span>
-                              <span className="uppercase font-bold tracking-wide opacity-60 truncate">{lastPayment.paymentMethod}</span>
-                            </div>
-                          ) : (
-                            <span />
-                          )}
-                          <Badge
-                            className={cn(
-                              'font-bold text-[9px] py-0.5 px-2 rounded-full select-none shrink-0',
-                              active
-                                ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
-                                : expired
-                                  ? 'bg-red-500/10 text-red-500 border-red-500/20'
-                                  : 'bg-muted-foreground/10 text-muted-foreground border-muted-foreground/20',
+                          {/* Pago + Badge */}
+                          <div className="flex items-center justify-between pl-3.5 gap-2">
+                            {hasPayment ? (
+                              <div className="flex items-center gap-1 text-[11px] text-muted-foreground min-w-0">
+                                <CreditCard className="size-3 shrink-0" />
+                                <span className="font-semibold text-foreground">
+                                  {formatCurrency(lastPayment.amount)}
+                                </span>
+                                <span className="uppercase font-bold tracking-wide opacity-60 truncate">
+                                  {lastPayment.paymentMethod}
+                                </span>
+                              </div>
+                            ) : (
+                              <span />
                             )}
-                          >
-                            {active ? 'Activa' : expired ? 'Vencida' : sub.status}
-                          </Badge>
+                            <Badge
+                              className={cn(
+                                'font-bold text-[9px] py-0.5 px-2 rounded-full select-none shrink-0',
+                                active
+                                  ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+                                  : expired
+                                    ? 'bg-red-500/10 text-red-500 border-red-500/20'
+                                    : 'bg-muted-foreground/10 text-muted-foreground border-muted-foreground/20',
+                              )}
+                            >
+                              {active
+                                ? 'Activa'
+                                : expired
+                                  ? 'Vencida'
+                                  : sub.status}
+                            </Badge>
+                          </div>
                         </div>
-                      </div>
-                    )
-                  })}
+                      )
+                    })
+                  )}
                 </div>
               </section>
             </div>
           </>
         ) : (
-          <div className="py-12 text-center text-destructive text-sm">Error al cargar el socio</div>
+          <div className="py-12 text-center text-destructive text-sm">
+            Error al cargar el socio
+          </div>
         )}
 
         <DialogFooter className="px-6 py-4 border-t dark:border-white/[0.05] border-black/[0.05]">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cerrar</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cerrar
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -187,19 +262,31 @@ function SectionTitle({ icon: Icon, label }: { icon: any; label: string }) {
   return (
     <div className="flex items-center gap-1.5">
       <Icon className="size-3.5 text-primary" />
-      <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{label}</h4>
+      <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+        {label}
+      </h4>
     </div>
   )
 }
 
-function DataRow({ icon: Icon, label, value }: { icon: any; label: string; value: string }) {
+function DataRow({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: any
+  label: string
+  value: string
+}) {
   return (
     <div className="flex items-start gap-2.5 min-w-0">
       <div className="size-6 rounded-md dark:bg-white/5 bg-black/5 border dark:border-white/[0.06] border-black/[0.06] flex items-center justify-center shrink-0 mt-0.5">
         <Icon className="size-3 text-muted-foreground" />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground leading-none">{label}</p>
+        <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground leading-none">
+          {label}
+        </p>
         <p className="font-semibold text-sm mt-0.5 truncate">{value}</p>
       </div>
     </div>

@@ -4,7 +4,13 @@ import { Eye, EyeOff, Sun, Moon, Monitor, ArrowLeft } from 'lucide-react'
 import { Input } from '#/shared/components/ui/input'
 import { Label } from '#/shared/components/ui/label'
 import { Button } from '#/shared/components/ui/button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '#/shared/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '#/shared/components/ui/select'
 import { authClient } from '#/shared/lib/auth-client.ts'
 import { getSession } from '#/shared/lib/server-utils.ts'
 import { useTheme } from 'next-themes'
@@ -12,7 +18,10 @@ import { checkDbEmpty, createInitialAdmin } from '#/features/users/server.ts'
 import { toast } from 'sonner'
 
 function capitalizeEach(str: string) {
-  return str.replace(/\w\S*/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+  return str.replace(
+    /\w\S*/g,
+    (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase(),
+  )
 }
 
 export const Route = createFileRoute('/login')({
@@ -94,10 +103,19 @@ function LoginPage() {
       setShowSetupModal(false)
       setDbEmpty(false)
     } catch (err: any) {
-      console.error('[createInitialAdmin] err:', err, 'message:', err?.message, 'stack:', err?.stack)
+      console.error(
+        '[createInitialAdmin] err:',
+        err,
+        'message:',
+        err?.message,
+        'stack:',
+        err?.stack,
+      )
       if (err instanceof Response) {
         const body = await err.json().catch(() => null)
-        setSetupError(body?.message || body?.error || `Error HTTP ${err.status}`)
+        setSetupError(
+          body?.message || body?.error || `Error HTTP ${err.status}`,
+        )
       } else if (err?.message) {
         setSetupError(err.message)
       } else {
@@ -152,11 +170,17 @@ function LoginPage() {
       )}
       <div className="w-full max-w-sm mx-auto">
         <div className="text-center mb-8">
-          <div className="mx-auto flex size-14 items-center justify-center rounded-xl bg-primary text-primary-foreground font-bold text-xl shadow-lg mb-4">
-            GM
-          </div>
-          <h1 className="text-2xl font-bold text-foreground">GymManager POS</h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <img
+            src="/logo-ligth.png"
+            alt="Trainix Logo"
+            className="h-40 w-auto mx-auto object-contain select-none pointer-events-none dark:hidden block"
+          />
+          <img
+            src="/logo-dark.png"
+            alt="Trainix Logo"
+            className="h-40 w-auto mx-auto object-contain select-none pointer-events-none hidden dark:block"
+          />
+          <p className="text-sm text-muted-foreground ">
             Ingresá tus credenciales para acceder al sistema
           </p>
         </div>
@@ -164,7 +188,8 @@ function LoginPage() {
         {dbEmpty && !showSetupModal && (
           <div className="rounded-2xl bg-primary/10 border border-primary/20 p-4 text-center space-y-3 mb-5 animate-in fade-in duration-300">
             <p className="text-xs text-muted-foreground">
-              No hay usuarios registrados en el sistema. Creá el administrador inicial para comenzar.
+              No hay usuarios registrados en el sistema. Creá el administrador
+              inicial para comenzar.
             </p>
             <Button
               type="button"
@@ -179,7 +204,14 @@ function LoginPage() {
         {showSetupModal ? (
           <form onSubmit={handleSetupSubmit} className="space-y-4">
             <div className="flex items-center gap-2 mb-2">
-              <Button type="button" variant="ghost" size="sm" className="h-8 rounded-xl" onClick={() => setShowSetupModal(false)} disabled={setupLoading}>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-8 rounded-xl"
+                onClick={() => setShowSetupModal(false)}
+                disabled={setupLoading}
+              >
                 <ArrowLeft className="size-3.5" /> Volver
               </Button>
             </div>
@@ -191,26 +223,79 @@ function LoginPage() {
             )}
 
             <div className="space-y-1.5">
-              <Label htmlFor="setup-name" className="text-sm font-medium text-foreground">Nombre completo</Label>
-              <Input id="setup-name" placeholder="Ej. Juan Pérez" value={setupForm.name} onChange={(e) => setSetupForm({ ...setupForm, name: capitalizeEach(e.target.value) })} required className="h-11 px-6" />
+              <Label
+                htmlFor="setup-name"
+                className="text-sm font-medium text-foreground"
+              >
+                Nombre completo
+              </Label>
+              <Input
+                id="setup-name"
+                placeholder="Ej. Juan Pérez"
+                value={setupForm.name}
+                onChange={(e) =>
+                  setSetupForm({
+                    ...setupForm,
+                    name: capitalizeEach(e.target.value),
+                  })
+                }
+                required
+                className="h-11 px-6"
+              />
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="setup-email" className="text-sm font-medium text-foreground">Email</Label>
-              <Input id="setup-email" type="email" placeholder="Ej. admin@gym.local" value={setupForm.email} onChange={(e) => setSetupForm({ ...setupForm, email: e.target.value })} required className="h-11 px-6" />
+              <Label
+                htmlFor="setup-email"
+                className="text-sm font-medium text-foreground"
+              >
+                Email
+              </Label>
+              <Input
+                id="setup-email"
+                type="email"
+                placeholder="Ej. admin@gym.local"
+                value={setupForm.email}
+                onChange={(e) =>
+                  setSetupForm({ ...setupForm, email: e.target.value })
+                }
+                required
+                className="h-11 px-6"
+              />
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="setup-doc" className="text-sm font-medium text-foreground">Número de Documento (CI/DNI)</Label>
-              <Input id="setup-doc" placeholder="Ej. 1234567" value={setupForm.documentNumber} onChange={(e) => setSetupForm({ ...setupForm, documentNumber: e.target.value })} required className="h-11 px-6" />
-              <p className="text-xs text-muted-foreground/80 px-1">Se usará como contraseña de inicio de sesión</p>
+              <Label
+                htmlFor="setup-doc"
+                className="text-sm font-medium text-foreground"
+              >
+                Número de Documento (CI/DNI)
+              </Label>
+              <Input
+                id="setup-doc"
+                placeholder="Ej. 1234567"
+                value={setupForm.documentNumber}
+                onChange={(e) =>
+                  setSetupForm({ ...setupForm, documentNumber: e.target.value })
+                }
+                required
+                className="h-11 px-6"
+              />
+              <p className="text-xs text-muted-foreground/80 px-1">
+                Se usará como contraseña de inicio de sesión
+              </p>
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="setup-phone" className="text-sm font-medium text-foreground">Teléfono (opcional)</Label>
+              <Label
+                htmlFor="setup-phone"
+                className="text-sm font-medium text-foreground"
+              >
+                Teléfono (opcional)
+              </Label>
               <div className="flex gap-2">
                 <Select value={countryCode} onValueChange={setCountryCode}>
-                    <SelectTrigger className="w-[130px] h-11 rounded-full shrink-0">
+                  <SelectTrigger className="w-[130px] h-11 rounded-full shrink-0">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -230,16 +315,42 @@ function LoginPage() {
                     <SelectItem value="+34">🇪🇸 +34</SelectItem>
                   </SelectContent>
                 </Select>
-                <Input id="setup-phone" placeholder="Ej. 70012345" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} className="h-11 px-6 flex-1" />
+                <Input
+                  id="setup-phone"
+                  placeholder="Ej. 70012345"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  className="h-11 px-6 flex-1"
+                />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="setup-address" className="text-sm font-medium text-foreground">Dirección (opcional)</Label>
-              <Input id="setup-address" placeholder="Ej. Av. Principal #123" value={setupForm.address} onChange={(e) => setSetupForm({ ...setupForm, address: capitalizeEach(e.target.value) })} className="h-11 px-6" />
+              <Label
+                htmlFor="setup-address"
+                className="text-sm font-medium text-foreground"
+              >
+                Dirección (opcional)
+              </Label>
+              <Input
+                id="setup-address"
+                placeholder="Ej. Av. Principal #123"
+                value={setupForm.address}
+                onChange={(e) =>
+                  setSetupForm({
+                    ...setupForm,
+                    address: capitalizeEach(e.target.value),
+                  })
+                }
+                className="h-11 px-6"
+              />
             </div>
 
-            <Button type="submit" className="w-full h-11 font-semibold transition-all" disabled={setupLoading}>
+            <Button
+              type="submit"
+              className="w-full h-11 font-semibold transition-all"
+              disabled={setupLoading}
+            >
               {setupLoading ? 'Creando...' : 'Crear Administrador'}
             </Button>
           </form>
@@ -252,24 +363,70 @@ function LoginPage() {
             )}
 
             <div className="space-y-1.5">
-              <Label htmlFor="email" className="text-sm font-medium text-foreground">Email</Label>
-              <Input id="email" type="email" placeholder="admin@gym.local" value={email} onChange={(e) => setEmail(e.target.value)} required className="h-11 px-6" />
+              <Label
+                htmlFor="email"
+                className="text-sm font-medium text-foreground"
+              >
+                Email
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="admin@gym.local"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="h-11 px-6"
+              />
             </div>
 
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-sm font-medium text-foreground">Contraseña</Label>
-                <button type="button" className="text-xs text-muted-foreground hover:text-foreground transition-colors">¿Olvidaste tu contraseña?</button>
+                <Label
+                  htmlFor="password"
+                  className="text-sm font-medium text-foreground"
+                >
+                  Contraseña
+                </Label>
+                <button
+                  type="button"
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  ¿Olvidaste tu contraseña?
+                </button>
               </div>
               <div className="relative">
-                <Input id="password" type={showPassword ? 'text' : 'password'} placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required className="h-11 px-6 pr-14" />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors" aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}>
-                  {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                <Input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="h-11 px-6 pr-14"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label={
+                    showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'
+                  }
+                >
+                  {showPassword ? (
+                    <EyeOff className="size-4" />
+                  ) : (
+                    <Eye className="size-4" />
+                  )}
                 </button>
               </div>
             </div>
 
-            <Button type="submit" className="w-full h-11 font-semibold transition-all" disabled={loading}>
+            <Button
+              type="submit"
+              className="w-full h-11 font-semibold transition-all"
+              disabled={loading}
+            >
               {loading ? 'Ingresando...' : 'Iniciar sesión'}
             </Button>
           </form>
@@ -277,7 +434,7 @@ function LoginPage() {
 
         {!showSetupModal && (
           <p className="text-center text-xs text-muted-foreground mt-8">
-            GymManager POS v1.0
+            Trainix v1.0
           </p>
         )}
       </div>

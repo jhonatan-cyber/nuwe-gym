@@ -46,7 +46,9 @@ export function useCameraCapture() {
   }, [stream])
 
   useEffect(() => {
-    return () => { stop() }
+    return () => {
+      stop()
+    }
   }, [stop])
 
   return { stream, status, videoRef, start, stop, capture, setStatus }

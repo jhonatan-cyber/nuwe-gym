@@ -4,6 +4,7 @@ import pg from 'pg'
 import { packages } from './schema/packages.ts'
 import { productCategories } from './schema/product-categories.ts'
 import { settings } from './schema/settings.ts'
+import { roles } from './schema/roles.ts'
 
 config({ path: ['.env.local', '.env'] })
 
@@ -13,6 +14,19 @@ async function seed() {
   const db = drizzle(pool)
 
   console.log('🌱 Seeding database...')
+
+  // Seed base roles
+  const existingRoles = await db.select().from(roles).limit(1)
+  if (existingRoles.length === 0) {
+    await db.insert(roles).values([
+      { name: 'ADMIN', label: 'Administrador' },
+      { name: 'RECEPTIONIST', label: 'Recepcionista' },
+      { name: 'TRAINER', label: 'Entrenador' },
+    ])
+    console.log('✅ Base roles created')
+  } else {
+    console.log('ℹ️ Roles already exist')
+  }
 
   // Seed packages
   const existingPackages = await db.select().from(packages).limit(1)

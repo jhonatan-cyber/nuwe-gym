@@ -1,6 +1,16 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Edit2, Trash2, Calendar, Clock, X, BookOpen, ClipboardList, ChevronRight } from 'lucide-react'
+import {
+  Plus,
+  Edit2,
+  Trash2,
+  Calendar,
+  Clock,
+  X,
+  BookOpen,
+  ClipboardList,
+  ChevronRight,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { Link } from '@tanstack/react-router'
 import {
@@ -131,7 +141,9 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
   })
 
   const [bookingDialogOpen, setBookingDialogOpen] = useState(false)
-  const [deletingScheduleId, setDeletingScheduleId] = useState<string | null>(null)
+  const [deletingScheduleId, setDeletingScheduleId] = useState<string | null>(
+    null,
+  )
 
   const [filterClassId, setFilterClassId] = useState<string>('all')
   const [filterStatus, setFilterStatus] = useState<string>('all')
@@ -325,13 +337,16 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
     setBookingDialogOpen(true)
   }
 
-
-
   return (
     <ModuleLayout
       breadcrumb={
         <>
-          <Link to="/dashboard" className="hover:text-foreground transition-colors">Dashboard</Link>
+          <Link
+            to="/dashboard"
+            className="hover:text-foreground transition-colors"
+          >
+            Dashboard
+          </Link>
           <ChevronRight className="size-3 mx-1 inline" />
           <span className="dark:text-white/60 text-foreground/60">Clases</span>
         </>
@@ -344,7 +359,8 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
             : 'Historial de Reservas'
       }
       headerActions={
-        activeTab === 'classes' && !isReadOnly && (
+        activeTab === 'classes' &&
+        !isReadOnly && (
           <Button onClick={() => handleOpenClassDialog()}>
             <Plus className="mr-2 size-4" />
             Nueva Clase
@@ -355,68 +371,130 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
         <div className="flex flex-col gap-6 z-10 w-full">
           {/* Navigation menu */}
           <div className="space-y-2">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">Sección</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">
+              Sección
+            </p>
             <div className="flex flex-col gap-1.5">
               <button
                 onClick={() => setActiveTab('classes')}
                 className={cn(
-                  "w-full text-left p-3.5 rounded-2xl flex items-center gap-3 transition-all duration-200 border",
+                  'w-full text-left p-3.5 rounded-2xl flex items-center gap-3 transition-all duration-200 border',
                   activeTab === 'classes'
-                    ? "bg-amber-500 border-amber-500 text-white shadow-lg shadow-amber-500/20"
-                    : "bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-foreground"
+                    ? 'bg-amber-500 border-amber-500 text-white shadow-lg shadow-amber-500/20'
+                    : 'bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-foreground',
                 )}
               >
-                <div className={cn(
-                  "size-8 rounded-xl flex items-center justify-center shrink-0",
-                  activeTab === 'classes' ? "bg-white/20" : "bg-black/5 dark:bg-white/5"
-                )}>
-                  <BookOpen className={cn("size-4", activeTab === 'classes' ? "text-white" : "text-muted-foreground")} />
+                <div
+                  className={cn(
+                    'size-8 rounded-xl flex items-center justify-center shrink-0',
+                    activeTab === 'classes'
+                      ? 'bg-white/20'
+                      : 'bg-black/5 dark:bg-white/5',
+                  )}
+                >
+                  <BookOpen
+                    className={cn(
+                      'size-4',
+                      activeTab === 'classes'
+                        ? 'text-white'
+                        : 'text-muted-foreground',
+                    )}
+                  />
                 </div>
                 <div>
                   <p className="text-xs font-bold">Clases</p>
-                  <p className={cn("text-[9px] font-semibold uppercase tracking-wider", activeTab === 'classes' ? "text-white/60" : "text-muted-foreground")}>Lista y gestión</p>
+                  <p
+                    className={cn(
+                      'text-[9px] font-semibold uppercase tracking-wider',
+                      activeTab === 'classes'
+                        ? 'text-white/60'
+                        : 'text-muted-foreground',
+                    )}
+                  >
+                    Lista y gestión
+                  </p>
                 </div>
               </button>
 
               <button
                 onClick={() => setActiveTab('schedule')}
                 className={cn(
-                  "w-full text-left p-3.5 rounded-2xl flex items-center gap-3 transition-all duration-200 border",
+                  'w-full text-left p-3.5 rounded-2xl flex items-center gap-3 transition-all duration-200 border',
                   activeTab === 'schedule'
-                    ? "bg-amber-500 border-amber-500 text-white shadow-lg shadow-amber-500/20"
-                    : "bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-foreground"
+                    ? 'bg-amber-500 border-amber-500 text-white shadow-lg shadow-amber-500/20'
+                    : 'bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-foreground',
                 )}
               >
-                <div className={cn(
-                  "size-8 rounded-xl flex items-center justify-center shrink-0",
-                  activeTab === 'schedule' ? "bg-white/20" : "bg-black/5 dark:bg-white/5"
-                )}>
-                  <Calendar className={cn("size-4", activeTab === 'schedule' ? "text-white" : "text-muted-foreground")} />
+                <div
+                  className={cn(
+                    'size-8 rounded-xl flex items-center justify-center shrink-0',
+                    activeTab === 'schedule'
+                      ? 'bg-white/20'
+                      : 'bg-black/5 dark:bg-white/5',
+                  )}
+                >
+                  <Calendar
+                    className={cn(
+                      'size-4',
+                      activeTab === 'schedule'
+                        ? 'text-white'
+                        : 'text-muted-foreground',
+                    )}
+                  />
                 </div>
                 <div>
                   <p className="text-xs font-bold">Horario Semanal</p>
-                  <p className={cn("text-[9px] font-semibold uppercase tracking-wider", activeTab === 'schedule' ? "text-white/60" : "text-muted-foreground")}>Calendario</p>
+                  <p
+                    className={cn(
+                      'text-[9px] font-semibold uppercase tracking-wider',
+                      activeTab === 'schedule'
+                        ? 'text-white/60'
+                        : 'text-muted-foreground',
+                    )}
+                  >
+                    Calendario
+                  </p>
                 </div>
               </button>
 
               <button
                 onClick={() => setActiveTab('bookings')}
                 className={cn(
-                  "w-full text-left p-3.5 rounded-2xl flex items-center gap-3 transition-all duration-200 border",
+                  'w-full text-left p-3.5 rounded-2xl flex items-center gap-3 transition-all duration-200 border',
                   activeTab === 'bookings'
-                    ? "bg-amber-500 border-amber-500 text-white shadow-lg shadow-amber-500/20"
-                    : "bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-foreground"
+                    ? 'bg-amber-500 border-amber-500 text-white shadow-lg shadow-amber-500/20'
+                    : 'bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-foreground',
                 )}
               >
-                <div className={cn(
-                  "size-8 rounded-xl flex items-center justify-center shrink-0",
-                  activeTab === 'bookings' ? "bg-white/20" : "bg-black/5 dark:bg-white/5"
-                )}>
-                  <ClipboardList className={cn("size-4", activeTab === 'bookings' ? "text-white" : "text-muted-foreground")} />
+                <div
+                  className={cn(
+                    'size-8 rounded-xl flex items-center justify-center shrink-0',
+                    activeTab === 'bookings'
+                      ? 'bg-white/20'
+                      : 'bg-black/5 dark:bg-white/5',
+                  )}
+                >
+                  <ClipboardList
+                    className={cn(
+                      'size-4',
+                      activeTab === 'bookings'
+                        ? 'text-white'
+                        : 'text-muted-foreground',
+                    )}
+                  />
                 </div>
                 <div>
                   <p className="text-xs font-bold">Reservas</p>
-                  <p className={cn("text-[9px] font-semibold uppercase tracking-wider", activeTab === 'bookings' ? "text-white/60" : "text-muted-foreground")}>Historial</p>
+                  <p
+                    className={cn(
+                      'text-[9px] font-semibold uppercase tracking-wider',
+                      activeTab === 'bookings'
+                        ? 'text-white/60'
+                        : 'text-muted-foreground',
+                    )}
+                  >
+                    Historial
+                  </p>
                 </div>
               </button>
             </div>
@@ -424,24 +502,38 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
 
           {/* Metrics */}
           <div className="space-y-2">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">Métricas</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">
+              Métricas
+            </p>
             <div className="grid grid-cols-1 gap-2.5">
               <div className="bg-muted p-4 rounded-2xl border border-border/10 flex items-center justify-between">
                 <div>
-                  <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Total Clases</p>
-                  <p className="text-xl font-black mt-0.5">{classesList.length}</p>
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
+                    Total Clases
+                  </p>
+                  <p className="text-xl font-black mt-0.5">
+                    {classesList.length}
+                  </p>
                 </div>
               </div>
               <div className="bg-muted p-4 rounded-2xl border border-border/10 flex items-center justify-between">
                 <div>
-                  <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Horarios</p>
-                  <p className="text-xl font-black text-amber-500 mt-0.5">{weeklySchedule.length}</p>
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
+                    Horarios
+                  </p>
+                  <p className="text-xl font-black text-amber-500 mt-0.5">
+                    {weeklySchedule.length}
+                  </p>
                 </div>
               </div>
               <div className="bg-muted p-4 rounded-2xl border border-border/10 flex items-center justify-between">
                 <div>
-                  <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Reservas Filtro</p>
-                  <p className="text-xl font-black text-emerald-500 mt-0.5">{bookings.length}</p>
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
+                    Reservas Filtro
+                  </p>
+                  <p className="text-xl font-black text-emerald-500 mt-0.5">
+                    {bookings.length}
+                  </p>
                 </div>
               </div>
             </div>
@@ -450,10 +542,14 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
           {/* Filters (only visible when in bookings tab) */}
           {activeTab === 'bookings' && (
             <div className="space-y-3 pt-2 border-t dark:border-white/5 border-black/5">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">Filtros</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">
+                Filtros
+              </p>
               <div className="space-y-2">
                 <div className="grid gap-1">
-                  <Label className="text-[9px] uppercase tracking-wider text-muted-foreground">Clase</Label>
+                  <Label className="text-[9px] uppercase tracking-wider text-muted-foreground">
+                    Clase
+                  </Label>
                   <Select
                     value={filterClassId}
                     onValueChange={(v) => setFilterClassId(v)}
@@ -473,7 +569,9 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
                 </div>
 
                 <div className="grid gap-1">
-                  <Label className="text-[9px] uppercase tracking-wider text-muted-foreground">Estado</Label>
+                  <Label className="text-[9px] uppercase tracking-wider text-muted-foreground">
+                    Estado
+                  </Label>
                   <Select
                     value={filterStatus}
                     onValueChange={(v) => setFilterStatus(v)}
@@ -497,7 +595,6 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
     >
       {activeTab === 'classes' && (
         <>
-
           <Card className="transition-all duration-200">
             <CardContent className="p-0">
               <Table>
@@ -683,7 +780,6 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
 
       {activeTab === 'bookings' && (
         <>
-
           <Card className="transition-all duration-200">
             <CardContent className="p-0">
               <Table>
@@ -726,9 +822,7 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
                         <TableCell>{formatDate(booking.bookedAt)}</TableCell>
                         <TableCell>
                           <Badge
-                            variant={
-                              BOOKING_STATUS_COLORS[booking.status]
-                            }
+                            variant={BOOKING_STATUS_COLORS[booking.status]}
                           >
                             {BOOKING_STATUS_LABELS[booking.status] ||
                               booking.status}
@@ -969,7 +1063,10 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
                       <Input
                         value={scheduleForm.room}
                         onChange={(e) =>
-                          setScheduleForm({ ...scheduleForm, room: e.target.value })
+                          setScheduleForm({
+                            ...scheduleForm,
+                            room: e.target.value,
+                          })
                         }
                         placeholder="Ej: Sala A"
                       />
@@ -1050,12 +1147,9 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge
-                          variant={
-                            BOOKING_STATUS_COLORS[booking.status]
-                          }
-                        >
-                          {BOOKING_STATUS_LABELS[booking.status] || booking.status}
+                        <Badge variant={BOOKING_STATUS_COLORS[booking.status]}>
+                          {BOOKING_STATUS_LABELS[booking.status] ||
+                            booking.status}
                         </Badge>
                         {booking.status === 'CONFIRMED' && (
                           <>

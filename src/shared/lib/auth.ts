@@ -47,7 +47,8 @@ export const auth = betterAuth({
             user: 'TRAINER',
             admin: 'ADMIN',
           }
-          const mappedRole = roleMap[user.role as string] ?? user.role ?? 'TRAINER'
+          const mappedRole =
+            roleMap[user.role as string] ?? user.role ?? 'TRAINER'
           return { data: { ...user, role: mappedRole } }
         },
       },

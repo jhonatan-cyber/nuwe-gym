@@ -14,10 +14,7 @@ interface AppHeaderProps {
   userImage?: string | null
 }
 
-export function AppHeader({
-  userName,
-  userImage,
-}: AppHeaderProps) {
+export function AppHeader({ userName, userImage }: AppHeaderProps) {
   const { theme, setTheme } = useTheme()
   const isDark = theme === 'dark'
 
@@ -42,5 +39,3 @@ export function AppHeader({
     </div>
   )
 }
-
-

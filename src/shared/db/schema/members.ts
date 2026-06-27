@@ -1,7 +1,10 @@
-import { uuid, pgTable,
+import {
+  uuid,
+  pgTable,
   text,
   timestamp,
-  uniqueIndex, } from 'drizzle-orm/pg-core'
+  uniqueIndex,
+} from 'drizzle-orm/pg-core'
 import { memberStatusEnum } from './enums.ts'
 
 export const members = pgTable(

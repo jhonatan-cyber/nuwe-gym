@@ -11,7 +11,7 @@ const config = defineConfig({
   resolve: {
     tsconfigPaths: true,
     alias: {
-      'sonner': path.resolve(__dirname, './src/shared/components/ui/sonner.tsx'),
+      sonner: path.resolve(__dirname, './src/shared/components/ui/sonner.tsx'),
     },
   },
   plugins: [devtools(), tailwindcss(), tanstackStart(), viteReact()],

@@ -1,9 +1,12 @@
-import { uuid, pgTable,
+import {
+  uuid,
+  pgTable,
   integer,
   text,
   numeric,
   boolean,
-  timestamp, } from 'drizzle-orm/pg-core'
+  timestamp,
+} from 'drizzle-orm/pg-core'
 import { packageTypeEnum } from './enums.ts'
 
 export const packages = pgTable('packages', {

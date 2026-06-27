@@ -106,7 +106,9 @@ export const getUserBranches = createServerFn({ method: 'GET' }).handler(
 )
 
 export const setDefaultBranch = createServerFn({ method: 'POST' })
-  .inputValidator((data) => z.object({ branchId: z.string().uuid() }).parse(data))
+  .inputValidator((data) =>
+    z.object({ branchId: z.string().uuid() }).parse(data),
+  )
   .handler(async ({ data }) => {
     const session = await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] },

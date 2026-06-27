@@ -105,7 +105,7 @@ function ExportSection() {
     mutationFn: () => exportDatabase({ data: {} }),
     onSuccess: (result) => {
       const dateStr = new Date().toISOString().slice(0, 10)
-      downloadJSON(result, `backup-gymmanager-${dateStr}.json`)
+      downloadJSON(result, `backup-trainix-${dateStr}.json`)
       toast.success('Backup exportado correctamente')
     },
     onError: () => toast.error('Error al exportar backup'),

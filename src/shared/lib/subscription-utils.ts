@@ -3,7 +3,9 @@ export function isExpired(dateStr: string | Date | null | undefined): boolean {
   return new Date(dateStr) < new Date()
 }
 
-export function isExpiringThisWeek(dateStr: string | Date | null | undefined): boolean {
+export function isExpiringThisWeek(
+  dateStr: string | Date | null | undefined,
+): boolean {
   if (!dateStr) return false
   const date = new Date(dateStr)
   const now = new Date()
@@ -12,11 +14,15 @@ export function isExpiringThisWeek(dateStr: string | Date | null | undefined): b
   return date >= now && date <= nextWeek
 }
 
-export function getActiveSubscription<T extends { subscriptions: any[] }>(member: T): T['subscriptions'][number] | undefined {
+export function getActiveSubscription<T extends { subscriptions: any[] }>(
+  member: T,
+): T['subscriptions'][number] | undefined {
   return member.subscriptions[0]
 }
 
-export function isSubscriptionActive(sub: { status: string; endDate: string | Date | null } | undefined | null): boolean {
+export function isSubscriptionActive(
+  sub: { status: string; endDate: string | Date | null } | undefined | null,
+): boolean {
   if (!sub) return false
   return sub.status === 'ACTIVE' && !isExpired(sub.endDate)
 }

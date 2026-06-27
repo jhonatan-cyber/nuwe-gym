@@ -1,4 +1,10 @@
-import { CheckCircle2, User, Building2, CreditCard, MessageCircle } from 'lucide-react'
+import {
+  CheckCircle2,
+  User,
+  Building2,
+  CreditCard,
+  MessageCircle,
+} from 'lucide-react'
 import { getPaymentMethodLabel } from '#/shared/lib/subscription-utils.ts'
 import { Button } from '#/shared/components/ui/button'
 
@@ -10,7 +16,13 @@ interface Step5Props {
   onFinish: () => void
 }
 
-export function Step5Complete({ createdMemberName, createdPlanName, paymentMethod, onSendWhatsApp, onFinish }: Step5Props) {
+export function Step5Complete({
+  createdMemberName,
+  createdPlanName,
+  paymentMethod,
+  onSendWhatsApp,
+  onFinish,
+}: Step5Props) {
   return (
     <div className="flex flex-col items-center justify-center py-6 text-center">
       <div className="relative mb-5">
@@ -31,8 +43,12 @@ export function Step5Complete({ createdMemberName, createdPlanName, paymentMetho
             <User className="size-4 text-gray-500 dark:text-white/60" />
           </div>
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-white/40">Socio</p>
-            <p className="font-black text-gray-900 dark:text-white">{createdMemberName}</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-white/40">
+              Socio
+            </p>
+            <p className="font-black text-gray-900 dark:text-white">
+              {createdMemberName}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-3 pb-3 border-b border-gray-200 dark:border-white/10">
@@ -40,8 +56,12 @@ export function Step5Complete({ createdMemberName, createdPlanName, paymentMetho
             <Building2 className="size-4 text-gray-500 dark:text-white/60" />
           </div>
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-white/40">Plan</p>
-            <p className="font-black text-gray-900 dark:text-white">{createdPlanName}</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-white/40">
+              Plan
+            </p>
+            <p className="font-black text-gray-900 dark:text-white">
+              {createdPlanName}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -49,8 +69,12 @@ export function Step5Complete({ createdMemberName, createdPlanName, paymentMetho
             <CreditCard className="size-4 text-gray-500 dark:text-white/60" />
           </div>
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-white/40">Método de Pago</p>
-            <p className="font-black text-gray-900 dark:text-white capitalize">{getPaymentMethodLabel(paymentMethod)}</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-white/40">
+              Método de Pago
+            </p>
+            <p className="font-black text-gray-900 dark:text-white capitalize">
+              {getPaymentMethodLabel(paymentMethod)}
+            </p>
           </div>
         </div>
       </div>

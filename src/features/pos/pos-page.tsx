@@ -546,7 +546,7 @@ export function POSPage() {
             {lastCompletedSale && (
               <div className="p-4 bg-muted rounded-lg space-y-2 text-xs text-left max-w-xs mx-auto border font-mono">
                 <div className="flex justify-between border-b pb-1.5 font-bold">
-                  <span>GymManager POS</span>
+                  <span>Trainix</span>
                   <span>{lastCompletedSale.saleNumber}</span>
                 </div>
                 <div className="flex justify-between">

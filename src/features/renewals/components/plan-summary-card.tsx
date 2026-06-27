@@ -10,11 +10,19 @@ interface PlanSummaryCardProps {
   endDate?: Date
 }
 
-export function PlanSummaryCard({ title, price, durationDays, startDate, endDate }: PlanSummaryCardProps) {
+export function PlanSummaryCard({
+  title,
+  price,
+  durationDays,
+  startDate,
+  endDate,
+}: PlanSummaryCardProps) {
   return (
     <div className="bg-muted/30 dark:bg-muted/10 text-foreground rounded-2xl border border-border/10 p-5 flex items-stretch gap-4.5 shadow-sm select-none animate-in fade-in slide-in-from-bottom-2 duration-300">
       <div className="flex flex-col justify-center items-center px-2 border-r border-border/10 font-black tracking-widest text-muted-foreground/30 uppercase text-xs shrink-0 select-none">
-        <span className="rotate-270 inline-block font-sans tracking-[0.2em] font-extrabold">TRAINIX</span>
+        <span className="rotate-270 inline-block font-sans tracking-[0.2em] font-extrabold">
+          TRAINIX
+        </span>
       </div>
       <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
         <div className="flex items-start justify-between gap-2">
@@ -23,7 +31,9 @@ export function PlanSummaryCard({ title, price, durationDays, startDate, endDate
             Normal
           </Badge>
         </div>
-        <p className="text-2xl font-black tracking-tight text-foreground mt-2">{formatCurrency(price)}</p>
+        <p className="text-2xl font-black tracking-tight text-foreground mt-2">
+          {formatCurrency(price)}
+        </p>
         <div className="mt-4 space-y-1.5">
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
             <Clock className="size-3.5 text-muted-foreground shrink-0" />

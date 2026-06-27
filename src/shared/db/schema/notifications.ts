@@ -1,8 +1,11 @@
-import { uuid, pgTable,
+import {
+  uuid,
+  pgTable,
   pgEnum,
   text,
   boolean,
-  timestamp, } from 'drizzle-orm/pg-core'
+  timestamp,
+} from 'drizzle-orm/pg-core'
 
 export const notificationTypeEnum = pgEnum('notification_type', [
   'EXPIRATION',

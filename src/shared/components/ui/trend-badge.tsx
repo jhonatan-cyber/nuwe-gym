@@ -29,14 +29,16 @@ export function TrendBadge({
     ? 'bg-emerald-500/10 text-emerald-600'
     : 'bg-red-500/10 text-red-600'
 
-  const sizeClass = size === 'sm'
-    ? 'text-[8px] px-1.5 py-0 gap-0.5'
-    : 'text-xs px-2 py-0.5 gap-1'
+  const sizeClass =
+    size === 'sm'
+      ? 'text-[8px] px-1.5 py-0 gap-0.5'
+      : 'text-xs px-2 py-0.5 gap-1'
 
   const formattedValue = `${isPositive ? '+' : ''}${value}`
-  const formattedPercent = showPercent && percent !== undefined
-    ? ` (${percent > 0 ? '+' : ''}${percent}%)`
-    : ''
+  const formattedPercent =
+    showPercent && percent !== undefined
+      ? ` (${percent > 0 ? '+' : ''}${percent}%)`
+      : ''
 
   return (
     <span

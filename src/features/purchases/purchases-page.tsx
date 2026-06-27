@@ -1,7 +1,22 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ShoppingCart, Plus, Eye, Trash2, FileText, Calendar, Truck, User, DollarSign } from 'lucide-react'
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '#/shared/components/ui/tooltip'
+import {
+  ShoppingCart,
+  Plus,
+  Eye,
+  Trash2,
+  FileText,
+  Calendar,
+  Truck,
+  User,
+  DollarSign,
+} from 'lucide-react'
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+  TooltipProvider,
+} from '#/shared/components/ui/tooltip'
 import { toast } from 'sonner'
 import { getPurchases, createPurchase } from '#/features/purchases/server.ts'
 import { getSuppliers } from '#/features/suppliers/server.ts'
@@ -177,97 +192,97 @@ export function PurchasesPage() {
       />
 
       <TooltipProvider delayDuration={200}>
-      <DataTable
-        columns={[
-          {
-            key: 'purchaseNumber',
-            label: (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="cursor-default">N° Factura</span>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">
-                  <p>Número de factura o remito del proveedor</p>
-                </TooltipContent>
-              </Tooltip>
-            ),
-            render: (p: (typeof purchasesList)[number]) => (
-              <span className="inline-flex items-center gap-1.5 font-mono text-sm font-semibold">
-                <FileText className="size-3 text-muted-foreground" />
-                {p.purchaseNumber}
-              </span>
-            ),
-          },
-          {
-            key: 'date',
-            label: 'Fecha',
-            render: (p: (typeof purchasesList)[number]) => (
-              <span className="inline-flex items-center gap-1.5 text-xs">
-                <Calendar className="size-3 text-muted-foreground" />
-                {formatDateTime(p.purchasedAt)}
-              </span>
-            ),
-          },
-          {
-            key: 'supplier',
-            label: 'Proveedor',
-            render: (p: (typeof purchasesList)[number]) => (
-              <span className="inline-flex items-center gap-1.5 font-medium">
-                <Truck className="size-3 text-muted-foreground" />
-                {p.supplier.name}
-              </span>
-            ),
-          },
-          {
-            key: 'createdBy',
-            label: 'Registrada por',
-            render: (p: (typeof purchasesList)[number]) => (
-              <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                <User className="size-3 text-muted-foreground" />
-                {p.createdBy.name}
-              </span>
-            ),
-          },
-          {
-            key: 'total',
-            label: (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="cursor-default">Total Costo</span>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">
-                  <p>Costo total de la compra</p>
-                </TooltipContent>
-              </Tooltip>
-            ),
-            render: (p: (typeof purchasesList)[number]) => (
-              <span className="inline-flex items-center gap-1.5 font-semibold text-primary">
-                <DollarSign className="size-3 text-muted-foreground" />
-                ${p.total}
-              </span>
-            ),
-          },
-          {
-            key: 'actions',
-            label: 'Detalles',
-            className: 'text-right',
-            render: (p: (typeof purchasesList)[number]) => (
-              <Button
-                size="icon"
-                variant="ghost"
-                onClick={() => setSelectedPurchase(p)}
-              >
-                <Eye className="size-4" />
-              </Button>
-            ),
-          },
-        ]}
-        data={purchasesList}
-        isLoading={isLoadingPurchases}
-        loadingMessage="Cargando compras..."
-        emptyMessage="No hay compras registradas."
-        keyExtractor={(p: (typeof purchasesList)[number]) => p.id}
-      />
+        <DataTable
+          columns={[
+            {
+              key: 'purchaseNumber',
+              label: (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="cursor-default">N° Factura</span>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    <p>Número de factura o remito del proveedor</p>
+                  </TooltipContent>
+                </Tooltip>
+              ),
+              render: (p: (typeof purchasesList)[number]) => (
+                <span className="inline-flex items-center gap-1.5 font-mono text-sm font-semibold">
+                  <FileText className="size-3 text-muted-foreground" />
+                  {p.purchaseNumber}
+                </span>
+              ),
+            },
+            {
+              key: 'date',
+              label: 'Fecha',
+              render: (p: (typeof purchasesList)[number]) => (
+                <span className="inline-flex items-center gap-1.5 text-xs">
+                  <Calendar className="size-3 text-muted-foreground" />
+                  {formatDateTime(p.purchasedAt)}
+                </span>
+              ),
+            },
+            {
+              key: 'supplier',
+              label: 'Proveedor',
+              render: (p: (typeof purchasesList)[number]) => (
+                <span className="inline-flex items-center gap-1.5 font-medium">
+                  <Truck className="size-3 text-muted-foreground" />
+                  {p.supplier.name}
+                </span>
+              ),
+            },
+            {
+              key: 'createdBy',
+              label: 'Registrada por',
+              render: (p: (typeof purchasesList)[number]) => (
+                <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <User className="size-3 text-muted-foreground" />
+                  {p.createdBy.name}
+                </span>
+              ),
+            },
+            {
+              key: 'total',
+              label: (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="cursor-default">Total Costo</span>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    <p>Costo total de la compra</p>
+                  </TooltipContent>
+                </Tooltip>
+              ),
+              render: (p: (typeof purchasesList)[number]) => (
+                <span className="inline-flex items-center gap-1.5 font-semibold text-primary">
+                  <DollarSign className="size-3 text-muted-foreground" />$
+                  {p.total}
+                </span>
+              ),
+            },
+            {
+              key: 'actions',
+              label: 'Detalles',
+              className: 'text-right',
+              render: (p: (typeof purchasesList)[number]) => (
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => setSelectedPurchase(p)}
+                >
+                  <Eye className="size-4" />
+                </Button>
+              ),
+            },
+          ]}
+          data={purchasesList}
+          isLoading={isLoadingPurchases}
+          loadingMessage="Cargando compras..."
+          emptyMessage="No hay compras registradas."
+          keyExtractor={(p: (typeof purchasesList)[number]) => p.id}
+        />
       </TooltipProvider>
 
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>

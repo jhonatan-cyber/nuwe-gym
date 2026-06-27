@@ -42,7 +42,12 @@ export function ConfirmDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="gap-2">
-          <Button variant="outline" className="rounded-xl" disabled={isLoading} onClick={() => onOpenChange(false)}>
+          <Button
+            variant="outline"
+            className="rounded-xl"
+            disabled={isLoading}
+            onClick={() => onOpenChange(false)}
+          >
             {cancelText}
           </Button>
           <LoadingButton

@@ -18,17 +18,23 @@ import { createSubscription } from '#/features/subscriptions/server.ts'
 import { getMembers } from '#/features/members/server.ts'
 import { getActivePackages } from '#/features/packages/server.ts'
 import { formatCurrency, formatDate } from '#/shared/lib/formatters.ts'
-import { useTheme } from 'next-themes'
 import { ModuleLayout } from '#/shared/components/layout/module-layout.tsx'
 import { Button } from '#/shared/components/ui/button'
 import { LoadingButton } from '#/shared/components/ui/loading-button'
 import { Input } from '#/shared/components/ui/input'
 import { Label } from '#/shared/components/ui/label'
 import { Badge } from '#/shared/components/ui/badge'
-import { ToggleGroup, ToggleGroupItem } from '#/shared/components/ui/toggle-group'
+import {
+  ToggleGroup,
+  ToggleGroupItem,
+} from '#/shared/components/ui/toggle-group'
 import type { PaymentMethod } from '../types.ts'
 
-const paymentMethods: { value: PaymentMethod; label: string; icon: typeof Banknote }[] = [
+const paymentMethods: {
+  value: PaymentMethod
+  label: string
+  icon: typeof Banknote
+}[] = [
   { value: 'CASH', label: 'Efectivo', icon: Banknote },
   { value: 'CARD', label: 'Tarjeta', icon: CreditCard },
   { value: 'TRANSFER', label: 'Transferencia', icon: Building2 },
@@ -41,8 +47,6 @@ interface SubscriptionFormProps {
 
 export function SubscriptionForm({ onBack }: SubscriptionFormProps) {
   const queryClient = useQueryClient()
-  const { theme } = useTheme()
-  const isDark = theme === 'dark'
 
   const [memberSearch, setMemberSearch] = useState('')
   const [isMemberDropdownOpen, setIsMemberDropdownOpen] = useState(false)
@@ -98,7 +102,11 @@ export function SubscriptionForm({ onBack }: SubscriptionFormProps) {
     const pkg = packages.find((p) => p.id === formData.packageId)
     const start = new Date(date)
     start.setDate(start.getDate() + (pkg?.durationDays || 30))
-    setFormData({ ...formData, startDate: date, endDate: start.toISOString().split('T')[0] })
+    setFormData({
+      ...formData,
+      startDate: date,
+      endDate: start.toISOString().split('T')[0],
+    })
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -109,7 +117,10 @@ export function SubscriptionForm({ onBack }: SubscriptionFormProps) {
   const filteredMembers = members
     .filter((m) => {
       const q = memberSearch.toLowerCase()
-      return m.fullName.toLowerCase().includes(q) || (m.documentNumber ?? '').toLowerCase().includes(q)
+      return (
+        m.fullName.toLowerCase().includes(q) ||
+        (m.documentNumber ?? '').toLowerCase().includes(q)
+      )
     })
     .slice(0, 10)
 
@@ -134,14 +145,28 @@ export function SubscriptionForm({ onBack }: SubscriptionFormProps) {
               if (!v || v === 'list') onBack()
             }}
           >
-            <ToggleGroupItem value="list"><List className="size-3.5" /> Listado</ToggleGroupItem>
-            <ToggleGroupItem value="form"><Plus className="size-3.5" /> Nuevo</ToggleGroupItem>
+            <ToggleGroupItem value="list">
+              <List className="size-3.5" /> Listado
+            </ToggleGroupItem>
+            <ToggleGroupItem value="form">
+              <Plus className="size-3.5" /> Nuevo
+            </ToggleGroupItem>
           </ToggleGroup>
-          <img src={isDark ? '/logo-dark.png' : '/logo-ligth.png'} alt="Logo Gym" className="w-full mx-auto opacity-90" />
+          <img
+            src="/logo-ligth.png"
+            alt="Logo Gym"
+            className="w-full mx-auto opacity-90 dark:hidden block"
+          />
+          <img
+            src="/logo-dark.png"
+            alt="Logo Gym"
+            className="w-full mx-auto opacity-90 hidden dark:block"
+          />
           <div className="flex items-start gap-3 p-3 rounded-2xl dark:bg-white/2 bg-black/2 border dark:border-white/5 border-black/5">
             <Zap className="size-3.5 text-muted-foreground shrink-0 mt-0.5" />
             <p className="text-[10px] text-muted-foreground leading-relaxed">
-              Las suscripciones vinculan a un socio con un paquete activo y registran el pago correspondiente.
+              Las suscripciones vinculan a un socio con un paquete activo y
+              registran el pago correspondiente.
             </p>
           </div>
         </div>
@@ -150,7 +175,9 @@ export function SubscriptionForm({ onBack }: SubscriptionFormProps) {
       <div className="bg-card p-6 rounded-4xl border border-border/10 shadow-xl overflow-y-auto max-h-full">
         <form onSubmit={handleSubmit} className="max-w-2xl mx-auto space-y-6">
           <div>
-            <p className="text-sm font-black tracking-tight">Alta de Suscripción</p>
+            <p className="text-sm font-black tracking-tight">
+              Alta de Suscripción
+            </p>
             <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">
               Asigná un paquete a un socio y registrá el pago correspondiente.
             </p>
@@ -191,7 +218,10 @@ export function SubscriptionForm({ onBack }: SubscriptionFormProps) {
 
               {isMemberDropdownOpen && (
                 <>
-                  <div className="fixed inset-0 z-40" onClick={() => setIsMemberDropdownOpen(false)} />
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setIsMemberDropdownOpen(false)}
+                  />
                   <div className="absolute top-[calc(100%+4px)] left-0 z-50 max-h-60 w-full overflow-auto rounded-2xl border dark:border-white/10 border-black/10 bg-popover p-1.5 text-popover-foreground shadow-2xl backdrop-blur-md">
                     {filteredMembers.length === 0 ? (
                       <div className="py-6 text-center text-xs text-muted-foreground font-semibold">
@@ -211,7 +241,9 @@ export function SubscriptionForm({ onBack }: SubscriptionFormProps) {
                         >
                           <div>
                             <p className="font-bold">{m.fullName}</p>
-                            <p className="text-[10px] text-muted-foreground mt-0.5">CI: {m.documentNumber}</p>
+                            <p className="text-[10px] text-muted-foreground mt-0.5">
+                              CI: {m.documentNumber}
+                            </p>
                           </div>
                           {formData.memberId === m.id && (
                             <Badge className="bg-emerald-500/15 text-emerald-600 hover:bg-emerald-500/15 border-none text-[9px] font-bold uppercase">
@@ -245,7 +277,9 @@ export function SubscriptionForm({ onBack }: SubscriptionFormProps) {
                     >
                       <div>
                         <div className="flex items-start justify-between gap-2">
-                          <h4 className="font-bold text-xs tracking-tight truncate">{p.name}</h4>
+                          <h4 className="font-bold text-xs tracking-tight truncate">
+                            {p.name}
+                          </h4>
                           {isSelected && (
                             <Badge className="bg-primary text-primary-foreground text-[8px] font-bold uppercase shrink-0">
                               Seleccionado
@@ -257,8 +291,12 @@ export function SubscriptionForm({ onBack }: SubscriptionFormProps) {
                         </p>
                       </div>
                       <div className="flex items-center justify-between border-t border-border/5 pt-2 mt-auto">
-                        <span className="text-[9px] text-muted-foreground font-semibold">{p.durationDays} Días</span>
-                        <span className="font-extrabold text-xs text-primary">{formatCurrency(p.price)}</span>
+                        <span className="text-[9px] text-muted-foreground font-semibold">
+                          {p.durationDays} Días
+                        </span>
+                        <span className="font-extrabold text-xs text-primary">
+                          {formatCurrency(p.price)}
+                        </span>
                       </div>
                     </div>
                   )
@@ -278,7 +316,9 @@ export function SubscriptionForm({ onBack }: SubscriptionFormProps) {
                     <button
                       key={pm.value}
                       type="button"
-                      onClick={() => setFormData({ ...formData, paymentMethod: pm.value })}
+                      onClick={() =>
+                        setFormData({ ...formData, paymentMethod: pm.value })
+                      }
                       className={`flex flex-col items-center justify-center p-3 rounded-2xl border transition-all duration-200 gap-1.5 text-[11px] font-bold ${
                         isSelected
                           ? 'border-primary bg-primary/5 text-primary shadow-sm ring-1 ring-primary/20'
@@ -298,12 +338,28 @@ export function SubscriptionForm({ onBack }: SubscriptionFormProps) {
                 <Label htmlFor="startDate" className="text-xs font-bold">
                   Fecha de Inicio <span className="text-destructive">*</span>
                 </Label>
-                <Input id="startDate" type="date" required value={formData.startDate} onChange={(e) => handleStartDateChange(e.target.value)} />
+                <Input
+                  id="startDate"
+                  type="date"
+                  required
+                  value={formData.startDate}
+                  onChange={(e) => handleStartDateChange(e.target.value)}
+                />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="endDate" className="text-xs font-bold">Fecha de Vencimiento</Label>
-                <Input id="endDate" type="date" readOnly className="bg-muted" value={formData.endDate} />
-                <p className="text-[10px] text-muted-foreground">Calculado automáticamente por el paquete.</p>
+                <Label htmlFor="endDate" className="text-xs font-bold">
+                  Fecha de Vencimiento
+                </Label>
+                <Input
+                  id="endDate"
+                  type="date"
+                  readOnly
+                  className="bg-muted"
+                  value={formData.endDate}
+                />
+                <p className="text-[10px] text-muted-foreground">
+                  Calculado automáticamente por el paquete.
+                </p>
               </div>
             </div>
 
@@ -312,7 +368,9 @@ export function SubscriptionForm({ onBack }: SubscriptionFormProps) {
                 <div className="flex items-center justify-between border-b dark:border-white/5 border-black/5 pb-3">
                   <div className="flex items-center gap-2">
                     <Receipt className="size-5 text-primary" />
-                    <span className="font-bold text-sm text-foreground">Resumen de Operación</span>
+                    <span className="font-bold text-sm text-foreground">
+                      Resumen de Operación
+                    </span>
                   </div>
                   <Badge className="bg-primary/10 text-primary border-primary/20 text-[10px] font-bold">
                     Listo para confirmar
@@ -320,30 +378,47 @@ export function SubscriptionForm({ onBack }: SubscriptionFormProps) {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                   <div>
-                    <span className="text-[10px] text-muted-foreground font-semibold uppercase">Socio</span>
-                    <p className="font-bold text-foreground truncate mt-0.5">{selectedMember?.fullName}</p>
+                    <span className="text-[10px] text-muted-foreground font-semibold uppercase">
+                      Socio
+                    </span>
+                    <p className="font-bold text-foreground truncate mt-0.5">
+                      {selectedMember?.fullName}
+                    </p>
                   </div>
                   <div>
-                    <span className="text-[10px] text-muted-foreground font-semibold uppercase">Paquete</span>
+                    <span className="text-[10px] text-muted-foreground font-semibold uppercase">
+                      Paquete
+                    </span>
                     <p className="font-bold text-foreground truncate mt-0.5">
                       {packages.find((p) => p.id === formData.packageId)?.name}
                     </p>
                   </div>
                   <div>
-                    <span className="text-[10px] text-muted-foreground font-semibold uppercase">Medio de Pago</span>
+                    <span className="text-[10px] text-muted-foreground font-semibold uppercase">
+                      Medio de Pago
+                    </span>
                     <p className="font-bold text-foreground mt-0.5">
-                      {paymentMethods.find((p) => p.value === formData.paymentMethod)?.label}
+                      {
+                        paymentMethods.find(
+                          (p) => p.value === formData.paymentMethod,
+                        )?.label
+                      }
                     </p>
                   </div>
                   <div>
-                    <span className="text-[10px] text-muted-foreground font-semibold uppercase">Vigencia</span>
+                    <span className="text-[10px] text-muted-foreground font-semibold uppercase">
+                      Vigencia
+                    </span>
                     <p className="font-bold text-foreground mt-0.5">
-                      {formatDate(new Date(formData.startDate))} hasta {formatDate(new Date(formData.endDate))}
+                      {formatDate(new Date(formData.startDate))} hasta{' '}
+                      {formatDate(new Date(formData.endDate))}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center justify-between border-t dark:border-white/5 border-black/5 pt-3 mt-1.5">
-                  <span className="text-sm font-bold text-foreground">Monto Total</span>
+                  <span className="text-sm font-bold text-foreground">
+                    Monto Total
+                  </span>
                   <span className="text-3xl font-black text-primary tracking-tight">
                     {formatCurrency(formData.amountPaid || 0)}
                   </span>
@@ -353,7 +428,9 @@ export function SubscriptionForm({ onBack }: SubscriptionFormProps) {
           </div>
 
           <div className="flex items-center justify-end gap-3 pt-2">
-            <Button type="button" variant="outline" onClick={onBack}>Cancelar</Button>
+            <Button type="button" variant="outline" onClick={onBack}>
+              Cancelar
+            </Button>
             <LoadingButton
               type="submit"
               isLoading={createMutation.isPending}

@@ -22,23 +22,25 @@ import {
   MapPin,
   CreditCard,
 } from 'lucide-react'
-import { getUserById, revokeSession, resetUserPassword } from '#/features/users/server.ts'
+import {
+  getUserById,
+  revokeSession,
+  resetUserPassword,
+} from '#/features/users/server.ts'
 import { Button } from '#/shared/components/ui/button'
 import {
   Dialog,
   DialogContent,
   DialogFooter,
-} from '#/shared/components/ui/dialog'
-import { Badge } from '#/shared/components/ui/badge'
-import { Input } from '#/shared/components/ui/input'
-import { ConfirmDialog } from '#/shared/components/ui/confirm-dialog'
-import {
   Dialog as SubDialog,
   DialogContent as SubDialogContent,
   DialogHeader as SubDialogHeader,
   DialogTitle as SubDialogTitle,
-  DialogFooter as SubDialogFooter,
+  DialogFooter as SubDialogFooter
 } from '#/shared/components/ui/dialog'
+import { Badge } from '#/shared/components/ui/badge'
+import { Input } from '#/shared/components/ui/input'
+import { ConfirmDialog } from '#/shared/components/ui/confirm-dialog'
 import { cn } from '#/shared/lib/utils.ts'
 import { ROLE_LABELS } from '#/features/users/types.ts'
 
@@ -82,7 +84,11 @@ function formatTimeAgo(date: Date | string | null) {
   return formatDate(date)
 }
 
-function parseUserAgent(ua: string | null): { browser: string; os: string; isMobile: boolean } {
+function parseUserAgent(ua: string | null): {
+  browser: string
+  os: string
+  isMobile: boolean
+} {
   if (!ua) return { browser: '—', os: '—', isMobile: false }
   const isMobile = /mobile|android|iphone|ipad/i.test(ua)
   let browser = '—'
@@ -107,10 +113,15 @@ const ACTION_COLORS: Record<string, string> = {
   LOGOUT: 'bg-gray-500/10 text-gray-600 border-gray-500/20',
 }
 
-export function UserDetailDialog({ userId, onOpenChange }: UserDetailDialogProps) {
+export function UserDetailDialog({
+  userId,
+  onOpenChange,
+}: UserDetailDialogProps) {
   const queryClient = useQueryClient()
 
-  const [revokingSessionId, setRevokingSessionId] = useState<string | null>(null)
+  const [revokingSessionId, setRevokingSessionId] = useState<string | null>(
+    null,
+  )
   const [revokingUserName, setRevokingUserName] = useState<string>('')
   const [isResetPwOpen, setIsResetPwOpen] = useState(false)
   const [newPassword, setNewPassword] = useState('')
@@ -129,7 +140,8 @@ export function UserDetailDialog({ userId, onOpenChange }: UserDetailDialogProps
       setRevokingSessionId(null)
       toast.success('Sesión cerrada correctamente')
     },
-    onError: (err: Error) => toast.error(err.message || 'Error al cerrar la sesión'),
+    onError: (err: Error) =>
+      toast.error(err.message || 'Error al cerrar la sesión'),
   })
 
   function handleRevokeSession(sessionId: string, userName: string) {
@@ -144,7 +156,8 @@ export function UserDetailDialog({ userId, onOpenChange }: UserDetailDialogProps
       setNewPassword('')
       toast.success('Contraseña reseteada correctamente')
     },
-    onError: (err: Error) => toast.error(err.message || 'Error al resetear la contraseña'),
+    onError: (err: Error) =>
+      toast.error(err.message || 'Error al resetear la contraseña'),
   })
 
   function handleConfirmRevoke() {
@@ -166,7 +179,9 @@ export function UserDetailDialog({ userId, onOpenChange }: UserDetailDialogProps
   function handleResetPassword(e: React.FormEvent) {
     e.preventDefault()
     if (!user || !newPassword.trim()) return
-    resetPwMutation.mutate({ data: { userId: user.id, newPassword: newPassword.trim() } })
+    resetPwMutation.mutate({
+      data: { userId: user.id, newPassword: newPassword.trim() },
+    })
   }
 
   const user = data?.user
@@ -180,7 +195,9 @@ export function UserDetailDialog({ userId, onOpenChange }: UserDetailDialogProps
   return (
     <Dialog
       open={!!userId}
-      onOpenChange={(open) => { if (!open) onOpenChange(false) }}
+      onOpenChange={(open) => {
+        if (!open) onOpenChange(false)
+      }}
     >
       <DialogContent className="max-w-2xl max-h-[88vh] overflow-x-hidden overflow-y-auto scrollbar-none p-0 gap-0">
         {isLoading ? (
@@ -196,7 +213,11 @@ export function UserDetailDialog({ userId, onOpenChange }: UserDetailDialogProps
               <div className="relative flex items-center gap-4">
                 {/* Avatar */}
                 <div className="size-14 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/10 flex items-center justify-center font-black text-xl uppercase shrink-0 text-primary tracking-wider shadow-inner select-none">
-                  {user.name.split(' ').map((n: string) => n[0]).slice(0, 2).join('')}
+                  {user.name
+                    .split(' ')
+                    .map((n: string) => n[0])
+                    .slice(0, 2)
+                    .join('')}
                 </div>
 
                 {/* Info */}
@@ -211,7 +232,8 @@ export function UserDetailDialog({ userId, onOpenChange }: UserDetailDialogProps
                         'bg-foreground/10 text-foreground border-foreground/20',
                       )}
                     >
-                      {ROLE_LABELS[user.role as keyof typeof ROLE_LABELS] || user.role}
+                      {ROLE_LABELS[user.role as keyof typeof ROLE_LABELS] ||
+                        user.role}
                     </Badge>
                   </div>
                   <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
@@ -239,20 +261,54 @@ export function UserDetailDialog({ userId, onOpenChange }: UserDetailDialogProps
                 <SectionTitle icon={User} label="Información" />
                 <div className="grid grid-cols-2 gap-x-6 gap-y-4 mt-3">
                   <DataRow icon={User} label="Nombre" value={user.name} />
-                  <DataRow icon={CreditCard} label="CI" value={user.documentNumber || '—'} />
+                  <DataRow
+                    icon={CreditCard}
+                    label="CI"
+                    value={user.documentNumber || '—'}
+                  />
                   <DataRow icon={Mail} label="Email" value={user.email} />
-                  <DataRow icon={Phone} label="Teléfono" value={user.phone || '—'} />
-                  <DataRow icon={MapPin} label="Dirección" value={user.address || '—'} />
-                  <DataRow icon={Shield} label="Rol" value={ROLE_LABELS[user.role as keyof typeof ROLE_LABELS] || user.role} />
-                  <DataRow icon={Calendar} label="Registro" value={formatDate(user.createdAt)} />
-                  <DataRow icon={RefreshCw} label="Última actualización" value={formatDate(user.updatedAt)} />
-                  <DataRow icon={CircleCheck} label="Email verificado" value={user.emailVerified ? 'Sí' : 'No'} />
+                  <DataRow
+                    icon={Phone}
+                    label="Teléfono"
+                    value={user.phone || '—'}
+                  />
+                  <DataRow
+                    icon={MapPin}
+                    label="Dirección"
+                    value={user.address || '—'}
+                  />
+                  <DataRow
+                    icon={Shield}
+                    label="Rol"
+                    value={
+                      ROLE_LABELS[user.role as keyof typeof ROLE_LABELS] ||
+                      user.role
+                    }
+                  />
+                  <DataRow
+                    icon={Calendar}
+                    label="Registro"
+                    value={formatDate(user.createdAt)}
+                  />
+                  <DataRow
+                    icon={RefreshCw}
+                    label="Última actualización"
+                    value={formatDate(user.updatedAt)}
+                  />
+                  <DataRow
+                    icon={CircleCheck}
+                    label="Email verificado"
+                    value={user.emailVerified ? 'Sí' : 'No'}
+                  />
                 </div>
               </section>
 
               {/* Sesiones activas */}
               <section>
-                <SectionTitle icon={Activity} label={`Sesiones (${activeSessions.length} activas)`} />
+                <SectionTitle
+                  icon={Activity}
+                  label={`Sesiones (${activeSessions.length} activas)`}
+                />
                 {userSessions.length === 0 ? (
                   <div className="mt-3 py-8 rounded-2xl border dark:border-white/[0.04] border-black/[0.04] bg-muted/40 text-center text-sm text-muted-foreground">
                     Sin sesiones registradas.
@@ -287,7 +343,9 @@ export function UserDetailDialog({ userId, onOpenChange }: UserDetailDialogProps
                               <div
                                 className={cn(
                                   'size-1.5 rounded-full shrink-0',
-                                  isActive ? 'bg-emerald-500' : 'bg-muted-foreground/30',
+                                  isActive
+                                    ? 'bg-emerald-500'
+                                    : 'bg-muted-foreground/30',
                                 )}
                               />
                             </div>
@@ -322,7 +380,12 @@ export function UserDetailDialog({ userId, onOpenChange }: UserDetailDialogProps
                               variant="ghost"
                               size="icon-xs"
                               className="text-red-500 hover:text-red-600 hover:bg-red-50 shrink-0"
-                              onClick={() => handleRevokeSession(session.id, user?.name || '')}
+                              onClick={() =>
+                                handleRevokeSession(
+                                  session.id,
+                                  user?.name || '',
+                                )
+                              }
                             >
                               <XCircle className="size-3.5" />
                             </Button>
@@ -336,7 +399,10 @@ export function UserDetailDialog({ userId, onOpenChange }: UserDetailDialogProps
 
               {/* Actividad reciente */}
               <section>
-                <SectionTitle icon={Globe} label="Actividad reciente (últimos 50 eventos)" />
+                <SectionTitle
+                  icon={Globe}
+                  label="Actividad reciente (últimos 50 eventos)"
+                />
                 {auditLogs.length === 0 ? (
                   <div className="mt-3 py-8 rounded-2xl border dark:border-white/[0.04] border-black/[0.04] bg-muted/40 text-center text-sm text-muted-foreground">
                     Sin actividad registrada.
@@ -362,7 +428,8 @@ export function UserDetailDialog({ userId, onOpenChange }: UserDetailDialogProps
                             <Badge
                               className={cn(
                                 'text-[9px] font-bold py-0 px-1.5 rounded shrink-0',
-                                ACTION_COLORS[log.action] || 'bg-muted text-muted-foreground border-none',
+                                ACTION_COLORS[log.action] ||
+                                  'bg-muted text-muted-foreground border-none',
                               )}
                             >
                               {log.action}
@@ -427,17 +494,29 @@ export function UserDetailDialog({ userId, onOpenChange }: UserDetailDialogProps
             <div className="bg-amber-500/10 p-3 rounded-lg flex gap-2 text-xs text-amber-800 border border-amber-500/20">
               <Info className="size-5 shrink-0" />
               <span>
-                La contraseña debe tener al menos 6 caracteres.
-                Recomendamos generar una contraseña segura y compartirla de forma segura con el usuario.
-                Todas las sesiones activas del usuario seguirán vigentes.
+                La contraseña debe tener al menos 6 caracteres. Recomendamos
+                generar una contraseña segura y compartirla de forma segura con
+                el usuario. Todas las sesiones activas del usuario seguirán
+                vigentes.
               </span>
             </div>
             <SubDialogFooter className="pt-4">
-              <Button type="button" variant="outline" onClick={() => setIsResetPwOpen(false)}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsResetPwOpen(false)}
+              >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={resetPwMutation.isPending || newPassword.trim().length < 6}>
-                {resetPwMutation.isPending ? 'Reseteando...' : 'Resetear Contraseña'}
+              <Button
+                type="submit"
+                disabled={
+                  resetPwMutation.isPending || newPassword.trim().length < 6
+                }
+              >
+                {resetPwMutation.isPending
+                  ? 'Reseteando...'
+                  : 'Resetear Contraseña'}
               </Button>
             </SubDialogFooter>
           </form>
@@ -446,7 +525,9 @@ export function UserDetailDialog({ userId, onOpenChange }: UserDetailDialogProps
 
       <ConfirmDialog
         open={revokingSessionId !== null}
-        onOpenChange={(open) => { if (!open) setRevokingSessionId(null) }}
+        onOpenChange={(open) => {
+          if (!open) setRevokingSessionId(null)
+        }}
         title="Cerrar Sesión"
         description="¿Estás seguro de que deseas cerrar esta sesión? El usuario deberá volver a iniciar sesión."
         confirmText="Cerrar Sesión"
@@ -468,7 +549,15 @@ function SectionTitle({ icon: Icon, label }: { icon: any; label: string }) {
   )
 }
 
-function DataRow({ icon: Icon, label, value }: { icon: any; label: string; value: string }) {
+function DataRow({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: any
+  label: string
+  value: string
+}) {
   return (
     <div className="flex items-start gap-2.5 min-w-0">
       <div className="size-6 rounded-md dark:bg-white/5 bg-black/5 border dark:border-white/[0.06] border-black/[0.06] flex items-center justify-center shrink-0 mt-0.5">

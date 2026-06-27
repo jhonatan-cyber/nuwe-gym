@@ -37,13 +37,13 @@ export function ModuleLayout({
               {title}
             </h1>
           </div>
-          {headerActions && <div className="flex items-center gap-2">{headerActions}</div>}
+          {headerActions && (
+            <div className="flex items-center gap-2">{headerActions}</div>
+          )}
         </div>
 
         {/* Content */}
-        <div className="flex-1 flex flex-col gap-5 min-w-0">
-          {children}
-        </div>
+        <div className="flex-1 flex flex-col gap-5 min-w-0">{children}</div>
       </div>
     </div>
   )

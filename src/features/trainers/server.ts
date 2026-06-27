@@ -33,7 +33,9 @@ export const getTrainers = createServerFn({ method: 'GET' }).handler(
 )
 
 export const getTrainer = createServerFn({ method: 'GET' })
-  .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
+  .inputValidator((data: unknown) =>
+    z.object({ id: z.string().uuid() }).parse(data),
+  )
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
     return await db.query.trainerProfiles.findFirst({

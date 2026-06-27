@@ -1,8 +1,11 @@
-import { uuid, pgTable,
+import {
+  uuid,
+  pgTable,
   text,
   boolean,
   timestamp,
-  index, } from 'drizzle-orm/pg-core'
+  index,
+} from 'drizzle-orm/pg-core'
 import { users } from './auth.ts'
 
 export const branches = pgTable(

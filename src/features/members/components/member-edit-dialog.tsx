@@ -32,7 +32,11 @@ interface MemberEditDialogProps {
   onOpenChange: (open: boolean) => void
 }
 
-export function MemberEditDialog({ member, open, onOpenChange }: MemberEditDialogProps) {
+export function MemberEditDialog({
+  member,
+  open,
+  onOpenChange,
+}: MemberEditDialogProps) {
   const queryClient = useQueryClient()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
@@ -48,7 +52,10 @@ export function MemberEditDialog({ member, open, onOpenChange }: MemberEditDialo
     emergencyContactName: member.emergencyContactName || '',
     emergencyContactPhone: member.emergencyContactPhone || '',
     address: member.address || '',
-    status: member.status === 'SUSPENDED' ? 'INACTIVE' as const : member.status as 'ACTIVE' | 'INACTIVE',
+    status:
+      member.status === 'SUSPENDED'
+        ? ('INACTIVE' as const)
+        : (member.status),
   })
 
   const photoMutation = useMutation({
@@ -77,7 +84,9 @@ export function MemberEditDialog({ member, open, onOpenChange }: MemberEditDialo
     reader.onload = (event) => {
       const base64 = event.target?.result as string
       setPhotoPreview(base64)
-      photoMutation.mutate({ data: { memberId: member.id, photoBase64: base64 } })
+      photoMutation.mutate({
+        data: { memberId: member.id, photoBase64: base64 },
+      })
     }
     reader.readAsDataURL(file)
   }
@@ -105,7 +114,9 @@ export function MemberEditDialog({ member, open, onOpenChange }: MemberEditDialo
                   id="edit-fullName"
                   required
                   value={formData.fullName}
-                  onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, fullName: e.target.value })
+                  }
                 />
               </div>
             </div>
@@ -154,7 +165,9 @@ export function MemberEditDialog({ member, open, onOpenChange }: MemberEditDialo
                   id="edit-documentNumber"
                   required
                   value={formData.documentNumber}
-                  onChange={(e) => setFormData({ ...formData, documentNumber: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, documentNumber: e.target.value })
+                  }
                 />
               </div>
               <div className="grid gap-2">
@@ -163,7 +176,9 @@ export function MemberEditDialog({ member, open, onOpenChange }: MemberEditDialo
                   id="edit-birthDate"
                   type="date"
                   value={formData.birthDate}
-                  onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, birthDate: e.target.value })
+                  }
                 />
               </div>
             </div>
@@ -175,7 +190,9 @@ export function MemberEditDialog({ member, open, onOpenChange }: MemberEditDialo
                   id="edit-phone"
                   type="tel"
                   value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, phone: e.target.value })
+                  }
                 />
               </div>
               <div className="grid gap-2">
@@ -184,7 +201,9 @@ export function MemberEditDialog({ member, open, onOpenChange }: MemberEditDialo
                   id="edit-email"
                   type="email"
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
                 />
               </div>
             </div>
@@ -193,20 +212,34 @@ export function MemberEditDialog({ member, open, onOpenChange }: MemberEditDialo
 
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="edit-emergencyContactName">Contacto de Emergencia</Label>
+                <Label htmlFor="edit-emergencyContactName">
+                  Contacto de Emergencia
+                </Label>
                 <Input
                   id="edit-emergencyContactName"
                   value={formData.emergencyContactName}
-                  onChange={(e) => setFormData({ ...formData, emergencyContactName: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      emergencyContactName: e.target.value,
+                    })
+                  }
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="edit-emergencyContactPhone">Teléfono de Emergencia</Label>
+                <Label htmlFor="edit-emergencyContactPhone">
+                  Teléfono de Emergencia
+                </Label>
                 <Input
                   id="edit-emergencyContactPhone"
                   type="tel"
                   value={formData.emergencyContactPhone}
-                  onChange={(e) => setFormData({ ...formData, emergencyContactPhone: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      emergencyContactPhone: e.target.value,
+                    })
+                  }
                 />
               </div>
             </div>
@@ -217,7 +250,9 @@ export function MemberEditDialog({ member, open, onOpenChange }: MemberEditDialo
                 id="edit-address"
                 placeholder="Calle, Ciudad, Provincia"
                 value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, address: e.target.value })
+                }
               />
             </div>
 
@@ -227,20 +262,31 @@ export function MemberEditDialog({ member, open, onOpenChange }: MemberEditDialo
               <Label htmlFor="edit-status">Estado del Perfil</Label>
               <Select
                 value={formData.status}
-                onValueChange={(value) => setFormData({ ...formData, status: value as 'ACTIVE' | 'INACTIVE' })}
+                onValueChange={(value) =>
+                  setFormData({
+                    ...formData,
+                    status: value as 'ACTIVE' | 'INACTIVE',
+                  })
+                }
               >
                 <SelectTrigger id="edit-status" className="w-full">
                   <SelectValue placeholder="Estado del perfil" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ACTIVE">Activo</SelectItem>
-                  <SelectItem value="INACTIVE">Inactivo (Suspendido)</SelectItem>
+                  <SelectItem value="INACTIVE">
+                    Inactivo (Suspendido)
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
               Cancelar
             </Button>
             <LoadingButton

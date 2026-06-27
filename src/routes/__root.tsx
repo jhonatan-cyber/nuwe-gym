@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { useEffect } from 'react'
 import {
   HeadContent,
   Outlet,
@@ -20,13 +21,31 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
     meta: [
       { charSet: 'utf-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'GymManager POS' },
+      { title: 'Trainix POS' },
       {
         name: 'description',
         content: 'Sistema de administración para gimnasios con POS integrado',
       },
+      // Open Graph / Facebook
+      { property: 'og:type', content: 'website' },
+      { property: 'og:title', content: 'Trainix POS' },
+      {
+        property: 'og:description',
+        content: 'Sistema de administración para gimnasios con POS integrado',
+      },
+      { property: 'og:image', content: 'http://localhost:3000/logo-dark.png' },
+      { property: 'og:url', content: 'http://localhost:3000' },
+      // Twitter / X
+      { name: 'twitter:card', content: 'summary_large_image' },
+      { name: 'twitter:title', content: 'Trainix POS' },
+      {
+        name: 'twitter:description',
+        content: 'Sistema de administración para gimnasios con POS integrado',
+      },
+      { name: 'twitter:image', content: 'http://localhost:3000/logo-dark.png' },
     ],
     links: [
+      { rel: 'canonical', href: 'http://localhost:3000' },
       { rel: 'stylesheet', href: appCss },
       {
         rel: 'preconnect',
@@ -48,6 +67,23 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 })
 
 function RootComponent() {
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+
+    const cleanupSvgTitles = () => {
+      document.querySelectorAll('svg title').forEach((t) => t.remove())
+    }
+
+    // Run initial cleanup
+    cleanupSvgTitles()
+
+    // Observe changes to clean up dynamically rendered charts/SVGs
+    const observer = new MutationObserver(cleanupSvgTitles)
+    observer.observe(document.body, { childList: true, subtree: true })
+
+    return () => observer.disconnect()
+  }, [])
+
   return <Outlet />
 }
 

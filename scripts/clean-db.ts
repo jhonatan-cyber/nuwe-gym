@@ -19,7 +19,9 @@ async function clean() {
   for (const row of tablenames.rows) {
     const table = row.tablename as string
     console.log(`Truncating ${table}...`)
-    await db.execute(sql.raw(`TRUNCATE TABLE "${table}" RESTART IDENTITY CASCADE;`))
+    await db.execute(
+      sql.raw(`TRUNCATE TABLE "${table}" RESTART IDENTITY CASCADE;`),
+    )
   }
 
   console.log('🌱 Seeding base roles...')

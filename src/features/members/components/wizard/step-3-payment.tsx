@@ -10,13 +10,23 @@ const PAYMENT_METHODS = [
 ]
 
 interface Step3Props {
-  selectedPackage?: { name: string; price: string | number; durationDays: number } | null
+  selectedPackage?: {
+    name: string
+    price: string | number
+    durationDays: number
+  } | null
   paymentMethod: string
   onMethodChange: (method: 'CASH' | 'CARD' | 'TRANSFER' | 'QR') => void
 }
 
-export function Step3Payment({ selectedPackage, paymentMethod, onMethodChange }: Step3Props) {
-  const price = selectedPackage ? formatCurrency(Number(selectedPackage.price)) : '—'
+export function Step3Payment({
+  selectedPackage,
+  paymentMethod,
+  onMethodChange,
+}: Step3Props) {
+  const price = selectedPackage
+    ? formatCurrency(Number(selectedPackage.price))
+    : '—'
   const label = selectedPackage
     ? `Paquete ${selectedPackage.name} · ${selectedPackage.durationDays} días`
     : ''
@@ -33,13 +43,19 @@ export function Step3Payment({ selectedPackage, paymentMethod, onMethodChange }:
         <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-white/40 mb-2">
           Total a pagar
         </p>
-        <p className="text-4xl font-black tracking-tight text-gray-900 dark:text-white">{price}</p>
+        <p className="text-4xl font-black tracking-tight text-gray-900 dark:text-white">
+          {price}
+        </p>
         {selectedPackage && (
-          <p className="text-[11px] font-semibold text-gray-400 dark:text-white/40 mt-2">{label}</p>
+          <p className="text-[11px] font-semibold text-gray-400 dark:text-white/40 mt-2">
+            {label}
+          </p>
         )}
       </div>
       <div className="grid gap-2">
-        <Label className="text-xs font-bold text-gray-700 dark:text-white/70">Método de Pago</Label>
+        <Label className="text-xs font-bold text-gray-700 dark:text-white/70">
+          Método de Pago
+        </Label>
         {PAYMENT_METHODS.map((method) => {
           const isSelected = paymentMethod === method.value
           const Icon = method.icon
@@ -63,10 +79,14 @@ export function Step3Payment({ selectedPackage, paymentMethod, onMethodChange }:
               >
                 <Icon className="size-4" />
               </div>
-              <span className={`font-bold text-sm ${isSelected ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-white/40'}`}>
+              <span
+                className={`font-bold text-sm ${isSelected ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-white/40'}`}
+              >
                 {method.label}
               </span>
-              {isSelected && <Check className="size-4 ml-auto text-gray-900 dark:text-white" />}
+              {isSelected && (
+                <Check className="size-4 ml-auto text-gray-900 dark:text-white" />
+              )}
             </button>
           )
         })}

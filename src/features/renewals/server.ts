@@ -190,8 +190,12 @@ export const processAutoRenewals = createServerFn({ method: 'POST' }).handler(
             where: eq(cashRegisterSessions.status, 'OPEN'),
           })
 
-          const durationDays = sub.package ? sub.package.durationDays : (sub.plan?.durationDays || 30)
-          const amount = sub.package ? sub.package.price : (sub.plan?.price || '0')
+          const durationDays = sub.package
+            ? sub.package.durationDays
+            : sub.plan?.durationDays || 30
+          const amount = sub.package
+            ? sub.package.price
+            : sub.plan?.price || '0'
 
           const startDate = new Date()
           const endDate = new Date()

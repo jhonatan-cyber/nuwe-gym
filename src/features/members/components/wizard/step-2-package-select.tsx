@@ -17,7 +17,12 @@ interface Step2Props {
   onSelect: (id: string) => void
 }
 
-export function Step2PackageSelect({ packages, selectedPackageId, error, onSelect }: Step2Props) {
+export function Step2PackageSelect({
+  packages,
+  selectedPackageId,
+  error,
+  onSelect,
+}: Step2Props) {
   return (
     <div>
       <h2 className="text-2xl font-black tracking-tight text-gray-900 dark:text-white mb-1">
@@ -28,7 +33,9 @@ export function Step2PackageSelect({ packages, selectedPackageId, error, onSelec
       </p>
       {packages.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-sm font-bold text-gray-400 dark:text-white/40">No hay paquetes activos disponibles.</p>
+          <p className="text-sm font-bold text-gray-400 dark:text-white/40">
+            No hay paquetes activos disponibles.
+          </p>
         </div>
       ) : (
         <div className="grid gap-3">
@@ -47,20 +54,28 @@ export function Step2PackageSelect({ packages, selectedPackageId, error, onSelec
               >
                 <div
                   className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
-                    isSelected ? 'border-gray-900 dark:border-white' : 'border-gray-300 dark:border-white/20'
+                    isSelected
+                      ? 'border-gray-900 dark:border-white'
+                      : 'border-gray-300 dark:border-white/20'
                   }`}
                 >
-                  {isSelected && <div className="size-2.5 rounded-full bg-gray-900 dark:bg-white" />}
+                  {isSelected && (
+                    <div className="size-2.5 rounded-full bg-gray-900 dark:bg-white" />
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2">
-                    <h3 className="font-black text-base text-gray-900 dark:text-white">{pkg.name}</h3>
+                    <h3 className="font-black text-base text-gray-900 dark:text-white">
+                      {pkg.name}
+                    </h3>
                     <span className="text-xl font-black text-gray-900 dark:text-white shrink-0">
                       {formatCurrency(Number(pkg.price))}
                     </span>
                   </div>
                   {pkg.description && (
-                    <p className="text-xs text-gray-500 dark:text-white/60 mt-1 line-clamp-2">{pkg.description}</p>
+                    <p className="text-xs text-gray-500 dark:text-white/60 mt-1 line-clamp-2">
+                      {pkg.description}
+                    </p>
                   )}
                   <div className="flex items-center gap-2 mt-2">
                     <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 dark:bg-white/10 px-2.5 py-0.5 text-[10px] font-bold text-gray-500 dark:text-white/60 border border-gray-200 dark:border-white/10">
@@ -79,7 +94,11 @@ export function Step2PackageSelect({ packages, selectedPackageId, error, onSelec
           })}
         </div>
       )}
-      {error && <p className="text-[10px] font-semibold text-destructive mt-2">{error}</p>}
+      {error && (
+        <p className="text-[10px] font-semibold text-destructive mt-2">
+          {error}
+        </p>
+      )}
     </div>
   )
 }

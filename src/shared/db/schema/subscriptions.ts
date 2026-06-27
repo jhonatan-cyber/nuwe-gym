@@ -1,7 +1,4 @@
-import { uuid, pgTable,
-  text,
-  timestamp,
-  index, } from 'drizzle-orm/pg-core'
+import { uuid, pgTable, text, timestamp, index } from 'drizzle-orm/pg-core'
 import { subscriptionStatusEnum } from './enums.ts'
 import { members } from './members.ts'
 import { membershipPlans } from './membership-plans.ts'
@@ -14,10 +11,8 @@ export const subscriptions = pgTable(
     memberId: uuid('member_id')
       .notNull()
       .references(() => members.id),
-    planId: uuid('plan_id')
-      .references(() => membershipPlans.id),
-    packageId: uuid('package_id')
-      .references(() => packages.id),
+    planId: uuid('plan_id').references(() => membershipPlans.id),
+    packageId: uuid('package_id').references(() => packages.id),
     startDate: timestamp('start_date').notNull(),
     endDate: timestamp('end_date').notNull(),
     status: subscriptionStatusEnum('status').notNull().default('ACTIVE'),
@@ -38,4 +33,3 @@ export const subscriptions = pgTable(
     index('subscriptions_updated_at_idx').on(table.updatedAt),
   ],
 )
-

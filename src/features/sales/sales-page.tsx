@@ -23,8 +23,16 @@ import { StatCard } from '#/shared/components/ui/stat-card'
 import { FilterBar } from '#/shared/components/ui/filter-bar'
 import { LoadingSpinner } from '#/shared/components/ui/loading-spinner'
 import { EmptyState } from '#/shared/components/ui/empty-state'
-import { ToggleGroup, ToggleGroupItem } from '#/shared/components/ui/toggle-group'
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '#/shared/components/ui/tooltip'
+import {
+  ToggleGroup,
+  ToggleGroupItem,
+} from '#/shared/components/ui/toggle-group'
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+  TooltipProvider,
+} from '#/shared/components/ui/tooltip'
 import { formatCurrency, formatDateTime } from '#/shared/lib/formatters.ts'
 import {
   Dialog,
@@ -76,36 +84,64 @@ export function SalesPage() {
   })
 
   const statusLabel =
-    filterStatus === 'ALL' ? 'Todas las Ventas'
-    : filterStatus === 'COMPLETED' ? 'Completadas'
-    : filterStatus === 'CANCELLED' ? 'Canceladas'
-    : 'Reembolsadas'
+    filterStatus === 'ALL'
+      ? 'Todas las Ventas'
+      : filterStatus === 'COMPLETED'
+        ? 'Completadas'
+        : filterStatus === 'CANCELLED'
+          ? 'Canceladas'
+          : 'Reembolsadas'
 
   const statusBadge = (status: string | null) => {
     switch (status) {
       case 'COMPLETED':
-        return <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 text-[10px] font-bold">Completada</Badge>
+        return (
+          <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 text-[10px] font-bold">
+            Completada
+          </Badge>
+        )
       case 'CANCELLED':
-        return <Badge variant="destructive" className="text-[10px] font-bold">Cancelada</Badge>
+        return (
+          <Badge variant="destructive" className="text-[10px] font-bold">
+            Cancelada
+          </Badge>
+        )
       case 'REFUNDED':
-        return <Badge className="bg-orange-500/10 text-orange-500 border-orange-500/20 text-[10px] font-bold">Reembolsada</Badge>
+        return (
+          <Badge className="bg-orange-500/10 text-orange-500 border-orange-500/20 text-[10px] font-bold">
+            Reembolsada
+          </Badge>
+        )
       default:
-        return <Badge variant="outline" className="text-[10px]">{status}</Badge>
+        return (
+          <Badge variant="outline" className="text-[10px]">
+            {status}
+          </Badge>
+        )
     }
   }
 
   const paymentLabel = (method: string | null) => {
     switch (method) {
-      case 'CASH': return 'Efectivo'
-      case 'QR': return 'QR'
-      case 'TRANSFER': return 'Transferencia'
-      case 'CARD': return 'Tarjeta'
-      default: return method || '—'
+      case 'CASH':
+        return 'Efectivo'
+      case 'QR':
+        return 'QR'
+      case 'TRANSFER':
+        return 'Transferencia'
+      case 'CARD':
+        return 'Tarjeta'
+      default:
+        return method || '—'
     }
   }
 
-  const breadcrumbLabel = activeView === 'history' ? 'Historial' : 'Resumen Diario'
-  const titleLabel = activeView === 'history' ? 'Historial de Ventas' : 'Resumen Diario de Ventas'
+  const breadcrumbLabel =
+    activeView === 'history' ? 'Historial' : 'Resumen Diario'
+  const titleLabel =
+    activeView === 'history'
+      ? 'Historial de Ventas'
+      : 'Resumen Diario de Ventas'
 
   return (
     <ModuleLayout
@@ -122,10 +158,16 @@ export function SalesPage() {
           <ToggleGroup
             type="single"
             value={activeView}
-            onValueChange={(v) => { if (v === 'history' || v === 'summary') setActiveView(v) }}
+            onValueChange={(v) => {
+              if (v === 'history' || v === 'summary') setActiveView(v)
+            }}
           >
-            <ToggleGroupItem value="history"><List className="size-3.5" /> Historial</ToggleGroupItem>
-            <ToggleGroupItem value="summary"><BarChart3 className="size-3.5" /> Resumen</ToggleGroupItem>
+            <ToggleGroupItem value="history">
+              <List className="size-3.5" /> Historial
+            </ToggleGroupItem>
+            <ToggleGroupItem value="summary">
+              <BarChart3 className="size-3.5" /> Resumen
+            </ToggleGroupItem>
           </ToggleGroup>
 
           <div className="space-y-3">
@@ -133,10 +175,30 @@ export function SalesPage() {
               Métricas
             </p>
             <div className="grid grid-cols-1 gap-3">
-              <StatCard label="Total Ventas" value={stats?.totalSales ?? 0} icon={ShoppingBag} variant="default" />
-              <StatCard label="Ventas Hoy" value={stats?.todaySales ?? 0} icon={TrendingUp} variant="emerald" />
-              <StatCard label="Ingresos Hoy" value={formatCurrency(stats?.todayRevenue ?? 0)} icon={DollarSign} variant="foreground" />
-              <StatCard label="Ingresos Totales" value={formatCurrency(stats?.totalRevenue ?? 0)} icon={Receipt} variant="default" />
+              <StatCard
+                label="Total Ventas"
+                value={stats?.totalSales ?? 0}
+                icon={ShoppingBag}
+                variant="default"
+              />
+              <StatCard
+                label="Ventas Hoy"
+                value={stats?.todaySales ?? 0}
+                icon={TrendingUp}
+                variant="emerald"
+              />
+              <StatCard
+                label="Ingresos Hoy"
+                value={formatCurrency(stats?.todayRevenue ?? 0)}
+                icon={DollarSign}
+                variant="foreground"
+              />
+              <StatCard
+                label="Ingresos Totales"
+                value={formatCurrency(stats?.totalRevenue ?? 0)}
+                icon={Receipt}
+                variant="default"
+              />
             </div>
           </div>
 
@@ -163,7 +225,8 @@ export function SalesPage() {
         <div className="flex-1 flex flex-col min-w-0">
           <div className="flex items-center justify-between mb-5">
             <p className="text-sm font-black tracking-tight">
-              {filteredSales.length} venta{filteredSales.length !== 1 ? 's' : ''}
+              {filteredSales.length} venta
+              {filteredSales.length !== 1 ? 's' : ''}
             </p>
             <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">
               {statusLabel}
@@ -180,106 +243,109 @@ export function SalesPage() {
             />
           ) : (
             <TooltipProvider delayDuration={200}>
-            <DataTable
-              columns={[
-                {
-                  key: 'saleNumber',
-                  label: (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="cursor-default">N° Venta</span>
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom">
-                        <p>Número único de transacción</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  ),
-                  render: (sale: Sale) => (
-                    <span className="inline-flex items-center gap-1.5 font-mono text-sm font-semibold">
-                      <Receipt className="size-3 text-muted-foreground" />
-                      {sale.saleNumber}
-                    </span>
-                  ),
-                },
-                {
-                  key: 'date',
-                  label: 'Fecha',
-                  render: (sale: Sale) => (
-                    <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <Calendar className="size-3 text-muted-foreground" />
-                      {formatDateTime(sale.soldAt)}
-                    </span>
-                  ),
-                },
-                {
-                  key: 'status',
-                  label: 'Estado',
-                  render: (sale: Sale) => statusBadge(sale.status),
-                },
-                {
-                  key: 'client',
-                  label: 'Cliente / Socio',
-                  render: (sale: Sale) =>
-                    sale.member ? (
-                      <div className="flex flex-col">
-                        <span className="inline-flex items-center gap-1.5 font-medium text-primary text-sm">
-                          <Users className="size-3 text-muted-foreground" />
-                          {sale.member.fullName}
-                        </span>
-                        <span className="text-[10px] text-muted-foreground">
-                          Socio #{sale.member.id}
-                        </span>
-                      </div>
-                    ) : (
-                      <span className="inline-flex items-center gap-1.5 text-sm">
-                        <Users className="size-3 text-muted-foreground" />
-                        {sale.customerName || 'Cliente General'}
+              <DataTable
+                columns={[
+                  {
+                    key: 'saleNumber',
+                    label: (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="cursor-default">N° Venta</span>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom">
+                          <p>Número único de transacción</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    ),
+                    render: (sale: Sale) => (
+                      <span className="inline-flex items-center gap-1.5 font-mono text-sm font-semibold">
+                        <Receipt className="size-3 text-muted-foreground" />
+                        {sale.saleNumber}
                       </span>
                     ),
-                },
-                {
-                  key: 'seller',
-                  label: 'Atendido por',
-                  render: (sale: Sale) => (
-                    <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <User className="size-3 text-muted-foreground" />
-                      {sale.user.name}
-                    </span>
-                  ),
-                },
-                {
-                  key: 'method',
-                  label: (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="cursor-default">Método</span>
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom">
-                        <p>Método de pago utilizado</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  ),
-                  render: (sale: Sale) => (
-                    <Badge variant="outline" className="text-[10px] font-bold">
-                      {paymentLabel(sale.paymentMethod)}
-                    </Badge>
-                  ),
-                },
-                {
-                  key: 'total',
-                  label: 'Total',
-                  render: (sale: Sale) => (
-                    <span className="inline-flex items-center gap-1.5 font-bold text-primary text-sm">
-                      <DollarSign className="size-3 text-muted-foreground" />
-                      {formatCurrency(sale.total)}
-                    </span>
-                  ),
-                },
-                {
-                  key: 'actions',
-                  label: '',
-                  className: 'text-right',
-                  render: (sale: Sale) => (
+                  },
+                  {
+                    key: 'date',
+                    label: 'Fecha',
+                    render: (sale: Sale) => (
+                      <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <Calendar className="size-3 text-muted-foreground" />
+                        {formatDateTime(sale.soldAt)}
+                      </span>
+                    ),
+                  },
+                  {
+                    key: 'status',
+                    label: 'Estado',
+                    render: (sale: Sale) => statusBadge(sale.status),
+                  },
+                  {
+                    key: 'client',
+                    label: 'Cliente / Socio',
+                    render: (sale: Sale) =>
+                      sale.member ? (
+                        <div className="flex flex-col">
+                          <span className="inline-flex items-center gap-1.5 font-medium text-primary text-sm">
+                            <Users className="size-3 text-muted-foreground" />
+                            {sale.member.fullName}
+                          </span>
+                          <span className="text-[10px] text-muted-foreground">
+                            Socio #{sale.member.id}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 text-sm">
+                          <Users className="size-3 text-muted-foreground" />
+                          {sale.customerName || 'Cliente General'}
+                        </span>
+                      ),
+                  },
+                  {
+                    key: 'seller',
+                    label: 'Atendido por',
+                    render: (sale: Sale) => (
+                      <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <User className="size-3 text-muted-foreground" />
+                        {sale.user.name}
+                      </span>
+                    ),
+                  },
+                  {
+                    key: 'method',
+                    label: (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="cursor-default">Método</span>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom">
+                          <p>Método de pago utilizado</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    ),
+                    render: (sale: Sale) => (
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] font-bold"
+                      >
+                        {paymentLabel(sale.paymentMethod)}
+                      </Badge>
+                    ),
+                  },
+                  {
+                    key: 'total',
+                    label: 'Total',
+                    render: (sale: Sale) => (
+                      <span className="inline-flex items-center gap-1.5 font-bold text-primary text-sm">
+                        <DollarSign className="size-3 text-muted-foreground" />
+                        {formatCurrency(sale.total)}
+                      </span>
+                    ),
+                  },
+                  {
+                    key: 'actions',
+                    label: '',
+                    className: 'text-right',
+                    render: (sale: Sale) => (
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Button
@@ -294,15 +360,15 @@ export function SalesPage() {
                           <p>Ver detalle</p>
                         </TooltipContent>
                       </Tooltip>
-                  ),
-                },
-              ]}
-              data={filteredSales}
-              isLoading={false}
-              loadingMessage="Cargando ventas..."
-              emptyMessage="No se encontraron ventas."
-              keyExtractor={(sale: Sale) => sale.id}
-            />
+                    ),
+                  },
+                ]}
+                data={filteredSales}
+                isLoading={false}
+                loadingMessage="Cargando ventas..."
+                emptyMessage="No se encontraron ventas."
+                keyExtractor={(sale: Sale) => sale.id}
+              />
             </TooltipProvider>
           )}
 
@@ -362,7 +428,9 @@ export function SalesPage() {
                         <TableHeader className="bg-muted/40">
                           <TableRow>
                             <TableHead className="py-2">Prod</TableHead>
-                            <TableHead className="py-2 text-center">Cant</TableHead>
+                            <TableHead className="py-2 text-center">
+                              Cant
+                            </TableHead>
                             <TableHead className="py-2 text-right">
                               Precio
                             </TableHead>
@@ -408,7 +476,9 @@ export function SalesPage() {
                     )}
                     <div className="flex justify-between text-base font-bold border-t pt-1 font-sans">
                       <span>Total:</span>
-                      <span className="text-primary">{formatCurrency(selectedSale.total)}</span>
+                      <span className="text-primary">
+                        {formatCurrency(selectedSale.total)}
+                      </span>
                     </div>
                   </div>
                 </div>

@@ -54,11 +54,12 @@ describe('Notifications', () => {
   })
 
   it('should create with reference', async () => {
+    const testUuid = crypto.randomUUID()
     const n = await createNotification({
-      referenceId: '42',
+      referenceId: testUuid,
       referenceType: 'subscription',
     })
-    expect(n.referenceId).toBe('42')
+    expect(n.referenceId).toBe(testUuid)
   })
 
   it('should list ordered by date', async () => {

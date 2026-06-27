@@ -26,7 +26,10 @@ import {
   deleteUser,
 } from '#/features/users/server.ts'
 import { ModuleLayout } from '#/shared/components/layout/module-layout.tsx'
-import { ToggleGroup, ToggleGroupItem } from '#/shared/components/ui/toggle-group'
+import {
+  ToggleGroup,
+  ToggleGroupItem,
+} from '#/shared/components/ui/toggle-group'
 import { DataTable } from '#/shared/components/data-table'
 import { StatCard } from '#/shared/components/ui/stat-card'
 import { FilterBar } from '#/shared/components/ui/filter-bar'
@@ -42,7 +45,12 @@ import {
   DialogTitle,
   DialogFooter,
 } from '#/shared/components/ui/dialog'
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '#/shared/components/ui/tooltip'
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+  TooltipProvider,
+} from '#/shared/components/ui/tooltip'
 import type { StaffUser, UserRole } from '#/features/users/types.ts'
 import { ROLE_LABELS, ROLE_COLORS, ROLES_INFO } from '#/features/users/types.ts'
 import { UserDetailDialog } from '#/features/users/components/user-detail-dialog.tsx'
@@ -82,7 +90,9 @@ export function AdminUsersPage({ currentUserId }: AdminUsersPageProps) {
   // Derived stats
   const totalUsers = usersList.length
   const adminCount = usersList.filter((u) => u.role === 'ADMIN').length
-  const receptionistCount = usersList.filter((u) => u.role === 'RECEPTIONIST').length
+  const receptionistCount = usersList.filter(
+    (u) => u.role === 'RECEPTIONIST',
+  ).length
   const trainerCount = usersList.filter((u) => u.role === 'TRAINER').length
 
   // Filtered users
@@ -91,7 +101,8 @@ export function AdminUsersPage({ currentUserId }: AdminUsersPageProps) {
       !search ||
       u.name.toLowerCase().includes(search.toLowerCase()) ||
       u.email.toLowerCase().includes(search.toLowerCase()) ||
-      (u.documentNumber && u.documentNumber.toLowerCase().includes(search.toLowerCase()))
+      (u.documentNumber &&
+        u.documentNumber.toLowerCase().includes(search.toLowerCase()))
     const roleMatch = roleFilter === 'ALL' || u.role === roleFilter
     return searchMatch && roleMatch
   })
@@ -113,7 +124,8 @@ export function AdminUsersPage({ currentUserId }: AdminUsersPageProps) {
       toast.success('Usuario actualizado con éxito')
       closeEditModal()
     },
-    onError: (err: Error) => toast.error(err.message || 'Error al actualizar usuario'),
+    onError: (err: Error) =>
+      toast.error(err.message || 'Error al actualizar usuario'),
   })
 
   const deleteMutation = useMutation({
@@ -188,7 +200,8 @@ export function AdminUsersPage({ currentUserId }: AdminUsersPageProps) {
   }
 
   function getRoleBadge(r: string) {
-    const colorClass = ROLE_COLORS[r as UserRole] || 'bg-muted text-muted-foreground border-none'
+    const colorClass =
+      ROLE_COLORS[r as UserRole] || 'bg-muted text-muted-foreground border-none'
     return (
       <Badge className={`${colorClass} border-none font-bold`}>
         {ROLE_LABELS[r as UserRole] || r}
@@ -200,9 +213,12 @@ export function AdminUsersPage({ currentUserId }: AdminUsersPageProps) {
   function RolesView() {
     return (
       <div className="space-y-5">
-        <p className="text-sm font-black tracking-tight">Roles y Permisos del Sistema</p>
+        <p className="text-sm font-black tracking-tight">
+          Roles y Permisos del Sistema
+        </p>
         <p className="text-xs text-muted-foreground">
-          Cada rol define un conjunto de permisos que determinan qué puede ver y hacer un usuario en el sistema.
+          Cada rol define un conjunto de permisos que determinan qué puede ver y
+          hacer un usuario en el sistema.
         </p>
 
         <div className="grid grid-cols-1 gap-4">
@@ -228,25 +244,31 @@ export function AdminUsersPage({ currentUserId }: AdminUsersPageProps) {
                 className={`cursor-pointer transition-all duration-300 hover:shadow-md ${
                   isExpanded ? 'ring-2 ring-primary/30' : ''
                 }`}
-                onClick={() => setExpandedRole(isExpanded ? null : roleInfo.role)}
+                onClick={() =>
+                  setExpandedRole(isExpanded ? null : roleInfo.role)
+                }
               >
                 <CardContent className="p-5">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className={`size-10 rounded-xl flex items-center justify-center ${
-                        roleInfo.role === 'ADMIN'
-                          ? 'bg-red-500/10'
-                          : roleInfo.role === 'RECEPTIONIST'
-                            ? 'bg-blue-500/10'
-                            : 'bg-amber-500/10'
-                      }`}>
-                        <IconComponent className={`size-5 ${
+                      <div
+                        className={`size-10 rounded-xl flex items-center justify-center ${
                           roleInfo.role === 'ADMIN'
-                            ? 'text-red-500'
+                            ? 'bg-red-500/10'
                             : roleInfo.role === 'RECEPTIONIST'
-                              ? 'text-blue-500'
-                              : 'text-amber-500'
-                        }`} />
+                              ? 'bg-blue-500/10'
+                              : 'bg-amber-500/10'
+                        }`}
+                      >
+                        <IconComponent
+                          className={`size-5 ${
+                            roleInfo.role === 'ADMIN'
+                              ? 'text-red-500'
+                              : roleInfo.role === 'RECEPTIONIST'
+                                ? 'text-blue-500'
+                                : 'text-amber-500'
+                          }`}
+                        />
                       </div>
                       <div>
                         <p className="font-bold text-sm">{roleInfo.label}</p>
@@ -259,9 +281,11 @@ export function AdminUsersPage({ currentUserId }: AdminUsersPageProps) {
                       <Badge variant="outline" className="text-[10px]">
                         {roleInfo.permissions.length} permisos
                       </Badge>
-                      <Info className={`size-4 text-muted-foreground transition-transform duration-300 ${
-                        isExpanded ? 'rotate-180' : ''
-                      }`} />
+                      <Info
+                        className={`size-4 text-muted-foreground transition-transform duration-300 ${
+                          isExpanded ? 'rotate-180' : ''
+                        }`}
+                      />
                     </div>
                   </div>
 
@@ -309,23 +333,49 @@ export function AdminUsersPage({ currentUserId }: AdminUsersPageProps) {
             <ToggleGroup
               type="single"
               value="roles"
-              onValueChange={(v) => { if (v) setActiveView(v as ViewMode) }}
+              onValueChange={(v) => {
+                if (v) setActiveView(v as ViewMode)
+              }}
             >
-              <ToggleGroupItem value="list"><List className="size-3.5" /> Usuarios</ToggleGroupItem>
-              <ToggleGroupItem value="roles"><Shield className="size-3.5" /> Roles</ToggleGroupItem>
+              <ToggleGroupItem value="list">
+                <List className="size-3.5" /> Usuarios
+              </ToggleGroupItem>
+              <ToggleGroupItem value="roles">
+                <Shield className="size-3.5" /> Roles
+              </ToggleGroupItem>
             </ToggleGroup>
             <div className="space-y-3">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">Roles del Sistema</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">
+                Roles del Sistema
+              </p>
               <p className="text-xs text-muted-foreground px-1 leading-relaxed">
-                El sistema cuenta con 3 roles predefinidos. Hacé clic en cada uno para ver sus permisos.
+                El sistema cuenta con 3 roles predefinidos. Hacé clic en cada
+                uno para ver sus permisos.
               </p>
             </div>
             <div className="space-y-3 pt-2 border-t dark:border-white/5 border-black/5">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">Distribución</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">
+                Distribución
+              </p>
               <div className="grid grid-cols-1 gap-3">
-                <StatCard label="Administradores" value={adminCount} icon={ShieldAlert} variant="default" />
-                <StatCard label="Recepcionistas" value={receptionistCount} icon={ShieldCheck} variant="default" />
-                <StatCard label="Entrenadores" value={trainerCount} icon={Shield} variant="default" />
+                <StatCard
+                  label="Administradores"
+                  value={adminCount}
+                  icon={ShieldAlert}
+                  variant="default"
+                />
+                <StatCard
+                  label="Recepcionistas"
+                  value={receptionistCount}
+                  icon={ShieldCheck}
+                  variant="default"
+                />
+                <StatCard
+                  label="Entrenadores"
+                  value={trainerCount}
+                  icon={Shield}
+                  variant="default"
+                />
               </div>
             </div>
           </div>
@@ -352,23 +402,54 @@ export function AdminUsersPage({ currentUserId }: AdminUsersPageProps) {
             <ToggleGroup
               type="single"
               value="list"
-              onValueChange={(v) => { if (v) setActiveView(v as ViewMode) }}
+              onValueChange={(v) => {
+                if (v) setActiveView(v as ViewMode)
+              }}
             >
-              <ToggleGroupItem value="list"><List className="size-3.5" /> Usuarios</ToggleGroupItem>
-              <ToggleGroupItem value="roles"><Shield className="size-3.5" /> Roles</ToggleGroupItem>
+              <ToggleGroupItem value="list">
+                <List className="size-3.5" /> Usuarios
+              </ToggleGroupItem>
+              <ToggleGroupItem value="roles">
+                <Shield className="size-3.5" /> Roles
+              </ToggleGroupItem>
             </ToggleGroup>
             {activeView !== 'create' && (
-              <Button onClick={handleOpenCreate} className="flex items-center gap-2 w-full">
+              <Button
+                onClick={handleOpenCreate}
+                className="flex items-center gap-2 w-full"
+              >
                 <Plus className="size-4" /> Nuevo Personal
               </Button>
             )}
             <div className="space-y-3">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">Métricas</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">
+                Métricas
+              </p>
               <div className="grid grid-cols-1 gap-3">
-                <StatCard label="Total Usuarios" value={totalUsers} icon={Users} variant="default" />
-                <StatCard label="Administradores" value={adminCount} icon={ShieldAlert} variant="default" />
-                <StatCard label="Recepcionistas" value={receptionistCount} icon={ShieldCheck} variant="default" />
-                <StatCard label="Entrenadores" value={trainerCount} icon={Shield} variant="default" />
+                <StatCard
+                  label="Total Usuarios"
+                  value={totalUsers}
+                  icon={Users}
+                  variant="default"
+                />
+                <StatCard
+                  label="Administradores"
+                  value={adminCount}
+                  icon={ShieldAlert}
+                  variant="default"
+                />
+                <StatCard
+                  label="Recepcionistas"
+                  value={receptionistCount}
+                  icon={ShieldCheck}
+                  variant="default"
+                />
+                <StatCard
+                  label="Entrenadores"
+                  value={trainerCount}
+                  icon={Shield}
+                  variant="default"
+                />
               </div>
             </div>
             {activeView !== 'create' && (
@@ -394,218 +475,229 @@ export function AdminUsersPage({ currentUserId }: AdminUsersPageProps) {
           <UserCreationWizard onClose={handleCloseCreate} />
         ) : (
           <TooltipProvider delayDuration={200}>
-          <DataTable
-          columns={[
-            {
-              key: 'user',
-              label: 'Usuario',
-              render: (user: StaffUser) => (
-                <div className="flex items-center gap-3">
-                  <div className="size-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0 ring-2 ring-foreground/10">
-                    <span className="text-xs font-bold text-primary">
-                      {user.name.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="font-bold text-sm dark:text-white text-foreground leading-tight truncate">
-                      {user.name}
-                      {user.id === currentUserId && (
-                        <span className="text-[10px] text-muted-foreground font-normal ml-1">(Vos)</span>
-                      )}
-                    </p>
-                    <p className="text-[10px] font-semibold text-muted-foreground flex items-center gap-1">
-                      <Mail className="size-2.5" />
-                      {user.email}
-                    </p>
-                  </div>
-                </div>
-              ),
-            },
-            {
-              key: 'documentNumber',
-              label: (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="cursor-default">CI</span>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">
-                    <p>Cédula de Identidad</p>
-                  </TooltipContent>
-                </Tooltip>
-              ),
-              sortable: true,
-              sortValue: (user: StaffUser) => user.documentNumber || '',
-              render: (user: StaffUser) => (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-foreground/80 cursor-default">
-                      <IdCard className="size-3 text-muted-foreground" />
-                      {user.documentNumber || '-'}
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">
-                    <p>Cédula de Identidad</p>
-                  </TooltipContent>
-                </Tooltip>
-              ),
-            },
-            {
-              key: 'phone',
-              label: (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="cursor-default">Teléfono</span>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">
-                    <p>Número de teléfono del usuario</p>
-                  </TooltipContent>
-                </Tooltip>
-              ),
-              sortable: true,
-              sortValue: (user: StaffUser) => user.phone || '',
-              render: (user: StaffUser) => (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="inline-flex items-center gap-1.5 text-xs text-foreground/70 cursor-default">
-                      <Phone className="size-3 text-muted-foreground" />
-                      {user.phone || '-'}
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">
-                    <p>{user.phone || 'Sin teléfono'}</p>
-                  </TooltipContent>
-                </Tooltip>
-              ),
-            },
-            {
-              key: 'address',
-              label: (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="cursor-default">Dirección</span>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">
-                    <p>Dirección del usuario</p>
-                  </TooltipContent>
-                </Tooltip>
-              ),
-              sortable: true,
-              sortValue: (user: StaffUser) => user.address || '',
-              render: (user: StaffUser) => (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="inline-flex items-center gap-1.5 text-xs text-foreground/70 max-w-[180px] truncate cursor-default">
-                      <MapPin className="size-3 text-muted-foreground shrink-0" />
-                      <span className="truncate">{user.address || '-'}</span>
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" className="max-w-[300px]">
-                    <p>{user.address || 'Sin dirección registrada'}</p>
-                  </TooltipContent>
-                </Tooltip>
-              ),
-            },
-            {
-              key: 'role',
-              label: 'Rol Actual',
-              render: (user: StaffUser) => getRoleBadge(user.role),
-            },
-            {
-              key: 'changeRole',
-              label: 'Cambiar Rol',
-              render: (user: StaffUser) => (
-                <select
-                  value={user.role}
-                  onChange={(e) => handleRoleChange(user.id, e.target.value)}
-                  disabled={user.id === currentUserId}
-                  className="h-8 px-2 border rounded bg-background text-sm focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <option value="ADMIN">Administrador</option>
-                  <option value="RECEPTIONIST">Recepcionista</option>
-                  <option value="TRAINER">Entrenador</option>
-                </select>
-              ),
-            },
-            {
-              key: 'created',
-              label: 'Registro',
-              render: (user: StaffUser) => (
-                <span className="text-xs text-muted-foreground">
-                  {new Date(user.createdAt).toLocaleDateString('es-ES', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric',
-                  })}
-                </span>
-              ),
-            },
-            {
-              key: 'actions',
-              label: '',
-              className: 'text-right',
-              render: (user: StaffUser) => (
-                <div className="flex justify-end gap-0.5">
+            <DataTable
+              columns={[
+                {
+                  key: 'user',
+                  label: 'Usuario',
+                  render: (user: StaffUser) => (
+                    <div className="flex items-center gap-3">
+                      <div className="size-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0 ring-2 ring-foreground/10">
+                        <span className="text-xs font-bold text-primary">
+                          {user.name.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-bold text-sm dark:text-white text-foreground leading-tight truncate">
+                          {user.name}
+                          {user.id === currentUserId && (
+                            <span className="text-[10px] text-muted-foreground font-normal ml-1">
+                              (Vos)
+                            </span>
+                          )}
+                        </p>
+                        <p className="text-[10px] font-semibold text-muted-foreground flex items-center gap-1">
+                          <Mail className="size-2.5" />
+                          {user.email}
+                        </p>
+                      </div>
+                    </div>
+                  ),
+                },
+                {
+                  key: 'documentNumber',
+                  label: (
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon-xs"
-                          onClick={() => setViewUserId(user.id)}
-                        >
-                          <Eye className="size-3.5" />
-                        </Button>
+                        <span className="cursor-default">CI</span>
                       </TooltipTrigger>
                       <TooltipContent side="bottom">
-                        <p>Ver detalle</p>
+                        <p>Cédula de Identidad</p>
                       </TooltipContent>
                     </Tooltip>
+                  ),
+                  sortable: true,
+                  sortValue: (user: StaffUser) => user.documentNumber || '',
+                  render: (user: StaffUser) => (
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon-xs"
-                          onClick={() => openEditModal(user)}
-                        >
-                          <Edit2 className="size-3.5" />
-                        </Button>
+                        <span className="inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-foreground/80 cursor-default">
+                          <IdCard className="size-3 text-muted-foreground" />
+                          {user.documentNumber || '-'}
+                        </span>
                       </TooltipTrigger>
                       <TooltipContent side="bottom">
-                        <p>Editar usuario</p>
+                        <p>Cédula de Identidad</p>
                       </TooltipContent>
                     </Tooltip>
+                  ),
+                },
+                {
+                  key: 'phone',
+                  label: (
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon-xs"
-                          className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                          disabled={user.id === currentUserId}
-                          onClick={() => handleDeleteUser(user.id)}
-                        >
-                          <Trash2 className="size-3.5" />
-                        </Button>
+                        <span className="cursor-default">Teléfono</span>
                       </TooltipTrigger>
                       <TooltipContent side="bottom">
-                        <p>Eliminar usuario</p>
+                        <p>Número de teléfono del usuario</p>
                       </TooltipContent>
                     </Tooltip>
-                </div>
-              ),
-            },
-          ]}
-          data={filteredUsers}
-          isLoading={isLoading}
-          loadingMessage="Cargando usuarios..."
-          emptyMessage="No se encontraron usuarios."
-          keyExtractor={(user: StaffUser) => user.id}
-          skeletonRows={5}
-        />
+                  ),
+                  sortable: true,
+                  sortValue: (user: StaffUser) => user.phone || '',
+                  render: (user: StaffUser) => (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="inline-flex items-center gap-1.5 text-xs text-foreground/70 cursor-default">
+                          <Phone className="size-3 text-muted-foreground" />
+                          {user.phone || '-'}
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">
+                        <p>{user.phone || 'Sin teléfono'}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  ),
+                },
+                {
+                  key: 'address',
+                  label: (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="cursor-default">Dirección</span>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">
+                        <p>Dirección del usuario</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  ),
+                  sortable: true,
+                  sortValue: (user: StaffUser) => user.address || '',
+                  render: (user: StaffUser) => (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="inline-flex items-center gap-1.5 text-xs text-foreground/70 max-w-[180px] truncate cursor-default">
+                          <MapPin className="size-3 text-muted-foreground shrink-0" />
+                          <span className="truncate">
+                            {user.address || '-'}
+                          </span>
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="max-w-[300px]">
+                        <p>{user.address || 'Sin dirección registrada'}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  ),
+                },
+                {
+                  key: 'role',
+                  label: 'Rol Actual',
+                  render: (user: StaffUser) => getRoleBadge(user.role),
+                },
+                {
+                  key: 'changeRole',
+                  label: 'Cambiar Rol',
+                  render: (user: StaffUser) => (
+                    <select
+                      value={user.role}
+                      onChange={(e) =>
+                        handleRoleChange(user.id, e.target.value)
+                      }
+                      disabled={user.id === currentUserId}
+                      className="h-8 px-2 border rounded bg-background text-sm focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <option value="ADMIN">Administrador</option>
+                      <option value="RECEPTIONIST">Recepcionista</option>
+                      <option value="TRAINER">Entrenador</option>
+                    </select>
+                  ),
+                },
+                {
+                  key: 'created',
+                  label: 'Registro',
+                  render: (user: StaffUser) => (
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(user.createdAt).toLocaleDateString('es-ES', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                      })}
+                    </span>
+                  ),
+                },
+                {
+                  key: 'actions',
+                  label: '',
+                  className: 'text-right',
+                  render: (user: StaffUser) => (
+                    <div className="flex justify-end gap-0.5">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon-xs"
+                            onClick={() => setViewUserId(user.id)}
+                          >
+                            <Eye className="size-3.5" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom">
+                          <p>Ver detalle</p>
+                        </TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon-xs"
+                            onClick={() => openEditModal(user)}
+                          >
+                            <Edit2 className="size-3.5" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom">
+                          <p>Editar usuario</p>
+                        </TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon-xs"
+                            className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                            disabled={user.id === currentUserId}
+                            onClick={() => handleDeleteUser(user.id)}
+                          >
+                            <Trash2 className="size-3.5" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom">
+                          <p>Eliminar usuario</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                  ),
+                },
+              ]}
+              data={filteredUsers}
+              isLoading={isLoading}
+              loadingMessage="Cargando usuarios..."
+              emptyMessage="No se encontraron usuarios."
+              keyExtractor={(user: StaffUser) => user.id}
+              skeletonRows={5}
+            />
           </TooltipProvider>
         )}
       </ModuleLayout>
 
       {/* Edit User Dialog */}
-      <Dialog open={isEditOpen} onOpenChange={(open) => { if (!open) closeEditModal() }}>
+      <Dialog
+        open={isEditOpen}
+        onOpenChange={(open) => {
+          if (!open) closeEditModal()
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Editar Usuario</DialogTitle>
@@ -660,8 +752,9 @@ export function AdminUsersPage({ currentUserId }: AdminUsersPageProps) {
             <div className="bg-blue-500/10 p-3 rounded-lg flex gap-2 text-xs text-blue-800 border border-blue-500/20">
               <Info className="size-5 shrink-0" />
               <span>
-                Estás editando los datos de <strong>{editingUser?.name}</strong> (rol actual: {editingUser ? ROLE_LABELS[editingUser.role] : ''}).
-                Para cambiar el rol usá el selector en la tabla.
+                Estás editando los datos de <strong>{editingUser?.name}</strong>{' '}
+                (rol actual: {editingUser ? ROLE_LABELS[editingUser.role] : ''}
+                ). Para cambiar el rol usá el selector en la tabla.
               </span>
             </div>
 
@@ -677,8 +770,6 @@ export function AdminUsersPage({ currentUserId }: AdminUsersPageProps) {
         </DialogContent>
       </Dialog>
 
-
-
       {/* Delete Confirmation */}
       <ConfirmDialog
         open={deletingUserId !== null}
@@ -693,7 +784,9 @@ export function AdminUsersPage({ currentUserId }: AdminUsersPageProps) {
       {/* User Detail Dialog */}
       <UserDetailDialog
         userId={viewUserId}
-        onOpenChange={(open) => { if (!open) setViewUserId(null) }}
+        onOpenChange={(open) => {
+          if (!open) setViewUserId(null)
+        }}
       />
     </>
   )

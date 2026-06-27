@@ -1,5 +1,11 @@
 import { useState, useEffect } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '#/shared/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '#/shared/components/ui/dialog'
 import { Input } from '#/shared/components/ui/input'
 import { Textarea } from '#/shared/components/ui/textarea'
 import { Button } from '#/shared/components/ui/button'
@@ -13,7 +19,11 @@ interface CategoryFormData {
 
 interface CategoryDialogsProps {
   isModalOpen: boolean
-  editingCategory: { id: number; name: string; description?: string | null } | null
+  editingCategory: {
+    id: number
+    name: string
+    description?: string | null
+  } | null
   isPendingCreate: boolean
   isPendingUpdate: boolean
   categoryToDelete: { id: number; name: string } | null
@@ -49,21 +59,33 @@ export function CategoryDialogs({
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!categoryName) return
-    onSubmit({ name: categoryName, description: categoryDescription }, editingCategory?.id)
+    onSubmit(
+      { name: categoryName, description: categoryDescription },
+      editingCategory?.id,
+    )
     setCategoryName('')
     setCategoryDescription('')
   }
 
   return (
     <>
-      <Dialog open={isModalOpen} onOpenChange={(open) => { if (!open) onClose() }}>
+      <Dialog
+        open={isModalOpen}
+        onOpenChange={(open) => {
+          if (!open) onClose()
+        }}
+      >
         <DialogContent className="max-w-md rounded-2xl">
           <DialogHeader>
-            <DialogTitle className="font-black">{editingCategory ? 'Editar Categoría' : 'Nueva Categoría'}</DialogTitle>
+            <DialogTitle className="font-black">
+              {editingCategory ? 'Editar Categoría' : 'Nueva Categoría'}
+            </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1">
-              <label className="text-sm font-bold">Nombre de la Categoría *</label>
+              <label className="text-sm font-bold">
+                Nombre de la Categoría *
+              </label>
               <Input
                 placeholder="Ej. Suplementos, Accesorios..."
                 value={categoryName}
@@ -83,7 +105,14 @@ export function CategoryDialogs({
               />
             </div>
             <DialogFooter className="pt-4">
-              <Button type="button" variant="outline" onClick={onClose} className="rounded-xl">Cancelar</Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onClose}
+                className="rounded-xl"
+              >
+                Cancelar
+              </Button>
               <LoadingButton
                 type="submit"
                 isLoading={isPendingCreate || isPendingUpdate}
@@ -98,12 +127,24 @@ export function CategoryDialogs({
 
       <ConfirmDialog
         open={!!categoryToDelete}
-        onOpenChange={(open) => { if (!open) onCloseDelete() }}
+        onOpenChange={(open) => {
+          if (!open) onCloseDelete()
+        }}
         title="Eliminar Categoría"
         description={
-          <>¿Estás seguro de eliminar <strong className="text-foreground">{categoryToDelete?.name}</strong>? Los productos asociados no se eliminarán, solo la categoría quedará oculta.</>
+          <>
+            ¿Estás seguro de eliminar{' '}
+            <strong className="text-foreground">
+              {categoryToDelete?.name}
+            </strong>
+            ? Los productos asociados no se eliminarán, solo la categoría
+            quedará oculta.
+          </>
         }
-        onConfirm={() => { if (categoryToDelete) onConfirmDelete(categoryToDelete); onCloseDelete() }}
+        onConfirm={() => {
+          if (categoryToDelete) onConfirmDelete(categoryToDelete)
+          onCloseDelete()
+        }}
         isLoading={isPendingDelete}
       />
     </>

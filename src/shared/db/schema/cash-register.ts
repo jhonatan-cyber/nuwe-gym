@@ -1,7 +1,4 @@
-import { uuid, pgTable,
-  text,
-  numeric,
-  timestamp, } from 'drizzle-orm/pg-core'
+import { uuid, pgTable, text, numeric, timestamp } from 'drizzle-orm/pg-core'
 import {
   cashSessionStatusEnum,
   cashMovementTypeEnum,

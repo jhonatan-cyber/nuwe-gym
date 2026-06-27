@@ -23,7 +23,9 @@ export function MemberAvatar({ name, photoUrl, size = 9 }: MemberAvatarProps) {
   }
 
   return (
-    <div className={`size-${size} rounded-full bg-gradient-to-br from-foreground/10 to-foreground/5 flex items-center justify-center shrink-0 text-[10px] font-bold text-muted-foreground`}>
+    <div
+      className={`size-${size} rounded-full bg-gradient-to-br from-foreground/10 to-foreground/5 flex items-center justify-center shrink-0 text-[10px] font-bold text-muted-foreground`}
+    >
       {initials}
     </div>
   )

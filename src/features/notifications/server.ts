@@ -135,16 +135,20 @@ export const generateNotifications = createServerFn({ method: 'POST' })
 
       for (const tier of EXPIRATION_TIERS) {
         if (daysUntilExpiry <= tier.days) {
-          const titleSuffix = tier.urgency === 'urgent'
-            ? '⚠️ Urgente'
-            : tier.urgency === 'warning'
-              ? '🔔 Aviso'
-              : '📋 Recordatorio'
+          const titleSuffix =
+            tier.urgency === 'urgent'
+              ? '⚠️ Urgente'
+              : tier.urgency === 'warning'
+                ? '🔔 Aviso'
+                : '📋 Recordatorio'
           const existing = await db.query.notifications.findFirst({
             where: and(
               eq(notifications.type, 'EXPIRATION'),
               eq(notifications.referenceId, sub.id),
-              eq(notifications.title, `${titleSuffix} Suscripción vence ${tier.label}`),
+              eq(
+                notifications.title,
+                `${titleSuffix} Suscripción vence ${tier.label}`,
+              ),
             ),
           })
           if (!existing) {
@@ -177,7 +181,8 @@ export const generateNotifications = createServerFn({ method: 'POST' })
       })
       if (!existing) {
         const daysOverdue = Math.ceil(
-          (now.getTime() - new Date(sub.endDate).getTime()) / (1000 * 60 * 60 * 24),
+          (now.getTime() - new Date(sub.endDate).getTime()) /
+            (1000 * 60 * 60 * 24),
         )
         newNotifications.push({
           type: 'EXPIRATION',

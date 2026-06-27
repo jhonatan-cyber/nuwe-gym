@@ -9,10 +9,14 @@ interface StatCardProps {
   variant?: StatVariant
 }
 
-const variantStyles: Record<StatVariant, { value: string; iconBox: string; icon: string }> = {
+const variantStyles: Record<
+  StatVariant,
+  { value: string; iconBox: string; icon: string }
+> = {
   default: {
     value: 'text-2xl font-black tracking-tight',
-    iconBox: 'dark:bg-white/5 bg-black/5 dark:group-hover:bg-white/10 group-hover:bg-black/10',
+    iconBox:
+      'dark:bg-white/5 bg-black/5 dark:group-hover:bg-white/10 group-hover:bg-black/10',
     icon: 'text-muted-foreground group-hover:scale-110',
   },
   emerald: {
@@ -32,7 +36,12 @@ const variantStyles: Record<StatVariant, { value: string; iconBox: string; icon:
   },
 }
 
-export function StatCard({ label, value, icon: Icon, variant = 'default' }: StatCardProps) {
+export function StatCard({
+  label,
+  value,
+  icon: Icon,
+  variant = 'default',
+}: StatCardProps) {
   const styles = variantStyles[variant]
   return (
     <div className="relative overflow-hidden bg-muted/60 p-4.5 rounded-[1.25rem] border border-border/10 shadow-sm hover:shadow-md transition-all duration-300 flex items-center justify-between group">
@@ -42,8 +51,12 @@ export function StatCard({ label, value, icon: Icon, variant = 'default' }: Stat
         </p>
         <p className={styles.value}>{value}</p>
       </div>
-      <div className={`size-10 rounded-xl flex items-center justify-center group-hover:scale-105 transition-all duration-300 shrink-0 ${styles.iconBox}`}>
-        <Icon className={`size-5 transition-transform duration-300 ${styles.icon}`} />
+      <div
+        className={`size-10 rounded-xl flex items-center justify-center group-hover:scale-105 transition-all duration-300 shrink-0 ${styles.iconBox}`}
+      >
+        <Icon
+          className={`size-5 transition-transform duration-300 ${styles.icon}`}
+        />
       </div>
     </div>
   )

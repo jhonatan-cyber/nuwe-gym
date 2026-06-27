@@ -1,9 +1,12 @@
-import { uuid, pgTable,
+import {
+  uuid,
+  pgTable,
   integer,
   text,
   numeric,
   timestamp,
-  index, } from 'drizzle-orm/pg-core'
+  index,
+} from 'drizzle-orm/pg-core'
 import { suppliers } from './suppliers.ts'
 import { users } from './auth.ts'
 import { products } from './products.ts'

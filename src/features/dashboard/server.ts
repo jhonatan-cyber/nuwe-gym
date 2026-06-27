@@ -16,7 +16,7 @@ export const getDashboardData = createServerFn({ method: 'GET' }).handler(
     const session = await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] },
     })
-    const userRole = session.user.role as UserRole
+    const userRole = session.user.role
     const now = new Date()
     const startOfToday = new Date(
       now.getFullYear(),

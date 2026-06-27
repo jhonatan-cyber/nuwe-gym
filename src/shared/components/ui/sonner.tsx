@@ -9,9 +9,12 @@ interface ToastOptions {
   position?: SileoPosition
 }
 
-const mapOptions = (message: string | React.ReactNode, options?: ToastOptions): SileoOptions => {
+const mapOptions = (
+  message: string | React.ReactNode,
+  options?: ToastOptions,
+): SileoOptions => {
   const opts: SileoOptions = {}
-  
+
   if (typeof message === 'string') {
     opts.title = message
   } else {
@@ -60,7 +63,10 @@ export const toast = {
 }
 
 // Fallback for calling toast("message") directly
-const toastFunction = (message: string | React.ReactNode, options?: ToastOptions) => {
+const toastFunction = (
+  message: string | React.ReactNode,
+  options?: ToastOptions,
+) => {
   return toast.custom(message, options)
 }
 

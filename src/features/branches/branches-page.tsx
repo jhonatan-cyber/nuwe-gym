@@ -1,7 +1,22 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Store, Plus, Pencil, Power, PowerOff, MapPin, Phone, Mail, Clock } from 'lucide-react'
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '#/shared/components/ui/tooltip'
+import {
+  Store,
+  Plus,
+  Pencil,
+  Power,
+  PowerOff,
+  MapPin,
+  Phone,
+  Mail,
+  Clock,
+} from 'lucide-react'
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+  TooltipProvider,
+} from '#/shared/components/ui/tooltip'
 import { toast } from 'sonner'
 import {
   getBranches,
@@ -136,102 +151,106 @@ export function BranchesPage() {
       />
 
       <TooltipProvider delayDuration={200}>
-      <DataTable
-        columns={[
-          {
-            key: 'name',
-            label: 'Nombre',
-            render: (b: (typeof branchesList)[number]) => (
-              <span className="font-semibold">{b.name}</span>
-            ),
-          },
-          {
-            key: 'address',
-            label: 'Dirección',
-            render: (b: (typeof branchesList)[number]) => (
-              <span className="inline-flex items-center gap-1.5 text-muted-foreground">
-                <MapPin className="size-3 text-muted-foreground shrink-0" />
-                {b.address || '-'}
-              </span>
-            ),
-          },
-          {
-            key: 'phone',
-            label: 'Teléfono',
-            render: (b: (typeof branchesList)[number]) => (
-              <span className="inline-flex items-center gap-1.5 text-muted-foreground">
-                <Phone className="size-3 text-muted-foreground" />
-                {b.phone || '-'}
-              </span>
-            ),
-          },
-          {
-            key: 'email',
-            label: 'Email',
-            render: (b: (typeof branchesList)[number]) => (
-              <span className="inline-flex items-center gap-1.5 text-muted-foreground">
-                <Mail className="size-3 text-muted-foreground" />
-                {b.email || '-'}
-              </span>
-            ),
-          },
-          {
-            key: 'hours',
-            label: (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="cursor-default">Horario</span>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">
-                  <p>Horario de atención de la sucursal</p>
-                </TooltipContent>
-              </Tooltip>
-            ),
-            render: (b: (typeof branchesList)[number]) => (
-              <span className="inline-flex items-center gap-1.5 text-sm whitespace-nowrap">
-                <Clock className="size-3 text-muted-foreground" />
-                {b.openingTime} - {b.closingTime}
-              </span>
-            ),
-          },
-          {
-            key: 'status',
-            label: 'Estado',
-            render: (b: (typeof branchesList)[number]) => (
-              <Badge variant={b.isActive ? 'default' : 'secondary'}>
-                {b.isActive ? 'Activa' : 'Inactiva'}
-              </Badge>
-            ),
-          },
-          {
-            key: 'actions',
-            label: 'Acciones',
-            className: 'text-right',
-            render: (b: (typeof branchesList)[number]) => (
-              <div className="flex justify-end gap-1">
-                <Button size="icon" variant="ghost" onClick={() => openEdit(b)}>
-                  <Pencil className="size-4" />
-                </Button>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  onClick={() => handleToggleActive(b)}
-                >
-                  {b.isActive ? (
-                    <PowerOff className="size-4 text-destructive" />
-                  ) : (
-                    <Power className="size-4 text-green-500" />
-                  )}
-                </Button>
-              </div>
-            ),
-          },
-        ]}
-        data={branchesList}
-        isLoading={isLoading}
-        emptyMessage="No hay sucursales"
-        keyExtractor={(b: (typeof branchesList)[number]) => b.id}
-      />
+        <DataTable
+          columns={[
+            {
+              key: 'name',
+              label: 'Nombre',
+              render: (b: (typeof branchesList)[number]) => (
+                <span className="font-semibold">{b.name}</span>
+              ),
+            },
+            {
+              key: 'address',
+              label: 'Dirección',
+              render: (b: (typeof branchesList)[number]) => (
+                <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                  <MapPin className="size-3 text-muted-foreground shrink-0" />
+                  {b.address || '-'}
+                </span>
+              ),
+            },
+            {
+              key: 'phone',
+              label: 'Teléfono',
+              render: (b: (typeof branchesList)[number]) => (
+                <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                  <Phone className="size-3 text-muted-foreground" />
+                  {b.phone || '-'}
+                </span>
+              ),
+            },
+            {
+              key: 'email',
+              label: 'Email',
+              render: (b: (typeof branchesList)[number]) => (
+                <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                  <Mail className="size-3 text-muted-foreground" />
+                  {b.email || '-'}
+                </span>
+              ),
+            },
+            {
+              key: 'hours',
+              label: (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="cursor-default">Horario</span>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    <p>Horario de atención de la sucursal</p>
+                  </TooltipContent>
+                </Tooltip>
+              ),
+              render: (b: (typeof branchesList)[number]) => (
+                <span className="inline-flex items-center gap-1.5 text-sm whitespace-nowrap">
+                  <Clock className="size-3 text-muted-foreground" />
+                  {b.openingTime} - {b.closingTime}
+                </span>
+              ),
+            },
+            {
+              key: 'status',
+              label: 'Estado',
+              render: (b: (typeof branchesList)[number]) => (
+                <Badge variant={b.isActive ? 'default' : 'secondary'}>
+                  {b.isActive ? 'Activa' : 'Inactiva'}
+                </Badge>
+              ),
+            },
+            {
+              key: 'actions',
+              label: 'Acciones',
+              className: 'text-right',
+              render: (b: (typeof branchesList)[number]) => (
+                <div className="flex justify-end gap-1">
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => openEdit(b)}
+                  >
+                    <Pencil className="size-4" />
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => handleToggleActive(b)}
+                  >
+                    {b.isActive ? (
+                      <PowerOff className="size-4 text-destructive" />
+                    ) : (
+                      <Power className="size-4 text-green-500" />
+                    )}
+                  </Button>
+                </div>
+              ),
+            },
+          ]}
+          data={branchesList}
+          isLoading={isLoading}
+          emptyMessage="No hay sucursales"
+          keyExtractor={(b: (typeof branchesList)[number]) => b.id}
+        />
       </TooltipProvider>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
