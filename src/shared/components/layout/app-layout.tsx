@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { Outlet } from '@tanstack/react-router'
+import { Menu } from 'lucide-react'
 import { Toaster } from '#/shared/components/ui/sonner.tsx'
 import { AppSidebar } from './app-sidebar.tsx'
 import { AppHeader } from './app-header.tsx'
@@ -20,6 +22,8 @@ export function AppLayout({
   userRole,
   userImage,
 }: AppLayoutProps) {
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+
   return (
     <div className="h-screen w-screen flex bg-background text-foreground overflow-hidden font-sans relative">
       <style>{`
@@ -60,9 +64,22 @@ export function AppLayout({
         />
       </div>
 
-      <AppSidebar role={userRole} />
+      <button
+        type="button"
+        onClick={() => setSidebarOpen(true)}
+        className="fixed top-6 left-6 z-30 flex size-9 items-center justify-center rounded-lg border border-border/10 bg-card/85 backdrop-blur-md text-foreground shadow-md transition-all hover:bg-accent hover:text-accent-foreground md:hidden"
+        aria-label="Abrir menú"
+      >
+        <Menu className="size-5" />
+      </button>
 
-      <div className="flex-1 flex flex-col h-full overflow-hidden relative pl-[102px] p-4 pb-0">
+      <AppSidebar
+        role={userRole}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
+
+      <div className="flex-1 flex flex-col h-full overflow-hidden relative pl-4 md:pl-[102px] p-4 pb-0">
         <AppHeader
           userId={userId}
           userName={userName}
@@ -71,7 +88,7 @@ export function AppLayout({
           userImage={userImage}
         />
 
-        <main className="flex-1 overflow-auto p-6 scrollbar-none">
+        <main className="flex-1 overflow-auto p-4 md:p-6 scrollbar-none">
           <PageTransition>
             <Outlet />
           </PageTransition>

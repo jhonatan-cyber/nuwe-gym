@@ -93,7 +93,7 @@ export function Step1PersonalInfo({
         </p>
       </div>
       <div className="space-y-3">
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="grid gap-1.5">
             <Label className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
               Nombre{' '}
@@ -145,7 +145,7 @@ export function Step1PersonalInfo({
             )}
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="grid gap-1.5">
             <Label className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
               Cédula de Identidad{' '}
@@ -201,7 +201,7 @@ export function Step1PersonalInfo({
             </ToggleGroup>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="grid gap-1.5">
             <Label className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
               Número de Celular{' '}

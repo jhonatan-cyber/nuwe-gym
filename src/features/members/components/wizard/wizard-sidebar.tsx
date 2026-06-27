@@ -149,7 +149,7 @@ export function WizardSidebar({
   if (insideLayout) return content
 
   return (
-    <div className="w-[300px] shrink-0 bg-card/80 backdrop-blur-md p-6 relative h-fit flex flex-col rounded-4xl overflow-hidden shadow-xl border border-border/10">
+    <div className="hidden md:flex w-[300px] shrink-0 bg-card/80 backdrop-blur-md p-6 relative h-fit flex-col rounded-4xl overflow-hidden shadow-xl border border-border/10">
       {content}
     </div>
   )

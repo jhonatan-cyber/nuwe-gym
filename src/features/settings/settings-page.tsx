@@ -241,7 +241,7 @@ export function SettingsPage() {
         <p className="text-muted-foreground">Administración del gimnasio</p>
       </div>
 
-      <div className="flex gap-1 border-b pb-1">
+      <div className="flex gap-1 border-b pb-1 overflow-x-auto scrollbar-none whitespace-nowrap -mx-4 px-4 md:mx-0 md:px-0">
         {tabs.map((tab) => {
           const Icon = tab.icon
           return (
@@ -250,7 +250,7 @@ export function SettingsPage() {
               variant={activeTab === tab.id ? 'secondary' : 'ghost'}
               size="sm"
               onClick={() => setActiveTab(tab.id)}
-              className="rounded-b-none"
+              className="rounded-b-none shrink-0"
             >
               <Icon className="size-4" />
               {tab.label}

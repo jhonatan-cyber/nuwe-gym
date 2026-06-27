@@ -64,7 +64,7 @@ export function Step2PackageSelect({
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-2">
                     <h3 className="font-black text-base text-gray-900 dark:text-white">
                       {pkg.name}
                     </h3>

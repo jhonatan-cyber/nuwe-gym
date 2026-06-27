@@ -46,6 +46,7 @@ export function POSPage() {
   const queryClient = useQueryClient()
 
   const [cart, setCart] = useState<CartItem[]>([])
+  const [activeTab, setActiveTab] = useState<'catalog' | 'cart'>('catalog')
   const [searchTerm, setSearchTerm] = useState('')
   const [debouncedProductSearch, setDebouncedProductSearch] = useState('')
   const [categoryIdFilter, setCategoryIdFilter] = useState('')
@@ -248,8 +249,39 @@ export function POSPage() {
         )}
       </div>
 
+      {/* Selector de pestañas para mobile */}
+      <div className="grid grid-cols-2 p-1 bg-muted rounded-xl mb-1 lg:hidden shrink-0 border border-border/10">
+        <button
+          type="button"
+          onClick={() => setActiveTab('catalog')}
+          className={`py-2.5 text-xs font-bold rounded-lg transition-all ${
+            activeTab === 'catalog'
+              ? 'bg-background text-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          Catálogo
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('cart')}
+          className={`py-2.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+            activeTab === 'cart'
+              ? 'bg-background text-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          Carrito
+          {cart.length > 0 && (
+            <Badge className="bg-primary hover:bg-primary text-primary-foreground h-4 min-w-4 rounded-full flex items-center justify-center p-0.5 text-[9px] font-bold">
+              {cart.reduce((sum, item) => sum + item.quantity, 0)}
+            </Badge>
+          )}
+        </button>
+      </div>
+
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 overflow-hidden">
-        <div className="lg:col-span-2 flex flex-col gap-4 overflow-hidden h-full">
+        <div className={`lg:col-span-2 flex flex-col gap-4 overflow-hidden h-full ${activeTab === 'catalog' ? 'flex' : 'hidden lg:flex'}`}>
           <div className="flex flex-col md:flex-row gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -350,7 +382,7 @@ export function POSPage() {
           </div>
         </div>
 
-        <Card className="lg:col-span-1 flex flex-col h-full overflow-hidden shadow-lg border-primary/10">
+        <Card className={`lg:col-span-1 flex flex-col h-full overflow-hidden shadow-lg border-primary/10 ${activeTab === 'cart' ? 'flex' : 'hidden lg:flex'}`}>
           <CardHeader className="py-4 border-b">
             <CardTitle className="text-lg flex items-center gap-2">
               <ShoppingBag className="size-5 text-primary" /> Carrito de Compras

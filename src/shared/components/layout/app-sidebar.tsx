@@ -153,7 +153,15 @@ const navItems: NavItem[] = [
   },
 ]
 
-export function AppSidebar({ role }: { role: UserRole }) {
+export function AppSidebar({
+  role,
+  isOpen,
+  onClose,
+}: {
+  role: UserRole
+  isOpen?: boolean
+  onClose?: () => void
+}) {
   const matches = useMatches()
   const currentPath = matches[matches.length - 1]?.fullPath ?? ''
 
@@ -166,57 +174,73 @@ export function AppSidebar({ role }: { role: UserRole }) {
   )
 
   return (
-    <div className="fixed left-4 top-4 bottom-4 w-[70px] bg-card/80 backdrop-blur-md dark:text-white text-foreground flex flex-col items-center py-6 rounded-[2rem] shrink-0 shadow-xl border border-border/10 justify-between z-40">
-      {/* Top Logo */}
-      <div className="flex flex-col items-center gap-6 w-full">
-        <Link
-          to="/dashboard"
-          className="hover:opacity-85 transition-opacity px-1"
-        >
-          <img
-            src="/logo-ligth.png"
-            alt="Trainix Logo"
-            className="size-11 object-contain select-none pointer-events-none dark:hidden block"
-          />
-          <img
-            src="/logo-dark.png"
-            alt="Trainix Logo"
-            className="size-11 object-contain select-none pointer-events-none hidden dark:block"
-          />
-        </Link>
-        <div className="w-8 h-px dark:bg-white/10 bg-black/10" />
-      </div>
+    <>
+      {/* Overlay para mobile */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 md:hidden"
+          onClick={onClose}
+        />
+      )}
 
-      {/* Navigation Icons list */}
-      <div className="flex-1 w-full overflow-y-auto scrollbar-none flex flex-col items-center gap-3 my-4 py-2 px-2">
-        <TooltipProvider delayDuration={100}>
-          {visibleItems.map((item) => {
-            const isActive = currentPath.startsWith(item.url)
-            return (
-              <Tooltip key={item.url}>
-                <TooltipTrigger asChild>
-                  <Link
-                    to={item.url}
-                    className={`flex w-10 h-10 shrink-0 items-center justify-center rounded-lg transition-all duration-200 ${
-                      isActive
-                        ? 'dark:bg-white/20 bg-black/10 dark:text-white text-foreground'
-                        : 'dark:text-white/40 text-muted-foreground hover:dark:bg-white/8 hover:bg-black/5 hover:dark:text-white hover:text-foreground'
-                    }`}
+      <div
+        className={`fixed top-4 bottom-4 w-[70px] bg-card/80 backdrop-blur-md dark:text-white text-foreground flex flex-col items-center py-6 rounded-[2rem] shrink-0 shadow-xl border border-border/10 justify-between z-50 transition-all duration-300 ${
+          isOpen ? 'left-4' : '-left-20 md:left-4'
+        } ${isOpen ? 'flex' : 'hidden md:flex'}`}
+      >
+        {/* Top Logo */}
+        <div className="flex flex-col items-center gap-6 w-full">
+          <Link
+            to="/dashboard"
+            className="hover:opacity-85 transition-opacity px-1"
+            onClick={onClose}
+          >
+            <img
+              src="/logo-ligth.png"
+              alt="Trainix Logo"
+              className="size-11 object-contain select-none pointer-events-none dark:hidden block"
+            />
+            <img
+              src="/logo-dark.png"
+              alt="Trainix Logo"
+              className="size-11 object-contain select-none pointer-events-none hidden dark:block"
+            />
+          </Link>
+          <div className="w-8 h-px dark:bg-white/10 bg-black/10" />
+        </div>
+
+        {/* Navigation Icons list */}
+        <div className="flex-1 w-full overflow-y-auto scrollbar-none flex flex-col items-center gap-3 my-4 py-2 px-2">
+          <TooltipProvider delayDuration={100}>
+            {visibleItems.map((item) => {
+              const isActive = currentPath.startsWith(item.url)
+              return (
+                <Tooltip key={item.url}>
+                  <TooltipTrigger asChild>
+                    <Link
+                      to={item.url}
+                      onClick={onClose}
+                      className={`flex w-10 h-10 shrink-0 items-center justify-center rounded-lg transition-all duration-200 ${
+                        isActive
+                          ? 'dark:bg-white/20 bg-black/10 dark:text-white text-foreground'
+                          : 'dark:text-white/40 text-muted-foreground hover:dark:bg-white/8 hover:bg-black/5 hover:dark:text-white hover:text-foreground'
+                      }`}
+                    >
+                      <item.icon className="size-[18px]" />
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent
+                    side="right"
+                    className="bg-popover dark:text-white text-foreground border-border/20 ml-2 shadow-md"
                   >
-                    <item.icon className="size-[18px]" />
-                  </Link>
-                </TooltipTrigger>
-                <TooltipContent
-                  side="right"
-                  className="bg-popover dark:text-white text-foreground border-border/20 ml-2 shadow-md"
-                >
-                  <p>{item.title}</p>
-                </TooltipContent>
-              </Tooltip>
-            )
-          })}
-        </TooltipProvider>
+                    <p>{item.title}</p>
+                  </TooltipContent>
+                </Tooltip>
+              )
+            })}
+          </TooltipProvider>
+        </div>
       </div>
-    </div>
+    </>
   )
 }

@@ -450,7 +450,7 @@ export function MemberEnrollmentWizard({
     }
 
     return (
-      <div className="flex gap-6 items-start justify-start w-full">
+      <div className="flex flex-col md:flex-row gap-6 items-start justify-start w-full">
         <WizardSidebar step={step} variant={variant} onClose={handleClose} />
         {formContent}
       </div>
