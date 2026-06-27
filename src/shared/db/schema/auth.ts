@@ -1,13 +1,16 @@
 import { pgTable, text, timestamp, boolean } from 'drizzle-orm/pg-core'
-import { userRoleEnum } from './enums.ts'
+import { roles } from './roles.ts'
 
-export const users = pgTable('user', { banned: boolean('banned'), 
+export const users = pgTable('user', { banned: boolean('banned'),
   id: text('id').primaryKey(),
   name: text('name').notNull(),
   email: text('email').notNull().unique(),
   emailVerified: boolean('email_verified').notNull(),
   image: text('image'),
-  role: userRoleEnum('role').notNull().default('TRAINER'),
+  role: text('role').notNull().default('TRAINER').references(() => roles.name),
+  documentNumber: text('document_number'),
+  phone: text('phone'),
+  address: text('address'),
   createdAt: timestamp('created_at').notNull(),
   updatedAt: timestamp('updated_at').notNull(),
 })

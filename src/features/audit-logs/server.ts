@@ -6,13 +6,13 @@ import { auditLogs } from '#/shared/db/schema/audit-logs.ts'
 import { requireRole, getSession } from '#/shared/lib/server-utils.ts'
 
 export interface AuditLogRow {
-  id: number
+  id: string
   userId: string | null
   userName: string | null
   userRole: string | null
   action: string
   entityType: string
-  entityId: number | null
+  entityId: string | null
   description: string
   details: Record<string, any> | null
   ipAddress: string | null
@@ -85,7 +85,7 @@ export const getAuditLogs = createServerFn({ method: 'GET' })
   })
 
 export const getAuditLog = createServerFn({ method: 'GET' })
-  .inputValidator((id: unknown) => z.number().int().positive().parse(id))
+  .inputValidator((id: unknown) => z.string().uuid().parse(id))
   .handler(async ({ data: id }) => {
     await requireRole({ data: { roles: ['ADMIN'] } })
 

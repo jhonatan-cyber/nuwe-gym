@@ -1,16 +1,13 @@
-import {
-  pgTable,
-  serial,
-  text,
+import { uuid, pgTable,
   integer,
+  text,
   numeric,
   boolean,
-  timestamp,
-} from 'drizzle-orm/pg-core'
+  timestamp, } from 'drizzle-orm/pg-core'
 import { packageTypeEnum } from './enums.ts'
 
 export const packages = pgTable('packages', {
-  id: serial('id').primaryKey(),
+  id: uuid('id').defaultRandom().primaryKey(),
   name: text('name').notNull(),
   description: text('description'),
   imageBase64: text('image_base64'),
@@ -26,8 +23,8 @@ export const packages = pgTable('packages', {
 })
 
 export const packageItems = pgTable('package_items', {
-  id: serial('id').primaryKey(),
-  packageId: integer('package_id')
+  id: uuid('id').defaultRandom().primaryKey(),
+  packageId: uuid('package_id')
     .notNull()
     .references(() => packages.id, { onDelete: 'cascade' }),
   description: text('description').notNull(),

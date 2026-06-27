@@ -1,11 +1,8 @@
-import {
-  pgTable,
-  serial,
+import { uuid, pgTable,
   integer,
   text,
   timestamp,
-  index,
-} from 'drizzle-orm/pg-core'
+  index, } from 'drizzle-orm/pg-core'
 import { inventoryMovementTypeEnum } from './enums.ts'
 import { products } from './products.ts'
 import { users } from './auth.ts'
@@ -13,8 +10,8 @@ import { users } from './auth.ts'
 export const inventoryMovements = pgTable(
   'inventory_movements',
   {
-    id: serial('id').primaryKey(),
-    productId: integer('product_id')
+    id: uuid('id').defaultRandom().primaryKey(),
+    productId: uuid('product_id')
       .notNull()
       .references(() => products.id),
     movementType: inventoryMovementTypeEnum('movement_type').notNull(),
@@ -22,7 +19,7 @@ export const inventoryMovements = pgTable(
     previousStock: integer('previous_stock').notNull(),
     newStock: integer('new_stock').notNull(),
     referenceType: text('reference_type'),
-    referenceId: integer('reference_id'),
+    referenceId: uuid('reference_id'),
     notes: text('notes'),
     createdByUserId: text('created_by_user_id')
       .notNull()

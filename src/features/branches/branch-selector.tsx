@@ -14,13 +14,13 @@ const BRANCH_STORAGE_KEY = 'currentBranchId'
 
 export function BranchSelector() {
   const [mounted, setMounted] = useState(false)
-  const [currentBranchId, setCurrentBranchId] = useState<number | null>(null)
+  const [currentBranchId, setCurrentBranchId] = useState<string | null>(null)
 
   useEffect(() => {
     setMounted(true)
     const stored = localStorage.getItem(BRANCH_STORAGE_KEY)
     if (stored) {
-      setCurrentBranchId(Number(stored))
+      setCurrentBranchId(stored)
     }
   }, [])
 
@@ -34,7 +34,7 @@ export function BranchSelector() {
     branches.find((b) => b.isDefault) ??
     branches[0]
 
-  const handleSwitch = (branchId: number) => {
+  const handleSwitch = (branchId: string) => {
     localStorage.setItem(BRANCH_STORAGE_KEY, String(branchId))
     setCurrentBranchId(branchId)
   }

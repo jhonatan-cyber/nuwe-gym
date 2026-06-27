@@ -15,7 +15,7 @@ describe('Audit Logs', () => {
       .values({
         action: 'CREATE',
         entityType: 'MEMBER',
-        entityId: 1,
+        entityId: '1',
         description: 'Creó un nuevo miembro',
         userId: TEST_USER_ID,
         userName: 'Admin',
@@ -30,29 +30,14 @@ describe('Audit Logs', () => {
   })
 
   it('should filter logs by action type', async () => {
-    await db.insert(auditLogs).values([
-      {
-        action: 'CREATE',
-        entityType: 'PRODUCT',
-        entityId: 1,
-        description: 'crear',
-        userId: TEST_USER_ID,
-      },
-      {
-        action: 'UPDATE',
-        entityType: 'PRODUCT',
-        entityId: 1,
-        description: 'actualizar',
-        userId: TEST_USER_ID,
-      },
-      {
-        action: 'DELETE',
-        entityType: 'PRODUCT',
-        entityId: 1,
-        description: 'eliminar',
-        userId: TEST_USER_ID,
-      },
-    ])
+    const logsData = [
+      { action: 'CREATE' as const, entityType: 'PRODUCT' as const, entityId: '1', description: 'crear', userId: TEST_USER_ID },
+      { action: 'UPDATE' as const, entityType: 'PRODUCT' as const, entityId: '1', description: 'actualizar', userId: TEST_USER_ID },
+      { action: 'DELETE' as const, entityType: 'PRODUCT' as const, entityId: '1', description: 'eliminar', userId: TEST_USER_ID },
+    ]
+    for (const log of logsData) {
+      await db.insert(auditLogs).values(log)
+    }
 
     const creates = await db.query.auditLogs.findMany({
       where: eq(auditLogs.action, 'CREATE'),

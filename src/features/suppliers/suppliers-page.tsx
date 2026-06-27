@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Truck, Plus, Edit, CheckCircle, XCircle } from 'lucide-react'
+import { Truck, Plus, Edit, CheckCircle, XCircle, Building2, Phone, Mail, MapPin } from 'lucide-react'
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '#/shared/components/ui/tooltip'
 import { toast } from 'sonner'
 import {
   getSuppliers,
@@ -136,37 +137,62 @@ export function SuppliersPage() {
         }
       />
 
+      <TooltipProvider delayDuration={200}>
       <DataTable
         columns={[
           {
             key: 'name',
             label: 'Nombre',
+            sortable: true,
+            sortValue: (sup: (typeof suppliersList)[number]) => sup.name,
             render: (sup: (typeof suppliersList)[number]) => (
-              <span className="font-semibold">{sup.name}</span>
+              <span className="inline-flex items-center gap-1.5 font-semibold">
+                <Building2 className="size-3 text-muted-foreground" />
+                {sup.name}
+              </span>
             ),
           },
           {
             key: 'phone',
-            label: 'Teléfono',
-            render: (sup: (typeof suppliersList)[number]) => sup.phone || '-',
+            label: <Tooltip><TooltipTrigger asChild><span className="cursor-default">Teléfono</span></TooltipTrigger><TooltipContent side="bottom"><p>Número de contacto del proveedor</p></TooltipContent></Tooltip>,
+            sortable: true,
+            sortValue: (sup: (typeof suppliersList)[number]) => sup.phone || '',
+            render: (sup: (typeof suppliersList)[number]) => (
+              <span className="inline-flex items-center gap-1.5">
+                <Phone className="size-3 text-muted-foreground" />
+                {sup.phone || '-'}
+              </span>
+            ),
           },
           {
             key: 'email',
-            label: 'Email',
-            render: (sup: (typeof suppliersList)[number]) => sup.email || '-',
+            label: <Tooltip><TooltipTrigger asChild><span className="cursor-default">Email</span></TooltipTrigger><TooltipContent side="bottom"><p>Correo electrónico del proveedor</p></TooltipContent></Tooltip>,
+            sortable: true,
+            sortValue: (sup: (typeof suppliersList)[number]) => sup.email || '',
+            render: (sup: (typeof suppliersList)[number]) => (
+              <span className="inline-flex items-center gap-1.5">
+                <Mail className="size-3 text-muted-foreground" />
+                {sup.email || '-'}
+              </span>
+            ),
           },
           {
             key: 'address',
-            label: 'Dirección',
+            label: <Tooltip><TooltipTrigger asChild><span className="cursor-default">Dirección</span></TooltipTrigger><TooltipContent side="bottom"><p>Dirección comercial del proveedor</p></TooltipContent></Tooltip>,
+            sortable: true,
+            sortValue: (sup: (typeof suppliersList)[number]) => sup.address || '',
             render: (sup: (typeof suppliersList)[number]) => (
-              <span className="text-muted-foreground max-w-xs truncate">
-                {sup.address || '-'}
+              <span className="inline-flex items-center gap-1.5 text-muted-foreground max-w-xs truncate">
+                <MapPin className="size-3 text-muted-foreground shrink-0" />
+                <span className="truncate">{sup.address || '-'}</span>
               </span>
             ),
           },
           {
             key: 'status',
             label: 'Estado',
+            sortable: true,
+            sortValue: (sup: (typeof suppliersList)[number]) => sup.isActive ? 1 : 0,
             render: (sup: (typeof suppliersList)[number]) =>
               sup.isActive ? (
                 <Badge className="bg-emerald-500/10 text-emerald-600 border-none">
@@ -183,27 +209,41 @@ export function SuppliersPage() {
             render: (sup: (typeof suppliersList)[number]) =>
               isAdmin ? (
                 <div className="flex justify-end gap-2">
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={() => openEditModal(sup)}
-                  >
-                    <Edit className="size-4" />
-                  </Button>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className={
-                      sup.isActive ? 'text-red-500' : 'text-emerald-500'
-                    }
-                    onClick={() => toggleStatus(sup)}
-                  >
-                    {sup.isActive ? (
-                      <XCircle className="size-4" />
-                    ) : (
-                      <CheckCircle className="size-4" />
-                    )}
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => openEditModal(sup)}
+                      >
+                        <Edit className="size-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      <p>Editar proveedor</p>
+                    </TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className={
+                          sup.isActive ? 'text-red-500' : 'text-emerald-500'
+                        }
+                        onClick={() => toggleStatus(sup)}
+                      >
+                        {sup.isActive ? (
+                          <XCircle className="size-4" />
+                        ) : (
+                          <CheckCircle className="size-4" />
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      <p>{sup.isActive ? 'Desactivar proveedor' : 'Activar proveedor'}</p>
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
               ) : null,
           },
@@ -213,6 +253,7 @@ export function SuppliersPage() {
         emptyMessage="No hay proveedores registrados."
         keyExtractor={(sup: (typeof suppliersList)[number]) => sup.id}
       />
+      </TooltipProvider>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent>

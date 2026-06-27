@@ -44,6 +44,15 @@ export function capitalizeWords(str: string | null | undefined): string {
   return str.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
+export function getInitials(name: string): string {
+  return name
+    .split(' ')
+    .map((n) => n[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase()
+}
+
 export function formatRelativeTime(date: Date | string | null): string {
   if (!date) return ''
   const d = typeof date === 'string' ? new Date(date) : date

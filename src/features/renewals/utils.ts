@@ -1,5 +1,8 @@
+import { getInitials } from '#/shared/lib/formatters.ts'
 import { Coins, CreditCard, Building2, QrCode } from 'lucide-react'
 import type { PaymentMethod } from './types.ts'
+
+export { getInitials }
 
 export interface PaymentMethodOption {
   value: PaymentMethod
@@ -20,12 +23,3 @@ export const STEPS = [
   { id: 2 as const, label: 'Selección de Plan', sublabel: 'Elija un plan de inscripción' },
   { id: 3 as const, label: 'Pago de Inscripción', sublabel: 'Seleccione un método de pago' },
 ]
-
-export function getInitials(name: string): string {
-  return name
-    .split(' ')
-    .map((n) => n[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase()
-}

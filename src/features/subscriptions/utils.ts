@@ -1,18 +1,11 @@
+import { getInitials } from '#/shared/lib/formatters.ts'
 import type { Subscription } from './types.ts'
 
-export function getInitials(name: string): string {
-  return name
-    .split(' ')
-    .map((n) => n[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase()
-}
-
+export { getInitials }
 export function getSubscriptionStatus(sub: Pick<Subscription, 'status' | 'endDate'>) {
   const end = new Date(sub.endDate)
   const isExpired = end < new Date()
-  const isCanceled = sub.status === 'CANCELED' || sub.status === 'CANCELLED'
+  const isCanceled = sub.status === 'CANCELED'
   if (isCanceled) return 'CANCELLED'
   if (isExpired) return 'EXPIRED'
   return 'ACTIVE'
@@ -24,7 +17,7 @@ export function getSubscriptionProgress(sub: Pick<Subscription, 'status' | 'star
   const start = new Date(sub.startDate)
   const end = new Date(sub.endDate)
   const isExpired = end < today
-  const isCanceled = sub.status === 'CANCELED' || sub.status === 'CANCELLED'
+  const isCanceled = sub.status === 'CANCELED'
 
   const totalDays = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)))
   const daysRemaining = isCanceled

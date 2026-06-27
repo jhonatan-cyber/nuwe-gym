@@ -1,11 +1,7 @@
-import {
-  pgTable,
-  serial,
-  integer,
+import { uuid, pgTable,
   text,
   numeric,
-  timestamp,
-} from 'drizzle-orm/pg-core'
+  timestamp, } from 'drizzle-orm/pg-core'
 import {
   cashSessionStatusEnum,
   cashMovementTypeEnum,
@@ -15,7 +11,7 @@ import {
 import { users } from './auth.ts'
 
 export const cashRegisterSessions = pgTable('cash_register_sessions', {
-  id: serial('id').primaryKey(),
+  id: uuid('id').defaultRandom().primaryKey(),
   openedByUserId: text('opened_by_user_id')
     .notNull()
     .references(() => users.id),
@@ -37,17 +33,17 @@ export const cashRegisterSessions = pgTable('cash_register_sessions', {
   closedAt: timestamp('closed_at'),
   status: cashSessionStatusEnum('status').notNull().default('OPEN'),
   notes: text('notes'),
-  branchId: integer('branch_id'),
+  branchId: uuid('branch_id'),
 })
 
 export const cashMovements = pgTable('cash_movements', {
-  id: serial('id').primaryKey(),
-  cashSessionId: integer('cash_session_id')
+  id: uuid('id').defaultRandom().primaryKey(),
+  cashSessionId: uuid('cash_session_id')
     .notNull()
     .references(() => cashRegisterSessions.id, { onDelete: 'cascade' }),
   movementType: cashMovementTypeEnum('movement_type').notNull(),
   sourceType: cashSourceTypeEnum('source_type').notNull(),
-  sourceId: integer('source_id'),
+  sourceId: uuid('source_id'),
   amount: numeric('amount', { precision: 10, scale: 2 }).notNull(),
   paymentMethod: paymentMethodEnum('payment_method').notNull(),
   description: text('description'),

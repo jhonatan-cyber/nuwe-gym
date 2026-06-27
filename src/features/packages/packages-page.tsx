@@ -23,7 +23,7 @@ export function PackagesPage({ userRole }: PackagesPageProps) {
   const isReadOnly = userRole === 'TRAINER'
 
   const [activeView, setActiveView] = useState<'list' | 'form'>('list')
-  const [editingPackageId, setEditingPackageId] = useState<number | null>(null)
+  const [editingPackageId, setEditingPackageId] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [filterType, setFilterType] = useState('ALL')
 
@@ -76,7 +76,7 @@ export function PackagesPage({ userRole }: PackagesPageProps) {
     })
   }
 
-  function handleOpenForm(pkgId?: number) {
+  function handleOpenForm(pkgId?: string) {
     setEditingPackageId(pkgId ?? null)
     setActiveView('form')
   }

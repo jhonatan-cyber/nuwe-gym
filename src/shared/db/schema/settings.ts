@@ -1,19 +1,16 @@
-import {
-  pgTable,
-  serial,
+import { uuid, pgTable,
+  integer,
   text,
   numeric,
-  integer,
   boolean,
   timestamp,
-  check,
-} from 'drizzle-orm/pg-core'
+  check, } from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
 
 export const settings = pgTable(
   'settings',
   {
-    id: serial('id').primaryKey(),
+    id: uuid('id').default('00000000-0000-0000-0000-000000000000').primaryKey(),
     gymName: text('gym_name').notNull().default('Mi Gimnasio'),
     gymAddress: text('gym_address').default(''),
     gymPhone: text('gym_phone').default(''),
@@ -41,5 +38,5 @@ export const settings = pgTable(
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
-  (table) => [check('settings_single_row', sql`${table.id} = 1`)],
+  (table) => [check('settings_single_row', sql`${table.id} = '00000000-0000-0000-0000-000000000000'::uuid`)],
 )

@@ -83,7 +83,7 @@ export const createPackage = createServerFn({ method: 'POST' })
   })
 
 const updatePackageSchema = z.object({
-  id: z.number(),
+  id: z.string().uuid(),
   name: z.string().min(1),
   description: z.string().optional(),
   imageBase64: z.string().optional(),
@@ -141,7 +141,7 @@ export const updatePackage = createServerFn({ method: 'POST' })
   })
 
 export const deletePackage = createServerFn({ method: 'POST' })
-  .inputValidator((data) => z.object({ id: z.number() }).parse(data))
+  .inputValidator((data) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST'] },

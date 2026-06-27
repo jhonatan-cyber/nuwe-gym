@@ -1,9 +1,8 @@
 import {
   pgEnum,
   pgTable,
-  serial,
+  uuid,
   text,
-  integer,
   timestamp,
   jsonb,
 } from 'drizzle-orm/pg-core'
@@ -46,16 +45,18 @@ export const entityEnum = pgEnum('entity_type', [
   'PACKAGE',
 ])
 
+
 export const auditLogs = pgTable('audit_logs', {
-  id: serial('id').primaryKey(),
+  id: uuid('id').defaultRandom().primaryKey(),
   userId: text('user_id'),
   userName: text('user_name'),
   userRole: text('user_role'),
   action: actionEnum('action').notNull(),
   entityType: entityEnum('entity_type').notNull(),
-  entityId: integer('entity_id'),
+  entityId: text('entity_id'),
   description: text('description').notNull(),
   details: jsonb('details'),
   ipAddress: text('ip_address'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })
+

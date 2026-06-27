@@ -41,7 +41,7 @@ export const getMembers = createServerFn({ method: 'GET' })
   })
 
 export const getMemberById = createServerFn({ method: 'GET' })
-  .inputValidator((id) => z.number().parse(id))
+  .inputValidator((id) => z.string().uuid().parse(id))
   .handler(async ({ data: id }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
     return await db.query.members.findFirst({
@@ -64,6 +64,7 @@ const createMemberSchema = z.object({
   email: z.string().optional(),
   phone: z.string().optional(),
   birthDate: z.string().optional(),
+  gender: z.string().optional(),
   emergencyContactName: z.string().optional(),
   emergencyContactPhone: z.string().optional(),
   address: z.string().optional(),
@@ -84,6 +85,7 @@ export const createMember = createServerFn({ method: 'POST' })
         email: data.email,
         phone: data.phone,
         birthDate: data.birthDate ? new Date(data.birthDate) : undefined,
+        gender: data.gender,
         emergencyContactName: data.emergencyContactName,
         emergencyContactPhone: data.emergencyContactPhone,
         address: data.address,
@@ -102,14 +104,14 @@ export const createMember = createServerFn({ method: 'POST' })
   })
 
 const updateMemberSchema = createMemberSchema.extend({
-  id: z.number(),
+  id: z.string().uuid(),
   status: z.enum(['ACTIVE', 'INACTIVE']),
 })
 
 export type UpdateMemberData = z.infer<typeof updateMemberSchema>
 
 const uploadPhotoSchema = z.object({
-  memberId: z.number(),
+  memberId: z.string().uuid(),
   photoBase64: z.string(),
 })
 
@@ -148,6 +150,7 @@ export const updateMember = createServerFn({ method: 'POST' })
         email: data.email,
         phone: data.phone,
         birthDate: data.birthDate ? new Date(data.birthDate) : undefined,
+        gender: data.gender,
         emergencyContactName: data.emergencyContactName,
         emergencyContactPhone: data.emergencyContactPhone,
         address: data.address,

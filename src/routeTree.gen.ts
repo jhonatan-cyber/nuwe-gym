@@ -13,6 +13,7 @@ import { Route as QrCheckinRouteImport } from './routes/qr-checkin'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthedUsersRouteImport } from './routes/_authed/users'
 import { Route as AuthedTrainersRouteImport } from './routes/_authed/trainers'
 import { Route as AuthedSuppliersRouteImport } from './routes/_authed/suppliers'
 import { Route as AuthedSubscriptionsRouteImport } from './routes/_authed/subscriptions'
@@ -61,6 +62,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthedUsersRoute = AuthedUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AuthedRoute,
 } as any)
 const AuthedTrainersRoute = AuthedTrainersRouteImport.update({
   id: '/trainers',
@@ -240,6 +246,7 @@ export interface FileRoutesByFullPath {
   '/subscriptions': typeof AuthedSubscriptionsRoute
   '/suppliers': typeof AuthedSuppliersRoute
   '/trainers': typeof AuthedTrainersRoute
+  '/users': typeof AuthedUsersRoute
   '/admin/users': typeof AuthedAdminUsersRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
@@ -274,6 +281,7 @@ export interface FileRoutesByTo {
   '/subscriptions': typeof AuthedSubscriptionsRoute
   '/suppliers': typeof AuthedSuppliersRoute
   '/trainers': typeof AuthedTrainersRoute
+  '/users': typeof AuthedUsersRoute
   '/admin/users': typeof AuthedAdminUsersRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
@@ -310,6 +318,7 @@ export interface FileRoutesById {
   '/_authed/subscriptions': typeof AuthedSubscriptionsRoute
   '/_authed/suppliers': typeof AuthedSuppliersRoute
   '/_authed/trainers': typeof AuthedTrainersRoute
+  '/_authed/users': typeof AuthedUsersRoute
   '/_authed/admin/users': typeof AuthedAdminUsersRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
@@ -346,6 +355,7 @@ export interface FileRouteTypes {
     | '/subscriptions'
     | '/suppliers'
     | '/trainers'
+    | '/users'
     | '/admin/users'
     | '/api/auth/$'
   fileRoutesByTo: FileRoutesByTo
@@ -380,6 +390,7 @@ export interface FileRouteTypes {
     | '/subscriptions'
     | '/suppliers'
     | '/trainers'
+    | '/users'
     | '/admin/users'
     | '/api/auth/$'
   id:
@@ -415,6 +426,7 @@ export interface FileRouteTypes {
     | '/_authed/subscriptions'
     | '/_authed/suppliers'
     | '/_authed/trainers'
+    | '/_authed/users'
     | '/_authed/admin/users'
     | '/api/auth/$'
   fileRoutesById: FileRoutesById
@@ -456,6 +468,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authed/users': {
+      id: '/_authed/users'
+      path: '/users'
+      fullPath: '/users'
+      preLoaderRoute: typeof AuthedUsersRouteImport
+      parentRoute: typeof AuthedRoute
     }
     '/_authed/trainers': {
       id: '/_authed/trainers'
@@ -691,6 +710,7 @@ interface AuthedRouteChildren {
   AuthedSubscriptionsRoute: typeof AuthedSubscriptionsRoute
   AuthedSuppliersRoute: typeof AuthedSuppliersRoute
   AuthedTrainersRoute: typeof AuthedTrainersRoute
+  AuthedUsersRoute: typeof AuthedUsersRoute
   AuthedAdminUsersRoute: typeof AuthedAdminUsersRoute
 }
 
@@ -722,6 +742,7 @@ const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedSubscriptionsRoute: AuthedSubscriptionsRoute,
   AuthedSuppliersRoute: AuthedSuppliersRoute,
   AuthedTrainersRoute: AuthedTrainersRoute,
+  AuthedUsersRoute: AuthedUsersRoute,
   AuthedAdminUsersRoute: AuthedAdminUsersRoute,
 }
 

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { QrCode, Printer, X } from 'lucide-react'
+import { QrCode, Printer, X, IdCard } from 'lucide-react'
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '#/shared/components/ui/tooltip'
 import { toast } from 'sonner'
 import {
   generateMemberQR,
@@ -133,11 +134,14 @@ export function QRCodesPage({ userRole }: QRCodesPageProps) {
         />
       </div>
 
+      <TooltipProvider delayDuration={200}>
       <DataTable
         columns={[
           {
             key: 'member',
             label: 'Socio',
+            sortable: true,
+            sortValue: (member: (typeof membersList)[number]) => member.fullName,
             render: (member: (typeof membersList)[number]) => (
               <div className="flex items-center gap-2">
                 {member.photoUrl ? (
@@ -157,16 +161,21 @@ export function QRCodesPage({ userRole }: QRCodesPageProps) {
           },
           {
             key: 'document',
-            label: 'Documento',
+            label: <Tooltip><TooltipTrigger asChild><span className="cursor-default">Documento</span></TooltipTrigger><TooltipContent side="bottom"><p>Número de documento de identidad del socio</p></TooltipContent></Tooltip>,
+            sortable: true,
+            sortValue: (member: (typeof membersList)[number]) => member.documentNumber || '',
             render: (member: (typeof membersList)[number]) => (
-              <span className="text-muted-foreground">
+              <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                <IdCard className="size-3 text-muted-foreground" />
                 {member.documentNumber || '—'}
               </span>
             ),
           },
           {
             key: 'qr',
-            label: 'QR',
+            label: <Tooltip><TooltipTrigger asChild><span className="cursor-default">QR</span></TooltipTrigger><TooltipContent side="bottom"><p>Estado del código QR de acceso</p></TooltipContent></Tooltip>,
+            sortable: true,
+            sortValue: (member: (typeof membersList)[number]) => member.qrCode ? 1 : 0,
             render: (member: (typeof membersList)[number]) =>
               member.qrCode ? (
                 <Badge
@@ -185,14 +194,21 @@ export function QRCodesPage({ userRole }: QRCodesPageProps) {
             className: 'text-right',
             render: (member: (typeof membersList)[number]) =>
               !isReadOnly && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleGenerateQR(member)}
-                >
-                  <QrCode className="size-4 mr-1" />
-                  {member.qrCode ? 'Ver QR' : 'Generar'}
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleGenerateQR(member)}
+                    >
+                      <QrCode className="size-4 mr-1" />
+                      {member.qrCode ? 'Ver QR' : 'Generar'}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    <p>{member.qrCode ? 'Ver código QR del socio' : 'Generar código QR para el socio'}</p>
+                  </TooltipContent>
+                </Tooltip>
               ),
           },
         ]}
@@ -201,6 +217,7 @@ export function QRCodesPage({ userRole }: QRCodesPageProps) {
         emptyMessage="No se encontraron socios."
         keyExtractor={(member: (typeof membersList)[number]) => member.id}
       />
+      </TooltipProvider>
 
       <Dialog open={isQrDialogOpen} onOpenChange={setIsQrDialogOpen}>
         <DialogContent className="max-w-sm">

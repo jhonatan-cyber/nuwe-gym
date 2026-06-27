@@ -2,7 +2,7 @@ import { Building2 } from 'lucide-react'
 import { formatCurrency } from '#/shared/lib/formatters.ts'
 
 interface Package {
-  id: number
+  id: string
   name: string
   price: string | number
   durationDays: number
@@ -12,9 +12,9 @@ interface Package {
 
 interface Step2Props {
   packages: Package[]
-  selectedPackageId: number | null
+  selectedPackageId: string | null
   error?: string
-  onSelect: (id: number) => void
+  onSelect: (id: string) => void
 }
 
 export function Step2PackageSelect({ packages, selectedPackageId, error, onSelect }: Step2Props) {
@@ -42,7 +42,7 @@ export function Step2PackageSelect({ packages, selectedPackageId, error, onSelec
                 className={`relative flex items-start gap-4 p-5 rounded-2xl border-2 text-left transition-all duration-200 ${
                   isSelected
                     ? 'bg-gray-900/5 border-gray-900 dark:bg-white/5 dark:border-white shadow-sm'
-                    : 'bg-gray-50 border-gray-200 hover:border-gray-300 dark:bg-white/[0.02] dark:border-white/10 dark:hover:border-white/20'
+                    : 'bg-gray-50 border-gray-200 hover:border-gray-300 dark:bg-white/2 dark:border-white/10 dark:hover:border-white/20'
                 }`}
               >
                 <div

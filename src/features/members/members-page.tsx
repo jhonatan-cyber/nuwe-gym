@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { ChevronRight, Edit2, Eye, List, Plus, Users, CheckCircle2, Clock } from 'lucide-react'
+import { ChevronRight, Edit2, Eye, List, Plus, Users, CheckCircle2, Clock, Package } from 'lucide-react'
 import { getMembers } from '#/features/members/server.ts'
 import { useDebounce } from '#/shared/hooks/use-debounce.ts'
 import { isExpired, isExpiringThisWeek, getActiveSubscription, isSubscriptionActive } from '#/shared/lib/subscription-utils.ts'
@@ -32,7 +32,7 @@ export function MembersPage({ userRole }: MembersPageProps) {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL')
   const [activeView, setActiveView] = useState<'enroll' | 'list'>('enroll')
   const [editingMember, setEditingMember] = useState<MemberWithSubscriptions | null>(null)
-  const [viewMemberId, setViewMemberId] = useState<number | null>(null)
+  const [viewMemberId, setViewMemberId] = useState<string | null>(null)
 
   const debouncedSearch = useDebounce(search, 300)
 
@@ -121,7 +121,8 @@ export function MembersPage({ userRole }: MembersPageProps) {
           </div>
         }
       >
-        <DataTable
+        <TooltipProvider delayDuration={200}>
+          <DataTable
             columns={[
               {
                 key: 'member',
@@ -139,8 +140,17 @@ export function MembersPage({ userRole }: MembersPageProps) {
                 ),
               },
               {
-                key: 'plan',
-                label: 'Paquete',
+              key: 'plan',
+              label: (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="cursor-default">Paquete</span>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    <p>Plan o paquete de suscripción contratado</p>
+                  </TooltipContent>
+                </Tooltip>
+              ),
                 render: (member: MemberWithSubscriptions) => {
                   const sub = getActiveSubscription(member)
                   if (!sub) return <span className="text-xs text-muted-foreground">—</span>
@@ -148,12 +158,13 @@ export function MembersPage({ userRole }: MembersPageProps) {
                   return (
                     <Badge
                       className={cn(
-                        'text-[10px] font-bold',
+                        'inline-flex items-center gap-1 text-[10px] font-bold',
                         expired
                           ? 'bg-red-500/10 text-red-500 border-red-500/20 hover:bg-red-500/15'
                           : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 hover:bg-emerald-500/15',
                       )}
                     >
+                      <Package className="size-2.5" />
                       {sub.package?.name || sub.plan?.name || 'N/A'}
                     </Badge>
                   )
@@ -178,7 +189,6 @@ export function MembersPage({ userRole }: MembersPageProps) {
                     className: 'text-right',
                     render: (member: MemberWithSubscriptions) => (
                       <div className="flex justify-end gap-0.5">
-                        <TooltipProvider delayDuration={200}>
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Button variant="ghost" size="icon-xs" onClick={() => setViewMemberId(member.id)}>
@@ -195,7 +205,6 @@ export function MembersPage({ userRole }: MembersPageProps) {
                             </TooltipTrigger>
                             <TooltipContent side="bottom"><p>Editar</p></TooltipContent>
                           </Tooltip>
-                        </TooltipProvider>
                       </div>
                     ),
                   }]
@@ -208,6 +217,7 @@ export function MembersPage({ userRole }: MembersPageProps) {
             keyExtractor={(member: MemberWithSubscriptions) => member.id}
             skeletonRows={5}
           />
+        </TooltipProvider>
       </ModuleLayout>
 
       {editingMember && (

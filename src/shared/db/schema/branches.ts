@@ -1,18 +1,14 @@
-import {
-  pgTable,
-  serial,
+import { uuid, pgTable,
   text,
   boolean,
-  integer,
   timestamp,
-  index,
-} from 'drizzle-orm/pg-core'
+  index, } from 'drizzle-orm/pg-core'
 import { users } from './auth.ts'
 
 export const branches = pgTable(
   'branches',
   {
-    id: serial('id').primaryKey(),
+    id: uuid('id').defaultRandom().primaryKey(),
     name: text('name').notNull(),
     address: text('address').default(''),
     phone: text('phone').default(''),
@@ -27,11 +23,11 @@ export const branches = pgTable(
 )
 
 export const userBranches = pgTable('user_branches', {
-  id: serial('id').primaryKey(),
+  id: uuid('id').defaultRandom().primaryKey(),
   userId: text('user_id')
     .notNull()
     .references(() => users.id),
-  branchId: integer('branch_id')
+  branchId: uuid('branch_id')
     .notNull()
     .references(() => branches.id),
   isDefault: boolean('is_default').default(false),

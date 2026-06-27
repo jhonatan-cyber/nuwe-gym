@@ -1,12 +1,9 @@
-import {
-  pgTable,
-  serial,
+import { uuid, pgTable,
   integer,
   text,
   numeric,
   timestamp,
-  index,
-} from 'drizzle-orm/pg-core'
+  index, } from 'drizzle-orm/pg-core'
 import { suppliers } from './suppliers.ts'
 import { users } from './auth.ts'
 import { products } from './products.ts'
@@ -14,8 +11,8 @@ import { products } from './products.ts'
 export const purchases = pgTable(
   'purchases',
   {
-    id: serial('id').primaryKey(),
-    supplierId: integer('supplier_id')
+    id: uuid('id').defaultRandom().primaryKey(),
+    supplierId: uuid('supplier_id')
       .notNull()
       .references(() => suppliers.id),
     purchaseNumber: text('purchase_number').notNull(),
@@ -37,11 +34,11 @@ export const purchases = pgTable(
 export const purchaseItems = pgTable(
   'purchase_items',
   {
-    id: serial('id').primaryKey(),
-    purchaseId: integer('purchase_id')
+    id: uuid('id').defaultRandom().primaryKey(),
+    purchaseId: uuid('purchase_id')
       .notNull()
       .references(() => purchases.id),
-    productId: integer('product_id')
+    productId: uuid('product_id')
       .notNull()
       .references(() => products.id),
     quantity: integer('quantity').notNull(),

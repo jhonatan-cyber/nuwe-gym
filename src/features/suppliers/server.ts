@@ -49,7 +49,7 @@ export const createSupplier = createServerFn({ method: 'POST' })
   })
 
 const updateSupplierSchema = z.object({
-  id: z.number(),
+  id: z.string().uuid(),
   name: z.string(),
   phone: z.string().optional(),
   email: z.string().optional(),

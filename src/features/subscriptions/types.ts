@@ -7,8 +7,8 @@ export type PaymentMethod = 'CASH' | 'CARD' | 'TRANSFER' | 'QR'
 export type StatusFilter = 'ALL' | 'ACTIVE' | 'EXPIRED' | 'CANCELLED'
 
 export interface SubscriptionFormData {
-  memberId: number
-  packageId: number
+  memberId: string
+  packageId: string
   startDate: string
   endDate: string
   amountPaid: string

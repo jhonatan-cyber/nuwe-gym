@@ -22,7 +22,7 @@ export const getClasses = createServerFn({ method: 'GET' }).handler(
 )
 
 export const getClass = createServerFn({ method: 'GET' })
-  .inputValidator((data: { id: number }) => data)
+  .inputValidator((data: { id: string }) => data)
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
     return await db.query.classes.findFirst({
@@ -64,7 +64,7 @@ export const createClass = createServerFn({ method: 'POST' })
   })
 
 const updateClassSchema = z.object({
-  id: z.number(),
+  id: z.string().uuid(),
   name: z.string().min(1),
   description: z.string().optional(),
   color: z.string().optional(),
@@ -98,7 +98,7 @@ export const updateClass = createServerFn({ method: 'POST' })
     return classItem
   })
 
-const deleteClassSchema = z.object({ id: z.number() })
+const deleteClassSchema = z.object({ id: z.string().uuid() })
 
 export const deleteClass = createServerFn({ method: 'POST' })
   .inputValidator((data) => deleteClassSchema.parse(data))
@@ -116,7 +116,7 @@ export const deleteClass = createServerFn({ method: 'POST' })
   })
 
 const addScheduleSchema = z.object({
-  classId: z.number(),
+  classId: z.string().uuid(),
   dayOfWeek: z.number().min(0).max(6),
   startTime: z.string(),
   endTime: z.string(),
@@ -149,7 +149,7 @@ export const addSchedule = createServerFn({ method: 'POST' })
     return schedule
   })
 
-const removeScheduleSchema = z.object({ id: z.number() })
+const removeScheduleSchema = z.object({ id: z.string().uuid() })
 
 export const removeSchedule = createServerFn({ method: 'POST' })
   .inputValidator((data) => removeScheduleSchema.parse(data))
@@ -169,7 +169,7 @@ export const removeSchedule = createServerFn({ method: 'POST' })
   })
 
 const getBookingsSchema = z.object({
-  classId: z.number().optional(),
+  classId: z.string().uuid().optional(),
   status: z.string().optional(),
 })
 
@@ -215,8 +215,8 @@ export const getBookings = createServerFn({ method: 'GET' })
   })
 
 const createBookingSchema = z.object({
-  classScheduleId: z.number(),
-  memberId: z.number(),
+  classScheduleId: z.string().uuid(),
+  memberId: z.string().uuid(),
 })
 
 export const createBooking = createServerFn({ method: 'POST' })
@@ -265,7 +265,7 @@ export const createBooking = createServerFn({ method: 'POST' })
     return booking
   })
 
-const cancelBookingSchema = z.object({ id: z.number() })
+const cancelBookingSchema = z.object({ id: z.string().uuid() })
 
 export const cancelBooking = createServerFn({ method: 'POST' })
   .inputValidator((data) => cancelBookingSchema.parse(data))
@@ -288,7 +288,7 @@ export const cancelBooking = createServerFn({ method: 'POST' })
     return booking
   })
 
-const markAttendanceSchema = z.object({ id: z.number() })
+const markAttendanceSchema = z.object({ id: z.string().uuid() })
 
 export const markAttendance = createServerFn({ method: 'POST' })
   .inputValidator((data) => markAttendanceSchema.parse(data))

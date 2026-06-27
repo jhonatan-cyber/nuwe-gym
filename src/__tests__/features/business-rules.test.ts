@@ -68,7 +68,7 @@ describe('FK Constraint Violations', () => {
   it('should reject check-in with non-existent memberId', async () => {
     await expect(
       db.insert(checkIns).values({
-        memberId: 99999,
+        memberId: '99999',
         checkedInAt: new Date(),
         registeredByUserId: TEST_USER_ID,
         resultStatus: 'ALLOWED',
@@ -91,7 +91,7 @@ describe('FK Constraint Violations', () => {
     await expect(
       db.insert(saleItems).values({
         saleId: sale.id,
-        productId: 99999,
+        productId: '99999',
         quantity: 1,
         unitPrice: '100',
         subtotal: '100',

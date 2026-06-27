@@ -26,7 +26,7 @@ import { TYPE_OPTIONS, EMPTY_FORM } from '../types.ts'
 import type { PackageType, PackageFormData, Package } from '../types.ts'
 
 interface PackageFormProps {
-  editingPackageId: number | null
+  editingPackageId: string | null
   onBack: () => void
 }
 
@@ -56,6 +56,8 @@ export function PackageForm({ editingPackageId, onBack }: PackageFormProps) {
     }
     return EMPTY_FORM
   })
+
+  const [isDragging, setIsDragging] = useState(false)
 
   const createMutation = useMutation({
     mutationFn: createPackage,
@@ -90,6 +92,30 @@ export function PackageForm({ editingPackageId, onBack }: PackageFormProps) {
   function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      setFormData({ ...formData, imageBase64: event.target?.result as string })
+    }
+    reader.readAsDataURL(file)
+  }
+
+  function handleDragOver(e: React.DragEvent) {
+    e.preventDefault()
+    setIsDragging(true)
+  }
+
+  function handleDragLeave() {
+    setIsDragging(false)
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault()
+    setIsDragging(false)
+    const file = e.dataTransfer.files[0] as File | undefined
+    if (!file || !file.type.startsWith('image/')) {
+      toast.error('Por favor, arrastrá solo archivos de imagen.')
+      return
+    }
     const reader = new FileReader()
     reader.onload = (event) => {
       setFormData({ ...formData, imageBase64: event.target?.result as string })
@@ -154,7 +180,7 @@ export function PackageForm({ editingPackageId, onBack }: PackageFormProps) {
             alt="Logo Gym"
             className="w-full mx-auto opacity-90"
           />
-          <div className="flex items-start gap-3 p-3 rounded-2xl dark:bg-white/[0.02] bg-black/[0.02] border dark:border-white/5 border-black/5">
+          <div className="flex items-start gap-3 p-3 rounded-2xl dark:bg-white/2 bg-black/2 border dark:border-white/5 border-black/5">
             <Zap className="size-3.5 text-muted-foreground shrink-0 mt-0.5" />
             <p className="text-[10px] text-muted-foreground leading-relaxed">
               Los paquetes se pueden crear a medida. Ej: Sesiones, Primavera, Invierno, etc.
@@ -163,8 +189,7 @@ export function PackageForm({ editingPackageId, onBack }: PackageFormProps) {
         </div>
       }
     >
-      <div className="bg-card p-6 rounded-[2rem] border border-border/10 shadow-xl overflow-y-auto max-h-full">
-        <form onSubmit={handleSubmit} className="max-w-2xl mx-auto space-y-6">
+      <form onSubmit={handleSubmit} className="max-w-2xl mx-auto w-full space-y-6">
           <div>
             <p className="text-sm font-black tracking-tight">{formTitle}</p>
             <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">
@@ -174,7 +199,16 @@ export function PackageForm({ editingPackageId, onBack }: PackageFormProps) {
 
           <div className="grid gap-2">
             <Label className="text-xs font-bold">Imagen del Paquete</Label>
-            <div className="relative aspect-[16/9] max-h-[200px] rounded-2xl border-2 border-dashed dark:border-white/10 border-black/10 overflow-hidden dark:bg-white/[0.02] bg-black/[0.02]">
+            <div
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              className={`relative aspect-video max-h-[200px] rounded-2xl border-2 border-dashed overflow-hidden transition-all duration-200 ${
+                isDragging
+                  ? 'border-primary bg-primary/5 scale-[1.01]'
+                  : 'dark:border-white/10 border-black/10 dark:bg-white/2 bg-black/2'
+              }`}
+            >
               {formData.imageBase64 ? (
                 <>
                   <img src={formData.imageBase64} alt="Preview" className="w-full h-full object-cover" />
@@ -188,7 +222,7 @@ export function PackageForm({ editingPackageId, onBack }: PackageFormProps) {
                   </Button>
                 </>
               ) : (
-                <label className="w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-black/[0.04] dark:hover:bg-white/[0.04] transition-colors">
+                <label className="w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-black/4 dark:hover:bg-white/4 transition-colors">
                   <ImagePlus className="size-8 text-muted-foreground mb-2" />
                   <span className="text-xs font-bold text-muted-foreground">Click para subir imagen</span>
                   <span className="text-[10px] text-muted-foreground/60 mt-0.5">JPG, PNG o WebP</span>
@@ -310,20 +344,19 @@ export function PackageForm({ editingPackageId, onBack }: PackageFormProps) {
             )}
           </div>
 
-          <div className="flex items-center justify-end gap-3 pt-2">
+          <div className="flex items-center justify-between pt-2">
             <Button type="button" variant="outline" onClick={onBack}>
               Cancelar
             </Button>
             <LoadingButton
               type="submit"
               isLoading={createMutation.isPending || updateMutation.isPending}
-              className="bg-foreground text-primary-foreground hover:bg-foreground/90"
+              className="bg-black text-white border border-black dark:border-white hover:bg-white hover:text-black dark:hover:bg-black dark:hover:text-white transition-colors duration-200"
             >
               {isEditing ? 'Guardar Cambios' : 'Crear Paquete'}
             </LoadingButton>
           </div>
         </form>
-      </div>
     </ModuleLayout>
   )
 }

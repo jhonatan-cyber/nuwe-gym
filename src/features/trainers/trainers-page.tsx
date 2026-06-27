@@ -1,125 +1,67 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Edit2, Eye, X } from 'lucide-react'
+import { ChevronRight, Edit2, Plus, Users, CheckCircle2, XCircle, List, ArrowLeft, Zap, Phone, Mail } from 'lucide-react'
+import { useTheme } from 'next-themes'
 import { toast } from 'sonner'
 import {
   getTrainers,
-  getTrainer,
+  getMyMembers,
   createTrainer,
   updateTrainer,
-  assignMember,
-  unassignMember,
-  getMyMembers,
   getTrainerUsers,
-  setAvailability,
 } from '#/features/trainers/server.ts'
-import { getMembers } from '#/features/members/server.ts'
-
+import { ModuleLayout } from '#/shared/components/layout/module-layout.tsx'
+import { ToggleGroup, ToggleGroupItem } from '#/shared/components/ui/toggle-group'
 import { Button } from '#/shared/components/ui/button'
 import { LoadingButton } from '#/shared/components/ui/loading-button'
-import { Card, CardContent } from '#/shared/components/ui/card'
-import { Input } from '#/shared/components/ui/input'
-import { Label } from '#/shared/components/ui/label'
-import { Textarea } from '#/shared/components/ui/textarea'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '#/shared/components/ui/dialog'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '#/shared/components/ui/select'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '#/shared/components/ui/table'
 import { Badge } from '#/shared/components/ui/badge'
-import { Skeleton } from '#/shared/components/ui/skeleton'
+import { DataTable } from '#/shared/components/data-table.tsx'
+import { StatCard } from '#/shared/components/ui/stat-card'
+import { FilterBar } from '#/shared/components/ui/filter-bar'
+import { Input } from '#/shared/components/ui/input'
+import { Textarea } from '#/shared/components/ui/textarea'
+import { Label } from '#/shared/components/ui/label'
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '#/shared/components/ui/select'
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '#/shared/components/ui/tooltip'
+import type { TrainerWithDetails, ViewMode } from './types.ts'
 
 interface TrainersPageProps {
   userRole: string
 }
-
-const DAY_LABELS = [
-  'Domingo',
-  'Lunes',
-  'Martes',
-  'Miércoles',
-  'Jueves',
-  'Viernes',
-  'Sábado',
-]
-const DAY_NAMES = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
-
-type Tab = 'trainers' | 'assignments'
 
 export function TrainersPage({ userRole }: TrainersPageProps) {
   const queryClient = useQueryClient()
   const isAdmin = userRole === 'ADMIN'
   const isTrainer = userRole === 'TRAINER'
   const canWrite = isAdmin
-  const [activeTab, setActiveTab] = useState<Tab>('trainers')
+  const { resolvedTheme } = useTheme()
+  const isDark = resolvedTheme === 'dark'
 
-  // Trainer CRUD
-  const [trainerDialogOpen, setTrainerDialogOpen] = useState(false)
-  const [trainerForm, setTrainerForm] = useState({
-    userId: '',
-    specialty: '',
-    bio: '',
-    commissionRate: '',
-  })
+  const [activeView, setActiveView] = useState<ViewMode>('trainers')
+  const [search, setSearch] = useState('')
 
-  // Detail view
-  const [detailTrainerId, setDetailTrainerId] = useState<number | null>(null)
+  // Create/Edit form state
+  const [editingTrainer, setEditingTrainer] = useState<TrainerWithDetails | null>(null)
+  const [userId, setUserId] = useState('')
+  const [specialty, setSpecialty] = useState('')
+  const [bio, setBio] = useState('')
+  const [commissionRate, setCommissionRate] = useState('')
 
-  // Assign dialog
-  const [assignDialogOpen, setAssignDialogOpen] = useState(false)
-  const [assignForm, setAssignForm] = useState({ trainerId: '', memberId: '' })
-
-  // Availability dialog
-  const [availDialogOpen, setAvailDialogOpen] = useState(false)
-  const [availTrainerId, setAvailTrainerId] = useState<number | null>(null)
-  const [availSlots, setAvailSlots] = useState<
-    { dayOfWeek: string; startTime: string; endTime: string }[]
-  >([])
+  useEffect(() => {
+    if (activeView === 'create' || activeView === 'edit') {
+      setUserId(editingTrainer?.userId || '')
+      setSpecialty(editingTrainer?.specialty || '')
+      setBio(editingTrainer?.bio || '')
+      setCommissionRate(editingTrainer?.commissionRate || '0')
+    }
+  }, [activeView, editingTrainer])
 
   // Queries
-  const { data: trainers = [], isLoading: trainersLoading } = useQuery({
-    queryKey: ['trainers'],
+  const { data: trainers = [], isLoading } = useQuery({
+    queryKey: ['trainers', search],
     queryFn: () => getTrainers(),
-  })
-
-  const [editingTrainer, setEditingTrainer] = useState<
-    (typeof trainers)[number] | null
-  >(null)
-
-  const { data: trainerUsers = [] } = useQuery({
-    queryKey: ['trainer-users'],
-    queryFn: () => getTrainerUsers(),
-    enabled: canWrite,
-  })
-
-  const { data: membersList = [] } = useQuery({
-    queryKey: ['members-for-assign'],
-    queryFn: () => getMembers({ data: {} }),
-    enabled: canWrite,
-  })
-
-  const { data: detailTrainer } = useQuery({
-    queryKey: ['trainer-detail', detailTrainerId],
-    queryFn: () => getTrainer({ data: { id: detailTrainerId! } }),
-    enabled: !!detailTrainerId,
   })
 
   const { data: myMembers = [] } = useQuery({
@@ -128,871 +70,301 @@ export function TrainersPage({ userRole }: TrainersPageProps) {
     enabled: isTrainer,
   })
 
+  const { data: trainerUsers = [] } = useQuery({
+    queryKey: ['trainer-users'],
+    queryFn: () => getTrainerUsers(),
+    enabled: activeView === 'create' && canWrite,
+  })
+
+  const totalTrainers = trainers.length
+  const activeTrainers = trainers.filter((t) => t.isActive).length
+  const inactiveTrainers = totalTrainers - activeTrainers
+
+  const filteredTrainers = trainers.filter((t) => {
+    if (!search) return true
+    const q = search.toLowerCase()
+    return t.user.name.toLowerCase().includes(q) || (t.specialty || '').toLowerCase().includes(q)
+  })
+
   // Mutations
-  const createTrainerMutation = useMutation({
+  const createMutation = useMutation({
     mutationFn: createTrainer,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['trainers'] })
-      setTrainerDialogOpen(false)
+      setEditingTrainer(null)
+      setActiveView('trainers')
       toast.success('Entrenador creado exitosamente')
     },
-    onError: (err: Error) =>
-      toast.error(err.message || 'Error al crear entrenador'),
+    onError: (err: Error) => toast.error(err.message || 'Error al crear entrenador'),
   })
 
-  const updateTrainerMutation = useMutation({
+  const updateMutation = useMutation({
     mutationFn: updateTrainer,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['trainers'] })
-      setTrainerDialogOpen(false)
+      setEditingTrainer(null)
+      setActiveView('trainers')
       toast.success('Entrenador actualizado')
     },
     onError: () => toast.error('Error al actualizar entrenador'),
   })
 
-  const assignMutation = useMutation({
-    mutationFn: assignMember,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['trainers'] })
-      setAssignDialogOpen(false)
-      toast.success('Socio asignado correctamente')
-    },
-    onError: (err: Error) =>
-      toast.error(err.message || 'Error al asignar socio'),
-  })
-
-  const unassignMutation = useMutation({
-    mutationFn: unassignMember,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['trainers'] })
-      queryClient.invalidateQueries({ queryKey: ['trainer-detail'] })
-      toast.success('Asignación eliminada')
-    },
-    onError: () => toast.error('Error al eliminar asignación'),
-  })
-
-  const setAvailMutation = useMutation({
-    mutationFn: setAvailability,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['trainer-detail'] })
-      setAvailDialogOpen(false)
-      toast.success('Disponibilidad actualizada')
-    },
-    onError: () => toast.error('Error al actualizar disponibilidad'),
-  })
-
-  function handleOpenCreateDialog() {
-    setEditingTrainer(null)
-    setTrainerForm({ userId: '', specialty: '', bio: '', commissionRate: '' })
-    setTrainerDialogOpen(true)
-  }
-
-  function handleOpenEditDialog(trainer: (typeof trainers)[number]) {
-    setEditingTrainer(trainer)
-    setTrainerForm({
-      userId: trainer.userId,
-      specialty: trainer.specialty || '',
-      bio: trainer.bio || '',
-      commissionRate: trainer.commissionRate || '0',
-    })
-    setTrainerDialogOpen(true)
-  }
-
-  function handleTrainerSubmit(e: React.FormEvent) {
+  function handleFormSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (editingTrainer) {
-      updateTrainerMutation.mutate({
-        data: {
-          id: editingTrainer.id,
-          specialty: trainerForm.specialty,
-          bio: trainerForm.bio,
-          commissionRate: trainerForm.commissionRate,
-        },
-      })
+      updateMutation.mutate({ data: { id: editingTrainer.id, specialty, bio, commissionRate } })
     } else {
-      createTrainerMutation.mutate({ data: trainerForm })
+      if (!userId) return
+      createMutation.mutate({ data: { userId, specialty, bio, commissionRate } })
     }
   }
 
-  function handleAssignSubmit() {
-    assignMutation.mutate({
-      data: {
-        trainerId: Number(assignForm.trainerId),
-        memberId: Number(assignForm.memberId),
-      },
-    })
+  function handleEdit(trainer: TrainerWithDetails) {
+    setEditingTrainer(trainer)
+    setActiveView('edit')
   }
 
-  function handleUnassign(id: number) {
-    if (confirm('¿Eliminar esta asignación?')) {
-      unassignMutation.mutate({ data: { id } })
-    }
+  function handleBackToList() {
+    setEditingTrainer(null)
+    setActiveView('trainers')
   }
 
-  function handleOpenAvailDialog(trainerId: number, slots: typeof availSlots) {
-    setAvailTrainerId(trainerId)
-    setAvailSlots(
-      slots.length > 0
-        ? slots.map((s) => ({
-            dayOfWeek: String(s.dayOfWeek),
-            startTime: s.startTime,
-            endTime: s.endTime,
-          }))
-        : [{ dayOfWeek: '1', startTime: '08:00', endTime: '17:00' }],
-    )
-    setAvailDialogOpen(true)
-  }
-
-  function handleSaveAvailability() {
-    if (!availTrainerId) return
-    setAvailMutation.mutate({
-      data: {
-        trainerId: availTrainerId,
-        slots: availSlots.map((s) => ({
-          dayOfWeek: Number(s.dayOfWeek),
-          startTime: s.startTime,
-          endTime: s.endTime,
-        })),
-      },
-    })
-  }
-
-  function addAvailSlot() {
-    setAvailSlots([
-      ...availSlots,
-      { dayOfWeek: '1', startTime: '08:00', endTime: '17:00' },
-    ])
-  }
-
-  function removeAvailSlot(index: number) {
-    setAvailSlots(availSlots.filter((_, i) => i !== index))
-  }
-
-  function updateAvailSlot(index: number, field: string, value: string) {
-    setAvailSlots(
-      availSlots.map((s, i) => (i === index ? { ...s, [field]: value } : s)),
-    )
-  }
-
+  // Trainer view
   if (isTrainer) {
     return (
-      <div className="space-y-6 animate-in fade-in duration-500">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Mis Socios</h1>
-          <p className="text-muted-foreground">Socios asignados a tu cargo.</p>
-        </div>
-        <Card className="transition-all duration-200">
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nombre</TableHead>
-                  <TableHead>Teléfono</TableHead>
-                  <TableHead>Email</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {myMembers.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={3}
-                      className="text-center py-8 text-muted-foreground"
-                    >
-                      No tenés socios asignados.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  myMembers.map((member: (typeof myMembers)[number]) => (
-                    <TableRow key={member.id}>
-                      <TableCell className="font-medium">
-                        {member.fullName}
-                      </TableCell>
-                      <TableCell>{member.phone || '-'}</TableCell>
-                      <TableCell>{member.email || '-'}</TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      </div>
+      <ModuleLayout
+        breadcrumb={
+          <div className="flex items-center gap-1">
+            <span className="text-muted-foreground">Entrenadores</span>
+            <ChevronRight className="size-3 text-muted-foreground/50" />
+            <span className="text-foreground">Mis Socios</span>
+          </div>
+        }
+        title="Mis Socios"
+      >
+        <DataTable
+          columns={[
+            {
+              key: 'member', label: 'Socio',
+              render: (member: any) => (
+                <div className="flex items-center gap-3">
+                  <div className="size-8 rounded-full bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/10 flex items-center justify-center font-bold text-[10px] uppercase shrink-0 text-primary tracking-wider shadow-inner">
+                    {member.fullName.split(' ').map((n: string) => n[0]).slice(0, 2).join('')}
+                  </div>
+                  <div>
+                    <p className="font-bold text-sm">{member.fullName}</p>
+                    {member.documentNumber && <p className="text-[10px] text-muted-foreground">CI: {member.documentNumber}</p>}
+                  </div>
+                </div>
+              ),
+            },
+            { key: 'phone', label: 'Teléfono', render: (member: any) => (
+              <span className="inline-flex items-center gap-1.5">
+                <Phone className="size-3 text-muted-foreground" />
+                {member.phone || '—'}
+              </span>
+            ) },
+            { key: 'email', label: 'Email', render: (member: any) => (
+              <span className="inline-flex items-center gap-1.5">
+                <Mail className="size-3 text-muted-foreground" />
+                {member.email || '—'}
+              </span>
+            ) },
+          ]}
+          data={myMembers}
+          keyExtractor={(m: any) => m.id}
+          emptyMessage="No tenés socios asignados."
+          skeletonRows={5}
+        />
+      </ModuleLayout>
     )
   }
 
-  const tabs: { key: Tab; label: string }[] = [
-    { key: 'trainers', label: 'Entrenadores' },
-    { key: 'assignments', label: 'Asignaciones' },
-  ]
+  const isFormView = activeView === 'create' || activeView === 'edit'
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Entrenadores</h1>
-        <p className="text-muted-foreground">
-          Gestión de entrenadores, asignaciones y disponibilidad.
-        </p>
-      </div>
+    <ModuleLayout
+      breadcrumb={
+        <div className="flex items-center gap-1">
+          <span className="text-muted-foreground">Entrenadores</span>
+          <ChevronRight className="size-3 text-muted-foreground/50" />
+          <span className="text-foreground">{isFormView ? (editingTrainer ? 'Editar' : 'Nuevo') : 'Listado'}</span>
+        </div>
+      }
+      title={isFormView ? (editingTrainer ? 'Editar Entrenador' : 'Nuevo Entrenador') : 'Entrenadores'}
+      leftPanel={
+        <div className="flex flex-col gap-6 z-10 w-full">
+          <ToggleGroup type="single" value={activeView === 'trainers' ? 'trainers' : 'create'} onValueChange={(v) => { if (v) { setEditingTrainer(null); setActiveView(v as ViewMode) } }}>
+            <ToggleGroupItem value="trainers"><List className="size-3.5" /> Listado</ToggleGroupItem>
+            {canWrite && <ToggleGroupItem value="create"><Plus className="size-3.5" /> Crear nuevo</ToggleGroupItem>}
+          </ToggleGroup>
 
-      <div className="flex gap-1 rounded-lg bg-muted p-1 w-fit">
-        {tabs.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-              activeTab === tab.key
-                ? 'bg-background text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {activeTab === 'trainers' && (
-        <>
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">
-              {trainers.length} entrenador{trainers.length !== 1 ? 'es' : ''}{' '}
-              registrado{trainers.length !== 1 ? 's' : ''}
-            </p>
-            {canWrite && (
-              <Button onClick={handleOpenCreateDialog}>
-                <Plus className="mr-2 size-4" />
-                Nuevo Entrenador
-              </Button>
-            )}
-          </div>
-
-          <Card className="transition-all duration-200">
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nombre</TableHead>
-                    <TableHead>Especialidad</TableHead>
-                    <TableHead>Socios</TableHead>
-                    <TableHead>Estado</TableHead>
-                    {canWrite && (
-                      <TableHead className="text-right">Acciones</TableHead>
-                    )}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {trainersLoading ? (
-                    Array.from({ length: 3 }).map((_, i) => (
-                      <TableRow key={i}>
-                        {Array.from({ length: 5 }).map((_cell, j) => (
-                          <TableCell key={j}>
-                            <Skeleton className="h-4 w-full" />
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                    ))
-                  ) : trainers.length === 0 ? (
-                    <TableRow>
-                      <TableCell
-                        colSpan={5}
-                        className="text-center py-8 text-muted-foreground"
-                      >
-                        No hay entrenadores registrados.
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    trainers.map((t: (typeof trainers)[number]) => (
-                      <TableRow key={t.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <div className="size-8 bg-primary/10 text-primary rounded-full flex items-center justify-center font-bold text-xs uppercase">
-                              {t.user.name.substring(0, 2)}
-                            </div>
-                            <span className="font-medium">{t.user.name}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {t.specialty || '-'}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="secondary">
-                            {t.memberCount} socio
-                            {t.memberCount !== 1 ? 's' : ''}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={t.isActive ? 'default' : 'secondary'}>
-                            {t.isActive ? 'Activo' : 'Inactivo'}
-                          </Badge>
-                        </TableCell>
-                        {canWrite && (
-                          <TableCell className="text-right">
-                            <div className="flex justify-end gap-1">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => setDetailTrainerId(t.id)}
-                                title="Ver detalle"
-                              >
-                                <Eye className="size-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleOpenEditDialog(t)}
-                                title="Editar"
-                              >
-                                <Edit2 className="size-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        )}
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </>
-      )}
-
-      {activeTab === 'assignments' && (
-        <>
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">
-              Asignaciones de socios a entrenadores.
-            </p>
-            {canWrite && (
-              <Button
-                onClick={() => {
-                  setAssignForm({ trainerId: '', memberId: '' })
-                  setAssignDialogOpen(true)
-                }}
-              >
-                <Plus className="mr-2 size-4" />
-                Asignar Socio
-              </Button>
-            )}
-          </div>
-
-          <Card className="transition-all duration-200">
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Entrenador</TableHead>
-                    <TableHead>Socio</TableHead>
-                    <TableHead>Asignado</TableHead>
-                    <TableHead>Estado</TableHead>
-                    {canWrite && (
-                      <TableHead className="text-right">Acciones</TableHead>
-                    )}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {trainers.length === 0 ? (
-                    <TableRow>
-                      <TableCell
-                        colSpan={5}
-                        className="text-center py-8 text-muted-foreground"
-                      >
-                        No hay asignaciones.
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    trainers.flatMap((t: (typeof trainers)[number]) =>
-                      t.memberCount === 0
-                        ? []
-                        : t.assignments.map(
-                            (
-                              a: (typeof trainers)[number]['assignments'][number],
-                            ) => (
-                              <TableRow key={`${t.id}-${a.id}`}>
-                                <TableCell className="font-medium">
-                                  {t.user.name}
-                                </TableCell>
-                                <TableCell>{a.member.fullName}</TableCell>
-                                <TableCell className="text-muted-foreground text-sm">
-                                  {new Date(a.assignedAt).toLocaleDateString(
-                                    'es-AR',
-                                  )}
-                                </TableCell>
-                                <TableCell>
-                                  <Badge
-                                    variant={
-                                      a.isActive ? 'default' : 'secondary'
-                                    }
-                                  >
-                                    {a.isActive ? 'Activa' : 'Inactiva'}
-                                  </Badge>
-                                </TableCell>
-                                {canWrite && (
-                                  <TableCell className="text-right">
-                                    {a.isActive && (
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() => handleUnassign(a.id)}
-                                        title="Desasignar"
-                                      >
-                                        <X className="size-4 text-destructive" />
-                                      </Button>
-                                    )}
-                                  </TableCell>
-                                )}
-                              </TableRow>
-                            ),
-                          ),
-                    )
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </>
-      )}
-
-      {/* Create/Edit Trainer Dialog */}
-      <Dialog open={trainerDialogOpen} onOpenChange={setTrainerDialogOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <form onSubmit={handleTrainerSubmit}>
-            <DialogHeader>
-              <DialogTitle>
-                {editingTrainer ? 'Editar Entrenador' : 'Nuevo Entrenador'}
-              </DialogTitle>
-              <DialogDescription>
-                {editingTrainer
-                  ? 'Actualizá los datos del entrenador.'
-                  : 'Seleccioná un usuario para crear su perfil de entrenador.'}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              {!editingTrainer && (
-                <div className="grid gap-2">
-                  <Label htmlFor="userId">Usuario</Label>
-                  <Select
-                    value={trainerForm.userId}
-                    onValueChange={(v) =>
-                      setTrainerForm({ ...trainerForm, userId: v })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar usuario" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {trainerUsers.map((u: (typeof trainerUsers)[number]) => (
-                        <SelectItem key={u.id} value={u.id}>
-                          {u.name} ({u.email})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-              <div className="grid gap-2">
-                <Label htmlFor="specialty">Especialidad</Label>
-                <Input
-                  id="specialty"
-                  value={trainerForm.specialty}
-                  onChange={(e) =>
-                    setTrainerForm({
-                      ...trainerForm,
-                      specialty: e.target.value,
-                    })
-                  }
-                  placeholder="Ej: Musculación, Yoga, Spinning"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="bio">Biografía</Label>
-                <Textarea
-                  id="bio"
-                  value={trainerForm.bio}
-                  onChange={(e) =>
-                    setTrainerForm({ ...trainerForm, bio: e.target.value })
-                  }
-                  placeholder="Breve descripción del entrenador"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="commissionRate">Comisión (%)</Label>
-                <Input
-                  id="commissionRate"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  max="100"
-                  value={trainerForm.commissionRate}
-                  onChange={(e) =>
-                    setTrainerForm({
-                      ...trainerForm,
-                      commissionRate: e.target.value,
-                    })
-                  }
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setTrainerDialogOpen(false)}
-              >
-                Cancelar
-              </Button>
-              <LoadingButton
-                type="submit"
-                isLoading={
-                  createTrainerMutation.isPending ||
-                  updateTrainerMutation.isPending
-                }
-              >
-                Guardar
-              </LoadingButton>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Assign Member Dialog */}
-      <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Asignar Socio a Entrenador</DialogTitle>
-            <DialogDescription>
-              Seleccioná el entrenador y el socio a asignar.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label>Entrenador</Label>
-              <Select
-                value={assignForm.trainerId}
-                onValueChange={(v) =>
-                  setAssignForm({ ...assignForm, trainerId: v })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar entrenador" />
-                </SelectTrigger>
-                <SelectContent>
-                  {trainers.map((t: (typeof trainers)[number]) => (
-                    <SelectItem key={t.id} value={String(t.id)}>
-                      {t.user.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid gap-2">
-              <Label>Socio</Label>
-              <Select
-                value={assignForm.memberId}
-                onValueChange={(v) =>
-                  setAssignForm({ ...assignForm, memberId: v })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar socio" />
-                </SelectTrigger>
-                <SelectContent>
-                  {membersList.map((m: (typeof membersList)[number]) => (
-                    <SelectItem key={m.id} value={String(m.id)}>
-                      {m.fullName}{' '}
-                      {m.documentNumber ? `(${m.documentNumber})` : ''}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setAssignDialogOpen(false)}
-            >
-              Cancelar
-            </Button>
-            <Button
-              onClick={handleAssignSubmit}
-              disabled={assignMutation.isPending}
-            >
-              {assignMutation.isPending ? 'Asignando...' : 'Asignar'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Trainer Detail Dialog */}
-      <Dialog
-        open={!!detailTrainerId}
-        onOpenChange={(open) => {
-          if (!open) setDetailTrainerId(null)
-        }}
-      >
-        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Detalle del Entrenador</DialogTitle>
-            <DialogDescription>
-              Información del perfil, disponibilidad y socios asignados.
-            </DialogDescription>
-          </DialogHeader>
-          {detailTrainer ? (
-            <div className="space-y-6 py-4">
-              {/* Profile info */}
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                <div>
-                  <Label className="text-xs text-muted-foreground">
-                    Nombre
-                  </Label>
-                  <p className="font-medium">{detailTrainer.user.name}</p>
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">Email</Label>
-                  <p className="font-medium">{detailTrainer.user.email}</p>
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">
-                    Estado
-                  </Label>
-                  <Badge
-                    variant={detailTrainer.isActive ? 'default' : 'secondary'}
-                    className="mt-0.5"
-                  >
-                    {detailTrainer.isActive ? 'Activo' : 'Inactivo'}
-                  </Badge>
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">
-                    Especialidad
-                  </Label>
-                  <p className="font-medium">
-                    {detailTrainer.specialty || '-'}
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">
-                    Comisión
-                  </Label>
-                  <p className="font-medium">
-                    {detailTrainer.commissionRate || '0'}%
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">
-                    Socios Asignados
-                  </Label>
-                  <p className="font-medium">
-                    {detailTrainer.assignments.length}
-                  </p>
-                </div>
-              </div>
-              {detailTrainer.bio && (
-                <div>
-                  <Label className="text-xs text-muted-foreground">
-                    Biografía
-                  </Label>
-                  <p className="text-sm mt-1">{detailTrainer.bio}</p>
-                </div>
-              )}
-
-              {/* Availability */}
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">Disponibilidad</h3>
-                {canWrite && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      handleOpenAvailDialog(
-                        detailTrainer.id,
-                        detailTrainer.availability.map((s) => ({
-                          dayOfWeek: String(s.dayOfWeek),
-                          startTime: s.startTime,
-                          endTime: s.endTime,
-                        })),
-                      )
-                    }
-                  >
-                    Editar Disponibilidad
-                  </Button>
-                )}
-              </div>
-              {detailTrainer.availability.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  Sin disponibilidad configurada.
+          {isFormView ? (
+            <>
+              <img
+                src={isDark ? '/logo-dark.png' : '/logo-ligth.png'}
+                alt="Logo Gym"
+                className="w-full mx-auto opacity-90"
+              />
+              <div className="flex items-start gap-3 p-3 rounded-2xl dark:bg-white/2 bg-black/2 border dark:border-white/5 border-black/5">
+                <Zap className="size-3.5 text-muted-foreground shrink-0 mt-0.5" />
+                <p className="text-[10px] text-muted-foreground leading-relaxed">
+                  Completá los datos para crear un nuevo entrenador o asignarlo a un usuario existente.
                 </p>
-              ) : (
-                <div className="flex flex-wrap gap-2">
-                  {detailTrainer.availability.map(
-                    (
-                      s: NonNullable<
-                        typeof detailTrainer
-                      >['availability'][number],
-                    ) => (
-                      <Badge key={s.id} variant="outline" className="gap-1">
-                        {DAY_NAMES[s.dayOfWeek]} {s.startTime}-{s.endTime}
-                      </Badge>
-                    ),
-                  )}
-                </div>
-              )}
-
-              {/* Assigned members */}
-              <div>
-                <h3 className="text-lg font-semibold mb-3">Socios Asignados</h3>
-                {detailTrainer.assignments.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    No tiene socios asignados.
-                  </p>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Nombre</TableHead>
-                        <TableHead>Teléfono</TableHead>
-                        <TableHead>Email</TableHead>
-                        {canWrite && (
-                          <TableHead className="text-right">Acciones</TableHead>
-                        )}
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {detailTrainer.assignments.map(
-                        (
-                          a: NonNullable<
-                            typeof detailTrainer
-                          >['assignments'][number],
-                        ) => (
-                          <TableRow key={a.id}>
-                            <TableCell className="font-medium">
-                              {a.member.fullName}
-                            </TableCell>
-                            <TableCell>{a.member.phone || '-'}</TableCell>
-                            <TableCell>{a.member.email || '-'}</TableCell>
-                            {canWrite && (
-                              <TableCell className="text-right">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => handleUnassign(a.id)}
-                                  title="Desasignar"
-                                >
-                                  <X className="size-4 text-destructive" />
-                                </Button>
-                              </TableCell>
-                            )}
-                          </TableRow>
-                        ),
-                      )}
-                    </TableBody>
-                  </Table>
-                )}
               </div>
-            </div>
+            </>
           ) : (
-            <div className="py-8 text-center text-muted-foreground">
-              Cargando...
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDetailTrainerId(null)}>
-              Cerrar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            <>
+              <div className="space-y-3">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">Métricas</p>
+                <div className="grid grid-cols-1 gap-3">
+                  <StatCard label="Total Entrenadores" value={totalTrainers} icon={Users} variant="default" />
+                  <StatCard label="Activos" value={activeTrainers} icon={CheckCircle2} variant="emerald" />
+                  <StatCard label="Inactivos" value={inactiveTrainers} icon={XCircle} variant="foreground" />
+                </div>
+              </div>
 
-      {/* Availability Dialog */}
-      <Dialog open={availDialogOpen} onOpenChange={setAvailDialogOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Configurar Disponibilidad</DialogTitle>
-            <DialogDescription>
-              Definí los horarios disponibles del entrenador para cada día de la
-              semana.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3 py-2 max-h-60 overflow-y-auto">
-            {availSlots.map((slot, i) => (
-              <div
-                key={i}
-                className="flex items-start gap-2 rounded-lg border p-3"
-              >
-                <div className="grid grid-cols-3 gap-2 flex-1">
-                  <div className="grid gap-1">
-                    <Label className="text-xs">Día</Label>
-                    <Select
-                      value={slot.dayOfWeek}
-                      onValueChange={(v) => updateAvailSlot(i, 'dayOfWeek', v)}
-                    >
+              <FilterBar
+                search={search}
+                onSearchChange={setSearch}
+                searchPlaceholder="Buscar por nombre, especialidad..."
+              />
+            </>
+          )}
+        </div>
+      }
+    >
+      {isFormView ? (
+        <div className="flex-1 flex justify-center items-start pt-5">
+          <div className="w-full max-w-lg bg-card/60 border border-border/10 rounded-4xl shadow-xl overflow-hidden flex flex-col min-h-[580px]">
+            <form onSubmit={handleFormSubmit} className="flex-1 p-6 flex flex-col">
+              <div className="flex items-center gap-2 mb-5">
+                <Button type="button" variant="ghost" size="sm" className="h-8 rounded-xl" onClick={handleBackToList}>
+                  <ArrowLeft className="size-3.5" /> Volver
+                </Button>
+              </div>
+
+              <div className="flex-1 min-h-0 overflow-y-auto space-y-5">
+                {!editingTrainer && (
+                  <div className="grid gap-2">
+                    <Label htmlFor="userId">Usuario</Label>
+                    <Select value={userId} onValueChange={setUserId}>
                       <SelectTrigger>
-                        <SelectValue />
+                        <SelectValue placeholder="Seleccionar usuario" />
                       </SelectTrigger>
                       <SelectContent>
-                        {DAY_LABELS.map((label, di) => (
-                          <SelectItem key={di} value={String(di)}>
-                            {label}
-                          </SelectItem>
+                        {trainerUsers.map((u) => (
+                          <SelectItem key={u.id} value={u.id}>{u.name} ({u.email})</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="grid gap-1">
-                    <Label className="text-xs">Inicio</Label>
-                    <Input
-                      type="time"
-                      value={slot.startTime}
-                      onChange={(e) =>
-                        updateAvailSlot(i, 'startTime', e.target.value)
-                      }
-                    />
+                )}
+
+                <div className="grid gap-2">
+                  <Label htmlFor="specialty">Especialidad</Label>
+                  <Input id="specialty" value={specialty} onChange={(e) => setSpecialty(e.target.value)} placeholder="Ej: Musculación, Yoga, Spinning" />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="bio">Biografía</Label>
+                  <Textarea id="bio" value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Breve descripción del entrenador" />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="commissionRate">Comisión (%)</Label>
+                  <Input id="commissionRate" type="number" step="0.01" min="0" max="100" value={commissionRate} onChange={(e) => setCommissionRate(e.target.value)} />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 pt-4 mt-auto">
+                <Button type="button" variant="outline" className="rounded-xl" onClick={handleBackToList}>Cancelar</Button>
+                <LoadingButton type="submit" className="rounded-xl font-bold" isLoading={createMutation.isPending || updateMutation.isPending}>
+                  {editingTrainer ? 'Guardar Cambios' : 'Crear Entrenador'}
+                </LoadingButton>
+              </div>
+            </form>
+          </div>
+        </div>
+      ) : (
+        <TooltipProvider delayDuration={200}>
+        <DataTable
+          columns={[
+            {
+              key: 'trainer', label: 'Entrenador',
+              render: (t: TrainerWithDetails) => (
+                <div className="flex items-center gap-3">
+                  <div className="ring-2 ring-foreground/10 rounded-full size-9 flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5 font-bold text-xs uppercase shrink-0 text-primary tracking-wider shadow-inner">
+                    {t.user.name.split(' ').map((n) => n[0]).slice(0, 2).join('')}
                   </div>
-                  <div className="grid gap-1">
-                    <Label className="text-xs">Fin</Label>
-                    <Input
-                      type="time"
-                      value={slot.endTime}
-                      onChange={(e) =>
-                        updateAvailSlot(i, 'endTime', e.target.value)
-                      }
-                    />
+                  <div className="min-w-0">
+                    <p className="font-bold text-sm dark:text-white text-foreground leading-tight truncate">{t.user.name}</p>
+                    <p className="text-[10px] font-semibold text-muted-foreground">{t.user.email}</p>
                   </div>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="mt-5 shrink-0"
-                  onClick={() => removeAvailSlot(i)}
-                >
-                  <X className="size-4" />
-                </Button>
-              </div>
-            ))}
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={addAvailSlot}
-            className="w-full"
-          >
-            <Plus className="mr-2 size-4" />
-            Agregar Bloque
-          </Button>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setAvailDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <LoadingButton
-              onClick={handleSaveAvailability}
-              isLoading={setAvailMutation.isPending}
-            >
-              Guardar Disponibilidad
-            </LoadingButton>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+              ),
+            },
+            {
+              key: 'specialty', label: (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="cursor-default">Especialidad</span>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    <p>Área de entrenamiento del instructor</p>
+                  </TooltipContent>
+                </Tooltip>
+              ),
+              render: (t: TrainerWithDetails) => (
+                <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Zap className="size-3 text-muted-foreground" />
+                  {t.specialty || '—'}
+                </span>
+              ),
+            },
+            {
+              key: 'members', label: 'Socios',
+              render: (t: TrainerWithDetails) => (
+                <Badge variant="secondary" className="inline-flex items-center gap-1 font-bold text-[10px]">
+                  <Users className="size-2.5" />
+                  {t.memberCount} socio{t.memberCount !== 1 ? 's' : ''}
+                </Badge>
+              ),
+            },
+            {
+              key: 'status', label: '',
+              render: (t: TrainerWithDetails) => (
+                t.isActive
+                  ? <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 text-[10px] font-bold">Activo</Badge>
+                  : <Badge variant="destructive" className="text-[10px] font-bold">Inactivo</Badge>
+              ),
+            },
+            ...(canWrite
+              ? [{
+                  key: 'actions' as string, label: '',
+                  className: 'text-right' as string,
+                  render: (t: TrainerWithDetails) => (
+                      <div className="flex justify-end gap-0.5">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon-xs" onClick={() => handleEdit(t)}>
+                              <Edit2 className="size-3.5" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="bottom"><p>Editar</p></TooltipContent>
+                        </Tooltip>
+                      </div>
+                  ),
+                }]
+              : []),
+          ]}
+          data={filteredTrainers}
+          isLoading={isLoading}
+          loadingMessage="Cargando..."
+          emptyMessage={search ? 'No se encontraron entrenadores.' : 'No hay entrenadores registrados.'}
+          keyExtractor={(t: TrainerWithDetails) => t.id}
+          skeletonRows={5}
+        />
+        </TooltipProvider>
+      )}
+    </ModuleLayout>
   )
 }

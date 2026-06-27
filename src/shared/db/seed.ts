@@ -1,12 +1,9 @@
 import { config } from 'dotenv'
 import { drizzle } from 'drizzle-orm/node-postgres'
 import pg from 'pg'
-import { eq } from 'drizzle-orm'
-import { users, accounts } from './schema/auth.ts'
 import { packages } from './schema/packages.ts'
 import { productCategories } from './schema/product-categories.ts'
 import { settings } from './schema/settings.ts'
-import { hashPassword } from '@better-auth/utils/password'
 
 config({ path: ['.env.local', '.env'] })
 
@@ -16,76 +13,6 @@ async function seed() {
   const db = drizzle(pool)
 
   console.log('🌱 Seeding database...')
-
-  const existingAdmin = await db
-    .select()
-    .from(users)
-    .where(eq(users.email, 'admin@gym.local'))
-    .limit(1)
-
-  const passwordHash = await hashPassword('Admin123*')
-
-  if (existingAdmin.length > 0) {
-    const admin = existingAdmin[0]
-    // Update existing admin + account instead of delete+reinsert (preserves FK refs)
-    await db
-      .update(users)
-      .set({
-        name: 'Administrador',
-        emailVerified: true,
-        role: 'ADMIN',
-        updatedAt: new Date(),
-      })
-      .where(eq(users.id, admin.id))
-
-    const existingAccount = await db
-      .select()
-      .from(accounts)
-      .where(eq(accounts.userId, admin.id))
-      .limit(1)
-    if (existingAccount.length > 0) {
-      await db
-        .update(accounts)
-        .set({ password: passwordHash, updatedAt: new Date() })
-        .where(eq(accounts.userId, admin.id))
-    } else {
-      await db.insert(accounts).values({
-        id: crypto.randomUUID(),
-        accountId: admin.id,
-        providerId: 'credential',
-        userId: admin.id,
-        password: passwordHash,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-    }
-
-    console.log('✅ Admin user updated: admin@gym.local / Admin123*')
-  } else {
-    const adminId = crypto.randomUUID()
-
-    await db.insert(users).values({
-      id: adminId,
-      name: 'Administrador',
-      email: 'admin@gym.local',
-      emailVerified: true,
-      role: 'ADMIN',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    })
-
-    await db.insert(accounts).values({
-      id: crypto.randomUUID(),
-      accountId: adminId,
-      providerId: 'credential',
-      userId: adminId,
-      password: passwordHash,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    })
-
-    console.log('✅ Admin user created: admin@gym.local / Admin123*')
-  }
 
   // Seed packages
   const existingPackages = await db.select().from(packages).limit(1)

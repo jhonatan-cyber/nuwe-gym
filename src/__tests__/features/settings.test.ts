@@ -28,7 +28,7 @@ describe('Settings', () => {
     await db
       .update(settings)
       .set({ gymName: 'Gym Actualizado', gymAddress: 'Av. Nueva 456' })
-      .where(eq(settings.id, 1))
+      .where(eq(settings.id, '00000000-0000-0000-0000-000000000000'))
 
     const s = await db.query.settings.findFirst()
     expect(s!.gymName).toBe('Gym Actualizado')
@@ -39,7 +39,7 @@ describe('Settings', () => {
     await db
       .update(settings)
       .set({ enableAutoRenew: true, backupEnabled: true })
-      .where(eq(settings.id, 1))
+      .where(eq(settings.id, '00000000-0000-0000-0000-000000000000'))
 
     const s = await db.query.settings.findFirst()
     expect(s!.enableAutoRenew).toBe(true)
@@ -50,7 +50,7 @@ describe('Settings', () => {
     await db
       .update(settings)
       .set({ lowStockThreshold: 10, membershipReminderDays: 14 })
-      .where(eq(settings.id, 1))
+      .where(eq(settings.id, '00000000-0000-0000-0000-000000000000'))
 
     const s = await db.query.settings.findFirst()
     expect(s!.lowStockThreshold).toBe(10)

@@ -24,7 +24,7 @@ export const getRecentCheckIns = createServerFn({ method: 'GET' }).handler(
 )
 
 const createCheckInSchema = z.object({
-  memberId: z.number(),
+  memberId: z.string().uuid(),
   notes: z.string().optional(),
 })
 

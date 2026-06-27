@@ -59,7 +59,7 @@ export const getUnreadCount = createServerFn({ method: 'GET' }).handler(
   },
 )
 
-const markAsReadSchema = z.object({ id: z.number() })
+const markAsReadSchema = z.object({ id: z.string().uuid() })
 
 export const markAsRead = createServerFn({ method: 'POST' })
   .inputValidator((data) => markAsReadSchema.parse(data))

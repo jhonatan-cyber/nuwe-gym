@@ -7,7 +7,7 @@ export async function createAuditLog(params: {
   userRole?: string
   action: string
   entityType: string
-  entityId?: number
+  entityId?: string
   description: string
   details?: Record<string, unknown>
   ipAddress?: string

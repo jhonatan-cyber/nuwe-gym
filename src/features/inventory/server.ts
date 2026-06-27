@@ -19,9 +19,9 @@ export const getInventoryMovements = createServerFn({ method: 'GET' }).handler(
 )
 
 interface StockSnapshot {
-  productId: number
+  productId: string
   productName: string
-  categoryId: number
+  categoryId: string
   categoryName: string
   currentStock: number
   previousStock: number
@@ -42,7 +42,7 @@ export const getStockSnapshots = createServerFn({ method: 'GET' })
       .select({
         id: inventoryMovements.productId,
         productName: sql<string>`"products"."name"`,
-        categoryId: sql<number>`"products"."category_id"`,
+        categoryId: sql<string>`"products"."category_id"`,
         categoryName: sql<string>`"product_categories"."name"`,
         currentStock: sql<number>`"products"."stock_current"`,
       })

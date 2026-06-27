@@ -19,7 +19,7 @@ import type { Subscription } from '../types.ts'
 interface SubscriptionCardProps {
   sub: Subscription
   isReadOnly: boolean
-  onCancel: (id: number) => void
+  onCancel: (id: string) => void
 }
 
 function StatusBadge({ status, endDate }: { status: string; endDate: Date }) {
@@ -44,13 +44,13 @@ export function SubscriptionCard({ sub, isReadOnly, onCancel }: SubscriptionCard
   const { daysRemaining, daysExpired, percent, progressColor } = getSubscriptionProgress(sub)
 
   return (
-    <div className="group relative rounded-3xl border dark:border-white/[0.08] border-black/[0.08] p-5 flex flex-col justify-between gap-4.5 bg-card hover:shadow-xl hover:border-foreground/20 transition-all duration-300 min-h-[220px]">
+    <div className="group relative rounded-3xl border dark:border-white/8 border-black/8 p-5 flex flex-col justify-between gap-4.5 bg-card hover:shadow-xl hover:border-foreground/20 transition-all duration-300 min-h-[220px]">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
           {sub.member.photoUrl ? (
             <img src={sub.member.photoUrl} alt={sub.member.fullName} className="size-10 rounded-full object-cover shrink-0 border border-primary/10 shadow-sm" />
           ) : (
-            <div className="size-10 rounded-full bg-gradient-to-br from-primary/10 to-primary/5 dark:from-primary/25 dark:to-primary/5 border border-primary/10 flex items-center justify-center font-bold text-xs uppercase text-primary shrink-0 shadow-inner">
+            <div className="size-10 rounded-full bg-linear-to-br from-primary/10 to-primary/5 dark:from-primary/25 dark:to-primary/5 border border-primary/10 flex items-center justify-center font-bold text-xs uppercase text-primary shrink-0 shadow-inner">
               {getInitials(sub.member.fullName)}
             </div>
           )}

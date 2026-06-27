@@ -1,11 +1,7 @@
-import {
-  pgTable,
-  serial,
-  integer,
+import { uuid, pgTable,
   text,
   timestamp,
-  index,
-} from 'drizzle-orm/pg-core'
+  index, } from 'drizzle-orm/pg-core'
 import { subscriptionStatusEnum } from './enums.ts'
 import { members } from './members.ts'
 import { membershipPlans } from './membership-plans.ts'
@@ -14,13 +10,13 @@ import { packages } from './packages.ts'
 export const subscriptions = pgTable(
   'subscriptions',
   {
-    id: serial('id').primaryKey(),
-    memberId: integer('member_id')
+    id: uuid('id').defaultRandom().primaryKey(),
+    memberId: uuid('member_id')
       .notNull()
       .references(() => members.id),
-    planId: integer('plan_id')
+    planId: uuid('plan_id')
       .references(() => membershipPlans.id),
-    packageId: integer('package_id')
+    packageId: uuid('package_id')
       .references(() => packages.id),
     startDate: timestamp('start_date').notNull(),
     endDate: timestamp('end_date').notNull(),

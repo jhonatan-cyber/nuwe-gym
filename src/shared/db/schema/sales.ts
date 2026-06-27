@@ -1,12 +1,9 @@
-import {
-  pgTable,
-  serial,
+import { uuid, pgTable,
   integer,
   text,
   numeric,
   timestamp,
-  index,
-} from 'drizzle-orm/pg-core'
+  index, } from 'drizzle-orm/pg-core'
 import { saleStatusEnum, paymentMethodEnum } from './enums.ts'
 import { users } from './auth.ts'
 import { members } from './members.ts'
@@ -15,9 +12,9 @@ import { products } from './products.ts'
 export const sales = pgTable(
   'sales',
   {
-    id: serial('id').primaryKey(),
+    id: uuid('id').defaultRandom().primaryKey(),
     saleNumber: text('sale_number').notNull(),
-    memberId: integer('member_id').references(() => members.id),
+    memberId: uuid('member_id').references(() => members.id),
     customerName: text('customer_name'),
     userId: text('user_id')
       .notNull()
@@ -30,8 +27,8 @@ export const sales = pgTable(
     paymentMethod: paymentMethodEnum('payment_method'),
     status: saleStatusEnum('status').notNull().default('COMPLETED'),
     soldAt: timestamp('sold_at').notNull().defaultNow(),
-    cashSessionId: integer('cash_session_id'),
-    branchId: integer('branch_id'),
+    cashSessionId: uuid('cash_session_id'),
+    branchId: uuid('branch_id'),
     createdAt: timestamp('created_at').notNull().defaultNow(),
   },
   (table) => [
@@ -46,11 +43,11 @@ export const sales = pgTable(
 export const saleItems = pgTable(
   'sale_items',
   {
-    id: serial('id').primaryKey(),
-    saleId: integer('sale_id')
+    id: uuid('id').defaultRandom().primaryKey(),
+    saleId: uuid('sale_id')
       .notNull()
       .references(() => sales.id),
-    productId: integer('product_id')
+    productId: uuid('product_id')
       .notNull()
       .references(() => products.id),
     quantity: integer('quantity').notNull(),

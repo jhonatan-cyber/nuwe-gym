@@ -13,7 +13,7 @@ import { Badge } from '#/shared/components/ui/badge'
 import { cn } from '#/shared/lib/utils.ts'
 
 interface MemberDetailDialogProps {
-  memberId: number | null
+  memberId: string | null
   onOpenChange: (open: boolean) => void
 }
 

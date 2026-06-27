@@ -47,7 +47,7 @@ export const createCategory = createServerFn({ method: 'POST' })
   })
 
 const updateCategorySchema = z.object({
-  id: z.number(),
+  id: z.string().uuid(),
   name: z.string(),
   description: z.string().optional(),
   isActive: z.boolean().optional(),
@@ -81,7 +81,7 @@ export const updateCategory = createServerFn({ method: 'POST' })
 
 const getProductsSchema = z.object({
   search: z.string().optional(),
-  categoryId: z.number().optional(),
+  categoryId: z.string().uuid().optional(),
 })
 
 export const getProducts = createServerFn({ method: 'GET' })
@@ -117,7 +117,7 @@ const createProductSchema = z.object({
   barcode: z.string().optional(),
   name: z.string(),
   description: z.string().optional(),
-  categoryId: z.number(),
+  categoryId: z.string().uuid(),
   purchasePrice: z.string(),
   salePrice: z.string(),
   stockCurrent: z.number(),
@@ -155,12 +155,12 @@ export const createProduct = createServerFn({ method: 'POST' })
   })
 
 const updateProductSchema = z.object({
-  id: z.number(),
+  id: z.string().uuid(),
   sku: z.string(),
   barcode: z.string().optional(),
   name: z.string(),
   description: z.string().optional(),
-  categoryId: z.number(),
+  categoryId: z.string().uuid(),
   purchasePrice: z.string(),
   salePrice: z.string(),
   stockCurrent: z.number(),
@@ -202,7 +202,7 @@ export const updateProduct = createServerFn({ method: 'POST' })
   })
 
 const adjustStockSchema = z.object({
-  productId: z.number(),
+  productId: z.string().uuid(),
   quantity: z.number(),
   movementType: z.enum(['MANUAL_ADJUSTMENT', 'LOSS', 'RETURN']),
   notes: z.string().optional(),

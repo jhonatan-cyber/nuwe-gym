@@ -58,8 +58,8 @@ export const getExpiredSubscriptions = createServerFn({
 })
 
 const renewSubscriptionSchema = z.object({
-  memberId: z.number(),
-  packageId: z.number(),
+  memberId: z.string().uuid(),
+  packageId: z.string().uuid(),
   paymentMethod: z.enum(['CASH', 'CARD', 'TRANSFER', 'QR']),
   amount: z.string(),
   notes: z.string().optional(),
@@ -220,7 +220,7 @@ export const processAutoRenewals = createServerFn({ method: 'POST' }).handler(
               paymentDate: new Date(),
               notes: 'Renovación automática',
               createdByUserId: userId,
-              cashSessionId: openSession?.id ?? 0,
+              cashSessionId: openSession?.id ?? null,
             })
             .returning()
 
@@ -258,7 +258,7 @@ export const processAutoRenewals = createServerFn({ method: 'POST' }).handler(
 
 export const getMemberRenewalHistory = createServerFn({ method: 'GET' })
   .inputValidator((data: unknown) =>
-    z.object({ memberId: z.number() }).parse(data),
+    z.object({ memberId: z.string().uuid() }).parse(data),
   )
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })

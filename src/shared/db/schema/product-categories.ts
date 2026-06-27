@@ -1,16 +1,13 @@
-import {
-  pgTable,
-  serial,
+import { uuid, pgTable,
   text,
   boolean,
   timestamp,
-  uniqueIndex,
-} from 'drizzle-orm/pg-core'
+  uniqueIndex, } from 'drizzle-orm/pg-core'
 
 export const productCategories = pgTable(
   'product_categories',
   {
-    id: serial('id').primaryKey(),
+    id: uuid('id').defaultRandom().primaryKey(),
     name: text('name').notNull(),
     description: text('description'),
     isActive: boolean('is_active').notNull().default(true),

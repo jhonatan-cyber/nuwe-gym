@@ -1,5 +1,6 @@
 import { relations } from 'drizzle-orm'
 import { users, sessions, accounts } from './auth.ts'
+import { roles } from './roles.ts'
 import { members } from './members.ts'
 import { membershipPlans } from './membership-plans.ts'
 import { subscriptions } from './subscriptions.ts'
@@ -24,9 +25,14 @@ import { branches, userBranches } from './branches.ts'
 import { packages, packageItems } from './packages.ts'
 
 // Auth relations
-export const usersRelations = relations(users, ({ many }) => ({
+export const usersRelations = relations(users, ({ many, one }) => ({
   sessions: many(sessions),
   accounts: many(accounts),
+  roleObj: one(roles, { fields: [users.role], references: [roles.name] }),
+}))
+
+export const rolesRelations = relations(roles, ({ many }) => ({
+  users: many(users),
 }))
 
 export const sessionsRelations = relations(sessions, ({ one }) => ({

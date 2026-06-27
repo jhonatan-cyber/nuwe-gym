@@ -1,20 +1,17 @@
-import {
-  pgTable,
-  serial,
-  text,
+import { uuid, pgTable,
   integer,
+  text,
   boolean,
   timestamp,
   numeric,
-  index,
-} from 'drizzle-orm/pg-core'
+  index, } from 'drizzle-orm/pg-core'
 import { users } from './auth.ts'
 import { members } from './members.ts'
 
 export const trainerProfiles = pgTable(
   'trainer_profiles',
   {
-    id: serial('id').primaryKey(),
+    id: uuid('id').defaultRandom().primaryKey(),
     userId: text('user_id')
       .notNull()
       .references(() => users.id),
@@ -37,11 +34,11 @@ export const trainerProfiles = pgTable(
 export const trainerAssignments = pgTable(
   'trainer_assignments',
   {
-    id: serial('id').primaryKey(),
-    trainerId: integer('trainer_id')
+    id: uuid('id').defaultRandom().primaryKey(),
+    trainerId: uuid('trainer_id')
       .notNull()
       .references(() => trainerProfiles.id, { onDelete: 'cascade' }),
-    memberId: integer('member_id')
+    memberId: uuid('member_id')
       .notNull()
       .references(() => members.id),
     assignedAt: timestamp('assigned_at').defaultNow().notNull(),
@@ -56,8 +53,8 @@ export const trainerAssignments = pgTable(
 export const trainerAvailability = pgTable(
   'trainer_availability',
   {
-    id: serial('id').primaryKey(),
-    trainerId: integer('trainer_id')
+    id: uuid('id').defaultRandom().primaryKey(),
+    trainerId: uuid('trainer_id')
       .notNull()
       .references(() => trainerProfiles.id, { onDelete: 'cascade' }),
     dayOfWeek: integer('day_of_week').notNull(),

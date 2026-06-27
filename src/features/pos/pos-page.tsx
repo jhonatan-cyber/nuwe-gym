@@ -35,7 +35,7 @@ import {
 } from '#/shared/components/ui/dialog'
 
 interface CartItem {
-  id: number
+  id: string
   name: string
   salePrice: string
   quantity: number
@@ -92,7 +92,7 @@ export function POSPage() {
       getProducts({
         data: {
           search: debouncedProductSearch,
-          categoryId: categoryIdFilter ? Number(categoryIdFilter) : undefined,
+          categoryId: categoryIdFilter || undefined,
         },
       }),
   })
@@ -164,7 +164,7 @@ export function POSPage() {
     })
   }
 
-  const updateQuantity = (id: number, delta: number) => {
+  const updateQuantity = (id: string, delta: number) => {
     setCart((prev) =>
       prev
         .map((item) => {
@@ -182,7 +182,7 @@ export function POSPage() {
     )
   }
 
-  const removeFromCart = (id: number) => {
+  const removeFromCart = (id: string) => {
     setCart((prev) => prev.filter((item) => item.id !== id))
   }
 

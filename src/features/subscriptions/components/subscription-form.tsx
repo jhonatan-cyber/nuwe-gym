@@ -48,8 +48,8 @@ export function SubscriptionForm({ onBack }: SubscriptionFormProps) {
   const [isMemberDropdownOpen, setIsMemberDropdownOpen] = useState(false)
 
   const [formData, setFormData] = useState({
-    memberId: 0,
-    packageId: 0,
+    memberId: '',
+    packageId: '',
     startDate: new Date().toISOString().split('T')[0],
     endDate: '',
     amountPaid: '',
@@ -77,7 +77,7 @@ export function SubscriptionForm({ onBack }: SubscriptionFormProps) {
     onError: () => toast.error('Error al registrar la suscripción'),
   })
 
-  function handlePackageSelect(packageId: number) {
+  function handlePackageSelect(packageId: string) {
     const pkg = packages.find((p) => p.id === packageId)
     if (!pkg) return
     const start = new Date(formData.startDate)
@@ -138,7 +138,7 @@ export function SubscriptionForm({ onBack }: SubscriptionFormProps) {
             <ToggleGroupItem value="form"><Plus className="size-3.5" /> Nuevo</ToggleGroupItem>
           </ToggleGroup>
           <img src={isDark ? '/logo-dark.png' : '/logo-ligth.png'} alt="Logo Gym" className="w-full mx-auto opacity-90" />
-          <div className="flex items-start gap-3 p-3 rounded-2xl dark:bg-white/[0.02] bg-black/[0.02] border dark:border-white/5 border-black/5">
+          <div className="flex items-start gap-3 p-3 rounded-2xl dark:bg-white/2 bg-black/2 border dark:border-white/5 border-black/5">
             <Zap className="size-3.5 text-muted-foreground shrink-0 mt-0.5" />
             <p className="text-[10px] text-muted-foreground leading-relaxed">
               Las suscripciones vinculan a un socio con un paquete activo y registran el pago correspondiente.
@@ -147,7 +147,7 @@ export function SubscriptionForm({ onBack }: SubscriptionFormProps) {
         </div>
       }
     >
-      <div className="bg-card p-6 rounded-[2rem] border border-border/10 shadow-xl overflow-y-auto max-h-full">
+      <div className="bg-card p-6 rounded-4xl border border-border/10 shadow-xl overflow-y-auto max-h-full">
         <form onSubmit={handleSubmit} className="max-w-2xl mx-auto space-y-6">
           <div>
             <p className="text-sm font-black tracking-tight">Alta de Suscripción</p>
@@ -179,7 +179,7 @@ export function SubscriptionForm({ onBack }: SubscriptionFormProps) {
                   <button
                     type="button"
                     onClick={() => {
-                      setFormData({ ...formData, memberId: 0 })
+                      setFormData({ ...formData, memberId: '' })
                       setMemberSearch('')
                     }}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground hover:bg-black/10 dark:hover:bg-white/10 p-1 rounded-full shrink-0"
@@ -239,7 +239,7 @@ export function SubscriptionForm({ onBack }: SubscriptionFormProps) {
                       onClick={() => handlePackageSelect(p.id)}
                       className={`cursor-pointer rounded-2xl border p-4 transition-all duration-200 flex flex-col justify-between gap-3 bg-card hover:shadow-md ${
                         isSelected
-                          ? 'border-primary ring-2 ring-primary/20 dark:bg-primary/5 bg-primary/[0.02]'
+                          ? 'border-primary ring-2 ring-primary/20 dark:bg-primary/5 bg-primary/2'
                           : 'border-border/10 dark:hover:border-white/20 hover:border-black/20'
                       }`}
                     >

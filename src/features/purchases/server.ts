@@ -28,12 +28,12 @@ export const getPurchases = createServerFn({ method: 'GET' }).handler(
 )
 
 const createPurchaseSchema = z.object({
-  supplierId: z.number(),
+  supplierId: z.string().uuid(),
   purchaseNumber: z.string(),
   notes: z.string().optional(),
   items: z.array(
     z.object({
-      productId: z.number(),
+      productId: z.string().uuid(),
       quantity: z.number(),
       unitCost: z.string(),
     }),

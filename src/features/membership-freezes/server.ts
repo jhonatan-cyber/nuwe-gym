@@ -31,7 +31,7 @@ export const getFreezes = createServerFn({ method: 'GET' }).handler(
 
 export const getMemberFreezes = createServerFn({ method: 'GET' })
   .inputValidator((data: { memberId: number }) =>
-    z.object({ memberId: z.number() }).parse(data),
+    z.object({ memberId: z.string().uuid() }).parse(data),
   )
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
@@ -51,7 +51,7 @@ export const getMemberFreezes = createServerFn({ method: 'GET' })
   })
 
 const createFreezeSchema = z.object({
-  subscriptionId: z.number(),
+  subscriptionId: z.string().uuid(),
   startDate: z.string(),
   endDate: z.string(),
   reason: z.string().optional(),
@@ -65,7 +65,7 @@ export const createFreeze = createServerFn({ method: 'POST' })
     const session = await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST'] },
     })
-    const userId = Number(session.user.id)
+    const userId = session.user.id
 
     const sub = await db.query.subscriptions.findFirst({
       where: eq(subscriptions.id, data.subscriptionId),
@@ -138,8 +138,8 @@ export const createFreeze = createServerFn({ method: 'POST' })
   })
 
 export const resumeSubscription = createServerFn({ method: 'POST' })
-  .inputValidator((data: { freezeId: number }) =>
-    z.object({ freezeId: z.number() }).parse(data),
+  .inputValidator((data: { freezeId: string }) =>
+    z.object({ freezeId: z.string().uuid() }).parse(data),
   )
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })

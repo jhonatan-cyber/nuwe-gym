@@ -1,24 +1,21 @@
-import {
-  pgTable,
-  serial,
+import { uuid, pgTable,
   text,
-  integer,
   timestamp,
-  uniqueIndex,
-} from 'drizzle-orm/pg-core'
+  uniqueIndex, } from 'drizzle-orm/pg-core'
 import { memberStatusEnum } from './enums.ts'
 
 export const members = pgTable(
   'members',
   {
-    id: serial('id').primaryKey(),
+    id: uuid('id').defaultRandom().primaryKey(),
     fullName: text('full_name').notNull(),
     documentNumber: text('document_number'),
     phone: text('phone'),
     email: text('email'),
     birthDate: timestamp('birth_date'),
+    gender: text('gender'),
     address: text('address'),
-    branchId: integer('branch_id'),
+    branchId: uuid('branch_id'),
     emergencyContactName: text('emergency_contact_name'),
     emergencyContactPhone: text('emergency_contact_phone'),
     qrCode: text('qr_code'),

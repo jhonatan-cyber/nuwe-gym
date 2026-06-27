@@ -1,4 +1,5 @@
 export * from './enums.ts'
+export * from './roles.ts'
 export * from './auth.ts'
 export * from './members.ts'
 export * from './membership-plans.ts'

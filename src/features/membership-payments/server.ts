@@ -32,8 +32,8 @@ export const getMembershipPayments = createServerFn({ method: 'GET' }).handler(
 )
 
 const createDirectPaymentSchema = z.object({
-  memberId: z.number(),
-  subscriptionId: z.number(),
+  memberId: z.string().uuid(),
+  subscriptionId: z.string().uuid(),
   amount: z.string(),
   paymentMethod: z.enum(['CASH', 'CARD', 'TRANSFER', 'QR']),
   notes: z.string().optional(),

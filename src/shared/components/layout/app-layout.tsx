@@ -42,13 +42,16 @@ export function AppLayout({
           80% { transform: translate(60px, -40px) scale(0.92); }
         }
       `}</style>
-      <div className="fixed inset-0 -z-10 pointer-events-none overflow-hidden" aria-hidden="true">
+      <div
+        className="fixed inset-0 -z-10 pointer-events-none overflow-hidden"
+        aria-hidden="true"
+      >
         <div
-          className="absolute -top-[200px] -left-[200px] size-[550px] rounded-full bg-indigo-500/6 dark:bg-indigo-500/4 blur-[120px]"
+          className="absolute top-[-200px] left-[-200px] size-[550px] rounded-full bg-indigo-500/6 dark:bg-indigo-500/4 blur-[120px]"
           style={{ animation: 'bg-blob-1 35s ease-in-out infinite' }}
         />
         <div
-          className="absolute -bottom-[250px] -right-[200px] size-[600px] rounded-full bg-purple-500/6 dark:bg-purple-500/4 blur-[140px]"
+          className="absolute bottom-[-250px] right-[-200px] size-[600px] rounded-full bg-purple-500/6 dark:bg-purple-500/4 blur-[140px]"
           style={{ animation: 'bg-blob-2 45s ease-in-out infinite' }}
         />
         <div
@@ -75,7 +78,7 @@ export function AppLayout({
         </main>
       </div>
 
-      <Toaster richColors position="top-right" />
+      <Toaster richColors position="top-center" />
     </div>
   )
 }

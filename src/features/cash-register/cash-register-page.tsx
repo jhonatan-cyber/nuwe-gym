@@ -58,7 +58,7 @@ export function CashRegisterPage() {
   const [isCloseModalOpen, setIsCloseModalOpen] = useState(false)
   const [isMovementModalOpen, setIsMovementModalOpen] = useState(false)
   const [selectedHistorySessionId, setSelectedHistorySessionId] = useState<
-    number | null
+    string | null
   >(null)
 
   const [openingAmount, setOpeningAmount] = useState('10000.00')

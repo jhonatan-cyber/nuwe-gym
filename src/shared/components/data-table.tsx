@@ -1,4 +1,5 @@
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
+import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
 import { Card, CardContent } from '#/shared/components/ui/card.tsx'
 import { Skeleton } from '#/shared/components/ui/skeleton.tsx'
 import { ErrorState } from '#/shared/components/ui/error-state.tsx'
@@ -11,13 +12,16 @@ import {
   TableHeader,
   TableRow,
 } from '#/shared/components/ui/table.tsx'
+import { cn } from '#/shared/lib/utils.ts'
 
 interface Column<T> {
   key: string
-  label: string
+  label: ReactNode
   render: (item: T) => ReactNode
   className?: string
   headerClassName?: string
+  sortable?: boolean
+  sortValue?: (item: T) => string | number
 }
 
 interface DataTableProps<T> {
@@ -45,6 +49,40 @@ export function DataTable<T>({
   keyExtractor,
   skeletonRows = 3,
 }: DataTableProps<T>) {
+  const [sortKey, setSortKey] = useState<string | null>(null)
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
+
+  const handleSort = (col: Column<T>) => {
+    if (!col.sortable) return
+    if (sortKey === col.key) {
+      setSortDir((prev) => (prev === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setSortKey(col.key)
+      setSortDir('asc')
+    }
+  }
+
+  const sortedData = [...data].sort((a, b) => {
+    if (!sortKey) return 0
+    const col = columns.find((c) => c.key === sortKey)
+    if (!col || !col.sortable) return 0
+
+    const getValue = col.sortValue || col.render
+    const valA = String(getValue(a) ?? '').toLowerCase()
+    const valB = String(getValue(b) ?? '').toLowerCase()
+
+    if (valA < valB) return sortDir === 'asc' ? -1 : 1
+    if (valA > valB) return sortDir === 'asc' ? 1 : -1
+    return 0
+  })
+
+  function SortIcon({ colKey }: { colKey: string }) {
+    if (sortKey !== colKey) return <ArrowUpDown className="size-3 ml-1 opacity-30 group-hover:opacity-60 transition-opacity" />
+    return sortDir === 'asc'
+      ? <ArrowUp className="size-3 ml-1 text-primary" />
+      : <ArrowDown className="size-3 ml-1 text-primary" />
+  }
+
   return (
     <Card>
       <CardContent className="p-0">
@@ -69,14 +107,25 @@ export function DataTable<T>({
             <TableHeader>
               <TableRow>
                 {columns.map((col) => (
-                  <TableHead key={col.key} className={col.headerClassName}>
-                    {col.label}
+                  <TableHead
+                    key={col.key}
+                    className={cn(
+                      'cursor-default',
+                      col.headerClassName,
+                      col.sortable && 'cursor-pointer select-none group',
+                    )}
+                    onClick={() => handleSort(col)}
+                  >
+                    <span className="inline-flex items-center">
+                      {col.label}
+                      {col.sortable && <SortIcon colKey={col.key} />}
+                    </span>
                   </TableHead>
                 ))}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data.map((item) => (
+              {sortedData.map((item) => (
                 <TableRow key={keyExtractor(item)}>
                   {columns.map((col) => (
                     <TableCell key={col.key} className={col.className}>

@@ -57,9 +57,9 @@ export function CheckInsPage() {
     onError: () => toast.error('Error al registrar el ingreso'),
   })
 
-  const [pendingMemberId, setPendingMemberId] = useState<number | null>(null)
+  const [pendingMemberId, setPendingMemberId] = useState<string | null>(null)
 
-  const handleCheckIn = (memberId: number, hasAccess: boolean) => {
+  const handleCheckIn = (memberId: string, hasAccess: boolean) => {
     if (!hasAccess) {
       setPendingMemberId(memberId)
       return

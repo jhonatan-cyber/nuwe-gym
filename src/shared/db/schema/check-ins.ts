@@ -1,11 +1,7 @@
-import {
-  pgTable,
-  serial,
-  integer,
+import { uuid, pgTable,
   text,
   timestamp,
-  index,
-} from 'drizzle-orm/pg-core'
+  index, } from 'drizzle-orm/pg-core'
 import { checkInResultEnum } from './enums.ts'
 import { members } from './members.ts'
 import { users } from './auth.ts'
@@ -13,8 +9,8 @@ import { users } from './auth.ts'
 export const checkIns = pgTable(
   'check_ins',
   {
-    id: serial('id').primaryKey(),
-    memberId: integer('member_id')
+    id: uuid('id').defaultRandom().primaryKey(),
+    memberId: uuid('member_id')
       .notNull()
       .references(() => members.id),
     checkedInAt: timestamp('checked_in_at').notNull().defaultNow(),
@@ -23,7 +19,7 @@ export const checkIns = pgTable(
       .references(() => users.id),
     resultStatus: checkInResultEnum('result_status').notNull(),
     notes: text('notes'),
-    branchId: integer('branch_id'),
+    branchId: uuid('branch_id'),
   },
   (table) => [
     index('check_ins_member_id_idx').on(table.memberId),

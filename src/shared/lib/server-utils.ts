@@ -18,8 +18,14 @@ export const requireRole = createServerFn({ method: 'GET' })
     const request = getRequest()
     const session = await auth.api.getSession({ headers: request.headers })
     if (!session) throw new Error('Unauthorized')
-    if (!data.roles.includes(session.user.role as UserRole)) {
+    const roleMap: Record<string, UserRole> = {
+      admin: 'ADMIN',
+      user: 'TRAINER',
+    }
+    const rawRole = session.user.role
+    const normalizedRole: UserRole = roleMap[rawRole] ?? rawRole
+    if (!data.roles.includes(normalizedRole)) {
       throw new Error('Forbidden')
     }
-    return session
+    return { ...session, user: { ...session.user, role: normalizedRole } }
   })

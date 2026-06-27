@@ -33,7 +33,7 @@ export const getTrainers = createServerFn({ method: 'GET' }).handler(
 )
 
 export const getTrainer = createServerFn({ method: 'GET' })
-  .inputValidator((data: unknown) => z.object({ id: z.number() }).parse(data))
+  .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
     return await db.query.trainerProfiles.findFirst({
@@ -88,7 +88,7 @@ export const createTrainer = createServerFn({ method: 'POST' })
   })
 
 const updateTrainerSchema = z.object({
-  id: z.number(),
+  id: z.string().uuid(),
   specialty: z.string().optional(),
   bio: z.string().optional(),
   commissionRate: z.string().optional(),
@@ -120,8 +120,8 @@ export const updateTrainer = createServerFn({ method: 'POST' })
   })
 
 const assignMemberSchema = z.object({
-  trainerId: z.number(),
-  memberId: z.number(),
+  trainerId: z.string().uuid(),
+  memberId: z.string().uuid(),
 })
 
 export const assignMember = createServerFn({ method: 'POST' })
@@ -157,7 +157,7 @@ export const assignMember = createServerFn({ method: 'POST' })
     return assignment
   })
 
-const unassignMemberSchema = z.object({ id: z.number() })
+const unassignMemberSchema = z.object({ id: z.string().uuid() })
 
 export const unassignMember = createServerFn({ method: 'POST' })
   .inputValidator((data) => unassignMemberSchema.parse(data))
@@ -185,7 +185,7 @@ const availabilitySlotSchema = z.object({
 })
 
 const setAvailabilitySchema = z.object({
-  trainerId: z.number(),
+  trainerId: z.string().uuid(),
   slots: z.array(availabilitySlotSchema),
 })
 

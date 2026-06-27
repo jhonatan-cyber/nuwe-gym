@@ -120,7 +120,7 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
   })
 
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
-  const [deletingClassId, setDeletingClassId] = useState<number | null>(null)
+  const [deletingClassId, setDeletingClassId] = useState<string | null>(null)
 
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false)
   const [scheduleForm, setScheduleForm] = useState({
@@ -131,7 +131,7 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
   })
 
   const [bookingDialogOpen, setBookingDialogOpen] = useState(false)
-  const [deletingScheduleId, setDeletingScheduleId] = useState<number | null>(null)
+  const [deletingScheduleId, setDeletingScheduleId] = useState<string | null>(null)
 
   const [filterClassId, setFilterClassId] = useState<string>('all')
   const [filterStatus, setFilterStatus] = useState<string>('all')
@@ -160,7 +160,7 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
     queryFn: () =>
       getBookings({
         data: {
-          classId: filterClassId !== 'all' ? Number(filterClassId) : undefined,
+          classId: filterClassId !== 'all' ? filterClassId : undefined,
           status: filterStatus !== 'all' ? filterStatus : undefined,
         },
       }),
@@ -309,7 +309,7 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
     })
   }
 
-  function handleRemoveSchedule(scheduleId: number) {
+  function handleRemoveSchedule(scheduleId: string) {
     setDeletingScheduleId(scheduleId)
   }
 

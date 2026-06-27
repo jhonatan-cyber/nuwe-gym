@@ -5,10 +5,9 @@ import {
   AlertDialogFooter,
   AlertDialogTitle,
   AlertDialogDescription,
-  AlertDialogAction,
-  AlertDialogCancel,
 } from './alert-dialog'
 import { Button } from './button'
+import { LoadingButton } from './loading-button'
 
 interface ConfirmDialogProps {
   open: boolean
@@ -19,6 +18,7 @@ interface ConfirmDialogProps {
   cancelText?: string
   onConfirm: () => void
   variant?: 'destructive' | 'default'
+  isLoading?: boolean
 }
 
 export function ConfirmDialog({
@@ -30,6 +30,7 @@ export function ConfirmDialog({
   cancelText = 'Cancelar',
   onConfirm,
   variant = 'destructive',
+  isLoading = false,
 }: ConfirmDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -41,20 +42,20 @@ export function ConfirmDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="gap-2">
-          <AlertDialogCancel asChild>
-            <Button variant="outline" className="rounded-xl">{cancelText}</Button>
-          </AlertDialogCancel>
-          <AlertDialogAction asChild onClick={onConfirm}>
-            <Button
-              className={`rounded-xl font-bold ${
-                variant === 'destructive'
-                  ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
-                  : ''
-              }`}
-            >
-              {confirmText}
-            </Button>
-          </AlertDialogAction>
+          <Button variant="outline" className="rounded-xl" disabled={isLoading} onClick={() => onOpenChange(false)}>
+            {cancelText}
+          </Button>
+          <LoadingButton
+            isLoading={isLoading}
+            className={`rounded-xl font-bold ${
+              variant === 'destructive'
+                ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
+                : ''
+            }`}
+            onClick={onConfirm}
+          >
+            {confirmText}
+          </LoadingButton>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

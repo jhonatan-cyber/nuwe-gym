@@ -55,10 +55,10 @@ describe('Notifications', () => {
 
   it('should create with reference', async () => {
     const n = await createNotification({
-      referenceId: 42,
+      referenceId: '42',
       referenceType: 'subscription',
     })
-    expect(n.referenceId).toBe(42)
+    expect(n.referenceId).toBe('42')
   })
 
   it('should list ordered by date', async () => {

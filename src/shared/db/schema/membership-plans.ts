@@ -1,15 +1,12 @@
-import {
-  pgTable,
-  serial,
-  text,
+import { uuid, pgTable,
   integer,
+  text,
   numeric,
   boolean,
-  timestamp,
-} from 'drizzle-orm/pg-core'
+  timestamp, } from 'drizzle-orm/pg-core'
 
 export const membershipPlans = pgTable('membership_plans', {
-  id: serial('id').primaryKey(),
+  id: uuid('id').defaultRandom().primaryKey(),
   name: text('name').notNull(),
   description: text('description'),
   durationDays: integer('duration_days').notNull(),

@@ -15,7 +15,7 @@ export const getBranches = createServerFn({ method: 'GET' }).handler(
 )
 
 export const getBranch = createServerFn({ method: 'GET' })
-  .inputValidator((id: unknown) => z.number().parse(id))
+  .inputValidator((id: unknown) => z.string().uuid().parse(id))
   .handler(async ({ data: id }) => {
     const result = await db
       .select()
@@ -50,7 +50,7 @@ export const createBranch = createServerFn({ method: 'POST' })
   })
 
 const updateBranchSchema = z.object({
-  id: z.number(),
+  id: z.string().uuid(),
   name: z.string().min(1),
   address: z.string().optional(),
   phone: z.string().optional(),
@@ -106,7 +106,7 @@ export const getUserBranches = createServerFn({ method: 'GET' }).handler(
 )
 
 export const setDefaultBranch = createServerFn({ method: 'POST' })
-  .inputValidator((data) => z.object({ branchId: z.number() }).parse(data))
+  .inputValidator((data) => z.object({ branchId: z.string().uuid() }).parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] },

@@ -1,22 +1,18 @@
-import {
-  pgTable,
-  serial,
-  integer,
+import { uuid, pgTable,
   text,
   timestamp,
-  index,
-} from 'drizzle-orm/pg-core'
+  index, } from 'drizzle-orm/pg-core'
 import { subscriptions } from './subscriptions.ts'
 import { members } from './members.ts'
 
 export const membershipFreezes = pgTable(
   'membership_freezes',
   {
-    id: serial('id').primaryKey(),
-    subscriptionId: integer('subscription_id')
+    id: uuid('id').defaultRandom().primaryKey(),
+    subscriptionId: uuid('subscription_id')
       .notNull()
       .references(() => subscriptions.id),
-    memberId: integer('member_id')
+    memberId: uuid('member_id')
       .notNull()
       .references(() => members.id),
     startDate: timestamp('start_date').notNull(),
@@ -24,7 +20,7 @@ export const membershipFreezes = pgTable(
     reason: text('reason').default(''),
     resumedAt: timestamp('resumed_at'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
-    createdBy: integer('created_by'),
+    createdBy: text('created_by'),
   },
   (table) => [
     index('membership_freezes_subscription_id_idx').on(table.subscriptionId),

@@ -1,17 +1,14 @@
-import {
-  pgTable,
-  serial,
+import { uuid, pgTable,
   text,
   integer,
   boolean,
   timestamp,
-  index,
-} from 'drizzle-orm/pg-core'
+  index, } from 'drizzle-orm/pg-core'
 import { bookingStatusEnum } from './enums.ts'
 import { members } from './members.ts'
 
 export const classes = pgTable('classes', {
-  id: serial('id').primaryKey(),
+  id: uuid('id').defaultRandom().primaryKey(),
   name: text('name').notNull(),
   description: text('description'),
   color: text('color').notNull().default('#3b82f6'),
@@ -26,8 +23,8 @@ export const classes = pgTable('classes', {
 export const classSchedules = pgTable(
   'class_schedules',
   {
-    id: serial('id').primaryKey(),
-    classId: integer('class_id')
+    id: uuid('id').defaultRandom().primaryKey(),
+    classId: uuid('class_id')
       .notNull()
       .references(() => classes.id, { onDelete: 'cascade' }),
     dayOfWeek: integer('day_of_week').notNull(),
@@ -42,11 +39,11 @@ export const classSchedules = pgTable(
 export const classBookings = pgTable(
   'class_bookings',
   {
-    id: serial('id').primaryKey(),
-    classScheduleId: integer('class_schedule_id')
+    id: uuid('id').defaultRandom().primaryKey(),
+    classScheduleId: uuid('class_schedule_id')
       .notNull()
       .references(() => classSchedules.id, { onDelete: 'cascade' }),
-    memberId: integer('member_id')
+    memberId: uuid('member_id')
       .notNull()
       .references(() => members.id),
     bookedAt: timestamp('booked_at').notNull().defaultNow(),

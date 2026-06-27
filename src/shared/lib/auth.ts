@@ -16,7 +16,7 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
-    minPasswordLength: 6,
+    minPasswordLength: 4,
   },
   user: {
     additionalFields: {
@@ -25,11 +25,37 @@ export const auth = betterAuth({
         defaultValue: 'TRAINER',
         input: false,
       },
+      documentNumber: {
+        type: 'string',
+        required: false,
+      },
+      phone: {
+        type: 'string',
+        required: false,
+      },
+      address: {
+        type: 'string',
+        required: false,
+      },
+    },
+  },
+  databaseHooks: {
+    user: {
+      create: {
+        before: async (user) => {
+          const roleMap: Record<string, string> = {
+            user: 'TRAINER',
+            admin: 'ADMIN',
+          }
+          const mappedRole = roleMap[user.role as string] ?? user.role ?? 'TRAINER'
+          return { data: { ...user, role: mappedRole } }
+        },
+      },
     },
   },
   session: {
-    expiresIn: 60 * 60 * 24 * 7, // 7 days
-    updateAge: 60 * 60 * 24, // 1 day
+    expiresIn: 60 * 60 * 24 * 7,
+    updateAge: 60 * 60 * 24,
   },
   plugins: [admin()],
 })

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Store, Plus, Pencil, Power, PowerOff } from 'lucide-react'
+import { Store, Plus, Pencil, Power, PowerOff, MapPin, Phone, Mail, Clock } from 'lucide-react'
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '#/shared/components/ui/tooltip'
 import { toast } from 'sonner'
 import {
   getBranches,
@@ -41,7 +42,7 @@ const emptyForm: BranchForm = {
 export function BranchesPage() {
   const queryClient = useQueryClient()
   const [isOpen, setIsOpen] = useState(false)
-  const [editingId, setEditingId] = useState<number | null>(null)
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState<BranchForm>(emptyForm)
 
   const { data: branchesList = [], isLoading } = useQuery({
@@ -134,6 +135,7 @@ export function BranchesPage() {
         }
       />
 
+      <TooltipProvider delayDuration={200}>
       <DataTable
         columns={[
           {
@@ -147,28 +149,47 @@ export function BranchesPage() {
             key: 'address',
             label: 'Dirección',
             render: (b: (typeof branchesList)[number]) => (
-              <span className="text-muted-foreground">{b.address || '-'}</span>
+              <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                <MapPin className="size-3 text-muted-foreground shrink-0" />
+                {b.address || '-'}
+              </span>
             ),
           },
           {
             key: 'phone',
             label: 'Teléfono',
             render: (b: (typeof branchesList)[number]) => (
-              <span className="text-muted-foreground">{b.phone || '-'}</span>
+              <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                <Phone className="size-3 text-muted-foreground" />
+                {b.phone || '-'}
+              </span>
             ),
           },
           {
             key: 'email',
             label: 'Email',
             render: (b: (typeof branchesList)[number]) => (
-              <span className="text-muted-foreground">{b.email || '-'}</span>
+              <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                <Mail className="size-3 text-muted-foreground" />
+                {b.email || '-'}
+              </span>
             ),
           },
           {
             key: 'hours',
-            label: 'Horario',
+            label: (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="cursor-default">Horario</span>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  <p>Horario de atención de la sucursal</p>
+                </TooltipContent>
+              </Tooltip>
+            ),
             render: (b: (typeof branchesList)[number]) => (
-              <span className="text-sm whitespace-nowrap">
+              <span className="inline-flex items-center gap-1.5 text-sm whitespace-nowrap">
+                <Clock className="size-3 text-muted-foreground" />
                 {b.openingTime} - {b.closingTime}
               </span>
             ),
@@ -211,6 +232,7 @@ export function BranchesPage() {
         emptyMessage="No hay sucursales"
         keyExtractor={(b: (typeof branchesList)[number]) => b.id}
       />
+      </TooltipProvider>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent>

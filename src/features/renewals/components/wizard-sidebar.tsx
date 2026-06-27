@@ -1,6 +1,7 @@
 import { Search, X, Check, RefreshCw } from 'lucide-react'
 import { Input } from '#/shared/components/ui/input'
 import { Separator } from '#/shared/components/ui/separator'
+import { getInitials } from '#/shared/lib/formatters.ts'
 import { STEPS } from '../utils.ts'
 import type { Step, MemberWithSubscriptions } from '../types.ts'
 
@@ -167,8 +168,4 @@ export function WizardSidebar({
       </div>
     </div>
   )
-}
-
-function getInitials(name: string): string {
-  return name.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase()
 }

@@ -189,7 +189,7 @@ export const createManualMovement = createServerFn({ method: 'POST' })
   })
 
 const getCashSessionDetailsSchema = z.object({
-  sessionId: z.number(),
+  sessionId: z.string().uuid(),
 })
 
 export const getCashSessionDetails = createServerFn({ method: 'GET' })

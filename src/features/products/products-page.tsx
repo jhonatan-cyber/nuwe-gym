@@ -7,7 +7,12 @@ import {
   ArrowUpDown,
   Search,
   AlertTriangle,
+  Barcode,
+  Tags,
+  DollarSign,
+  Box,
 } from 'lucide-react'
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '#/shared/components/ui/tooltip'
 import { toast } from 'sonner'
 import {
   getProducts,
@@ -242,13 +247,26 @@ export function ProductsPage() {
         </select>
       </div>
 
+      <TooltipProvider delayDuration={200}>
       <DataTable
         columns={[
           {
             key: 'sku',
-            label: 'SKU',
+            label: (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="cursor-default">SKU</span>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  <p>Stock Keeping Unit (código interno)</p>
+                </TooltipContent>
+              </Tooltip>
+            ),
             render: (prod: (typeof productsList)[number]) => (
-              <span className="font-mono text-xs">{prod.sku}</span>
+              <span className="inline-flex items-center gap-1.5 font-mono text-xs">
+                <Barcode className="size-3 text-muted-foreground" />
+                {prod.sku}
+              </span>
             ),
           },
           {
@@ -256,7 +274,10 @@ export function ProductsPage() {
             label: 'Producto',
             render: (prod: (typeof productsList)[number]) => (
               <div className="flex flex-col">
-                <span className="font-medium">{prod.name}</span>
+                <span className="inline-flex items-center gap-1.5 font-medium">
+                  <Package className="size-3 text-muted-foreground" />
+                  {prod.name}
+                </span>
                 {prod.barcode && (
                   <span className="text-xs text-muted-foreground">
                     Código: {prod.barcode}
@@ -268,31 +289,71 @@ export function ProductsPage() {
           {
             key: 'category',
             label: 'Categoría',
-            render: (prod: (typeof productsList)[number]) => prod.category.name,
+            render: (prod: (typeof productsList)[number]) => (
+              <span className="inline-flex items-center gap-1.5">
+                <Tags className="size-3 text-muted-foreground" />
+                {prod.category.name}
+              </span>
+            ),
           },
           {
             key: 'purchasePrice',
-            label: 'Precio Compra',
-            render: (prod: (typeof productsList)[number]) =>
-              `$${prod.purchasePrice}`,
+            label: (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="cursor-default">Precio Compra</span>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  <p>Costo unitario del producto</p>
+                </TooltipContent>
+              </Tooltip>
+            ),
+            render: (prod: (typeof productsList)[number]) => (
+              <span className="inline-flex items-center gap-1.5">
+                <DollarSign className="size-3 text-muted-foreground" />
+                ${prod.purchasePrice}
+              </span>
+            ),
           },
           {
             key: 'salePrice',
-            label: 'Precio Venta',
+            label: (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="cursor-default">Precio Venta</span>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  <p>Precio al público</p>
+                </TooltipContent>
+              </Tooltip>
+            ),
             render: (prod: (typeof productsList)[number]) => (
-              <span className="font-semibold text-primary">
+              <span className="inline-flex items-center gap-1.5 font-semibold text-primary">
+                <DollarSign className="size-3 text-muted-foreground" />
                 ${prod.salePrice}
               </span>
             ),
           },
           {
             key: 'stock',
-            label: 'Stock Actual',
+            label: (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="cursor-default">Stock Actual</span>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  <p>Unidades disponibles en inventario</p>
+                </TooltipContent>
+              </Tooltip>
+            ),
             render: (prod: (typeof productsList)[number]) => {
               const isLowStock = prod.stockCurrent <= prod.stockMinimum
               return (
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold">{prod.stockCurrent}</span>
+                  <span className="inline-flex items-center gap-1.5 font-semibold">
+                    <Box className="size-3 text-muted-foreground" />
+                    {prod.stockCurrent}
+                  </span>
                   {isLowStock && (
                     <Badge
                       variant="destructive"
@@ -339,6 +400,7 @@ export function ProductsPage() {
         emptyMessage="No se encontraron productos."
         keyExtractor={(prod: (typeof productsList)[number]) => prod.id}
       />
+      </TooltipProvider>
 
       <Dialog open={isProductModalOpen} onOpenChange={setIsProductModalOpen}>
         <DialogContent className="max-w-lg">

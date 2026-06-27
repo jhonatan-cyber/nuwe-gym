@@ -40,7 +40,7 @@ export function RenewalsPage() {
   const [isChangingPlan, setIsChangingPlan] = useState(false)
 
   const [formData, setFormData] = useState({
-    packageId: 0,
+    packageId: '',
     paymentMethod: 'CASH' as PaymentMethod,
     amount: '',
     notes: '',
@@ -88,7 +88,7 @@ export function RenewalsPage() {
     setSelectedMember(null)
     setSearchQuery('')
     setIsChangingPlan(false)
-    setFormData({ packageId: 0, paymentMethod: 'CASH', amount: '', notes: '' })
+    setFormData({ packageId: '', paymentMethod: 'CASH', amount: '', notes: '' })
   }
 
   function handleSelectMember(member: any) {
@@ -208,7 +208,7 @@ interface Step2Props {
   selectedMember: MemberWithSubscriptions
   isChangingPlan: boolean
   setIsChangingPlan: (v: boolean) => void
-  formData: { packageId: number; amount: string }
+  formData: { packageId: string; amount: string }
   setFormData: (v: any) => void
   packages: any[]
   renewalHistory: any[]
@@ -368,7 +368,7 @@ function Step2Content({
 interface Step3Props {
   selectedMember: MemberWithSubscriptions
   selectedPkg: any
-  formData: { packageId: number; paymentMethod: PaymentMethod; amount: string; notes: string }
+  formData: { packageId: string; paymentMethod: PaymentMethod; amount: string; notes: string }
   setFormData: (v: any) => void
   isCashRegisterOpen: boolean
   isLoadingSession: boolean

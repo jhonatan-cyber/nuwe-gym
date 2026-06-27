@@ -28,8 +28,8 @@ export const getSubscriptions = createServerFn({ method: 'GET' }).handler(
 )
 
 const createSubscriptionSchema = z.object({
-  memberId: z.number(),
-  packageId: z.number(),
+  memberId: z.string().uuid(),
+  packageId: z.string().uuid(),
   startDate: z.string(),
   endDate: z.string(),
   amountPaid: z.string(),
@@ -113,7 +113,7 @@ export const createSubscription = createServerFn({ method: 'POST' })
   })
 
 export const cancelSubscription = createServerFn({ method: 'POST' })
-  .inputValidator((id) => z.number().parse(id))
+  .inputValidator((id) => z.string().uuid().parse(id))
   .handler(async ({ data: id }) => {
     const session = await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST'] },
