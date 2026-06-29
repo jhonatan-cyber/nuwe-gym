@@ -8,6 +8,7 @@ import {
   updateTrainer,
   getTrainerUsers,
 } from '#/features/trainers/server.ts'
+import { useCurrentBranch } from '#/shared/hooks/use-current-branch.ts'
 import type { TrainerWithDetails, ViewMode } from '#/features/trainers/types.ts'
 
 interface UseTrainersPageProps {
@@ -16,6 +17,7 @@ interface UseTrainersPageProps {
 
 export function useTrainersPage({ userRole }: UseTrainersPageProps) {
   const queryClient = useQueryClient()
+  const { branchId } = useCurrentBranch()
   const isAdmin = userRole === 'ADMIN'
   const isTrainer = userRole === 'TRAINER'
   const canWrite = isAdmin
@@ -39,8 +41,9 @@ export function useTrainersPage({ userRole }: UseTrainersPageProps) {
   }, [activeView, editingTrainer])
 
   const { data: trainers = [], isLoading } = useQuery({
-    queryKey: ['trainers', search],
-    queryFn: () => getTrainers(),
+    queryKey: ['trainers', branchId, search],
+    queryFn: () => getTrainers({ data: { branchId } }),
+    enabled: !!branchId,
   })
 
   const { data: myMembers = [] } = useQuery({
@@ -117,6 +120,7 @@ export function useTrainersPage({ userRole }: UseTrainersPageProps) {
       createMutation.mutate({
         data: {
           userId,
+          branchId,
           specialty: capitalizedSpecialty,
           bio: capitalizedBio,
           commissionRate,

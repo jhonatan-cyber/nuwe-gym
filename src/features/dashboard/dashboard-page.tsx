@@ -1,20 +1,42 @@
+import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { ArrowRight, Printer } from 'lucide-react'
-import type { getDashboardData as GetDashboardDataFn } from '#/features/dashboard/server.ts'
+import { getDashboardData } from '#/features/dashboard/server.ts'
+import { useCurrentBranch } from '#/shared/hooks/use-current-branch.ts'
+import { LoadingSpinner } from '#/shared/components/ui/loading-spinner'
 import { BiometricReaders } from './components/biometric-readers.tsx'
 import { GenderDistribution } from './components/gender-distribution.tsx'
 import { QuickActionsGrid } from './components/quick-actions-grid.tsx'
 import { ExpiringMembershipsBanner } from './components/expiring-memberships-banner.tsx'
 import { TopProducts } from './components/top-products.tsx'
 import { HourlyAttendanceChart } from './components/hourly-attendance-chart.tsx'
+import { InsightsPanel } from './components/insights-panel.tsx'
 
-type DashboardData = Awaited<ReturnType<typeof GetDashboardDataFn>>
+export function DashboardPage() {
+  const { branchId } = useCurrentBranch()
 
-interface DashboardPageProps {
-  data: DashboardData & { expiringSoonCount: number }
-}
+  const { data, isLoading } = useQuery({
+    queryKey: ['dashboard', branchId],
+    queryFn: () => getDashboardData({ data: { branchId: branchId ?? undefined } }),
+    enabled: !!branchId,
+  })
 
-export function DashboardPage({ data }: DashboardPageProps) {
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-10rem)]">
+        <LoadingSpinner size="lg" label="Cargando dashboard..." />
+      </div>
+    )
+  }
+
+  if (!data) {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-10rem)]">
+        <p className="text-muted-foreground">Error al cargar los datos del dashboard.</p>
+      </div>
+    )
+  }
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[30%_1fr] gap-5 dark:text-white text-foreground min-h-[calc(100vh-10rem)]">
       <div className="bg-card p-5 rounded-4xl border border-border/10 shadow-xl flex flex-col gap-5 select-none relative overflow-hidden">
@@ -39,6 +61,8 @@ export function DashboardPage({ data }: DashboardPageProps) {
         <BiometricReaders />
 
         <GenderDistribution genderStats={data.genderStats} />
+
+        <InsightsPanel />
 
         <Link
           to="/check-ins"

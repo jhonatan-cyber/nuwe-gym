@@ -12,6 +12,7 @@ import { members } from './members.ts'
 
 export const classes = pgTable('classes', {
   id: uuid('id').defaultRandom().primaryKey(),
+  branchId: uuid('branch_id'),
   name: text('name').notNull(),
   description: text('description'),
   color: text('color').notNull().default('#3b82f6'),

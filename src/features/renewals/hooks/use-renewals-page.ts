@@ -8,6 +8,7 @@ import {
 import { getActivePackages } from '#/features/packages/server.ts'
 import { getMembers } from '#/features/members/server.ts'
 import { getCurrentCashSession } from '#/features/cash-register/server.ts'
+import { useCurrentBranch } from '#/shared/hooks/use-current-branch.ts'
 import type {
   Step,
   PaymentMethod,
@@ -16,6 +17,7 @@ import type {
 
 export function useRenewalsPage() {
   const queryClient = useQueryClient()
+  const { branchId } = useCurrentBranch()
 
   const [step, setStep] = useState<Step>(1)
   const [searchQuery, setSearchQuery] = useState('')
@@ -31,8 +33,9 @@ export function useRenewalsPage() {
   })
 
   const { data: cashSession, isLoading: isLoadingSession } = useQuery({
-    queryKey: ['current-cash-session'],
-    queryFn: () => getCurrentCashSession(),
+    queryKey: ['current-cash-session', branchId],
+    queryFn: () => getCurrentCashSession({ data: { branchId: branchId ?? undefined } }),
+    enabled: !!branchId,
   })
   const isCashRegisterOpen = !!cashSession
 
@@ -44,7 +47,7 @@ export function useRenewalsPage() {
   const { data: memberSearchResults = [], isLoading: searchingMembers } =
     useQuery({
       queryKey: ['member-search', searchQuery],
-      queryFn: () => getMembers({ data: { search: searchQuery } }),
+      queryFn: () => getMembers({ data: { search: searchQuery, branchId: branchId ?? undefined } }),
       enabled: searchQuery.length >= 2,
     })
 
@@ -113,6 +116,7 @@ export function useRenewalsPage() {
         packageId: formData.packageId,
         paymentMethod: formData.paymentMethod,
         amount: formData.amount,
+        branchId: branchId ?? undefined,
         notes: formData.notes || undefined,
       },
     })

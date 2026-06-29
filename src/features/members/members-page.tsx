@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { getMembers } from '#/features/members/server.ts'
 import { useDebounce } from '#/shared/hooks/use-debounce.ts'
+import { useCurrentBranch } from '#/shared/hooks/use-current-branch.ts'
 import {
   isExpired,
   isExpiringThisWeek,
@@ -62,10 +63,12 @@ export function MembersPage({ userRole }: MembersPageProps) {
   const [viewMemberId, setViewMemberId] = useState<string | null>(null)
 
   const debouncedSearch = useDebounce(search, 300)
+  const { branchId } = useCurrentBranch()
 
   const { data: membersList = [], isLoading } = useQuery({
-    queryKey: ['members', debouncedSearch],
-    queryFn: () => getMembers({ data: { search: debouncedSearch } }),
+    queryKey: ['members', debouncedSearch, branchId],
+    queryFn: () => getMembers({ data: { search: debouncedSearch, branchId: branchId ?? undefined } }),
+    enabled: !!branchId,
   })
 
   const totalMembers = membersList.length

@@ -14,6 +14,7 @@ import {
   User,
 } from 'lucide-react'
 import { getRecentSales, getSaleStats } from '#/features/sales/server.ts'
+import { useCurrentBranch } from '#/shared/hooks/use-current-branch.ts'
 import { useDebounce } from '#/shared/hooks/use-debounce.ts'
 import { Badge } from '#/shared/components/ui/badge'
 import { Button } from '#/shared/components/ui/button'
@@ -52,6 +53,7 @@ import { DailySummaryView } from '#/features/sales/daily-summary-view.tsx'
 import type { Sale, StatusFilter } from '#/features/sales/types.ts'
 
 export function SalesPage() {
+  const { branchId } = useCurrentBranch()
   const [activeView, setActiveView] = useState<'history' | 'summary'>('history')
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState<StatusFilter>('ALL')
@@ -60,13 +62,15 @@ export function SalesPage() {
   const debouncedSearch = useDebounce(searchTerm, 300)
 
   const { data: salesList = [], isLoading } = useQuery({
-    queryKey: ['recent-sales'],
-    queryFn: () => getRecentSales(),
+    queryKey: ['recent-sales', branchId],
+    queryFn: () => getRecentSales({ data: { branchId } }),
+    enabled: !!branchId,
   })
 
   const { data: stats } = useQuery({
-    queryKey: ['sale-stats'],
-    queryFn: () => getSaleStats(),
+    queryKey: ['sale-stats', branchId],
+    queryFn: () => getSaleStats({ data: { branchId } }),
+    enabled: !!branchId,
   })
 
   const filteredSales = salesList.filter((sale) => {

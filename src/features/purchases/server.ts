@@ -9,10 +9,16 @@ import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { z } from 'zod'
 
-export const getPurchases = createServerFn({ method: 'GET' }).handler(
-  async () => {
+export const getPurchases = createServerFn({ method: 'GET' })
+  .inputValidator(
+    z.object({ branchId: z.string().uuid().optional() }).optional(),
+  )
+  .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
     return await db.query.purchases.findMany({
+      where: data?.branchId
+        ? eq(purchases.branchId, data.branchId)
+        : undefined,
       orderBy: [desc(purchases.purchasedAt)],
       with: {
         supplier: true,
@@ -24,11 +30,11 @@ export const getPurchases = createServerFn({ method: 'GET' }).handler(
         },
       },
     })
-  },
-)
+  })
 
 const createPurchaseSchema = z.object({
   supplierId: z.string().uuid(),
+  branchId: z.string().uuid().optional(),
   purchaseNumber: z.string(),
   notes: z.string().optional(),
   items: z.array(
@@ -58,6 +64,7 @@ export const createPurchase = createServerFn({ method: 'POST' })
         .insert(purchases)
         .values({
           supplierId: data.supplierId,
+          branchId: data.branchId ?? null,
           purchaseNumber: data.purchaseNumber,
           subtotal,
           total,

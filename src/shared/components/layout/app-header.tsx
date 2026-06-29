@@ -15,6 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '#/shared/components/ui/dropdown-menu'
+import { BranchSelector } from '#/features/branches/branch-selector.tsx'
 
 interface AppHeaderProps {
   userId?: string
@@ -37,7 +38,9 @@ export function AppHeader({ userName, userImage, userEmail }: AppHeaderProps) {
   }
 
   return (
-    <div className="absolute top-6 right-6 z-50 flex items-center gap-3">
+    <div className="absolute top-6 right-6 z-50 flex items-center gap-1.5">
+      <BranchSelector />
+
       <button
         type="button"
         onClick={() => setTheme(isDark ? 'light' : 'dark')}

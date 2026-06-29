@@ -11,15 +11,18 @@ import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { z } from 'zod'
 
-export const getClasses = createServerFn({ method: 'GET' }).handler(
-  async () => {
+export const getClasses = createServerFn({ method: 'GET' })
+  .inputValidator(
+    z.object({ branchId: z.string().uuid().optional() }).optional(),
+  )
+  .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
     return await db.query.classes.findMany({
+      where: data?.branchId ? eq(classes.branchId, data.branchId) : undefined,
       with: { schedules: true },
       orderBy: [desc(classes.createdAt)],
     })
-  },
-)
+  })
 
 export const getClass = createServerFn({ method: 'GET' })
   .inputValidator((data: { id: string }) => data)
@@ -36,6 +39,7 @@ const createClassSchema = z.object({
   description: z.string().optional(),
   color: z.string().optional(),
   capacity: z.number().min(1),
+  branchId: z.string().uuid().optional(),
 })
 
 export const createClass = createServerFn({ method: 'POST' })
@@ -51,6 +55,7 @@ export const createClass = createServerFn({ method: 'POST' })
         description: data.description,
         color: data.color,
         capacity: data.capacity,
+        branchId: data.branchId ?? null,
       })
       .returning()
     createAuditLog({
@@ -311,13 +316,20 @@ export const markAttendance = createServerFn({ method: 'POST' })
     return booking
   })
 
-export const getWeeklySchedule = createServerFn({ method: 'GET' }).handler(
-  async () => {
+export const getWeeklySchedule = createServerFn({ method: 'GET' })
+  .inputValidator(
+    z.object({ branchId: z.string().uuid().optional() }).optional(),
+  )
+  .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
-    return await db.query.classSchedules.findMany({
+
+    const schedules = await db.query.classSchedules.findMany({
       where: eq(classSchedules.isActive, true),
       with: { class: true },
       orderBy: [classSchedules.dayOfWeek, classSchedules.startTime],
     })
-  },
-)
+
+    return data?.branchId
+      ? schedules.filter((s) => s.class.branchId === data.branchId)
+      : schedules
+  })

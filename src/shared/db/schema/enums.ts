@@ -21,6 +21,7 @@ export const checkInResultEnum = pgEnum('check_in_result', [
   'DENIED_EXPIRED',
   'DENIED_INACTIVE',
   'DENIED_SUSPENDED',
+  'DENIED_SCHEDULE',
 ])
 export const saleStatusEnum = pgEnum('sale_status', ['COMPLETED', 'CANCELED'])
 export const inventoryMovementTypeEnum = pgEnum('inventory_movement_type', [
@@ -54,3 +55,4 @@ export const packageTypeEnum = pgEnum('package_type', [
   'PROMOTION',
   'SPECIAL',
 ])
+export const renewalTypeEnum = pgEnum('renewal_type', ['MANUAL', 'AUTO'])

@@ -26,6 +26,7 @@ import {
   Calendar,
 } from 'lucide-react'
 import { getDailySalesSummary } from '#/features/sales/server.ts'
+import { useCurrentBranch } from '#/shared/hooks/use-current-branch.ts'
 import { StatCard } from '#/shared/components/ui/stat-card'
 import { LoadingSpinner } from '#/shared/components/ui/loading-spinner'
 import { EmptyState } from '#/shared/components/ui/empty-state'
@@ -551,9 +552,11 @@ function WeeklyComparisonTable({ data }: { data: DailySalesSummary }) {
 // ── Main view ─────────────────────────────────────────────────────
 
 export function DailySummaryView() {
+  const { branchId } = useCurrentBranch()
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['daily-sales-summary'],
-    queryFn: () => getDailySalesSummary(),
+    queryKey: ['daily-sales-summary', branchId],
+    queryFn: () => getDailySalesSummary({ data: { branchId } }),
+    enabled: !!branchId,
   })
 
   const theme = useChartTheme()

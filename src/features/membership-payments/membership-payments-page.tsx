@@ -17,6 +17,7 @@ import {
   TooltipProvider,
 } from '#/shared/components/ui/tooltip'
 import { getMembershipPayments } from '#/features/membership-payments/server.ts'
+import { useCurrentBranch } from '#/shared/hooks/use-current-branch.ts'
 import { Card, CardContent } from '#/shared/components/ui/card'
 import { Badge } from '#/shared/components/ui/badge'
 import { PageHeader } from '#/shared/components/page-header'
@@ -26,14 +27,16 @@ import { formatDateTime } from '#/shared/lib/formatters.ts'
 
 export function MembershipPaymentsPage() {
   const [searchTerm, setSearchTerm] = useState('')
+  const { branchId } = useCurrentBranch()
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value)
   }
 
   const { data: paymentsList = [], isLoading } = useQuery({
-    queryKey: ['membership-payments'],
-    queryFn: () => getMembershipPayments(),
+    queryKey: ['membership-payments', branchId],
+    queryFn: () => getMembershipPayments({ data: { branchId: branchId ?? undefined } }),
+    enabled: !!branchId,
   })
 
   const filteredPayments = paymentsList.filter(

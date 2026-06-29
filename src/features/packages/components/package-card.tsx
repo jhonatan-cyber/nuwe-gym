@@ -1,4 +1,4 @@
-import { PackageIcon, Edit2, Power, PowerOff, Trash2 } from 'lucide-react'
+import { PackageIcon, Edit2, Power, PowerOff, Trash2, Clock } from 'lucide-react'
 import {
   Tooltip,
   TooltipTrigger,
@@ -20,6 +20,7 @@ import {
 } from '#/shared/components/ui/alert-dialog'
 import { formatCurrency } from '#/shared/lib/formatters.ts'
 import { getDurationLabel, getTypeIcon, getTypeLabel } from '../utils.ts'
+import { DAY_LABELS } from '../types.ts'
 import type { Package } from '../types.ts'
 
 interface PackageCardProps {
@@ -178,6 +179,37 @@ export function PackageCard({
             Tiempo: {getDurationLabel(pkg.durationDays)}
           </p>
         </div>
+        {(pkg.allowedDays?.length ?? 0) > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1">
+            {DAY_LABELS.map((label, day) => {
+              const dayData = pkg.allowedDays?.find(
+                (d: any) => d.dayOfWeek === day,
+              )
+              return dayData ? (
+                <span
+                  key={day}
+                  className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-foreground/10"
+                  title={
+                    (dayData.startTime ?? '--:--') +
+                    ' - ' +
+                    (dayData.endTime ?? '--:--')
+                  }
+                >
+                  {label}
+                </span>
+              ) : null
+            })}
+          </div>
+        )}
+        {(pkg.allowedStartTime || pkg.allowedEndTime) && (
+          <div className="mt-2 flex items-center gap-1.5 text-[10px] text-muted-foreground">
+            <Clock className="size-3" />
+            <span>
+              {pkg.allowedStartTime || '00:00'} -{' '}
+              {pkg.allowedEndTime || '23:59'}
+            </span>
+          </div>
+        )}
         {pkg.items.length > 0 && (
           <div className="mt-3 pt-3 border-t dark:border-white/5 border-black/5">
             <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5">

@@ -18,6 +18,7 @@ import {
   getCashSessionDetails,
   getCashSessionsList,
 } from '#/features/cash-register/server.ts'
+import { useCurrentBranch } from '#/shared/hooks/use-current-branch.ts'
 import { Button } from '#/shared/components/ui/button'
 import {
   Card,
@@ -53,6 +54,7 @@ export function CashRegisterPage() {
   const queryClient = useQueryClient()
   const { userRole } = authedRoute.useRouteContext()
   const isAdmin = userRole === 'ADMIN'
+  const { branchId } = useCurrentBranch()
 
   const [isOpenModalOpen, setIsOpenModalOpen] = useState(false)
   const [isCloseModalOpen, setIsCloseModalOpen] = useState(false)
@@ -74,25 +76,26 @@ export function CashRegisterPage() {
   const [movementDescription, setMovementDescription] = useState('')
 
   const { data: currentSession, isLoading: isLoadingSession } = useQuery({
-    queryKey: ['current-cash-session'],
-    queryFn: () => getCurrentCashSession(),
+    queryKey: ['current-cash-session', branchId],
+    queryFn: () => getCurrentCashSession({ data: { branchId } }),
+    enabled: !!branchId,
   })
 
   const { data: sessionDetails, isLoading: isLoadingDetails } = useQuery({
-    queryKey: ['cash-session-details', currentSession?.id],
+    queryKey: ['cash-session-details', branchId, currentSession?.id],
     queryFn: () =>
       getCashSessionDetails({ data: { sessionId: currentSession!.id } }),
     enabled: !!currentSession?.id,
   })
 
   const { data: historySessions = [], isLoading: isLoadingHistory } = useQuery({
-    queryKey: ['cash-sessions-list'],
-    queryFn: () => getCashSessionsList(),
-    enabled: isAdmin,
+    queryKey: ['cash-sessions-list', branchId],
+    queryFn: () => getCashSessionsList({ data: { branchId } }),
+    enabled: !!branchId && isAdmin,
   })
 
   const { data: selectedHistoryDetails } = useQuery({
-    queryKey: ['cash-session-details', selectedHistorySessionId],
+    queryKey: ['cash-session-details', branchId, selectedHistorySessionId],
     queryFn: () =>
       getCashSessionDetails({ data: { sessionId: selectedHistorySessionId! } }),
     enabled: !!selectedHistorySessionId,
@@ -151,14 +154,14 @@ export function CashRegisterPage() {
   const handleOpenSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!openingAmount) return
-    openMutation.mutate({ data: { openingAmount, notes: openingNotes } })
+    openMutation.mutate({ data: { openingAmount, notes: openingNotes, branchId } })
   }
 
   const handleCloseSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!closingAmount) return
     closeMutation.mutate({
-      data: { actualClosingAmount: closingAmount, notes: closingNotes },
+      data: { actualClosingAmount: closingAmount, notes: closingNotes, branchId },
     })
   }
 
@@ -170,6 +173,7 @@ export function CashRegisterPage() {
         amount: movementAmount,
         movementType,
         description: movementDescription,
+        branchId,
       },
     })
   }

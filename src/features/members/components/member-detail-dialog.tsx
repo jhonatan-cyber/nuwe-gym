@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import { getMemberById } from '#/features/members/server.ts'
 import { getMemberRenewalHistory } from '#/features/renewals/server.ts'
+import { getMemberChurnRisk } from '#/features/analytics/server.ts'
 import { formatCurrency, formatDate } from '#/shared/lib/formatters.ts'
 import { Button } from '#/shared/components/ui/button'
 import {
@@ -240,6 +241,9 @@ export function MemberDetailDialog({
                   )}
                 </div>
               </section>
+
+              {/* Riesgo de abandono */}
+              <ChurnRiskSection memberId={memberDetail.id} />
             </div>
           </>
         ) : (
@@ -266,6 +270,52 @@ function SectionTitle({ icon: Icon, label }: { icon: any; label: string }) {
         {label}
       </h4>
     </div>
+  )
+}
+
+function ChurnRiskSection({ memberId }: { memberId: string }) {
+  const { data: risk, isLoading } = useQuery({
+    queryKey: ['member-churn-risk', memberId],
+    queryFn: () => getMemberChurnRisk({ data: { memberId } }),
+    enabled: !!memberId,
+  })
+
+  if (isLoading || !risk) return null
+
+  const levelConfig = {
+    LOW: { color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20', label: 'Bajo' },
+    MEDIUM: { color: 'text-amber-500 bg-amber-500/10 border-amber-500/20', label: 'Medio' },
+    HIGH: { color: 'text-orange-500 bg-orange-500/10 border-orange-500/20', label: 'Alto' },
+    CRITICAL: { color: 'text-red-500 bg-red-500/10 border-red-500/20', label: 'Critico' },
+  }
+
+  const cfg = levelConfig[risk.level]
+
+  return (
+    <section>
+      <SectionTitle icon={Heart} label="Riesgo de abandono" />
+      <div className="mt-3 p-4 rounded-2xl border dark:border-white/[0.04] border-black/[0.04] bg-foreground/[0.015] space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-bold">Score</span>
+          <span className={`text-xs font-black px-2 py-0.5 rounded-full border ${cfg.color}`}>
+            {risk.score}/100 · {cfg.label}
+          </span>
+        </div>
+        {risk.factors.length > 0 && (
+          <div className="space-y-1">
+            <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Factores</p>
+            <ul className="space-y-0.5">
+              {risk.factors.map((f, i) => (
+                <li key={i} className="text-[10px] text-muted-foreground flex items-start gap-1.5">
+                  <span className="size-1 rounded-full bg-foreground/30 mt-1.5 shrink-0" />
+                  {f}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    </section>
   )
 }
 

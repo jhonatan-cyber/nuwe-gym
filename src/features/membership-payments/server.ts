@@ -6,16 +6,25 @@ import {
   cashMovements,
 } from '#/shared/db/schema/cash-register.ts'
 import { members } from '#/shared/db/schema/members.ts'
-import { eq, desc } from 'drizzle-orm'
+import { eq, desc, and, inArray } from 'drizzle-orm'
 import { requireRole } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { z } from 'zod'
 
-export const getMembershipPayments = createServerFn({ method: 'GET' }).handler(
-  async () => {
+const getMembershipPaymentsSchema = z.object({
+  branchId: z.string().optional(),
+})
+
+export const getMembershipPayments = createServerFn({ method: 'GET' })
+  .inputValidator((data) => getMembershipPaymentsSchema.parse(data))
+  .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    const memberIds = data.branchId
+      ? (await db.select({ id: members.id }).from(members).where(eq(members.branchId, data.branchId))).map((m) => m.id)
+      : undefined
     return await db.query.membershipPayments.findMany({
+      where: memberIds ? inArray(membershipPayments.memberId, memberIds) : undefined,
       orderBy: [desc(membershipPayments.paymentDate)],
       with: {
         member: true,
@@ -28,8 +37,7 @@ export const getMembershipPayments = createServerFn({ method: 'GET' }).handler(
         createdBy: true,
       },
     })
-  },
-)
+  })
 
 const createDirectPaymentSchema = z.object({
   memberId: z.string().uuid(),
@@ -37,6 +45,7 @@ const createDirectPaymentSchema = z.object({
   amount: z.string(),
   paymentMethod: z.enum(['CASH', 'CARD', 'TRANSFER', 'QR']),
   notes: z.string().optional(),
+  branchId: z.string().optional(),
 })
 
 export const createDirectPayment = createServerFn({ method: 'POST' })
@@ -48,7 +57,12 @@ export const createDirectPayment = createServerFn({ method: 'POST' })
 
     const payment = await db.transaction(async (tx) => {
       const openSession = await tx.query.cashRegisterSessions.findFirst({
-        where: eq(cashRegisterSessions.status, 'OPEN'),
+        where: data.branchId
+          ? and(
+              eq(cashRegisterSessions.status, 'OPEN'),
+              eq(cashRegisterSessions.branchId, data.branchId),
+            )
+          : eq(cashRegisterSessions.status, 'OPEN'),
       })
 
       if (!openSession) {

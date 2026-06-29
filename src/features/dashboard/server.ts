@@ -1,6 +1,6 @@
 import { createServerFn } from '@tanstack/react-start'
 import { db } from '#/shared/db/index.ts'
-import { count, eq, gte, lte, and, sum, sql, desc } from 'drizzle-orm'
+import { count, eq, gte, lte, and, sum, sql, desc, inArray } from 'drizzle-orm'
 import { requireRole } from '#/shared/lib/server-utils.ts'
 import { members } from '#/shared/db/schema/members.ts'
 import { subscriptions } from '#/shared/db/schema/subscriptions.ts'
@@ -9,9 +9,15 @@ import { sales, saleItems } from '#/shared/db/schema/sales.ts'
 import { membershipPayments } from '#/shared/db/schema/membership-payments.ts'
 import { cashRegisterSessions } from '#/shared/db/schema/cash-register.ts'
 import { products } from '#/shared/db/schema/products.ts'
+import { z } from 'zod'
 
-export const getDashboardData = createServerFn({ method: 'GET' }).handler(
-  async () => {
+const getDashboardDataSchema = z.object({
+  branchId: z.string().optional(),
+})
+
+export const getDashboardData = createServerFn({ method: 'GET' })
+  .inputValidator((data) => getDashboardDataSchema.parse(data))
+  .handler(async ({ data }) => {
     const session = await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] },
     })
@@ -55,23 +61,47 @@ export const getDashboardData = createServerFn({ method: 'GET' }).handler(
       999,
     )
 
-    const totalMembersRes = await db.select({ count: count() }).from(members)
+    const memberFilter = data.branchId
+      ? eq(members.branchId, data.branchId)
+      : undefined
+    const memberIds = data.branchId
+      ? (await db
+          .select({ id: members.id })
+          .from(members)
+          .where(eq(members.branchId, data.branchId))).map((m) => m.id)
+      : undefined
+
+    const totalMembersRes = await db
+      .select({ count: count() })
+      .from(members)
+      .where(memberFilter)
     const totalMembers = totalMembersRes[0]?.count ?? 0
     const activeMembershipsRes = await db
       .select({ count: count() })
       .from(subscriptions)
-      .where(eq(subscriptions.status, 'ACTIVE'))
+      .where(
+        memberIds
+          ? and(eq(subscriptions.status, 'ACTIVE'), inArray(subscriptions.memberId, memberIds))
+          : eq(subscriptions.status, 'ACTIVE'),
+      )
     const activeMemberships = activeMembershipsRes[0]?.count ?? 0
 
     const checkInsTodayRes = await db
       .select({ count: count() })
       .from(checkIns)
       .where(
-        and(
-          gte(checkIns.checkedInAt, startOfToday),
-          lte(checkIns.checkedInAt, endOfToday),
-          eq(checkIns.resultStatus, 'ALLOWED'),
-        ),
+        data.branchId
+          ? and(
+              gte(checkIns.checkedInAt, startOfToday),
+              lte(checkIns.checkedInAt, endOfToday),
+              eq(checkIns.resultStatus, 'ALLOWED'),
+              eq(checkIns.branchId, data.branchId),
+            )
+          : and(
+              gte(checkIns.checkedInAt, startOfToday),
+              lte(checkIns.checkedInAt, endOfToday),
+              eq(checkIns.resultStatus, 'ALLOWED'),
+            ),
       )
     const checkInsToday = checkInsTodayRes[0]?.count ?? 0
 
@@ -79,11 +109,18 @@ export const getDashboardData = createServerFn({ method: 'GET' }).handler(
       .select({ sum: sum(sales.total) })
       .from(sales)
       .where(
-        and(
-          gte(sales.soldAt, startOfToday),
-          lte(sales.soldAt, endOfToday),
-          eq(sales.status, 'COMPLETED'),
-        ),
+        data.branchId
+          ? and(
+              gte(sales.soldAt, startOfToday),
+              lte(sales.soldAt, endOfToday),
+              eq(sales.status, 'COMPLETED'),
+              eq(sales.branchId, data.branchId),
+            )
+          : and(
+              gte(sales.soldAt, startOfToday),
+              lte(sales.soldAt, endOfToday),
+              eq(sales.status, 'COMPLETED'),
+            ),
       )
     const salesToday = Number(salesTodayRes[0]?.sum ?? 0)
 
@@ -96,6 +133,7 @@ export const getDashboardData = createServerFn({ method: 'GET' }).handler(
         eq(subscriptions.status, 'ACTIVE'),
         gte(subscriptions.endDate, startOfToday),
         lte(subscriptions.endDate, sevenDaysFromNow),
+        memberIds ? inArray(subscriptions.memberId, memberIds) : undefined,
       ),
       with: {
         member: true,
@@ -108,6 +146,7 @@ export const getDashboardData = createServerFn({ method: 'GET' }).handler(
       where: and(
         eq(products.isActive, true),
         sql`stock_current <= stock_minimum`,
+        data.branchId ? eq(products.branchId, data.branchId) : undefined,
       ),
       orderBy: (p, { asc }) => [asc(p.stockCurrent)],
     })
@@ -123,10 +162,16 @@ export const getDashboardData = createServerFn({ method: 'GET' }).handler(
         .select({ sum: sum(membershipPayments.amount) })
         .from(membershipPayments)
         .where(
-          and(
-            gte(membershipPayments.paymentDate, startOfMonth),
-            lte(membershipPayments.paymentDate, endOfMonth),
-          ),
+          memberIds
+            ? and(
+                gte(membershipPayments.paymentDate, startOfMonth),
+                lte(membershipPayments.paymentDate, endOfMonth),
+                inArray(membershipPayments.memberId, memberIds),
+              )
+            : and(
+                gte(membershipPayments.paymentDate, startOfMonth),
+                lte(membershipPayments.paymentDate, endOfMonth),
+              ),
         )
       membershipIncome = Number(membershipIncomeRes[0]?.sum ?? 0)
 
@@ -134,16 +179,28 @@ export const getDashboardData = createServerFn({ method: 'GET' }).handler(
         .select({ sum: sum(sales.total) })
         .from(sales)
         .where(
-          and(
-            gte(sales.soldAt, startOfMonth),
-            lte(sales.soldAt, endOfMonth),
-            eq(sales.status, 'COMPLETED'),
-          ),
+          data.branchId
+            ? and(
+                gte(sales.soldAt, startOfMonth),
+                lte(sales.soldAt, endOfMonth),
+                eq(sales.status, 'COMPLETED'),
+                eq(sales.branchId, data.branchId),
+              )
+            : and(
+                gte(sales.soldAt, startOfMonth),
+                lte(sales.soldAt, endOfMonth),
+                eq(sales.status, 'COMPLETED'),
+              ),
         )
       posIncome = Number(posIncomeRes[0]?.sum ?? 0)
 
       const openSession = await db.query.cashRegisterSessions.findFirst({
-        where: eq(cashRegisterSessions.status, 'OPEN'),
+        where: data.branchId
+          ? and(
+              eq(cashRegisterSessions.status, 'OPEN'),
+              eq(cashRegisterSessions.branchId, data.branchId),
+            )
+          : eq(cashRegisterSessions.status, 'OPEN'),
         with: {
           movements: true,
         },
@@ -170,22 +227,38 @@ export const getDashboardData = createServerFn({ method: 'GET' }).handler(
       const activeProductsRes = await db
         .select({ count: count() })
         .from(products)
-        .where(eq(products.isActive, true))
+        .where(
+          data.branchId
+            ? and(eq(products.isActive, true), eq(products.branchId, data.branchId))
+            : eq(products.isActive, true),
+        )
       activeProductsCount = activeProductsRes[0]?.count ?? 0
     }
 
     const femaleCount = 0
     const maleCount = 0
 
-    const topProductsRes = await db
-      .select({
-        productId: saleItems.productId,
-        totalQty: sum(saleItems.quantity),
-      })
-      .from(saleItems)
-      .groupBy(saleItems.productId)
-      .orderBy(desc(sum(saleItems.quantity)))
-      .limit(5)
+    const topProductsRes = data.branchId
+      ? await db
+          .select({
+            productId: saleItems.productId,
+            totalQty: sum(saleItems.quantity),
+          })
+          .from(saleItems)
+          .innerJoin(sales, eq(saleItems.saleId, sales.id))
+          .where(eq(sales.branchId, data.branchId))
+          .groupBy(saleItems.productId)
+          .orderBy(desc(sum(saleItems.quantity)))
+          .limit(5)
+      : await db
+          .select({
+            productId: saleItems.productId,
+            totalQty: sum(saleItems.quantity),
+          })
+          .from(saleItems)
+          .groupBy(saleItems.productId)
+          .orderBy(desc(sum(saleItems.quantity)))
+          .limit(5)
 
     const realTopProducts = (
       await Promise.all(
@@ -212,6 +285,9 @@ export const getDashboardData = createServerFn({ method: 'GET' }).handler(
     const topProducts = realTopProducts.slice(0, 5)
 
     const allCheckIns = await db.query.checkIns.findMany({
+      where: data.branchId
+        ? eq(checkIns.branchId, data.branchId)
+        : undefined,
       with: {
         member: true,
       },
@@ -287,30 +363,7 @@ export const getDashboardData = createServerFn({ method: 'GET' }).handler(
       },
       topProducts,
       hourlyCheckIns,
+      expiringSoonCount: expiringSubscriptions.length,
     }
-  },
-)
-
-export const getExpiringSoonCount = createServerFn({ method: 'GET' }).handler(
-  async () => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
-
-    const now = new Date()
-    const sevenDaysFromNow = new Date(now)
-    sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7)
-    sevenDaysFromNow.setHours(23, 59, 59, 999)
-
-    const rows = await db
-      .select({ count: count() })
-      .from(subscriptions)
-      .where(
-        and(
-          eq(subscriptions.status, 'ACTIVE'),
-          gte(subscriptions.endDate, now),
-          lte(subscriptions.endDate, sevenDaysFromNow),
-        ),
-      )
-
-    return rows[0]?.count ?? 0
   },
 )

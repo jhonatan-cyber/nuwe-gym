@@ -26,6 +26,7 @@ import {
   updateProduct,
   adjustStock,
 } from '#/features/products/server.ts'
+import { useCurrentBranch } from '#/shared/hooks/use-current-branch.ts'
 import { Button } from '#/shared/components/ui/button'
 import { LoadingButton } from '#/shared/components/ui/loading-button'
 import { Input } from '#/shared/components/ui/input'
@@ -75,15 +76,19 @@ export function ProductsPage() {
     queryFn: () => getCategories(),
   })
 
+  const { branchId } = useCurrentBranch()
+
   const { data: productsList = [], isLoading } = useQuery({
-    queryKey: ['products', searchTerm, categoryIdFilter],
+    queryKey: ['products', branchId, searchTerm, categoryIdFilter],
     queryFn: () =>
       getProducts({
         data: {
           search: searchTerm,
           categoryId: categoryIdFilter ? Number(categoryIdFilter) : undefined,
+          branchId,
         },
       }),
+    enabled: !!branchId,
   })
 
   const [selectedProduct, setSelectedProduct] = useState<
@@ -183,6 +188,7 @@ export function ProductsPage() {
       stockCurrent: Number(stockCurrent),
       stockMinimum: Number(stockMinimum),
       imageUrl,
+      branchId,
     }
 
     if (selectedProduct) {

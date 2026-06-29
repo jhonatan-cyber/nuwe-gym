@@ -12,9 +12,11 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { getProducts, getCategories } from '#/features/products/server.ts'
+import { POSRecommendations } from './components/pos-recommendations.tsx'
 import { getMembers } from '#/features/members/server.ts'
 import { createSale } from '#/features/sales/server.ts'
 import { getCurrentCashSession } from '#/features/cash-register/server.ts'
+import { useCurrentBranch } from '#/shared/hooks/use-current-branch.ts'
 import { Button } from '#/shared/components/ui/button'
 import { LoadingButton } from '#/shared/components/ui/loading-button'
 import {
@@ -44,9 +46,11 @@ interface CartItem {
 
 export function POSPage() {
   const queryClient = useQueryClient()
+  const { branchId } = useCurrentBranch()
 
   const [cart, setCart] = useState<CartItem[]>([])
   const [activeTab, setActiveTab] = useState<'catalog' | 'cart'>('catalog')
+  const [lastProductId, setLastProductId] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [debouncedProductSearch, setDebouncedProductSearch] = useState('')
   const [categoryIdFilter, setCategoryIdFilter] = useState('')
@@ -78,8 +82,9 @@ export function POSPage() {
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false)
 
   const { data: cashSession, isLoading: isLoadingSession } = useQuery({
-    queryKey: ['current-cash-session'],
-    queryFn: () => getCurrentCashSession(),
+    queryKey: ['current-cash-session', branchId],
+    queryFn: () => getCurrentCashSession({ data: { branchId } }),
+    enabled: !!branchId,
   })
 
   const { data: categories = [] } = useQuery({
@@ -88,14 +93,16 @@ export function POSPage() {
   })
 
   const { data: products = [], isLoading: isLoadingProducts } = useQuery({
-    queryKey: ['products', debouncedProductSearch, categoryIdFilter],
+    queryKey: ['products', branchId, debouncedProductSearch, categoryIdFilter],
     queryFn: () =>
       getProducts({
         data: {
           search: debouncedProductSearch,
           categoryId: categoryIdFilter || undefined,
+          branchId,
         },
       }),
+    enabled: !!branchId,
   })
 
   const { data: members = [] } = useQuery({
@@ -136,6 +143,7 @@ export function POSPage() {
       toast.error('Producto sin stock disponible.')
       return
     }
+    setLastProductId(product.id)
 
     setCart((prev) => {
       const existing = prev.find((item) => item.id === product.id)
@@ -213,6 +221,7 @@ export function POSPage() {
           : customerName || 'Cliente General',
         paymentMethod,
         discount,
+        branchId,
         items: cart.map((item) => ({
           productId: item.id,
           quantity: item.quantity,
@@ -316,7 +325,17 @@ export function POSPage() {
                 description="No hay productos disponibles."
               />
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 pb-4">
+              <>
+                {lastProductId && (
+                  <POSRecommendations
+                    currentProductId={lastProductId}
+                    onAddToCart={(id) => {
+                      const prod = products.find((p: any) => p.id === id)
+                      if (prod) addToCart(prod)
+                    }}
+                  />
+                )}
+                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 pb-4">
                 {products
                   .filter((p: (typeof products)[number]) => p.isActive)
                   .map((prod: (typeof products)[number]) => {
@@ -378,6 +397,7 @@ export function POSPage() {
                     )
                   })}
               </div>
+              </>
             )}
           </div>
         </div>

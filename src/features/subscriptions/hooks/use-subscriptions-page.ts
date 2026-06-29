@@ -5,6 +5,7 @@ import {
   getSubscriptions,
   cancelSubscription,
 } from '#/features/subscriptions/server.ts'
+import { useCurrentBranch } from '#/shared/hooks/use-current-branch.ts'
 import { getSubscriptionStatus } from '#/features/subscriptions/utils.ts'
 import type { StatusFilter } from '#/features/subscriptions/types.ts'
 
@@ -13,14 +14,16 @@ export type ViewMode = 'list' | 'form'
 export function useSubscriptionsPage(userRole: string) {
   const queryClient = useQueryClient()
   const isReadOnly = userRole === 'TRAINER'
+  const { branchId } = useCurrentBranch()
 
   const [activeView, setActiveView] = useState<ViewMode>('list')
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState<StatusFilter>('ALL')
 
   const { data: subsList = [], isLoading } = useQuery({
-    queryKey: ['subscriptions'],
-    queryFn: () => getSubscriptions(),
+    queryKey: ['subscriptions', branchId],
+    queryFn: () => getSubscriptions({ data: { branchId: branchId ?? undefined } }),
+    enabled: !!branchId,
   })
 
   const cancelMutation = useMutation({

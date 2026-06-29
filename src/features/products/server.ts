@@ -82,12 +82,13 @@ export const updateCategory = createServerFn({ method: 'POST' })
 const getProductsSchema = z.object({
   search: z.string().optional(),
   categoryId: z.string().uuid().optional(),
+  branchId: z.string().optional(),
 })
 
 export const getProducts = createServerFn({ method: 'GET' })
   .inputValidator((data) => getProductsSchema.parse(data))
   .handler(async ({ data }) => {
-    const filters = []
+    const filters: (ReturnType<typeof eq> | ReturnType<typeof or>)[] = []
 
     if (data.search) {
       filters.push(
@@ -101,6 +102,10 @@ export const getProducts = createServerFn({ method: 'GET' })
 
     if (data.categoryId) {
       filters.push(eq(products.categoryId, data.categoryId))
+    }
+
+    if (data.branchId) {
+      filters.push(eq(products.branchId, data.branchId))
     }
 
     return await db.query.products.findMany({
@@ -123,6 +128,7 @@ const createProductSchema = z.object({
   stockCurrent: z.number(),
   stockMinimum: z.number(),
   imageUrl: z.string().optional(),
+  branchId: z.string().optional(),
 })
 
 export const createProduct = createServerFn({ method: 'POST' })
@@ -142,6 +148,7 @@ export const createProduct = createServerFn({ method: 'POST' })
         stockCurrent: data.stockCurrent,
         stockMinimum: data.stockMinimum,
         imageUrl: data.imageUrl || null,
+        branchId: data.branchId ?? null,
       })
       .returning()
     createAuditLog({

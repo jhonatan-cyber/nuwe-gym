@@ -15,6 +15,7 @@ export const purchases = pgTable(
   'purchases',
   {
     id: uuid('id').defaultRandom().primaryKey(),
+    branchId: uuid('branch_id'),
     supplierId: uuid('supplier_id')
       .notNull()
       .references(() => suppliers.id),

@@ -12,10 +12,16 @@ import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { z } from 'zod'
 
-export const getTrainers = createServerFn({ method: 'GET' }).handler(
-  async () => {
+export const getTrainers = createServerFn({ method: 'GET' })
+  .inputValidator(
+    z.object({ branchId: z.string().uuid().optional() }).optional(),
+  )
+  .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
     const trainers = await db.query.trainerProfiles.findMany({
+      where: data?.branchId
+        ? eq(trainerProfiles.branchId, data.branchId)
+        : undefined,
       with: {
         user: true,
         assignments: {
@@ -29,8 +35,7 @@ export const getTrainers = createServerFn({ method: 'GET' }).handler(
       ...t,
       memberCount: t.assignments.length,
     }))
-  },
-)
+  })
 
 export const getTrainer = createServerFn({ method: 'GET' })
   .inputValidator((data: unknown) =>
@@ -53,6 +58,7 @@ export const getTrainer = createServerFn({ method: 'GET' })
 
 const createTrainerSchema = z.object({
   userId: z.string().min(1),
+  branchId: z.string().uuid().optional(),
   specialty: z.string().optional(),
   bio: z.string().optional(),
   commissionRate: z.string().optional(),
@@ -72,6 +78,7 @@ export const createTrainer = createServerFn({ method: 'POST' })
       .insert(trainerProfiles)
       .values({
         userId: data.userId,
+        branchId: data.branchId ?? null,
         specialty: data.specialty ?? '',
         bio: data.bio ?? '',
         commissionRate: data.commissionRate ?? '0',

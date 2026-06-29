@@ -32,3 +32,7 @@ export function getTypeLabel(type: string) {
       return 'Paquete'
   }
 }
+
+export function getRenewalLabel(type: string | null) {
+  return type === 'AUTO' ? 'Automatica' : 'Manual'
+}

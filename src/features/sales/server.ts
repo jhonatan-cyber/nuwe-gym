@@ -71,7 +71,15 @@ function getDateRanges(): DateRanges {
   }
 }
 
-function completedSalesFilter(start: Date, end: Date) {
+function completedSalesFilter(start: Date, end: Date, branchId?: string) {
+  if (branchId) {
+    return and(
+      gte(sales.soldAt, start),
+      lte(sales.soldAt, end),
+      eq(sales.status, 'COMPLETED'),
+      eq(sales.branchId, branchId),
+    )
+  }
   return and(
     gte(sales.soldAt, start),
     lte(sales.soldAt, end),
@@ -89,11 +97,12 @@ interface CountRevenue {
 async function getTodayStats(
   start: Date,
   end: Date,
+  branchId?: string,
 ): Promise<CountRevenue & { avgTicket: number }> {
   const [res] = await db
     .select({ total: count(), revenue: sum(sales.total) })
     .from(sales)
-    .where(completedSalesFilter(start, end))
+    .where(completedSalesFilter(start, end, branchId))
 
   const total = Number(res.total)
   const revenue = Number(res.revenue ?? 0)
@@ -108,7 +117,7 @@ interface DailyRow {
   revenue: number
 }
 
-async function getDailySales(start: Date, end: Date): Promise<DailyRow[]> {
+async function getDailySales(start: Date, end: Date, branchId?: string): Promise<DailyRow[]> {
   const res = await db
     .select({
       date: sql<string>`DATE(${sales.soldAt})`,
@@ -116,7 +125,7 @@ async function getDailySales(start: Date, end: Date): Promise<DailyRow[]> {
       revenue: sum(sales.total),
     })
     .from(sales)
-    .where(completedSalesFilter(start, end))
+    .where(completedSalesFilter(start, end, branchId))
     .groupBy(sql`DATE(${sales.soldAt})`)
     .orderBy(sql`DATE(${sales.soldAt})`)
 
@@ -136,6 +145,7 @@ interface PaymentMethodRow {
 async function getPaymentMethodBreakdown(
   start: Date,
   end: Date,
+  branchId?: string,
 ): Promise<PaymentMethodRow[]> {
   const res = await db
     .select({
@@ -144,7 +154,7 @@ async function getPaymentMethodBreakdown(
       revenue: sum(sales.total),
     })
     .from(sales)
-    .where(completedSalesFilter(start, end))
+    .where(completedSalesFilter(start, end, branchId))
     .groupBy(sales.paymentMethod)
 
   return res.map((r) => ({
@@ -161,7 +171,7 @@ interface ProductRow {
   revenue: number
 }
 
-async function getTopProducts(start: Date, end: Date): Promise<ProductRow[]> {
+async function getTopProducts(start: Date, end: Date, branchId?: string): Promise<ProductRow[]> {
   const res = await db
     .select({
       productId: saleItems.productId,
@@ -172,7 +182,7 @@ async function getTopProducts(start: Date, end: Date): Promise<ProductRow[]> {
     .from(saleItems)
     .innerJoin(sales, eq(saleItems.saleId, sales.id))
     .innerJoin(products, eq(saleItems.productId, products.id))
-    .where(completedSalesFilter(start, end))
+    .where(completedSalesFilter(start, end, branchId))
     .groupBy(saleItems.productId, products.name)
     .orderBy(desc(sum(saleItems.quantity)))
     .limit(5)
@@ -191,7 +201,7 @@ interface HourRow {
   revenue: number
 }
 
-async function getHourlySales(start: Date, end: Date): Promise<HourRow[]> {
+async function getHourlySales(start: Date, end: Date, branchId?: string): Promise<HourRow[]> {
   const res = await db
     .select({
       hour: sql<number>`EXTRACT(HOUR FROM ${sales.soldAt})`,
@@ -199,7 +209,7 @@ async function getHourlySales(start: Date, end: Date): Promise<HourRow[]> {
       revenue: sum(sales.total),
     })
     .from(sales)
-    .where(completedSalesFilter(start, end))
+    .where(completedSalesFilter(start, end, branchId))
     .groupBy(sql`EXTRACT(HOUR FROM ${sales.soldAt})`)
     .orderBy(sql`EXTRACT(HOUR FROM ${sales.soldAt})`)
 
@@ -243,6 +253,7 @@ interface WeeklyComparisonResult {
 
 async function getWeeklyComparison(
   ranges: DateRanges,
+  branchId?: string,
 ): Promise<WeeklyComparisonResult> {
   const {
     thisWeekStart,
@@ -260,7 +271,7 @@ async function getWeeklyComparison(
         revenue: sum(sales.total),
       })
       .from(sales)
-      .where(completedSalesFilter(start, end))
+      .where(completedSalesFilter(start, end, branchId))
       .groupBy(sql`DATE(${sales.soldAt})`)
       .orderBy(sql`DATE(${sales.soldAt})`)
     return res
@@ -337,8 +348,13 @@ export function calcPercentChange(
 
 // ── Public server functions ───────────────────────────────────────
 
-export const getDailySalesSummary = createServerFn({ method: 'GET' }).handler(
-  async () => {
+const getDailySalesSummarySchema = z.object({
+  branchId: z.string().optional(),
+})
+
+export const getDailySalesSummary = createServerFn({ method: 'GET' })
+  .inputValidator((data) => getDailySalesSummarySchema.parse(data))
+  .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
 
     const ranges = getDateRanges()
@@ -352,12 +368,12 @@ export const getDailySalesSummary = createServerFn({ method: 'GET' }).handler(
       byHour,
       weekly,
     ] = await Promise.all([
-      getTodayStats(todayStart, todayEnd),
-      getDailySales(thirtyDaysAgo, todayEnd),
-      getPaymentMethodBreakdown(todayStart, todayEnd),
-      getTopProducts(todayStart, todayEnd),
-      getHourlySales(todayStart, todayEnd),
-      getWeeklyComparison(ranges),
+      getTodayStats(todayStart, todayEnd, data.branchId),
+      getDailySales(thirtyDaysAgo, todayEnd, data.branchId),
+      getPaymentMethodBreakdown(todayStart, todayEnd, data.branchId),
+      getTopProducts(todayStart, todayEnd, data.branchId),
+      getHourlySales(todayStart, todayEnd, data.branchId),
+      getWeeklyComparison(ranges, data.branchId),
     ])
 
     return {
@@ -372,10 +388,18 @@ export const getDailySalesSummary = createServerFn({ method: 'GET' }).handler(
   },
 )
 
-export const getRecentSales = createServerFn({ method: 'GET' }).handler(
-  async () => {
+const getRecentSalesSchema = z.object({
+  branchId: z.string().optional(),
+})
+
+export const getRecentSales = createServerFn({ method: 'GET' })
+  .inputValidator((data) => getRecentSalesSchema.parse(data))
+  .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
     return await db.query.sales.findMany({
+      where: data.branchId
+        ? eq(sales.branchId, data.branchId)
+        : undefined,
       orderBy: [desc(sales.soldAt)],
       limit: 100,
       with: {
@@ -388,24 +412,36 @@ export const getRecentSales = createServerFn({ method: 'GET' }).handler(
         },
       },
     })
-  },
-)
+  })
 
-export const getSaleStats = createServerFn({ method: 'GET' }).handler(
-  async () => {
+const getSaleStatsSchema = z.object({
+  branchId: z.string().optional(),
+})
+
+export const getSaleStats = createServerFn({ method: 'GET' })
+  .inputValidator((data) => getSaleStatsSchema.parse(data))
+  .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
 
     const today = new Date()
     today.setHours(0, 0, 0, 0)
 
+    const totalWhere = data.branchId
+      ? eq(sales.branchId, data.branchId)
+      : undefined
+    const todayWhere = data.branchId
+      ? and(gte(sales.soldAt, today), eq(sales.branchId, data.branchId))
+      : gte(sales.soldAt, today)
+
     const [totalResult] = await db
       .select({ total: count(), revenue: sum(sales.total) })
       .from(sales)
+      .where(totalWhere)
 
     const [todayResult] = await db
       .select({ total: count(), revenue: sum(sales.total) })
       .from(sales)
-      .where(gte(sales.soldAt, today))
+      .where(todayWhere)
 
     return {
       totalSales: Number(totalResult.total),
@@ -421,6 +457,7 @@ const createSaleSchema = z.object({
   customerName: z.string().optional(),
   paymentMethod: z.enum(['CASH', 'QR', 'TRANSFER', 'CARD']),
   discount: z.string().optional(),
+  branchId: z.string().optional(),
   items: z.array(
     z.object({
       productId: z.string().uuid(),
@@ -439,7 +476,12 @@ export const createSale = createServerFn({ method: 'POST' })
 
     const sale = await db.transaction(async (tx) => {
       const openSession = await tx.query.cashRegisterSessions.findFirst({
-        where: eq(cashRegisterSessions.status, 'OPEN'),
+        where: data.branchId
+          ? and(
+              eq(cashRegisterSessions.status, 'OPEN'),
+              eq(cashRegisterSessions.branchId, data.branchId),
+            )
+          : eq(cashRegisterSessions.status, 'OPEN'),
       })
 
       if (!openSession) {
@@ -470,6 +512,7 @@ export const createSale = createServerFn({ method: 'POST' })
           paymentMethod: data.paymentMethod,
           status: 'COMPLETED',
           cashSessionId: openSession.id,
+          branchId: data.branchId ?? null,
         })
         .returning()
 

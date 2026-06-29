@@ -1,6 +1,6 @@
 import { createServerFn } from '@tanstack/react-start'
 import { z } from 'zod'
-import { eq, and, desc } from 'drizzle-orm'
+import { eq, and, desc, sql } from 'drizzle-orm'
 import { db } from '#/shared/db/index.ts'
 import { branches, userBranches } from '#/shared/db/schema/branches.ts'
 import { requireRole } from '#/shared/lib/server-utils.ts'
@@ -84,6 +84,25 @@ export const getUserBranches = createServerFn({ method: 'GET' }).handler(
     const session = await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] },
     })
+
+    // ADMIN ve todas las sucursales activas; los demás solo las asignadas
+    if (session.user.role === 'ADMIN') {
+      return await db
+        .select({
+          id: branches.id,
+          name: branches.name,
+          address: branches.address,
+          phone: branches.phone,
+          email: branches.email,
+          isActive: branches.isActive,
+          openingTime: branches.openingTime,
+          closingTime: branches.closingTime,
+          isDefault: sql`false`.mapWith(Boolean),
+        })
+        .from(branches)
+        .where(eq(branches.isActive, true))
+        .orderBy(branches.name)
+    }
 
     const rows = await db
       .select({

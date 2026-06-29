@@ -8,6 +8,7 @@ import {
   Clock,
   Upload,
   AlertCircle,
+  ChevronRight,
 } from 'lucide-react'
 import {
   Card,
@@ -23,6 +24,8 @@ import { Label } from '#/shared/components/ui/label'
 import { Skeleton } from '#/shared/components/ui/skeleton'
 import { Separator } from '#/shared/components/ui/separator'
 import { getSettings, updateSettings } from '#/features/settings/server.ts'
+import { ModuleLayout } from '#/shared/components/layout/module-layout.tsx'
+import { cn } from '#/shared/lib/utils.ts'
 
 type TabId = 'general' | 'billing' | 'notifications' | 'hours'
 
@@ -33,7 +36,7 @@ const tabs: {
 }[] = [
   { id: 'general', label: 'General', icon: Settings },
   { id: 'billing', label: 'Facturación', icon: DollarSign },
-  { id: 'hours', label: 'Horarios', icon: Clock },
+  { id: 'hours', label: 'Horarios y Logo', icon: Clock },
   { id: 'notifications', label: 'Notificaciones', icon: Bell },
 ]
 
@@ -195,392 +198,486 @@ export function SettingsPage() {
 
   if (loading) {
     return (
-      <div className="space-y-6 animate-in fade-in duration-500">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Configuración</h1>
-          <p className="text-muted-foreground">Administración del gimnasio</p>
-        </div>
-        <Card>
-          <CardContent className="py-8">
-            <div className="space-y-4">
-              <Skeleton className="h-5 w-48" />
-              <Skeleton className="h-9 w-full" />
-              <Skeleton className="h-9 w-full" />
-              <Skeleton className="h-9 w-full" />
+      <div className="w-full">
+        <ModuleLayout
+          breadcrumb={
+            <div className="flex items-center gap-1">
+              <span className="text-muted-foreground">Configuración</span>
+              <ChevronRight className="size-3 text-muted-foreground/50" />
+              <span className="text-foreground">General</span>
             </div>
-          </CardContent>
-        </Card>
+          }
+          title="Configuración"
+          leftPanel={
+            <div className="flex flex-col gap-6 w-full animate-pulse">
+              <div className="space-y-3">
+                <div className="h-3 w-16 bg-muted rounded px-1" />
+                <div className="space-y-2">
+                  <Skeleton className="h-9 w-full rounded-2xl" />
+                  <Skeleton className="h-9 w-full rounded-2xl" />
+                  <Skeleton className="h-9 w-full rounded-2xl" />
+                  <Skeleton className="h-9 w-full rounded-2xl" />
+                </div>
+              </div>
+            </div>
+          }
+        >
+          <Card className="rounded-[2rem] border-border/10 shadow-xl bg-card p-6 relative overflow-hidden animate-pulse">
+            <div className="space-y-4">
+              <Skeleton className="h-5 w-48 rounded-lg" />
+              <Skeleton className="h-9 w-full rounded-2xl" />
+              <Skeleton className="h-9 w-full rounded-2xl" />
+              <Skeleton className="h-9 w-full rounded-2xl" />
+            </div>
+          </Card>
+        </ModuleLayout>
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="space-y-6 animate-in fade-in duration-500">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Configuración</h1>
-          <p className="text-muted-foreground">Administración del gimnasio</p>
-        </div>
-        <Card className="transition-all duration-200">
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <AlertCircle className="size-12 text-destructive mb-4" />
-            <p className="text-lg font-medium text-destructive">
-              Error al cargar configuración
-            </p>
-            <p className="text-sm text-muted-foreground">{error}</p>
-          </CardContent>
-        </Card>
+      <div className="w-full">
+        <ModuleLayout
+          breadcrumb={
+            <div className="flex items-center gap-1">
+              <span className="text-muted-foreground">Configuración</span>
+              <ChevronRight className="size-3 text-muted-foreground/50" />
+              <span className="text-foreground">General</span>
+            </div>
+          }
+          title="Configuración"
+          leftPanel={
+            <div className="flex flex-col gap-6 w-full">
+              <div className="space-y-3">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">
+                  Secciones
+                </p>
+                <div className="space-y-1">
+                  <Skeleton className="h-9 w-full rounded-2xl" />
+                </div>
+              </div>
+            </div>
+          }
+        >
+          <Card className="rounded-[2rem] border-border/10 bg-card text-foreground overflow-hidden relative">
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <AlertCircle className="size-12 text-destructive mb-4" />
+              <p className="text-lg font-medium text-destructive">
+                Error al cargar configuración
+              </p>
+              <p className="text-sm text-muted-foreground">{error}</p>
+            </CardContent>
+          </Card>
+        </ModuleLayout>
       </div>
     )
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Configuración</h1>
-        <p className="text-muted-foreground">Administración del gimnasio</p>
-      </div>
-
-      <div className="flex gap-1 border-b pb-1 overflow-x-auto scrollbar-none whitespace-nowrap -mx-4 px-4 md:mx-0 md:px-0">
-        {tabs.map((tab) => {
-          const Icon = tab.icon
-          return (
-            <Button
-              key={tab.id}
-              variant={activeTab === tab.id ? 'secondary' : 'ghost'}
-              size="sm"
-              onClick={() => setActiveTab(tab.id)}
-              className="rounded-b-none shrink-0"
-            >
-              <Icon className="size-4" />
-              {tab.label}
-            </Button>
-          )
-        })}
-      </div>
-
-      {activeTab === 'general' && (
-        <Card className="transition-all duration-200">
-          <CardHeader>
-            <CardTitle>Información General</CardTitle>
-            <CardDescription>Datos principales del gimnasio</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Field label="Nombre del gimnasio" required>
-              <Input
-                value={form.gymName}
-                onChange={(e) => handleChange('gymName', e.target.value)}
-                placeholder="Mi Gimnasio"
-              />
-            </Field>
-            <Field label="Dirección">
-              <Input
-                value={form.gymAddress}
-                onChange={(e) => handleChange('gymAddress', e.target.value)}
-                placeholder="Calle y número"
-              />
-            </Field>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Teléfono">
-                <Input
-                  value={form.gymPhone}
-                  onChange={(e) => handleChange('gymPhone', e.target.value)}
-                  placeholder="+54 11 1234-5678"
-                />
-              </Field>
-              <Field label="Email">
-                <Input
-                  type="email"
-                  value={form.gymEmail}
-                  onChange={(e) => handleChange('gymEmail', e.target.value)}
-                  placeholder="info@gimnasio.com"
-                />
-              </Field>
-            </div>
-            <Separator />
-            <div className="flex justify-end">
-              <LoadingButton
-                onClick={handleSave}
-                isLoading={updateMutation.isPending}
-              >
-                Guardar cambios
-              </LoadingButton>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {activeTab === 'billing' && (
-        <Card className="transition-all duration-200">
-          <CardHeader>
-            <CardTitle>Facturación</CardTitle>
-            <CardDescription>
-              Configuración de moneda e impuestos
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Símbolo de moneda">
-                <Input
-                  value={form.currencySymbol}
-                  onChange={(e) =>
-                    handleChange('currencySymbol', e.target.value)
-                  }
-                  placeholder="$"
-                />
-              </Field>
-              <Field label="Código de moneda">
-                <Input
-                  value={form.currencyCode}
-                  onChange={(e) => handleChange('currencyCode', e.target.value)}
-                  placeholder="ARS"
-                />
-              </Field>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Tasa de impuesto (%)">
-                <Input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={form.taxRate}
-                  onChange={(e) => handleChange('taxRate', e.target.value)}
-                  placeholder="0.00"
-                />
-              </Field>
-              <Field label="Decimales">
-                <Input
-                  type="number"
-                  min="0"
-                  max="10"
-                  value={form.decimalPlaces}
-                  onChange={(e) =>
-                    handleChange('decimalPlaces', Number(e.target.value))
-                  }
-                />
-              </Field>
-            </div>
-            <Separator />
-            <div className="flex justify-end">
-              <LoadingButton
-                onClick={handleSave}
-                isLoading={updateMutation.isPending}
-              >
-                Guardar cambios
-              </LoadingButton>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {activeTab === 'hours' && (
-        <div className="grid gap-6 lg:grid-cols-2">
-          <Card className="transition-all duration-200">
-            <CardHeader>
-              <CardTitle>Logo del Gimnasio</CardTitle>
-              <CardDescription>
-                Imagen que se mostrará en los reportes y recibos
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center gap-4">
-                {form.logoBase64 ? (
-                  <img
-                    src={form.logoBase64}
-                    alt="Logo preview"
-                    className="size-24 rounded-lg border object-contain bg-white"
-                  />
-                ) : (
-                  <div className="size-24 rounded-lg border border-dashed flex items-center justify-center text-muted-foreground">
-                    <Upload className="size-8" />
-                  </div>
-                )}
-                <div className="flex-1">
-                  <Label htmlFor="logo">Seleccionar imagen</Label>
-                  <Input
-                    id="logo"
-                    type="file"
-                    accept="image/*"
-                    className="mt-1"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0]
-                      if (!file) return
-                      const reader = new FileReader()
-                      reader.onload = (ev) => {
-                        const result = ev.target?.result
-                        if (typeof result === 'string') {
-                          handleChange('logoBase64', result)
-                        }
-                      }
-                      reader.readAsDataURL(file)
-                    }}
-                  />
-                  {form.logoBase64 && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="mt-2 text-destructive"
-                      onClick={() => handleChange('logoBase64', '')}
-                    >
-                      Eliminar logo
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="transition-all duration-200">
-            <CardHeader>
-              <CardTitle>Horario de Atención</CardTitle>
-              <CardDescription>
-                Configurá los días y horarios de apertura del gimnasio
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Field label="Hora de apertura">
-                  <Input
-                    type="time"
-                    value={form.openingTime}
-                    onChange={(e) =>
-                      handleChange('openingTime', e.target.value)
-                    }
-                  />
-                </Field>
-                <Field label="Hora de cierre">
-                  <Input
-                    type="time"
-                    value={form.closingTime}
-                    onChange={(e) =>
-                      handleChange('closingTime', e.target.value)
-                    }
-                  />
-                </Field>
-              </div>
-              <Separator />
-              <div className="space-y-3">
-                <Label>Días de atención</Label>
-                {DAYS.map((day) => (
-                  <label
-                    key={day.key}
-                    className="flex items-center justify-between py-1.5"
-                  >
-                    <span className="text-sm">{day.label}</span>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={
-                        form[day.key as keyof SettingsForm] as boolean
-                      }
-                      onClick={() =>
-                        handleChange(
-                          day.key,
-                          !(form[day.key as keyof SettingsForm] as boolean),
-                        )
-                      }
-                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
-                        (form[day.key as keyof SettingsForm] as boolean)
-                          ? 'bg-primary'
-                          : 'bg-input'
-                      }`}
-                    >
-                      <span
-                        className={`pointer-events-none inline-block size-5 rounded-full bg-white shadow-sm ring-0 transition-transform ${
-                          (form[day.key as keyof SettingsForm] as boolean)
-                            ? 'translate-x-5'
-                            : 'translate-x-0'
-                        }`}
-                      />
-                    </button>
-                  </label>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-          <div className="lg:col-span-2 flex justify-end">
-            <LoadingButton
-              onClick={handleSave}
-              isLoading={updateMutation.isPending}
-            >
-              Guardar cambios
-            </LoadingButton>
+    <div className="w-full">
+      <ModuleLayout
+        breadcrumb={
+          <div className="flex items-center gap-1">
+            <span className="text-muted-foreground">Administración</span>
+            <ChevronRight className="size-3 text-muted-foreground/50" />
+            <span className="text-foreground font-semibold">Configuración</span>
           </div>
-        </div>
-      )}
+        }
+        title="Configuración"
+        leftPanel={
+          <div className="flex flex-col gap-6 z-10 w-full">
+            <div className="space-y-3">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">
+                Secciones
+              </p>
+              <div className="space-y-1 w-full">
+                {tabs.map((tab) => {
+                  const Icon = tab.icon
+                  const isActive = activeTab === tab.id
+                  return (
+                    <Button
+                      key={tab.id}
+                      variant={isActive ? 'secondary' : 'ghost'}
+                      onClick={() => setActiveTab(tab.id)}
+                      className={cn(
+                        "w-full justify-start gap-2.5 px-4 py-2.5 rounded-2xl font-semibold text-sm transition-all duration-200",
+                        isActive
+                          ? "bg-primary/10 text-primary hover:bg-primary/15 dark:bg-primary/20 dark:text-primary-foreground"
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                      )}
+                    >
+                      <Icon className="size-4 shrink-0" />
+                      {tab.label}
+                    </Button>
+                  )
+                })}
+              </div>
+            </div>
 
-      {activeTab === 'notifications' && (
-        <Card className="transition-all duration-200">
-          <CardHeader>
-            <CardTitle>Notificaciones</CardTitle>
-            <CardDescription>
-              Alertas y recordatorios automáticos
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Stock mínimo (unidades)">
-                <Input
-                  type="number"
-                  min="0"
-                  value={form.lowStockThreshold}
-                  onChange={(e) =>
-                    handleChange('lowStockThreshold', Number(e.target.value))
-                  }
-                />
-              </Field>
-              <Field label="Días para recordatorio de membresía">
-                <Input
-                  type="number"
-                  min="0"
-                  value={form.membershipReminderDays}
-                  onChange={(e) =>
-                    handleChange(
-                      'membershipReminderDays',
-                      Number(e.target.value),
-                    )
-                  }
-                />
-              </Field>
+            <div className="space-y-3 pt-4 border-t border-border/5">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">
+                Ayuda
+              </p>
+              <p className="text-xs text-muted-foreground px-1 leading-relaxed">
+                Configurá los parámetros generales del sistema, la facturación por defecto de tu moneda, tus horarios comerciales, el logo corporativo y las notificaciones automáticas para tus socios.
+              </p>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Ventana de check-in (minutos)">
+          </div>
+        }
+      >
+        {activeTab === 'general' && (
+          <Card className="rounded-[2rem] border-border/10 shadow-xl bg-card text-foreground overflow-hidden relative transition-all duration-200">
+            <div className="absolute -top-12 -left-12 size-36 bg-primary/5 rounded-full blur-2xl pointer-events-none" />
+            <div className="absolute -bottom-10 -right-10 size-32 bg-pink-500/5 rounded-full blur-2xl pointer-events-none" />
+            <CardHeader className="relative z-10">
+              <CardTitle className="text-xl font-black">Información General</CardTitle>
+              <CardDescription>Datos principales del gimnasio</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4 relative z-10">
+              <Field label="Nombre del gimnasio" required>
                 <Input
-                  type="number"
-                  min="0"
-                  value={form.checkInWindowMinutes}
-                  onChange={(e) =>
-                    handleChange('checkInWindowMinutes', Number(e.target.value))
-                  }
+                  value={form.gymName}
+                  onChange={(e) => handleChange('gymName', e.target.value)}
+                  placeholder="Mi Gimnasio"
+                  className="rounded-2xl border-border/10 focus-visible:ring-primary bg-background/50"
                 />
               </Field>
-              <Field label="Renovación automática">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={form.enableAutoRenew}
-                    onChange={(e) =>
-                      handleChange('enableAutoRenew', e.target.checked)
-                    }
-                    className="size-4 rounded border-input accent-primary"
+              <Field label="Dirección">
+                <Input
+                  value={form.gymAddress}
+                  onChange={(e) => handleChange('gymAddress', e.target.value)}
+                  placeholder="Calle y número"
+                  className="rounded-2xl border-border/10 focus-visible:ring-primary bg-background/50"
+                />
+              </Field>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Teléfono">
+                  <Input
+                    value={form.gymPhone}
+                    onChange={(e) => handleChange('gymPhone', e.target.value)}
+                    placeholder="+54 11 1234-5678"
+                    className="rounded-2xl border-border/10 focus-visible:ring-primary bg-background/50"
                   />
-                  <span className="text-sm text-muted-foreground">
-                    Activar renovación automática de membresías
-                  </span>
-                </label>
-              </Field>
-            </div>
-            <Separator />
-            <div className="flex justify-end">
+                </Field>
+                <Field label="Email">
+                  <Input
+                    type="email"
+                    value={form.gymEmail}
+                    onChange={(e) => handleChange('gymEmail', e.target.value)}
+                    placeholder="info@gimnasio.com"
+                    className="rounded-2xl border-border/10 focus-visible:ring-primary bg-background/50"
+                  />
+                </Field>
+              </div>
+              <Separator className="border-border/5" />
+              <div className="flex justify-end pt-2">
+                <LoadingButton
+                  onClick={handleSave}
+                  isLoading={updateMutation.isPending}
+                  className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold px-6 shadow-lg shadow-primary/10 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  Guardar cambios
+                </LoadingButton>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {activeTab === 'billing' && (
+          <Card className="rounded-[2rem] border-border/10 shadow-xl bg-card text-foreground overflow-hidden relative transition-all duration-200">
+            <div className="absolute -top-12 -left-12 size-36 bg-primary/5 rounded-full blur-2xl pointer-events-none" />
+            <div className="absolute -bottom-10 -right-10 size-32 bg-pink-500/5 rounded-full blur-2xl pointer-events-none" />
+            <CardHeader className="relative z-10">
+              <CardTitle className="text-xl font-black">Facturación</CardTitle>
+              <CardDescription>
+                Configuración de moneda e impuestos
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4 relative z-10">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Símbolo de moneda">
+                  <Input
+                    value={form.currencySymbol}
+                    onChange={(e) =>
+                      handleChange('currencySymbol', e.target.value)
+                    }
+                    placeholder="$"
+                    className="rounded-2xl border-border/10 focus-visible:ring-primary bg-background/50"
+                  />
+                </Field>
+                <Field label="Código de moneda">
+                  <Input
+                    value={form.currencyCode}
+                    onChange={(e) => handleChange('currencyCode', e.target.value)}
+                    placeholder="ARS"
+                    className="rounded-2xl border-border/10 focus-visible:ring-primary bg-background/50"
+                  />
+                </Field>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Tasa de impuesto (%)">
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={form.taxRate}
+                    onChange={(e) => handleChange('taxRate', e.target.value)}
+                    placeholder="0.00"
+                    className="rounded-2xl border-border/10 focus-visible:ring-primary bg-background/50"
+                  />
+                </Field>
+                <Field label="Decimales">
+                  <Input
+                    type="number"
+                    min="0"
+                    max="10"
+                    value={form.decimalPlaces}
+                    onChange={(e) =>
+                      handleChange('decimalPlaces', Number(e.target.value))
+                    }
+                    className="rounded-2xl border-border/10 focus-visible:ring-primary bg-background/50"
+                  />
+                </Field>
+              </div>
+              <Separator className="border-border/5" />
+              <div className="flex justify-end pt-2">
+                <LoadingButton
+                  onClick={handleSave}
+                  isLoading={updateMutation.isPending}
+                  className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold px-6 shadow-lg shadow-primary/10 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  Guardar cambios
+                </LoadingButton>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {activeTab === 'hours' && (
+          <div className="grid gap-6 lg:grid-cols-2">
+            <Card className="rounded-[2rem] border-border/10 shadow-xl bg-card text-foreground overflow-hidden relative transition-all duration-200">
+              <div className="absolute -top-12 -left-12 size-36 bg-primary/5 rounded-full blur-2xl pointer-events-none" />
+              <CardHeader className="relative z-10">
+                <CardTitle className="text-xl font-black">Logo del Gimnasio</CardTitle>
+                <CardDescription>
+                  Imagen que se mostrará en los reportes y recibos
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4 relative z-10">
+                <div className="flex items-center gap-4">
+                  {form.logoBase64 ? (
+                    <img
+                      src={form.logoBase64}
+                      alt="Logo preview"
+                      className="size-24 rounded-2xl border border-border/10 object-contain bg-white shadow-md"
+                    />
+                  ) : (
+                    <div className="size-24 rounded-2xl border border-dashed border-border/20 flex items-center justify-center text-muted-foreground bg-muted/20">
+                      <Upload className="size-8 text-muted-foreground/60" />
+                    </div>
+                  )}
+                  <div className="flex-1 space-y-2">
+                    <Label htmlFor="logo" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Seleccionar imagen</Label>
+                    <Input
+                      id="logo"
+                      type="file"
+                      accept="image/*"
+                      className="mt-1 rounded-2xl border-border/10 focus-visible:ring-primary bg-background/50 file:mr-2 file:py-1 file:px-2 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (!file) return
+                        const reader = new FileReader()
+                        reader.onload = (ev) => {
+                          const result = ev.target?.result
+                          if (typeof result === 'string') {
+                            handleChange('logoBase64', result)
+                          }
+                        }
+                        reader.readAsDataURL(file)
+                      }}
+                    />
+                    {form.logoBase64 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="mt-2 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-full font-semibold"
+                        onClick={() => handleChange('logoBase64', '')}
+                      >
+                        Eliminar logo
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="rounded-[2rem] border-border/10 shadow-xl bg-card text-foreground overflow-hidden relative transition-all duration-200">
+              <div className="absolute -bottom-10 -right-10 size-32 bg-pink-500/5 rounded-full blur-2xl pointer-events-none" />
+              <CardHeader className="relative z-10">
+                <CardTitle className="text-xl font-black">Horario de Atención</CardTitle>
+                <CardDescription>
+                  Configurá los días y horarios de apertura del gimnasio
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4 relative z-10">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Field label="Hora de apertura">
+                    <Input
+                      type="time"
+                      value={form.openingTime}
+                      onChange={(e) =>
+                        handleChange('openingTime', e.target.value)
+                      }
+                      className="rounded-2xl border-border/10 focus-visible:ring-primary bg-background/50"
+                    />
+                  </Field>
+                  <Field label="Hora de cierre">
+                    <Input
+                      type="time"
+                      value={form.closingTime}
+                      onChange={(e) =>
+                        handleChange('closingTime', e.target.value)
+                      }
+                      className="rounded-2xl border-border/10 focus-visible:ring-primary bg-background/50"
+                    />
+                  </Field>
+                </div>
+                <Separator className="border-border/5" />
+                <div className="space-y-3">
+                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Días de atención</Label>
+                  <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
+                    {DAYS.map((day) => (
+                      <label
+                        key={day.key}
+                        className="flex items-center justify-between py-1.5 px-2 rounded-xl hover:bg-muted/30 transition-all duration-150"
+                      >
+                        <span className="text-sm font-semibold">{day.label}</span>
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={
+                            form[day.key as keyof SettingsForm] as boolean
+                          }
+                          onClick={() =>
+                            handleChange(
+                              day.key,
+                              !(form[day.key as keyof SettingsForm] as boolean),
+                            )
+                          }
+                          className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
+                            (form[day.key as keyof SettingsForm] as boolean)
+                              ? 'bg-primary'
+                              : 'bg-muted-foreground/30'
+                          }`}
+                        >
+                          <span
+                            className={`pointer-events-none inline-block size-5 rounded-full bg-white shadow-sm ring-0 transition-transform ${
+                              (form[day.key as keyof SettingsForm] as boolean)
+                                ? 'translate-x-5'
+                                : 'translate-x-0'
+                            }`}
+                          />
+                        </button>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <div className="lg:col-span-2 flex justify-end">
               <LoadingButton
                 onClick={handleSave}
                 isLoading={updateMutation.isPending}
+                className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold px-6 shadow-lg shadow-primary/10 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
               >
                 Guardar cambios
               </LoadingButton>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        )}
+
+        {activeTab === 'notifications' && (
+          <Card className="rounded-[2rem] border-border/10 shadow-xl bg-card text-foreground overflow-hidden relative transition-all duration-200">
+            <div className="absolute -top-12 -left-12 size-36 bg-primary/5 rounded-full blur-2xl pointer-events-none" />
+            <div className="absolute -bottom-10 -right-10 size-32 bg-pink-500/5 rounded-full blur-2xl pointer-events-none" />
+            <CardHeader className="relative z-10">
+              <CardTitle className="text-xl font-black">Notificaciones</CardTitle>
+              <CardDescription>
+                Alertas y recordatorios automáticos
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4 relative z-10">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Stock mínimo (unidades)">
+                  <Input
+                    type="number"
+                    min="0"
+                    value={form.lowStockThreshold}
+                    onChange={(e) =>
+                      handleChange('lowStockThreshold', Number(e.target.value))
+                    }
+                    className="rounded-2xl border-border/10 focus-visible:ring-primary bg-background/50"
+                  />
+                </Field>
+                <Field label="Días para recordatorio de membresía">
+                  <Input
+                    type="number"
+                    min="0"
+                    value={form.membershipReminderDays}
+                    onChange={(e) =>
+                      handleChange(
+                        'membershipReminderDays',
+                        Number(e.target.value),
+                      )
+                    }
+                    className="rounded-2xl border-border/10 focus-visible:ring-primary bg-background/50"
+                  />
+                </Field>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Ventana de check-in (minutos)">
+                  <Input
+                    type="number"
+                    min="0"
+                    value={form.checkInWindowMinutes}
+                    onChange={(e) =>
+                      handleChange('checkInWindowMinutes', Number(e.target.value))
+                    }
+                    className="rounded-2xl border-border/10 focus-visible:ring-primary bg-background/50"
+                  />
+                </Field>
+                <Field label="Renovación automática">
+                  <label className="flex items-center gap-2 cursor-pointer pt-6">
+                    <input
+                      type="checkbox"
+                      checked={form.enableAutoRenew}
+                      onChange={(e) =>
+                        handleChange('enableAutoRenew', e.target.checked)
+                      }
+                      className="size-4 rounded border-border/20 accent-primary"
+                    />
+                    <span className="text-sm font-semibold text-muted-foreground">
+                      Activar renovación automática de membresías
+                    </span>
+                  </label>
+                </Field>
+              </div>
+              <Separator className="border-border/5" />
+              <div className="flex justify-end pt-2">
+                <LoadingButton
+                  onClick={handleSave}
+                  isLoading={updateMutation.isPending}
+                  className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold px-6 shadow-lg shadow-primary/10 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  Guardar cambios
+                </LoadingButton>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </ModuleLayout>
     </div>
   )
 }
@@ -596,7 +693,7 @@ function Field({
 }) {
   return (
     <div className="space-y-1.5">
-      <Label>
+      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
         {label}
         {required && <span className="text-destructive ml-0.5">*</span>}
       </Label>

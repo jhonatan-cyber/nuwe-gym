@@ -7,6 +7,7 @@ import {
   createCheckIn,
 } from '#/features/check-ins/server.ts'
 import { getMembers } from '#/features/members/server.ts'
+import { useCurrentBranch } from '#/shared/hooks/use-current-branch.ts'
 import { formatDateTime, formatDate } from '#/shared/lib/formatters.ts'
 
 import { Button } from '#/shared/components/ui/button'
@@ -34,9 +35,12 @@ export function CheckInsPage() {
     setTimeout(() => setDebouncedSearch(e.target.value), 300)
   }
 
+  const { branchId } = useCurrentBranch()
+
   const { data: checkInsList = [], isLoading: isLoadingCheckIns } = useQuery({
-    queryKey: ['check-ins'],
-    queryFn: () => getRecentCheckIns(),
+    queryKey: ['check-ins', branchId],
+    queryFn: () => getRecentCheckIns({ data: { branchId } }),
+    enabled: !!branchId,
     refetchInterval: 10000,
   })
 
@@ -64,7 +68,7 @@ export function CheckInsPage() {
       setPendingMemberId(memberId)
       return
     }
-    createMutation.mutate({ data: { memberId } })
+    createMutation.mutate({ data: { memberId, branchId } })
   }
 
   const handleConfirmCheckIn = () => {

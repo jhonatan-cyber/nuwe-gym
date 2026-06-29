@@ -19,7 +19,6 @@ interface SubscriptionsPageProps {
 export function SubscriptionsPage({ userRole }: SubscriptionsPageProps) {
   const {
     activeView,
-    setActiveView,
     search,
     setSearch,
     filterStatus,

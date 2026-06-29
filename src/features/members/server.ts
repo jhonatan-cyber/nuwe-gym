@@ -1,7 +1,7 @@
 import { createServerFn } from '@tanstack/react-start'
 import { db } from '#/shared/db/index.ts'
 import { members } from '#/shared/db/schema/members.ts'
-import { eq, desc, ilike, or } from 'drizzle-orm'
+import { eq, and, desc, ilike, or } from 'drizzle-orm'
 import { requireRole } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
@@ -9,21 +9,29 @@ import { z } from 'zod'
 
 const getMembersSchema = z.object({
   search: z.string().optional(),
+  branchId: z.string().optional(),
 })
 
 export const getMembers = createServerFn({ method: 'GET' })
   .inputValidator((data) => getMembersSchema.parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
-    let whereClause = undefined
 
+    const conditions: ReturnType<typeof eq>[] = []
     if (data.search) {
-      whereClause = or(
-        ilike(members.fullName, `%${data.search}%`),
-        ilike(members.documentNumber, `%${data.search}%`),
-        ilike(members.email, `%${data.search}%`),
+      conditions.push(
+        or(
+          ilike(members.fullName, `%${data.search}%`),
+          ilike(members.documentNumber, `%${data.search}%`),
+          ilike(members.email, `%${data.search}%`),
+        ) as unknown as ReturnType<typeof eq>,
       )
     }
+    if (data.branchId) {
+      conditions.push(eq(members.branchId, data.branchId))
+    }
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined
 
     return await db.query.members.findMany({
       where: whereClause,
@@ -68,6 +76,7 @@ const createMemberSchema = z.object({
   emergencyContactName: z.string().optional(),
   emergencyContactPhone: z.string().optional(),
   address: z.string().optional(),
+  branchId: z.string().uuid(),
 })
 
 export type CreateMemberData = z.infer<typeof createMemberSchema>
@@ -91,6 +100,7 @@ export const createMember = createServerFn({ method: 'POST' })
         emergencyContactName: data.emergencyContactName,
         emergencyContactPhone: data.emergencyContactPhone,
         address: data.address,
+        branchId: data.branchId ?? null,
       })
       .returning()
 

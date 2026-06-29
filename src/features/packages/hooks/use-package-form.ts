@@ -11,6 +11,35 @@ interface UsePackageFormProps {
   onBack: () => void
 }
 
+function pkgToForm(pkg: Package): PackageFormData {
+  return {
+    name: pkg.name,
+    description: pkg.description ?? '',
+    imageBase64: pkg.imageBase64 ?? '',
+    price: pkg.price,
+    durationDays: pkg.durationDays,
+    type: pkg.type,
+    renewalType: pkg.renewalType ?? 'MANUAL',
+    graceDays: pkg.graceDays ?? 0,
+    maxFreezes: pkg.maxFreezes ?? 0,
+    maxFreezeDays: pkg.maxFreezeDays ?? 0,
+    allowedStartTime: pkg.allowedStartTime ?? '',
+    allowedEndTime: pkg.allowedEndTime ?? '',
+    dailyAccessLimit: pkg.dailyAccessLimit ?? undefined,
+    color: pkg.color ?? '',
+    isActive: pkg.isActive,
+    items: pkg.items.map((i: any) => ({
+      description: i.description,
+      sortOrder: i.sortOrder,
+    })),
+    allowedDays: (pkg.allowedDays ?? []).map((d: any) => ({
+      dayOfWeek: d.dayOfWeek,
+      startTime: d.startTime ?? undefined,
+      endTime: d.endTime ?? undefined,
+    })),
+  }
+}
+
 export function usePackageForm({ editingPackageId, onBack }: UsePackageFormProps) {
   const queryClient = useQueryClient()
   const isEditing = editingPackageId !== null
@@ -19,21 +48,7 @@ export function usePackageForm({ editingPackageId, onBack }: UsePackageFormProps
     if (editingPackageId) {
       const packages = queryClient.getQueryData<Package[]>(['packages'])
       const pkg = packages?.find((p) => p.id === editingPackageId)
-      if (pkg) {
-        return {
-          name: pkg.name,
-          description: pkg.description ?? '',
-          imageBase64: pkg.imageBase64 ?? '',
-          price: pkg.price,
-          durationDays: pkg.durationDays,
-          type: pkg.type,
-          isActive: pkg.isActive,
-          items: pkg.items.map((i) => ({
-            description: i.description,
-            sortOrder: i.sortOrder,
-          })),
-        }
-      }
+      if (pkg) return pkgToForm(pkg)
     }
     return EMPTY_FORM
   })
@@ -127,6 +142,39 @@ export function usePackageForm({ editingPackageId, onBack }: UsePackageFormProps
     setFormData({ ...formData, items })
   }
 
+  function toggleDay(day: number) {
+    const exists = formData.allowedDays.find((d) => d.dayOfWeek === day)
+    if (exists) {
+      setFormData({
+        ...formData,
+        allowedDays: formData.allowedDays.filter(
+          (d) => d.dayOfWeek !== day,
+        ),
+      })
+    } else {
+      setFormData({
+        ...formData,
+        allowedDays: [
+          ...formData.allowedDays,
+          { dayOfWeek: day },
+        ],
+      })
+    }
+  }
+
+  function updateDayTime(
+    day: number,
+    field: 'startTime' | 'endTime',
+    value: string,
+  ) {
+    setFormData({
+      ...formData,
+      allowedDays: formData.allowedDays.map((d) =>
+        d.dayOfWeek === day ? { ...d, [field]: value } : d,
+      ),
+    })
+  }
+
   return {
     formData,
     setFormData,
@@ -142,5 +190,7 @@ export function usePackageForm({ editingPackageId, onBack }: UsePackageFormProps
     addItem,
     removeItem,
     updateItem,
+    toggleDay,
+    updateDayTime,
   }
 }

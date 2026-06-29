@@ -15,6 +15,7 @@ export const trainerProfiles = pgTable(
   'trainer_profiles',
   {
     id: uuid('id').defaultRandom().primaryKey(),
+    branchId: uuid('branch_id'),
     userId: text('user_id')
       .notNull()
       .references(() => users.id),

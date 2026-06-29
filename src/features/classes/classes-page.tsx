@@ -26,6 +26,7 @@ import {
   markAttendance,
 } from '#/features/classes/server.ts'
 import { formatDate, formatDateTime } from '#/shared/lib/formatters.ts'
+import { useCurrentBranch } from '#/shared/hooks/use-current-branch.ts'
 import { cn } from '#/shared/lib/utils.ts'
 import { ModuleLayout } from '#/shared/components/layout/module-layout.tsx'
 
@@ -147,15 +148,18 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
 
   const [filterClassId, setFilterClassId] = useState<string>('all')
   const [filterStatus, setFilterStatus] = useState<string>('all')
+  const { branchId } = useCurrentBranch()
 
   const { data: classesList = [], isLoading: classesLoading } = useQuery({
-    queryKey: ['classes'],
-    queryFn: () => getClasses(),
+    queryKey: ['classes', branchId],
+    queryFn: () => getClasses({ data: { branchId } }),
+    enabled: !!branchId,
   })
 
   const { data: weeklySchedule = [] } = useQuery({
-    queryKey: ['weekly-schedule'],
-    queryFn: () => getWeeklySchedule(),
+    queryKey: ['weekly-schedule', branchId],
+    queryFn: () => getWeeklySchedule({ data: { branchId } }),
+    enabled: !!branchId,
   })
 
   const [editingClass, setEditingClass] = useState<
@@ -293,7 +297,7 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
         data: { id: editingClass.id, ...classForm },
       })
     } else {
-      createClassMutation.mutate({ data: classForm })
+      createClassMutation.mutate({ data: { ...classForm, branchId } })
     }
   }
 

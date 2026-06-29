@@ -1,22 +1,39 @@
 import { createServerFn } from '@tanstack/react-start'
 import { db } from '#/shared/db/index.ts'
 import { inventoryMovements } from '#/shared/db/schema/inventory.ts'
-import { desc, sql } from 'drizzle-orm'
+import { products } from '#/shared/db/schema/products.ts'
+import { desc, eq, inArray, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { requireRole } from '#/shared/lib/server-utils.ts'
 
-export const getInventoryMovements = createServerFn({ method: 'GET' }).handler(
-  async () => {
+export const getInventoryMovements = createServerFn({ method: 'GET' })
+  .inputValidator(
+    z.object({ branchId: z.string().uuid().optional() }).optional(),
+  )
+  .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+
+    const branchId = data?.branchId
+    if (!branchId) {
+      return await db.query.inventoryMovements.findMany({
+        orderBy: [desc(inventoryMovements.createdAt)],
+        with: { product: true, createdBy: true },
+      })
+    }
+
+    const productIds = await db
+      .select({ id: products.id })
+      .from(products)
+      .where(eq(products.branchId, branchId))
+    const ids = productIds.map((p) => p.id)
+    if (ids.length === 0) return []
+
     return await db.query.inventoryMovements.findMany({
+      where: inArray(inventoryMovements.productId, ids),
       orderBy: [desc(inventoryMovements.createdAt)],
-      with: {
-        product: true,
-        createdBy: true,
-      },
+      with: { product: true, createdBy: true },
     })
-  },
-)
+  })
 
 interface StockSnapshot {
   productId: string

@@ -11,7 +11,6 @@ import { FilterBar } from '#/shared/components/ui/filter-bar'
 import { LoadingSpinner } from '#/shared/components/ui/loading-spinner'
 import { EmptyState } from '#/shared/components/ui/empty-state'
 import { getTypeLabel } from '#/features/packages/utils.ts'
-import type { Package } from '#/features/packages/types.ts'
 import { usePackagesPage } from '#/features/packages/hooks/use-packages-page.ts'
 
 interface PackagesPageProps {

@@ -1,19 +1,33 @@
 import { createServerFn } from '@tanstack/react-start'
 import { db } from '#/shared/db/index.ts'
 import { membershipFreezes } from '#/shared/db/schema/membership-freezes.ts'
+import { members } from '#/shared/db/schema/members.ts'
 import { subscriptions } from '#/shared/db/schema/subscriptions.ts'
-import { eq, and, isNull, gte, lte, desc } from 'drizzle-orm'
+import { eq, and, isNull, gte, lte, desc, inArray } from 'drizzle-orm'
+
+async function getBranchMemberIds(branchId: string): Promise<string[]> {
+  const rows = await db
+    .select({ id: members.id })
+    .from(members)
+    .where(eq(members.branchId, branchId))
+  return rows.map((r) => r.id)
+}
 
 import { requireRole } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { z } from 'zod'
 
-export const getFreezes = createServerFn({ method: 'GET' }).handler(
-  async () => {
+export const getFreezes = createServerFn({ method: 'GET' })
+  .inputValidator(
+    z.object({ branchId: z.string().uuid().optional() }).optional(),
+  )
+  .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
-
+    const memberIds = data?.branchId ? await getBranchMemberIds(data.branchId) : undefined
+    if (data?.branchId && memberIds!.length === 0) return []
     return await db.query.membershipFreezes.findMany({
+      where: memberIds ? inArray(membershipFreezes.memberId, memberIds) : undefined,
       orderBy: [desc(membershipFreezes.createdAt)],
       with: {
         subscription: {
@@ -26,8 +40,7 @@ export const getFreezes = createServerFn({ method: 'GET' }).handler(
         member: true,
       },
     })
-  },
-)
+  })
 
 export const getMemberFreezes = createServerFn({ method: 'GET' })
   .inputValidator((data: { memberId: number }) =>
@@ -206,14 +219,21 @@ export const getFreezeRules = createServerFn({ method: 'GET' }).handler(
   },
 )
 
-export const getFrozenSubscriptions = createServerFn({ method: 'GET' }).handler(
-  async () => {
+export const getFrozenSubscriptions = createServerFn({ method: 'GET' })
+  .inputValidator(
+    z.object({ branchId: z.string().uuid().optional() }).optional(),
+  )
+  .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+
+    const memberIds = data?.branchId ? await getBranchMemberIds(data.branchId) : undefined
+    if (data?.branchId && memberIds!.length === 0) return []
 
     const now = new Date()
 
     const activeFreezes = await db.query.membershipFreezes.findMany({
       where: and(
+        memberIds ? inArray(membershipFreezes.memberId, memberIds) : undefined,
         isNull(membershipFreezes.resumedAt),
         lte(membershipFreezes.startDate, now),
         gte(membershipFreezes.endDate, now),

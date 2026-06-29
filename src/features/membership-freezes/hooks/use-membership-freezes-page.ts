@@ -8,10 +8,12 @@ import {
   getFrozenSubscriptions,
 } from '#/features/membership-freezes/server.ts'
 import { getSubscriptions } from '#/features/subscriptions/server.ts'
+import { useCurrentBranch } from '#/shared/hooks/use-current-branch.ts'
 
 
 export function useMembershipFreezesPage(userRole: string) {
   const queryClient = useQueryClient()
+  const { branchId } = useCurrentBranch()
   const isAdmin = userRole === 'ADMIN'
   const canWrite = userRole === 'ADMIN' || userRole === 'RECEPTIONIST'
 
@@ -25,18 +27,21 @@ export function useMembershipFreezesPage(userRole: string) {
   })
 
   const { data: freezes = [], isLoading } = useQuery({
-    queryKey: ['membership-freezes'],
-    queryFn: () => getFreezes(),
+    queryKey: ['membership-freezes', branchId],
+    queryFn: () => getFreezes({ data: { branchId } }),
+    enabled: !!branchId,
   })
 
   const { data: frozenSubs = [] } = useQuery({
-    queryKey: ['frozen-subscriptions'],
-    queryFn: () => getFrozenSubscriptions(),
+    queryKey: ['frozen-subscriptions', branchId],
+    queryFn: () => getFrozenSubscriptions({ data: { branchId } }),
+    enabled: !!branchId,
   })
 
   const { data: allSubs = [] } = useQuery({
-    queryKey: ['subscriptions'],
-    queryFn: () => getSubscriptions(),
+    queryKey: ['subscriptions', branchId],
+    queryFn: () => getSubscriptions({ data: { branchId: branchId ?? undefined } }),
+    enabled: !!branchId,
   })
 
   const activeSubs = allSubs.filter(

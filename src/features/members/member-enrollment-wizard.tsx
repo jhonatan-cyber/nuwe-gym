@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { ChevronRight } from 'lucide-react'
 import { createMember, uploadMemberPhoto } from '#/features/members/server.ts'
+import { useCurrentBranch } from '#/shared/hooks/use-current-branch.ts'
 import { createSubscription } from '#/features/subscriptions/server.ts'
 import { getActivePackages } from '#/features/packages/server.ts'
 import { getSettings } from '#/features/settings/server.ts'
@@ -52,6 +53,7 @@ export function MemberEnrollmentWizard({
   onRenewalClick,
 }: WizardProps) {
   const queryClient = useQueryClient()
+  const { branchId } = useCurrentBranch()
   const {
     stream: cameraStream,
     videoRef,
@@ -170,6 +172,7 @@ export function MemberEnrollmentWizard({
             : undefined,
           birthDate: personalInfo.birthDate || undefined,
           gender: personalInfo.gender,
+          branchId,
         },
       })
       if (personalInfo.photoBase64) {
@@ -186,6 +189,7 @@ export function MemberEnrollmentWizard({
           endDate: getEndDateString(selectedPackage.durationDays),
           amountPaid: selectedPackage.price.toString(),
           paymentMethod,
+          branchId,
         },
       })
       setCreatedMemberName(member.fullName)

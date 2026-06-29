@@ -6,7 +6,6 @@ import {
   deletePackage,
   updatePackage,
 } from '#/features/packages/server.ts'
-import { getTypeLabel } from '#/features/packages/utils.ts'
 import type { Package } from '#/features/packages/types.ts'
 
 export type ViewMode = 'list' | 'form'
@@ -65,10 +64,23 @@ export function usePackagesPage(userRole: string) {
         price: pkg.price,
         durationDays: pkg.durationDays,
         type: pkg.type,
+        renewalType: pkg.renewalType ?? 'MANUAL',
+        graceDays: pkg.graceDays ?? 0,
+        maxFreezes: pkg.maxFreezes ?? 0,
+        maxFreezeDays: pkg.maxFreezeDays ?? 0,
+        allowedStartTime: pkg.allowedStartTime ?? '',
+        allowedEndTime: pkg.allowedEndTime ?? '',
+        dailyAccessLimit: pkg.dailyAccessLimit ?? undefined,
+        color: pkg.color ?? '',
         isActive: !pkg.isActive,
-        items: pkg.items.map((i) => ({
+        items: pkg.items.map((i: any) => ({
           description: i.description,
           sortOrder: i.sortOrder,
+        })),
+        allowedDays: (pkg.allowedDays ?? []).map((d: any) => ({
+          dayOfWeek: d.dayOfWeek,
+          startTime: d.startTime ?? undefined,
+          endTime: d.endTime ?? undefined,
         })),
       },
     })

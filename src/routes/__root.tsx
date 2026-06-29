@@ -21,14 +21,14 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
     meta: [
       { charSet: 'utf-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'Trainix POS' },
+      { title: 'Trainix' },
       {
         name: 'description',
         content: 'Sistema de administración para gimnasios con POS integrado',
       },
       // Open Graph / Facebook
       { property: 'og:type', content: 'website' },
-      { property: 'og:title', content: 'Trainix POS' },
+      { property: 'og:title', content: 'Trainix' },
       {
         property: 'og:description',
         content: 'Sistema de administración para gimnasios con POS integrado',
@@ -37,7 +37,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
       { property: 'og:url', content: 'http://localhost:3000' },
       // Twitter / X
       { name: 'twitter:card', content: 'summary_large_image' },
-      { name: 'twitter:title', content: 'Trainix POS' },
+      { name: 'twitter:title', content: 'Trainix' },
       {
         name: 'twitter:description',
         content: 'Sistema de administración para gimnasios con POS integrado',

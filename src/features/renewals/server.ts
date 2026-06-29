@@ -9,16 +9,19 @@ import {
 } from '#/shared/db/schema/cash-register.ts'
 import { members } from '#/shared/db/schema/members.ts'
 import { settings } from '#/shared/db/schema/settings.ts'
-import { eq, and, gte, lte, desc } from 'drizzle-orm'
+import { eq, and, gte, lte, desc, inArray } from 'drizzle-orm'
 import { requireRole } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { z } from 'zod'
 
+const getExpiringSubscriptionsSchema = z.object({
+  days: z.number().optional().default(7),
+  branchId: z.string().optional(),
+})
+
 export const getExpiringSubscriptions = createServerFn({ method: 'GET' })
-  .inputValidator((data: unknown) =>
-    z.object({ days: z.number().optional().default(7) }).parse(data),
-  )
+  .inputValidator((data) => getExpiringSubscriptionsSchema.parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
 
@@ -26,11 +29,16 @@ export const getExpiringSubscriptions = createServerFn({ method: 'GET' })
     const future = new Date()
     future.setDate(future.getDate() + data.days)
 
+    const memberIds = data.branchId
+      ? (await db.select({ id: members.id }).from(members).where(eq(members.branchId, data.branchId))).map((m) => m.id)
+      : undefined
+
     return await db.query.subscriptions.findMany({
       where: and(
         eq(subscriptions.status, 'ACTIVE'),
         gte(subscriptions.endDate, now),
         lte(subscriptions.endDate, future),
+        memberIds ? inArray(subscriptions.memberId, memberIds) : undefined,
       ),
       orderBy: [desc(subscriptions.endDate)],
       with: {
@@ -41,21 +49,33 @@ export const getExpiringSubscriptions = createServerFn({ method: 'GET' })
     })
   })
 
+const getExpiredSubscriptionsSchema = z.object({
+  branchId: z.string().optional(),
+})
+
 export const getExpiredSubscriptions = createServerFn({
   method: 'GET',
-}).handler(async () => {
-  await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
-
-  return await db.query.subscriptions.findMany({
-    where: eq(subscriptions.status, 'EXPIRED'),
-    orderBy: [desc(subscriptions.endDate)],
-    with: {
-      member: true,
-      plan: true,
-      package: true,
-    },
-  })
 })
+  .inputValidator((data) => getExpiredSubscriptionsSchema.parse(data))
+  .handler(async ({ data }) => {
+    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+
+    const memberIds = data.branchId
+      ? (await db.select({ id: members.id }).from(members).where(eq(members.branchId, data.branchId))).map((m) => m.id)
+      : undefined
+
+    return await db.query.subscriptions.findMany({
+      where: memberIds
+        ? and(eq(subscriptions.status, 'EXPIRED'), inArray(subscriptions.memberId, memberIds))
+        : eq(subscriptions.status, 'EXPIRED'),
+      orderBy: [desc(subscriptions.endDate)],
+      with: {
+        member: true,
+        plan: true,
+        package: true,
+      },
+    })
+  })
 
 const renewSubscriptionSchema = z.object({
   memberId: z.string().uuid(),
@@ -63,6 +83,7 @@ const renewSubscriptionSchema = z.object({
   paymentMethod: z.enum(['CASH', 'CARD', 'TRANSFER', 'QR']),
   amount: z.string(),
   notes: z.string().optional(),
+  branchId: z.string().optional(),
 })
 
 export type RenewSubscriptionData = z.infer<typeof renewSubscriptionSchema>
@@ -77,11 +98,18 @@ export const renewSubscription = createServerFn({ method: 'POST' })
 
     const subscription = await db.transaction(async (tx) => {
       const openSession = await tx.query.cashRegisterSessions.findFirst({
-        where: eq(cashRegisterSessions.status, 'OPEN'),
+        where: data.branchId
+          ? and(
+              eq(cashRegisterSessions.status, 'OPEN'),
+              eq(cashRegisterSessions.branchId, data.branchId),
+            )
+          : eq(cashRegisterSessions.status, 'OPEN'),
       })
 
       if (!openSession) {
-        throw new Error('Debe abrir la caja antes de renovar una suscripción.')
+        throw new Error(
+          'Debe abrir la caja antes de renovar una suscripción.',
+        )
       }
 
       const pkg = await tx.query.packages.findFirst({

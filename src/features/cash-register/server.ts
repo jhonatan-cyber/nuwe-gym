@@ -4,28 +4,38 @@ import {
   cashRegisterSessions,
   cashMovements,
 } from '#/shared/db/schema/cash-register.ts'
-import { eq, desc } from 'drizzle-orm'
+import { eq, and, desc } from 'drizzle-orm'
 import { requireRole } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { z } from 'zod'
 
-export const getCurrentCashSession = createServerFn({ method: 'GET' }).handler(
-  async () => {
+const getCurrentCashSessionSchema = z.object({
+  branchId: z.string().optional(),
+})
+
+export const getCurrentCashSession = createServerFn({ method: 'GET' })
+  .inputValidator((data) => getCurrentCashSessionSchema.parse(data))
+  .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
     const session = await db.query.cashRegisterSessions.findFirst({
-      where: eq(cashRegisterSessions.status, 'OPEN'),
+      where: data.branchId
+        ? and(
+            eq(cashRegisterSessions.status, 'OPEN'),
+            eq(cashRegisterSessions.branchId, data.branchId),
+          )
+        : eq(cashRegisterSessions.status, 'OPEN'),
       with: {
         openedBy: true,
       },
     })
     return session || null
-  },
-)
+  })
 
 const openCashSessionSchema = z.object({
   openingAmount: z.string(),
   notes: z.string().optional(),
+  branchId: z.string().optional(),
 })
 
 export const openCashSession = createServerFn({ method: 'POST' })
@@ -36,7 +46,12 @@ export const openCashSession = createServerFn({ method: 'POST' })
     })
 
     const openSession = await db.query.cashRegisterSessions.findFirst({
-      where: eq(cashRegisterSessions.status, 'OPEN'),
+      where: data.branchId
+        ? and(
+            eq(cashRegisterSessions.status, 'OPEN'),
+            eq(cashRegisterSessions.branchId, data.branchId),
+          )
+        : eq(cashRegisterSessions.status, 'OPEN'),
     })
 
     if (openSession) {
@@ -51,6 +66,7 @@ export const openCashSession = createServerFn({ method: 'POST' })
         expectedClosingAmount: data.openingAmount,
         status: 'OPEN',
         notes: data.notes || null,
+        branchId: data.branchId ?? null,
       })
       .returning()
 
@@ -69,6 +85,7 @@ export const openCashSession = createServerFn({ method: 'POST' })
 const closeCashSessionSchema = z.object({
   actualClosingAmount: z.string(),
   notes: z.string().optional(),
+  branchId: z.string().optional(),
 })
 
 export const closeCashSession = createServerFn({ method: 'POST' })
@@ -80,7 +97,12 @@ export const closeCashSession = createServerFn({ method: 'POST' })
 
     const closedSession = await db.transaction(async (tx) => {
       const openSession = await tx.query.cashRegisterSessions.findFirst({
-        where: eq(cashRegisterSessions.status, 'OPEN'),
+        where: data.branchId
+          ? and(
+              eq(cashRegisterSessions.status, 'OPEN'),
+              eq(cashRegisterSessions.branchId, data.branchId),
+            )
+          : eq(cashRegisterSessions.status, 'OPEN'),
       })
 
       if (!openSession) {
@@ -143,6 +165,7 @@ const createManualMovementSchema = z.object({
   amount: z.string(),
   movementType: z.enum(['INCOME', 'EXPENSE']),
   description: z.string(),
+  branchId: z.string().optional(),
 })
 
 export const createManualMovement = createServerFn({ method: 'POST' })
@@ -154,7 +177,12 @@ export const createManualMovement = createServerFn({ method: 'POST' })
 
     const movement = await db.transaction(async (tx) => {
       const openSession = await tx.query.cashRegisterSessions.findFirst({
-        where: eq(cashRegisterSessions.status, 'OPEN'),
+        where: data.branchId
+          ? and(
+              eq(cashRegisterSessions.status, 'OPEN'),
+              eq(cashRegisterSessions.branchId, data.branchId),
+            )
+          : eq(cashRegisterSessions.status, 'OPEN'),
       })
 
       if (!openSession) {
@@ -190,6 +218,7 @@ export const createManualMovement = createServerFn({ method: 'POST' })
 
 const getCashSessionDetailsSchema = z.object({
   sessionId: z.string().uuid(),
+  branchId: z.string().optional(),
 })
 
 export const getCashSessionDetails = createServerFn({ method: 'GET' })
@@ -214,14 +243,21 @@ export const getCashSessionDetails = createServerFn({ method: 'GET' })
     }
   })
 
-export const getCashSessionsList = createServerFn({ method: 'GET' }).handler(
-  async () => {
+const getCashSessionsListSchema = z.object({
+  branchId: z.string().optional(),
+})
+
+export const getCashSessionsList = createServerFn({ method: 'GET' })
+  .inputValidator((data) => getCashSessionsListSchema.parse(data))
+  .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN'] } })
     return await db.query.cashRegisterSessions.findMany({
+      where: data.branchId
+        ? eq(cashRegisterSessions.branchId, data.branchId)
+        : undefined,
       orderBy: [desc(cashRegisterSessions.openedAt)],
       with: {
         openedBy: true,
       },
     })
-  },
-)
+  })

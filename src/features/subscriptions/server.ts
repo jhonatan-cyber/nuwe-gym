@@ -7,16 +7,25 @@ import {
   cashMovements,
 } from '#/shared/db/schema/cash-register.ts'
 import { members } from '#/shared/db/schema/members.ts'
-import { eq, desc } from 'drizzle-orm'
+import { eq, desc, and, inArray } from 'drizzle-orm'
 import { requireRole } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { z } from 'zod'
 
-export const getSubscriptions = createServerFn({ method: 'GET' }).handler(
-  async () => {
+const getSubscriptionsSchema = z.object({
+  branchId: z.string().optional(),
+})
+
+export const getSubscriptions = createServerFn({ method: 'GET' })
+  .inputValidator((data) => getSubscriptionsSchema.parse(data))
+  .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    const memberIds = data.branchId
+      ? (await db.select({ id: members.id }).from(members).where(eq(members.branchId, data.branchId))).map((m) => m.id)
+      : undefined
     return await db.query.subscriptions.findMany({
+      where: memberIds ? inArray(subscriptions.memberId, memberIds) : undefined,
       orderBy: [desc(subscriptions.createdAt)],
       with: {
         member: true,
@@ -24,8 +33,7 @@ export const getSubscriptions = createServerFn({ method: 'GET' }).handler(
         package: true,
       },
     })
-  },
-)
+  })
 
 const createSubscriptionSchema = z.object({
   memberId: z.string().uuid(),
@@ -34,6 +42,7 @@ const createSubscriptionSchema = z.object({
   endDate: z.string(),
   amountPaid: z.string(),
   paymentMethod: z.enum(['CASH', 'CARD', 'TRANSFER', 'QR']),
+  branchId: z.string().optional(),
 })
 
 export type CreateSubscriptionData = z.infer<typeof createSubscriptionSchema>
@@ -48,7 +57,12 @@ export const createSubscription = createServerFn({ method: 'POST' })
 
     const subscription = await db.transaction(async (tx) => {
       const openSession = await tx.query.cashRegisterSessions.findFirst({
-        where: eq(cashRegisterSessions.status, 'OPEN'),
+        where: data.branchId
+          ? and(
+              eq(cashRegisterSessions.status, 'OPEN'),
+              eq(cashRegisterSessions.branchId, data.branchId),
+            )
+          : eq(cashRegisterSessions.status, 'OPEN'),
       })
 
       if (!openSession) {

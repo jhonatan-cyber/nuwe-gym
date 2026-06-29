@@ -22,7 +22,7 @@ import {
 import { membershipFreezes } from './membership-freezes.ts'
 import { auditLogs } from './audit-logs.ts'
 import { branches, userBranches } from './branches.ts'
-import { packages, packageItems } from './packages.ts'
+import { packages, packageItems, packageAllowedDays } from './packages.ts'
 
 export const usersRelations = relations(users, ({ many, one }) => ({
   sessions: many(sessions),
@@ -292,6 +292,7 @@ export const userBranchesRelations = relations(userBranches, ({ one }) => ({
 
 export const packagesRelations = relations(packages, ({ many }) => ({
   items: many(packageItems),
+  allowedDays: many(packageAllowedDays),
   subscriptions: many(subscriptions),
 }))
 
@@ -301,3 +302,13 @@ export const packageItemsRelations = relations(packageItems, ({ one }) => ({
     references: [packages.id],
   }),
 }))
+
+export const packageAllowedDaysRelations = relations(
+  packageAllowedDays,
+  ({ one }) => ({
+    package: one(packages, {
+      fields: [packageAllowedDays.packageId],
+      references: [packages.id],
+    }),
+  }),
+)

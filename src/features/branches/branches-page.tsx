@@ -1,5 +1,3 @@
-import { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   Store,
   Plus,
@@ -10,6 +8,7 @@ import {
   Phone,
   Mail,
   Clock,
+  ChevronRight,
 } from 'lucide-react'
 import {
   Tooltip,
@@ -17,319 +16,257 @@ import {
   TooltipContent,
   TooltipProvider,
 } from '#/shared/components/ui/tooltip'
-import { toast } from 'sonner'
-import {
-  getBranches,
-  createBranch,
-  updateBranch,
-} from '#/features/branches/server.ts'
 import { Button } from '#/shared/components/ui/button'
-import { Input } from '#/shared/components/ui/input'
 import { Badge } from '#/shared/components/ui/badge'
-import { PageHeader } from '#/shared/components/page-header'
+import { ModuleLayout } from '#/shared/components/layout/module-layout.tsx'
+import { StatCard } from '#/shared/components/ui/stat-card'
+import { FilterBar } from '#/shared/components/ui/filter-bar'
 import { DataTable } from '#/shared/components/data-table'
+import { cn } from '#/shared/lib/utils.ts'
+import { useBranchesPage } from '#/features/branches/hooks/use-branches-page.ts'
+import type { Branch } from '#/features/branches/types.ts'
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '#/shared/components/ui/dialog'
-
-interface BranchForm {
-  name: string
-  address: string
-  phone: string
-  email: string
-  openingTime: string
-  closingTime: string
-}
-
-const emptyForm: BranchForm = {
-  name: '',
-  address: '',
-  phone: '',
-  email: '',
-  openingTime: '08:00',
-  closingTime: '22:00',
-}
+  BranchCard,
+  BranchCardSkeleton,
+} from '#/features/branches/components/branch-card.tsx'
+import { BranchFormDialog } from '#/features/branches/components/branch-form-dialog.tsx'
 
 export function BranchesPage() {
-  const queryClient = useQueryClient()
-  const [isOpen, setIsOpen] = useState(false)
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [form, setForm] = useState<BranchForm>(emptyForm)
-
-  const { data: branchesList = [], isLoading } = useQuery({
-    queryKey: ['branches'],
-    queryFn: () => getBranches(),
-  })
-
-  const createMutation = useMutation({
-    mutationFn: createBranch,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['branches'] })
-      toast.success('Sucursal creada con éxito')
-      closeModal()
-    },
-    onError: (err: Error) => toast.error(err.message),
-  })
-
-  const updateMutation = useMutation({
-    mutationFn: updateBranch,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['branches'] })
-      toast.success('Sucursal actualizada con éxito')
-      closeModal()
-    },
-    onError: (err: Error) => toast.error(err.message),
-  })
-
-  const openCreate = () => {
-    setEditingId(null)
-    setForm(emptyForm)
-    setIsOpen(true)
-  }
-
-  const openEdit = (branch: (typeof branchesList)[number]) => {
-    setEditingId(branch.id)
-    setForm({
-      name: branch.name,
-      address: branch.address ?? '',
-      phone: branch.phone ?? '',
-      email: branch.email ?? '',
-      openingTime: branch.openingTime ?? '08:00',
-      closingTime: branch.closingTime ?? '22:00',
-    })
-    setIsOpen(true)
-  }
-
-  const closeModal = () => {
-    setIsOpen(false)
-    setEditingId(null)
-  }
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!form.name) return
-
-    if (editingId !== null) {
-      updateMutation.mutate({ data: { id: editingId, ...form } })
-    } else {
-      createMutation.mutate({ data: form })
-    }
-  }
-
-  const handleToggleActive = (branch: (typeof branchesList)[number]) => {
-    updateMutation.mutate({
-      data: {
-        id: branch.id,
-        name: branch.name,
-        address: branch.address ?? '',
-        phone: branch.phone ?? '',
-        email: branch.email ?? '',
-        openingTime: branch.openingTime ?? '08:00',
-        closingTime: branch.closingTime ?? '22:00',
-        isActive: !branch.isActive,
-      },
-    })
-  }
-
-  const isPending = createMutation.isPending || updateMutation.isPending
+  const {
+    isOpen,
+    editingId,
+    form,
+    search,
+    statusFilter,
+    setForm,
+    setSearch,
+    setStatusFilter,
+    isLoading,
+    filteredBranches,
+    totalBranches,
+    activeCount,
+    inactiveCount,
+    openCreate,
+    openEdit,
+    closeModal,
+    handleSubmit,
+    handleToggleActive,
+    isPending,
+  } = useBranchesPage()
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <PageHeader
-        title="Sucursales"
-        description="Gestioná las sucursales del gimnasio"
-        icon={<Store className="size-8 text-primary" />}
-        action={
-          <Button onClick={openCreate}>
-            <Plus className="size-4" /> Nueva Sucursal
-          </Button>
+    <div className="w-full">
+      <ModuleLayout
+        breadcrumb={
+          <div className="flex items-center gap-1">
+            <span className="text-muted-foreground">Configuración</span>
+            <ChevronRight className="size-3 text-muted-foreground/50" />
+            <span className="text-foreground">Sucursales</span>
+          </div>
         }
+        title="Sucursales"
+        leftPanel={
+          <div className="flex flex-col gap-6 z-10 w-full">
+            <Button
+              onClick={openCreate}
+              className="flex items-center gap-2 w-full bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-primary dark:text-primary-foreground dark:hover:bg-primary-foreground dark:hover:text-primary"
+            >
+              <Plus className="size-4" /> Nueva Sucursal
+            </Button>
+
+            <div className="space-y-3">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">
+                Métricas
+              </p>
+              <div className="grid grid-cols-1 gap-3">
+                <StatCard
+                  label="Total Sucursales"
+                  value={totalBranches}
+                  icon={Store}
+                  variant="default"
+                />
+                <StatCard
+                  label="Activas"
+                  value={activeCount}
+                  icon={Power}
+                  variant="emerald"
+                />
+                <StatCard
+                  label="Inactivas"
+                  value={inactiveCount}
+                  icon={PowerOff}
+                  variant="orange"
+                />
+              </div>
+            </div>
+
+            <FilterBar
+              search={search}
+              onSearchChange={setSearch}
+              searchPlaceholder="Buscar por nombre o dirección..."
+              filterValue={statusFilter}
+              onFilterChange={(v) => setStatusFilter(v as 'ALL' | 'ACTIVE' | 'INACTIVE')}
+              filterOptions={[
+                { value: 'ALL', label: 'Todos los Estados' },
+                { value: 'ACTIVE', label: 'Activas' },
+                { value: 'INACTIVE', label: 'Inactivas' },
+              ]}
+              filterPlaceholder="Estado"
+            />
+          </div>
+        }
+      >
+        <TooltipProvider delayDuration={200}>
+          {/* Vista Desktop (Tabla) */}
+          <div className="hidden 2xl:block">
+            <DataTable
+              columns={[
+                {
+                  key: 'name',
+                  label: 'Nombre',
+                  render: (b: Branch) => (
+                    <span className="font-bold text-sm text-foreground">{b.name}</span>
+                  ),
+                },
+                {
+                  key: 'address',
+                  label: 'Dirección',
+                  render: (b: Branch) => (
+                    <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                      <MapPin className="size-3.5 text-muted-foreground shrink-0" />
+                      {b.address || '-'}
+                    </span>
+                  ),
+                },
+                {
+                  key: 'phone',
+                  label: 'Teléfono',
+                  render: (b: Branch) => (
+                    <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                      <Phone className="size-3.5 text-muted-foreground shrink-0" />
+                      {b.phone || '-'}
+                    </span>
+                  ),
+                },
+                {
+                  key: 'email',
+                  label: 'Email',
+                  render: (b: Branch) => (
+                    <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                      <Mail className="size-3.5 text-muted-foreground shrink-0" />
+                      {b.email || '-'}
+                    </span>
+                  ),
+                },
+                {
+                  key: 'hours',
+                  label: (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="cursor-default">Horario</span>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">
+                        <p>Horario de atención de la sucursal</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  ),
+                  render: (b: Branch) => (
+                    <span className="inline-flex items-center gap-1.5 text-sm whitespace-nowrap">
+                      <Clock className="size-3.5 text-muted-foreground shrink-0" />
+                      {b.openingTime} - {b.closingTime}
+                    </span>
+                  ),
+                },
+                {
+                  key: 'status',
+                  label: 'Estado',
+                  render: (b: Branch) => (
+                    <Badge
+                      className={cn(
+                        'border font-semibold text-[10px] px-2 py-0.5 shadow-none',
+                        b.isActive
+                          ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20 hover:bg-emerald-500/15 dark:bg-emerald-500/20 dark:text-emerald-400 dark:border-emerald-500/30'
+                          : 'bg-red-500/10 text-red-600 border-red-500/20 hover:bg-red-500/15 dark:bg-red-500/20 dark:text-red-400 dark:border-red-500/30',
+                      )}
+                    >
+                      {b.isActive ? 'Activa' : 'Inactiva'}
+                    </Badge>
+                  ),
+                },
+                {
+                  key: 'actions',
+                  label: 'Acciones',
+                  className: 'text-right',
+                  render: (b: Branch) => (
+                    <div className="flex justify-end gap-1">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="size-8 rounded-full"
+                        onClick={() => openEdit(b)}
+                      >
+                        <Pencil className="size-4" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="size-8 rounded-full"
+                        onClick={() => handleToggleActive(b)}
+                      >
+                        {b.isActive ? (
+                          <PowerOff className="size-4 text-destructive" />
+                        ) : (
+                          <Power className="size-4 text-green-500" />
+                        )}
+                      </Button>
+                    </div>
+                  ),
+                },
+              ]}
+              data={filteredBranches}
+              isLoading={isLoading}
+              emptyMessage="No se encontraron sucursales."
+              keyExtractor={(b: Branch) => b.id}
+            />
+          </div>
+
+          {/* Vista Mobile (Cards) */}
+          <div className="block 2xl:hidden space-y-4">
+            {isLoading ? (
+              <div className="space-y-4">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <BranchCardSkeleton key={i} index={i} />
+                ))}
+              </div>
+            ) : filteredBranches.length === 0 ? (
+              <div className="rounded-[2rem] border border-border/10 bg-card p-8 text-center text-muted-foreground shadow-md animate-in fade-in">
+                No se encontraron sucursales.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {filteredBranches.map((branch) => (
+                  <BranchCard
+                    key={branch.id}
+                    branch={branch}
+                    onEdit={openEdit}
+                    onToggleActive={handleToggleActive}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </TooltipProvider>
+      </ModuleLayout>
+
+      <BranchFormDialog
+        isOpen={isOpen}
+        editingId={editingId}
+        form={form}
+        isPending={isPending}
+        onChange={setForm}
+        onSubmit={handleSubmit}
+        onClose={closeModal}
       />
-
-      <TooltipProvider delayDuration={200}>
-        <DataTable
-          columns={[
-            {
-              key: 'name',
-              label: 'Nombre',
-              render: (b: (typeof branchesList)[number]) => (
-                <span className="font-semibold">{b.name}</span>
-              ),
-            },
-            {
-              key: 'address',
-              label: 'Dirección',
-              render: (b: (typeof branchesList)[number]) => (
-                <span className="inline-flex items-center gap-1.5 text-muted-foreground">
-                  <MapPin className="size-3 text-muted-foreground shrink-0" />
-                  {b.address || '-'}
-                </span>
-              ),
-            },
-            {
-              key: 'phone',
-              label: 'Teléfono',
-              render: (b: (typeof branchesList)[number]) => (
-                <span className="inline-flex items-center gap-1.5 text-muted-foreground">
-                  <Phone className="size-3 text-muted-foreground" />
-                  {b.phone || '-'}
-                </span>
-              ),
-            },
-            {
-              key: 'email',
-              label: 'Email',
-              render: (b: (typeof branchesList)[number]) => (
-                <span className="inline-flex items-center gap-1.5 text-muted-foreground">
-                  <Mail className="size-3 text-muted-foreground" />
-                  {b.email || '-'}
-                </span>
-              ),
-            },
-            {
-              key: 'hours',
-              label: (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="cursor-default">Horario</span>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">
-                    <p>Horario de atención de la sucursal</p>
-                  </TooltipContent>
-                </Tooltip>
-              ),
-              render: (b: (typeof branchesList)[number]) => (
-                <span className="inline-flex items-center gap-1.5 text-sm whitespace-nowrap">
-                  <Clock className="size-3 text-muted-foreground" />
-                  {b.openingTime} - {b.closingTime}
-                </span>
-              ),
-            },
-            {
-              key: 'status',
-              label: 'Estado',
-              render: (b: (typeof branchesList)[number]) => (
-                <Badge variant={b.isActive ? 'default' : 'secondary'}>
-                  {b.isActive ? 'Activa' : 'Inactiva'}
-                </Badge>
-              ),
-            },
-            {
-              key: 'actions',
-              label: 'Acciones',
-              className: 'text-right',
-              render: (b: (typeof branchesList)[number]) => (
-                <div className="flex justify-end gap-1">
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={() => openEdit(b)}
-                  >
-                    <Pencil className="size-4" />
-                  </Button>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={() => handleToggleActive(b)}
-                  >
-                    {b.isActive ? (
-                      <PowerOff className="size-4 text-destructive" />
-                    ) : (
-                      <Power className="size-4 text-green-500" />
-                    )}
-                  </Button>
-                </div>
-              ),
-            },
-          ]}
-          data={branchesList}
-          isLoading={isLoading}
-          emptyMessage="No hay sucursales"
-          keyExtractor={(b: (typeof branchesList)[number]) => b.id}
-        />
-      </TooltipProvider>
-
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {editingId ? 'Editar Sucursal' : 'Nueva Sucursal'}
-            </DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-1">
-              <label className="text-sm font-medium">Nombre *</label>
-              <Input
-                placeholder="Ej. Sucursal Centro"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                required
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-sm font-medium">Dirección</label>
-              <Input
-                placeholder="Ej. Av. Siempre Viva 123"
-                value={form.address}
-                onChange={(e) => setForm({ ...form, address: e.target.value })}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-sm font-medium">Teléfono</label>
-                <Input
-                  placeholder="Ej. 11 1234-5678"
-                  value={form.phone}
-                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-sm font-medium">Email</label>
-                <Input
-                  type="email"
-                  placeholder="Ej. centro@gimnasio.com"
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-sm font-medium">Apertura</label>
-                <Input
-                  type="time"
-                  value={form.openingTime}
-                  onChange={(e) =>
-                    setForm({ ...form, openingTime: e.target.value })
-                  }
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-sm font-medium">Cierre</label>
-                <Input
-                  type="time"
-                  value={form.closingTime}
-                  onChange={(e) =>
-                    setForm({ ...form, closingTime: e.target.value })
-                  }
-                />
-              </div>
-            </div>
-            <DialogFooter className="pt-4">
-              <Button type="button" variant="outline" onClick={closeModal}>
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={isPending || !form.name}>
-                {editingId ? 'Guardar Cambios' : 'Crear Sucursal'}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }

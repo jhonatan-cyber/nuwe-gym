@@ -21,6 +21,7 @@ import { toast } from 'sonner'
 import { getPurchases, createPurchase } from '#/features/purchases/server.ts'
 import { getSuppliers } from '#/features/suppliers/server.ts'
 import { getProducts } from '#/features/products/server.ts'
+import { useCurrentBranch } from '#/shared/hooks/use-current-branch.ts'
 import { Button } from '#/shared/components/ui/button'
 import { Input } from '#/shared/components/ui/input'
 import { Textarea } from '#/shared/components/ui/textarea'
@@ -54,6 +55,7 @@ export function PurchasesPage() {
   const queryClient = useQueryClient()
   const { userRole } = authedRoute.useRouteContext()
   const isAdmin = userRole === 'ADMIN'
+  const { branchId } = useCurrentBranch()
 
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [supplierId, setSupplierId] = useState('')
@@ -64,8 +66,9 @@ export function PurchasesPage() {
   ])
 
   const { data: purchasesList = [], isLoading: isLoadingPurchases } = useQuery({
-    queryKey: ['purchases'],
-    queryFn: () => getPurchases(),
+    queryKey: ['purchases', branchId],
+    queryFn: () => getPurchases({ data: { branchId } }),
+    enabled: !!branchId,
   })
 
   const { data: suppliersList = [] } = useQuery({
@@ -165,6 +168,7 @@ export function PurchasesPage() {
     createMutation.mutate({
       data: {
         supplierId: Number(supplierId),
+        branchId,
         purchaseNumber,
         notes,
         items: formItems.map((item) => ({

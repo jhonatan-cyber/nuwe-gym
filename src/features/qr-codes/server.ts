@@ -8,6 +8,7 @@ import { requireRole, getSession } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { z } from 'zod'
+import { validateCheckIn } from '#/features/check-ins/server.ts'
 
 export const generateMemberQR = createServerFn({ method: 'POST' })
   .inputValidator((data) =>
@@ -115,13 +116,15 @@ export const processQRCheckIn = createServerFn({ method: 'POST' })
       registeredByUserId = adminUser?.id ?? 'SYSTEM'
     }
 
+    const { status } = await validateCheckIn(member.id)
+
     const [checkIn] = await db
       .insert(checkIns)
       .values({
         memberId: member.id,
         registeredByUserId,
         checkedInAt: new Date(),
-        resultStatus: 'ALLOWED',
+        resultStatus: status,
       })
       .returning()
 

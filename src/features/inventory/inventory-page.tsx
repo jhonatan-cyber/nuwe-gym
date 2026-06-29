@@ -23,6 +23,7 @@ import {
   getInventoryMovements,
   getStockSnapshots,
 } from '#/features/inventory/server.ts'
+import { useCurrentBranch } from '#/shared/hooks/use-current-branch.ts'
 import { ModuleLayout } from '#/shared/components/layout/module-layout.tsx'
 import {
   ToggleGroup,
@@ -101,6 +102,8 @@ export function InventoryPage() {
   const [editingCategory, setEditingCategory] = useState<any | null>(null)
   const [categoryToDelete, setCategoryToDelete] = useState<any | null>(null)
 
+  const { branchId } = useCurrentBranch()
+
   // Queries
   const { data: categories = [], isLoading: isLoadingCategories } = useQuery({
     queryKey: ['product-categories-active'],
@@ -108,24 +111,28 @@ export function InventoryPage() {
   })
 
   const { data: productsList = [], isLoading: isLoadingProducts } = useQuery({
-    queryKey: ['products', searchTerm, selectedCategoryId],
+    queryKey: ['products', branchId, searchTerm, selectedCategoryId],
     queryFn: () =>
       getProducts({
         data: {
           search: searchTerm,
           categoryId: selectedCategoryId ?? undefined,
+          branchId,
         },
       }),
+    enabled: !!branchId,
   })
 
   const { data: allProducts = [], isLoading: isLoadingAllProducts } = useQuery({
-    queryKey: ['products-all-count'],
-    queryFn: () => getProducts({ data: {} }),
+    queryKey: ['products-all-count', branchId],
+    queryFn: () => getProducts({ data: { branchId } }),
+    enabled: !!branchId,
   })
 
   const { data: movements = [], isLoading: isLoadingMovements } = useQuery({
-    queryKey: ['inventory-movements'],
-    queryFn: () => getInventoryMovements(),
+    queryKey: ['inventory-movements', branchId],
+    queryFn: () => getInventoryMovements({ data: { branchId } }),
+    enabled: !!branchId,
   })
 
   const { data: stockSnapshots = [] } = useQuery({
