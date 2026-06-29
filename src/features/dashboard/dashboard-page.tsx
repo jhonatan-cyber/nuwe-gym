@@ -11,6 +11,7 @@ import { ExpiringMembershipsBanner } from './components/expiring-memberships-ban
 import { TopProducts } from './components/top-products.tsx'
 import { HourlyAttendanceChart } from './components/hourly-attendance-chart.tsx'
 import { InsightsPanel } from './components/insights-panel.tsx'
+import { AnalyticsQueryBar } from '#/features/analytics/components/analytics-query-bar.tsx'
 
 export function DashboardPage() {
   const { branchId } = useCurrentBranch()
@@ -63,6 +64,8 @@ export function DashboardPage() {
         <GenderDistribution genderStats={data.genderStats} />
 
         <InsightsPanel />
+
+        <AnalyticsQueryBar />
 
         <Link
           to="/check-ins"

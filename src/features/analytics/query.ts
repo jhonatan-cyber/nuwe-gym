@@ -1,36 +1,35 @@
 import { db } from '#/shared/db/index.ts'
 import { sql } from 'drizzle-orm'
+import { getGroq, GROQ_MODEL } from '#/shared/lib/ai.ts'
 import type { QueryResult } from './types.ts'
 
-type QueryPattern = {
+type QueryIntent = {
+  name: string
   patterns: RegExp[]
-  intent: string
+  description: string
   execute: () => Promise<string>
 }
 
-async function queryOne(sqlQuery: ReturnType<typeof sql>): Promise<any> {
-  const result = await db.execute(sqlQuery)
-  return (result as any).rows?.[0]
-}
-
-const patterns: QueryPattern[] = [
+const intents: QueryIntent[] = [
   {
+    name: 'total_members',
     patterns: [
       /cuantos? (socios?|miembros?|miembras?) (nuevos?|registrados?|activos?)/i,
       /cuantos? socios? hay/i,
       /total (de )?socios?/i,
     ],
-    intent: 'total_members',
+    description: 'Total number of registered members in the gym',
     execute: async () => {
       const row = await queryOne(sql`SELECT COUNT(*)::int as c FROM members`)
       return `Hay ${row?.c ?? 0} socios registrados en total.`
     },
   },
   {
+    name: 'active_members',
     patterns: [
       /socios? (activos?|con membresia (activa|vigente))/i,
     ],
-    intent: 'active_members',
+    description: 'Number of members with ACTIVE status',
     execute: async () => {
       const row = await queryOne(
         sql`SELECT COUNT(*)::int as c FROM members WHERE status = 'ACTIVE'`,
@@ -39,12 +38,14 @@ const patterns: QueryPattern[] = [
     },
   },
   {
+    name: 'checkins_today',
     patterns: [
       /check(-| )?ins? (hoy|de hoy|del dia)/i,
       /cuantos? (checkins?|check(-| )?ins?) (hubo|hay) hoy/i,
       /asistencia (de )?hoy/i,
+      /cuanta? gente (entro|vino|asistio) hoy/i,
     ],
-    intent: 'checkins_today',
+    description: 'Number of check-ins registered today',
     execute: async () => {
       const row = await queryOne(
         sql`SELECT COUNT(*)::int as c FROM check_ins WHERE checked_in_at >= CURRENT_DATE`,
@@ -53,12 +54,14 @@ const patterns: QueryPattern[] = [
     },
   },
   {
+    name: 'top_product',
     patterns: [
       /producto mas vendido/i,
       /cual es el producto (mas |que )?se vende (mas )?/i,
       /top producto/i,
+      /que (es )?lo (que )?mas se vende/i,
     ],
-    intent: 'top_product',
+    description: 'Best-selling product by total units sold',
     execute: async () => {
       const row = await queryOne(
         sql`
@@ -76,13 +79,14 @@ const patterns: QueryPattern[] = [
     },
   },
   {
+    name: 'sales_today',
     patterns: [
       /ingresos? (de )?hoy/i,
       /cuanto se (vendio|recaudo) hoy/i,
       /ventas? de hoy/i,
       /caja (de )?hoy/i,
     ],
-    intent: 'sales_today',
+    description: 'Total sales revenue for today',
     execute: async () => {
       const row = await queryOne(
         sql`
@@ -95,12 +99,13 @@ const patterns: QueryPattern[] = [
     },
   },
   {
+    name: 'low_stock',
     patterns: [
       /productos? (con |con )?stock bajo/i,
       /que (hay que |)reponer/i,
       /stock (critico|minimo|bajo)/i,
     ],
-    intent: 'low_stock',
+    description: 'Products where current stock is at or below minimum',
     execute: async () => {
       const row = await queryOne(
         sql`
@@ -114,12 +119,13 @@ const patterns: QueryPattern[] = [
     },
   },
   {
+    name: 'expiring_subscriptions',
     patterns: [
       /suscripciones? (que |por )?vencer/i,
       /vencimientos? (proximos?|next 7 dias)/i,
       /cuantas? suscripciones? vencen/i,
     ],
-    intent: 'expiring',
+    description: 'Active subscriptions expiring in the next 7 days',
     execute: async () => {
       const row = await queryOne(
         sql`
@@ -135,12 +141,13 @@ const patterns: QueryPattern[] = [
     },
   },
   {
+    name: 'churn_risk',
     patterns: [
       /socios? (en )?riesgo/i,
       /churn/i,
       /posibles? (perdidas?|abandonos?)/i,
     ],
-    intent: 'churn_risk',
+    description: 'Active members who have not checked in for more than 14 days',
     execute: async () => {
       const row = await queryOne(
         sql`
@@ -165,23 +172,110 @@ const patterns: QueryPattern[] = [
   },
 ]
 
+async function queryOne(sqlQuery: ReturnType<typeof sql>): Promise<any> {
+  const result = await db.execute(sqlQuery)
+  return (result as any).rows?.[0]
+}
+
+// ── Groq tools (function calling) ──
+
+const groqTools: Record<string, () => Promise<string>> = {}
+const groqToolDefs: any[] = []
+
+for (const intent of intents) {
+  const fnName = intent.name
+  groqTools[fnName] = intent.execute
+  groqToolDefs.push({
+    type: 'function',
+    function: {
+      name: fnName,
+      description: intent.description,
+      parameters: { type: 'object', properties: {} },
+    },
+  })
+}
+
+async function groqFallback(input: string): Promise<QueryResult> {
+  try {
+    const groq = getGroq()
+    const completion = await groq.chat.completions.create({
+      model: GROQ_MODEL,
+      messages: [
+        {
+          role: 'system',
+          content: `Eres un asistente de inteligencia de negocios para un gimnasio llamado Tainix.
+Tu trabajo es responder preguntas sobre los datos del gimnasio.
+
+Tienes acceso a estas funciones de consulta:
+${intents.map((i) => `  - ${i.name}: ${i.description}`).join('\n')}
+
+REGLAS:
+- Si la pregunta coincide con alguna funcion DISPONIBLE, llama a esa funcion.
+- Si la pregunta NO coincide con ninguna funcion, responde de forma conversacional con lo que sepas sobre el gimnasio. Se breve y directo.
+- Responde SIEMPRE en español.',
+`,
+        },
+        { role: 'user', content: input },
+      ],
+      tools: groqToolDefs,
+      tool_choice: 'auto',
+      temperature: 0.1,
+      max_tokens: 300,
+    })
+
+    const choice = completion.choices?.[0]
+    const toolCall = choice?.message?.tool_calls?.[0]
+
+    if (toolCall?.function?.name && groqTools[toolCall.function.name]) {
+      const answer = await groqTools[toolCall.function.name]()
+      return {
+        query: input,
+        intent: `ai:${toolCall.function.name}`,
+        answer,
+      }
+    }
+
+    const text = choice?.message?.content?.trim()
+    if (text) {
+      return {
+        query: input,
+        intent: 'ai:conversational',
+        answer: text,
+      }
+    }
+
+    return {
+      query: input,
+      intent: 'ai:error',
+      answer: 'No entendi la consulta, intenta de nuevo.',
+    }
+  } catch (err) {
+    console.error('Groq query failed:', err)
+    return {
+      query: input,
+      intent: 'ai:error',
+      answer:
+        'Ocurrio un error al procesar la consulta con IA. Asegurate de que GROQ_API_KEY este configurada.',
+    }
+  }
+}
+
+// ── Main entry point ──
+
 export async function executeNaturalQuery(
   input: string,
 ): Promise<QueryResult> {
-  for (const p of patterns) {
-    for (const regex of p.patterns) {
+  // Step 1: try regex patterns first (instant, free)
+  for (const intent of intents) {
+    for (const regex of intent.patterns) {
       if (regex.test(input)) {
         try {
-          const answer = await p.execute()
-          return {
-            query: input,
-            intent: p.intent,
-            answer,
-          }
+          const answer = await intent.execute()
+          return { query: input, intent: intent.name, answer }
         } catch {
           return {
             query: input,
-            intent: p.intent,
+            intent: intent.name,
             answer: 'Ocurrio un error al procesar la consulta.',
           }
         }
@@ -189,10 +283,6 @@ export async function executeNaturalQuery(
     }
   }
 
-  return {
-    query: input,
-    intent: 'unknown',
-    answer:
-      'No entendi la consulta. Probá preguntar: "cuantos socios hay", "check-ins hoy", "producto mas vendido", "stock bajo", o "socios en riesgo".',
-  }
+  // Step 2: Groq-powered fallback
+  return groqFallback(input)
 }
