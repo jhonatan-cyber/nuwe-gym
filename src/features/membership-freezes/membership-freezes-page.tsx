@@ -1,29 +1,10 @@
-import { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import {
-  Snowflake,
-  Play,
-  Users,
-  Search,
-  Calendar,
-  FileText,
-} from 'lucide-react'
+import { Snowflake, Play, Users, Search, Calendar, FileText } from 'lucide-react'
 import {
   Tooltip,
   TooltipTrigger,
   TooltipContent,
   TooltipProvider,
 } from '#/shared/components/ui/tooltip'
-import { toast } from 'sonner'
-import {
-  getFreezes,
-  createFreeze,
-  resumeSubscription,
-  getFrozenSubscriptions,
-} from '#/features/membership-freezes/server.ts'
-import { getSubscriptions } from '#/features/subscriptions/server.ts'
-import { formatDate } from '#/shared/lib/formatters.ts'
-
 import { Button } from '#/shared/components/ui/button'
 import { LoadingButton } from '#/shared/components/ui/loading-button'
 import {
@@ -55,6 +36,8 @@ import {
   TableRow,
 } from '#/shared/components/ui/table'
 import { Badge } from '#/shared/components/ui/badge'
+import { formatDate } from '#/shared/lib/formatters.ts'
+import { useMembershipFreezesPage } from '#/features/membership-freezes/hooks/use-membership-freezes-page.ts'
 
 interface MembershipFreezesPageProps {
   userRole: string
@@ -63,100 +46,27 @@ interface MembershipFreezesPageProps {
 export function MembershipFreezesPage({
   userRole,
 }: MembershipFreezesPageProps) {
-  const queryClient = useQueryClient()
-  const isAdmin = userRole === 'ADMIN'
-  const canWrite = userRole === 'ADMIN' || userRole === 'RECEPTIONIST'
-
-  const [isFreezeModalOpen, setIsFreezeModalOpen] = useState(false)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [formData, setFormData] = useState({
-    subscriptionId: '',
-    startDate: '',
-    endDate: '',
-    reason: '',
-  })
-
-  const { data: freezes = [], isLoading } = useQuery({
-    queryKey: ['membership-freezes'],
-    queryFn: () => getFreezes(),
-  })
-
-  const { data: frozenSubs = [] } = useQuery({
-    queryKey: ['frozen-subscriptions'],
-    queryFn: () => getFrozenSubscriptions(),
-  })
-
-  const { data: allSubs = [] } = useQuery({
-    queryKey: ['subscriptions'],
-    queryFn: () => getSubscriptions(),
-  })
-
-  const activeSubs = allSubs.filter(
-    (s) => s.status === 'ACTIVE' && new Date(s.endDate) >= new Date(),
-  )
-
-  const createMutation = useMutation({
-    mutationFn: createFreeze,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['membership-freezes'] })
-      queryClient.invalidateQueries({ queryKey: ['frozen-subscriptions'] })
-      queryClient.invalidateQueries({ queryKey: ['subscriptions'] })
-      setIsFreezeModalOpen(false)
-      toast.success('Membresía congelada exitosamente')
-    },
-    onError: (error: Error) =>
-      toast.error(error.message || 'Error al congelar'),
-  })
-
-  const resumeMutation = useMutation({
-    mutationFn: resumeSubscription,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['membership-freezes'] })
-      queryClient.invalidateQueries({ queryKey: ['frozen-subscriptions'] })
-      queryClient.invalidateQueries({ queryKey: ['subscriptions'] })
-      toast.success('Suscripción reanudada exitosamente')
-    },
-    onError: (error: Error) =>
-      toast.error(error.message || 'Error al reanudar'),
-  })
-
-  const handleOpenFreezeModal = () => {
-    setFormData({ subscriptionId: '', startDate: '', endDate: '', reason: '' })
-    setSearchTerm('')
-    setIsFreezeModalOpen(true)
-  }
-
-  const handleCreateFreeze = (e: React.FormEvent) => {
-    e.preventDefault()
-    createMutation.mutate({
-      data: {
-        subscriptionId: formData.subscriptionId,
-        startDate: formData.startDate,
-        endDate: formData.endDate,
-        reason: formData.reason || undefined,
-      },
-    })
-  }
-
-  const selectedSub = activeSubs.find((s) => s.id === formData.subscriptionId)
-  const calculatedEndDate =
-    selectedSub && formData.startDate && formData.endDate
-      ? (() => {
-          const freezeDays = Math.ceil(
-            (new Date(formData.endDate).getTime() -
-              new Date(formData.startDate).getTime()) /
-              (1000 * 60 * 60 * 24),
-          )
-          const end = new Date(selectedSub.endDate)
-          end.setDate(end.getDate() + freezeDays)
-          return end
-        })()
-      : null
-
-  const daysRemaining = (freezeEnd: Date) => {
-    const diff = new Date(freezeEnd).getTime() - Date.now()
-    return Math.ceil(diff / (1000 * 60 * 60 * 24))
-  }
+  const {
+    isFreezeModalOpen,
+    setIsFreezeModalOpen,
+    searchTerm,
+    setSearchTerm,
+    formData,
+    freezes,
+    frozenSubs,
+    activeSubs,
+    isLoading,
+    createMutation,
+    resumeMutation,
+    selectedSub,
+    calculatedEndDate,
+    daysRemaining,
+    isAdmin,
+    canWrite,
+    handleOpenFreezeModal,
+    handleCreateFreeze,
+    handleFormChange,
+  } = useMembershipFreezesPage(userRole)
 
   const getFreezeStatus = (f: { resumedAt: Date | null; endDate: Date }) => {
     if (f.resumedAt) return <Badge variant="secondary">Reanudado</Badge>
@@ -397,9 +307,7 @@ export function MembershipFreezesPage({
                 sortValue: (f: (typeof freezes)[number]) =>
                   f.resumedAt
                     ? 2
-                    : f.endDate
-                      ? new Date(f.endDate).getTime()
-                      : 0,
+                    : new Date(f.endDate).getTime(),
                 render: (f: (typeof freezes)[number]) => getFreezeStatus(f),
               },
               ...(isAdmin
@@ -487,10 +395,7 @@ export function MembershipFreezesPage({
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                   value={formData.subscriptionId || ''}
                   onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      subscriptionId: e.target.value,
-                    })
+                    handleFormChange('subscriptionId', e.target.value)
                   }
                 >
                   <option value="" disabled>
@@ -518,7 +423,7 @@ export function MembershipFreezesPage({
                     required
                     value={formData.startDate}
                     onChange={(e) =>
-                      setFormData({ ...formData, startDate: e.target.value })
+                      handleFormChange('startDate', e.target.value)
                     }
                   />
                 </div>
@@ -533,7 +438,7 @@ export function MembershipFreezesPage({
                     required
                     value={formData.endDate}
                     onChange={(e) =>
-                      setFormData({ ...formData, endDate: e.target.value })
+                      handleFormChange('endDate', e.target.value)
                     }
                   />
                 </div>
@@ -580,7 +485,7 @@ export function MembershipFreezesPage({
                   placeholder="Ej: Viaje al exterior, razones médicas..."
                   value={formData.reason}
                   onChange={(e) =>
-                    setFormData({ ...formData, reason: e.target.value })
+                    handleFormChange('reason', e.target.value)
                   }
                   rows={3}
                 />

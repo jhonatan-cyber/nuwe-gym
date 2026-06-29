@@ -1,15 +1,8 @@
-import { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { ChevronRight, CreditCard, List, Plus } from 'lucide-react'
 import { StatCard } from '#/shared/components/ui/stat-card'
 import { FilterBar } from '#/shared/components/ui/filter-bar'
 import { LoadingSpinner } from '#/shared/components/ui/loading-spinner'
 import { EmptyState } from '#/shared/components/ui/empty-state'
-import { toast } from 'sonner'
-import {
-  getSubscriptions,
-  cancelSubscription,
-} from '#/features/subscriptions/server.ts'
 import { ModuleLayout } from '#/shared/components/layout/module-layout.tsx'
 import {
   ToggleGroup,
@@ -17,78 +10,34 @@ import {
 } from '#/shared/components/ui/toggle-group'
 import { SubscriptionCard } from '#/features/subscriptions/components/subscription-card.tsx'
 import { SubscriptionForm } from '#/features/subscriptions/components/subscription-form.tsx'
-import { getSubscriptionStatus } from '#/features/subscriptions/utils.ts'
-import type { StatusFilter } from '#/features/subscriptions/types.ts'
+import { useSubscriptionsPage } from '#/features/subscriptions/hooks/use-subscriptions-page.ts'
 
 interface SubscriptionsPageProps {
   userRole: string
 }
 
 export function SubscriptionsPage({ userRole }: SubscriptionsPageProps) {
-  const queryClient = useQueryClient()
-  const isReadOnly = userRole === 'TRAINER'
-
-  const [activeView, setActiveView] = useState<'list' | 'form'>('list')
-  const [search, setSearch] = useState('')
-  const [filterStatus, setFilterStatus] = useState<StatusFilter>('ALL')
-
-  const { data: subsList = [], isLoading } = useQuery({
-    queryKey: ['subscriptions'],
-    queryFn: () => getSubscriptions(),
-  })
-
-  const cancelMutation = useMutation({
-    mutationFn: cancelSubscription,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['subscriptions'] })
-      queryClient.invalidateQueries({ queryKey: ['members'] })
-      toast.success('Suscripción cancelada')
-    },
-    onError: () => toast.error('Error al cancelar'),
-  })
-
-  const filtered = subsList.filter((sub) => {
-    const status = getSubscriptionStatus(sub)
-    if (filterStatus !== 'ALL' && status !== filterStatus) return false
-    if (search) {
-      const q = search.toLowerCase()
-      const memberName = sub.member.fullName.toLowerCase()
-      const packageName = (
-        sub.package?.name ||
-        sub.plan?.name ||
-        ''
-      ).toLowerCase()
-      return memberName.includes(q) || packageName.includes(q)
-    }
-    return true
-  })
-
-  const totalSubscriptions = subsList.length
-  const activeSubscriptions = subsList.filter(
-    (s) => s.status === 'ACTIVE' && new Date(s.endDate) >= new Date(),
-  ).length
-  const expiredSubscriptions = subsList.filter(
-    (s) => s.status === 'ACTIVE' && new Date(s.endDate) < new Date(),
-  ).length
-
-  const statusLabel =
-    filterStatus === 'ALL'
-      ? 'Todos los Estados'
-      : filterStatus === 'ACTIVE'
-        ? 'Activas'
-        : filterStatus === 'EXPIRED'
-          ? 'Vencidas'
-          : 'Canceladas'
+  const {
+    activeView,
+    setActiveView,
+    search,
+    setSearch,
+    filterStatus,
+    setFilterStatus,
+    filtered,
+    isLoading,
+    totalSubscriptions,
+    activeSubscriptions,
+    expiredSubscriptions,
+    statusLabel,
+    isReadOnly,
+    handleOpenForm,
+    handleBackToList,
+    handleCancel,
+  } = useSubscriptionsPage(userRole)
 
   if (activeView === 'form') {
-    return (
-      <SubscriptionForm
-        onBack={() => {
-          setActiveView('list')
-          queryClient.invalidateQueries({ queryKey: ['subscriptions'] })
-        }}
-      />
-    )
+    return <SubscriptionForm onBack={handleBackToList} />
   }
 
   return (
@@ -108,7 +57,7 @@ export function SubscriptionsPage({ userRole }: SubscriptionsPageProps) {
               type="single"
               value="list"
               onValueChange={(v) => {
-                if (v === 'form') setActiveView('form')
+                if (v === 'form') handleOpenForm()
               }}
             >
               <ToggleGroupItem value="list">
@@ -149,7 +98,7 @@ export function SubscriptionsPage({ userRole }: SubscriptionsPageProps) {
             onSearchChange={setSearch}
             searchPlaceholder="Buscar socio o paquete..."
             filterValue={filterStatus}
-            onFilterChange={(v) => setFilterStatus(v as StatusFilter)}
+            onFilterChange={setFilterStatus}
             filterOptions={[
               { value: 'ALL', label: 'Todos los Estados' },
               { value: 'ACTIVE', label: 'Activas' },
@@ -186,7 +135,7 @@ export function SubscriptionsPage({ userRole }: SubscriptionsPageProps) {
                 key={sub.id}
                 sub={sub}
                 isReadOnly={isReadOnly}
-                onCancel={(id) => cancelMutation.mutate({ data: id })}
+                onCancel={handleCancel}
               />
             ))}
           </div>

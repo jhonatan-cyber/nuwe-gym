@@ -95,8 +95,8 @@ async function getTodayStats(
     .from(sales)
     .where(completedSalesFilter(start, end))
 
-  const total = Number(res?.total ?? 0)
-  const revenue = Number(res?.revenue ?? 0)
+  const total = Number(res.total)
+  const revenue = Number(res.revenue ?? 0)
   const avgTicket = total > 0 ? revenue / total : 0
 
   return { total, revenue, avgTicket }
@@ -408,10 +408,10 @@ export const getSaleStats = createServerFn({ method: 'GET' }).handler(
       .where(gte(sales.soldAt, today))
 
     return {
-      totalSales: Number(totalResult?.total ?? 0),
-      totalRevenue: Number(totalResult?.revenue ?? 0),
-      todaySales: Number(todayResult?.total ?? 0),
-      todayRevenue: Number(todayResult?.revenue ?? 0),
+      totalSales: Number(totalResult.total),
+      totalRevenue: Number(totalResult.revenue ?? 0),
+      todaySales: Number(todayResult.total),
+      todayRevenue: Number(todayResult.revenue ?? 0),
     }
   },
 )

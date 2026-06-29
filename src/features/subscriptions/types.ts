@@ -1,8 +1,9 @@
 import type { getSubscriptions } from './server.ts'
+import type { PaymentMethod } from '#/shared/lib/subscription-utils.ts'
 
 export type Subscription = Awaited<ReturnType<typeof getSubscriptions>>[number]
 
-export type PaymentMethod = 'CASH' | 'CARD' | 'TRANSFER' | 'QR'
+export type { PaymentMethod }
 
 export type StatusFilter = 'ALL' | 'ACTIVE' | 'EXPIRED' | 'CANCELLED'
 

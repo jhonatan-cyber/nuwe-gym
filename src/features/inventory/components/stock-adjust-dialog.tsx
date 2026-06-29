@@ -104,14 +104,14 @@ export function StockAdjustDialog({
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
-              className="rounded-xl"
+              className="rounded-full"
             >
               Cancelar
             </Button>
             <LoadingButton
               type="submit"
               isLoading={isPending}
-              className="rounded-xl font-bold"
+              className="rounded-full font-bold"
             >
               Registrar Ajuste
             </LoadingButton>

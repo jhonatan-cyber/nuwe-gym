@@ -1,8 +1,9 @@
 import type { getMembers } from '#/features/members/server.ts'
+import type { PaymentMethod } from '#/shared/lib/subscription-utils.ts'
 
 export type Step = 1 | 2 | 3
 
-export type PaymentMethod = 'CASH' | 'CARD' | 'TRANSFER' | 'QR'
+export type { PaymentMethod }
 
 export interface RenewalFormData {
   packageId: number

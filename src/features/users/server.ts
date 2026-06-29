@@ -1,8 +1,9 @@
 import { createServerFn } from '@tanstack/react-start'
+import { getRequest } from '@tanstack/react-start/server'
 import { db } from '#/shared/db/index.ts'
 import { users, sessions } from '#/shared/db/schema/auth.ts'
 import { auditLogs } from '#/shared/db/schema/audit-logs.ts'
-import { eq, desc } from 'drizzle-orm'
+import { eq, desc, and, ne } from 'drizzle-orm'
 import { requireRole } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
@@ -90,27 +91,41 @@ export const createStaffUser = createServerFn({ method: 'POST' })
   .inputValidator((data) => createStaffUserSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const request = getRequest()
+
+    // Verificar si el email ya existe
+    const emailLower = data.email.trim().toLowerCase()
+    const existingUser = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.email, emailLower))
+      .limit(1)
+
+    if (existingUser.length > 0) {
+      throw new Error('El correo electrónico ya está registrado por otro usuario.')
+    }
 
     const fullName = `${data.firstName.trim()} ${data.lastName.trim()}`
     const password = data.documentNumber
-    const baRole = data.role === 'ADMIN' ? 'admin' : 'user'
+    const baRole = data.role === 'ADMIN' ? 'ADMIN' : undefined
 
     let user: Awaited<ReturnType<typeof auth.api.createUser>>
     try {
       user = await auth.api.createUser({
-        headers: new Headers(),
+        headers: request.headers,
         body: {
-          email: data.email,
+          email: emailLower,
           password,
           name: fullName,
           role: baRole,
         },
       })
     } catch (err: any) {
+      console.error('Error al crear usuario del staff:', err)
       const message =
         err?.body?.message ||
         err?.message ||
-        'No se pudo crear el usuario. Verificá que el email no esté en uso.'
+        'No se pudo crear el usuario. Verificá los datos ingresados.'
       throw new Error(message)
     }
 
@@ -139,6 +154,7 @@ const updateUserSchema = z.object({
   userId: z.string(),
   name: z.string().min(1, 'El nombre es obligatorio'),
   email: z.string().email('Email inválido'),
+  role: z.enum(['ADMIN', 'RECEPTIONIST', 'TRAINER']),
   documentNumber: z
     .string()
     .regex(/^\d+$/, 'El CI debe contener solo números')
@@ -157,11 +173,28 @@ export const updateUser = createServerFn({ method: 'POST' })
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
 
+    const emailLower = data.email.trim().toLowerCase()
+    // Verificar si el email ya está en uso por otro usuario
+    const existingUser = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(and(eq(users.email, emailLower), ne(users.id, data.userId)))
+      .limit(1)
+
+    if (existingUser.length > 0) {
+      throw new Error('El correo electrónico ya está registrado por otro usuario.')
+    }
+
+    // Prevenir que un administrador se cambie el rol a sí mismo
+    const isSelfUpdate = session.user.id === data.userId
+    const roleValue = isSelfUpdate ? undefined : data.role
+
     const [user] = await db
       .update(users)
       .set({
         name: data.name,
-        email: data.email,
+        email: emailLower,
+        ...(roleValue ? { role: roleValue } : {}),
         documentNumber: data.documentNumber ?? undefined,
         phone: data.phone ?? null,
         address: data.address ?? null,
@@ -196,6 +229,7 @@ export const resetUserPassword = createServerFn({ method: 'POST' })
   .inputValidator((data) => resetPasswordSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const request = getRequest()
 
     const userResults = await db
       .select({ id: users.id, name: users.name })
@@ -206,7 +240,7 @@ export const resetUserPassword = createServerFn({ method: 'POST' })
     const user = userResults[0]
 
     await auth.api.setUserPassword({
-      headers: new Headers(),
+      headers: request.headers,
       body: {
         userId: data.userId,
         newPassword: data.newPassword,
@@ -262,61 +296,4 @@ export const deleteUser = createServerFn({ method: 'POST' })
     return { success: true }
   })
 
-export const checkDbEmpty = createServerFn({ method: 'GET' }).handler(
-  async () => {
-    const existingUsers = await db.select().from(users).limit(1)
-    return { isEmpty: existingUsers.length === 0 }
-  },
-)
 
-const createInitialAdminSchema = z.object({
-  name: z.string(),
-  email: z.string().email(),
-  documentNumber: z.string().min(1),
-  phone: z.string().optional(),
-  address: z.string().optional(),
-})
-
-export const createInitialAdmin = createServerFn({ method: 'POST' })
-  .inputValidator((data) => createInitialAdminSchema.parse(data))
-  .handler(async ({ data }) => {
-    const existingUsers = await db.select().from(users).limit(1)
-    if (existingUsers.length > 0) {
-      throw new Error(
-        'No se puede crear el administrador inicial si ya existen usuarios.',
-      )
-    }
-
-    let userId: string
-    try {
-      const result = await auth.api.signUpEmail({
-        headers: new Headers(),
-        body: {
-          email: data.email,
-          password: data.documentNumber,
-          name: data.name,
-        },
-      })
-      userId = result.user.id
-    } catch (err: any) {
-      const message =
-        err?.body?.message ||
-        err?.message ||
-        'No se pudo crear el usuario. Verificá que el email no esté en uso y que el documento tenga al menos 4 caracteres.'
-      throw new Error(message)
-    }
-
-    const [updatedUser] = await db
-      .update(users)
-      .set({
-        role: 'ADMIN',
-        emailVerified: true,
-        documentNumber: data.documentNumber,
-        phone: data.phone || null,
-        address: data.address || null,
-      })
-      .where(eq(users.id, userId))
-      .returning()
-
-    return updatedUser
-  })

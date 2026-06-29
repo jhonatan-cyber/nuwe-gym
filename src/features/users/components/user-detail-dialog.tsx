@@ -1,6 +1,4 @@
-import { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { toast } from 'sonner'
+import type { LucideIcon } from 'lucide-react'
 import {
   User,
   Mail,
@@ -17,71 +15,26 @@ import {
   CircleCheck,
   XCircle,
   Key,
-  Info,
   Phone,
   MapPin,
   CreditCard,
 } from 'lucide-react'
-import {
-  getUserById,
-  revokeSession,
-  resetUserPassword,
-} from '#/features/users/server.ts'
 import { Button } from '#/shared/components/ui/button'
 import {
   Dialog,
   DialogContent,
-  DialogFooter,
-  Dialog as SubDialog,
-  DialogContent as SubDialogContent,
-  DialogHeader as SubDialogHeader,
-  DialogTitle as SubDialogTitle,
-  DialogFooter as SubDialogFooter
 } from '#/shared/components/ui/dialog'
 import { Badge } from '#/shared/components/ui/badge'
-import { Input } from '#/shared/components/ui/input'
 import { ConfirmDialog } from '#/shared/components/ui/confirm-dialog'
 import { cn } from '#/shared/lib/utils.ts'
+import { formatDate, formatDateTime, formatRelativeTime } from '#/shared/lib/formatters.ts'
 import { ROLE_LABELS } from '#/features/users/types.ts'
+import { useUserDetailDialog } from '#/features/users/hooks/use-user-detail-dialog.ts'
+import { ResetPasswordDialog } from '#/features/users/components/reset-password-dialog.tsx'
 
 interface UserDetailDialogProps {
   userId: string | null
   onOpenChange: (open: boolean) => void
-}
-
-function formatDate(date: Date | string | null) {
-  if (!date) return '—'
-  return new Date(date).toLocaleDateString('es-ES', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  })
-}
-
-function formatDateTime(date: Date | string | null) {
-  if (!date) return '—'
-  return new Date(date).toLocaleString('es-ES', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-}
-
-function formatTimeAgo(date: Date | string | null) {
-  if (!date) return ''
-  const now = new Date()
-  const d = new Date(date)
-  const diffMs = now.getTime() - d.getTime()
-  const diffMins = Math.floor(diffMs / 60000)
-  if (diffMins < 1) return 'Ahora'
-  if (diffMins < 60) return `Hace ${diffMins}min`
-  const diffHours = Math.floor(diffMins / 60)
-  if (diffHours < 24) return `Hace ${diffHours}h`
-  const diffDays = Math.floor(diffHours / 24)
-  if (diffDays < 7) return `Hace ${diffDays}d`
-  return formatDate(date)
 }
 
 function parseUserAgent(ua: string | null): {
@@ -117,80 +70,25 @@ export function UserDetailDialog({
   userId,
   onOpenChange,
 }: UserDetailDialogProps) {
-  const queryClient = useQueryClient()
-
-  const [revokingSessionId, setRevokingSessionId] = useState<string | null>(
-    null,
-  )
-  const [revokingUserName, setRevokingUserName] = useState<string>('')
-  const [isResetPwOpen, setIsResetPwOpen] = useState(false)
-  const [newPassword, setNewPassword] = useState('')
-
-  const { data, isLoading } = useQuery({
-    queryKey: ['user-detail', userId],
-    queryFn: () => getUserById({ data: userId! }),
-    enabled: !!userId,
-    refetchOnMount: true,
-  })
-
-  const revokeMutation = useMutation({
-    mutationFn: revokeSession,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user-detail', userId] })
-      setRevokingSessionId(null)
-      toast.success('Sesión cerrada correctamente')
-    },
-    onError: (err: Error) =>
-      toast.error(err.message || 'Error al cerrar la sesión'),
-  })
-
-  function handleRevokeSession(sessionId: string, userName: string) {
-    setRevokingSessionId(sessionId)
-    setRevokingUserName(userName)
-  }
-
-  const resetPwMutation = useMutation({
-    mutationFn: resetUserPassword,
-    onSuccess: () => {
-      setIsResetPwOpen(false)
-      setNewPassword('')
-      toast.success('Contraseña reseteada correctamente')
-    },
-    onError: (err: Error) =>
-      toast.error(err.message || 'Error al resetear la contraseña'),
-  })
-
-  function handleConfirmRevoke() {
-    if (revokingSessionId) {
-      revokeMutation.mutate({
-        data: {
-          sessionId: revokingSessionId,
-          userName: revokingUserName,
-        },
-      })
-    }
-  }
-
-  function handleOpenResetPw() {
-    setNewPassword('')
-    setIsResetPwOpen(true)
-  }
-
-  function handleResetPassword(e: React.FormEvent) {
-    e.preventDefault()
-    if (!user || !newPassword.trim()) return
-    resetPwMutation.mutate({
-      data: { userId: user.id, newPassword: newPassword.trim() },
-    })
-  }
-
-  const user = data?.user
-  const userSessions = data?.sessions ?? []
-  const auditLogs = data?.auditLogs ?? []
-
-  const activeSessions = userSessions.filter(
-    (s) => new Date(s.expiresAt) > new Date(),
-  )
+  const {
+    user,
+    userSessions,
+    activeSessions,
+    auditLogs,
+    isLoading,
+    revokingSessionId,
+    setRevokingSessionId,
+    isResetPwOpen,
+    setIsResetPwOpen,
+    newPassword,
+    setNewPassword,
+    handleRevokeSession,
+    handleConfirmRevoke,
+    handleOpenResetPw,
+    handleResetPassword,
+    isRevoking,
+    isResettingPw,
+  } = useUserDetailDialog({ userId, onOpenChange })
 
   return (
     <Dialog
@@ -199,7 +97,7 @@ export function UserDetailDialog({
         if (!open) onOpenChange(false)
       }}
     >
-      <DialogContent className="max-w-2xl max-h-[88vh] overflow-x-hidden overflow-y-auto scrollbar-none p-0 gap-0">
+      <DialogContent className="max-w-2xl max-h-[88vh] flex flex-col p-0 gap-0 overflow-hidden">
         {isLoading ? (
           <div className="py-16 flex items-center justify-center gap-2 text-muted-foreground">
             <RefreshCw className="size-4 animate-spin text-primary" />
@@ -208,13 +106,14 @@ export function UserDetailDialog({
         ) : user ? (
           <>
             {/* ── Hero header ── */}
-            <div className="relative overflow-hidden px-6 pt-6 pb-5 border-b dark:border-white/[0.05] border-black/[0.05]">
-              <div className="absolute inset-0 bg-gradient-to-br from-foreground/[0.03] to-transparent pointer-events-none" />
+            <div className="relative overflow-hidden px-6 pt-6 pb-5 border-b dark:border-white/5 border-black/5 shrink-0">
+              <div className="absolute inset-0 bg-linear-to-br from-foreground/3 to-transparent pointer-events-none" />
               <div className="relative flex items-center gap-4">
                 {/* Avatar */}
-                <div className="size-14 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/10 flex items-center justify-center font-black text-xl uppercase shrink-0 text-primary tracking-wider shadow-inner select-none">
+                <div className="size-14 rounded-2xl bg-linear-to-br from-primary/20 to-primary/5 border border-primary/10 flex items-center justify-center font-black text-xl uppercase shrink-0 text-primary tracking-wider shadow-inner select-none">
                   {user.name
                     .split(' ')
+                    .filter(Boolean)
                     .map((n: string) => n[0])
                     .slice(0, 2)
                     .join('')}
@@ -244,7 +143,7 @@ export function UserDetailDialog({
                   <Button
                     variant="outline"
                     size="sm"
-                    className="flex items-center gap-1.5 text-xs h-8"
+                    className="flex items-center gap-1.5 text-xs h-8 rounded-full"
                     onClick={handleOpenResetPw}
                   >
                     <Key className="size-3.5" />
@@ -255,7 +154,7 @@ export function UserDetailDialog({
             </div>
 
             {/* ── Body ── */}
-            <div className="px-6 py-5 space-y-6">
+            <div className="flex-1 overflow-x-hidden overflow-y-auto scrollbar-none px-6 py-5 space-y-6">
               {/* Datos del usuario */}
               <section>
                 <SectionTitle icon={User} label="Información" />
@@ -310,7 +209,7 @@ export function UserDetailDialog({
                   label={`Sesiones (${activeSessions.length} activas)`}
                 />
                 {userSessions.length === 0 ? (
-                  <div className="mt-3 py-8 rounded-2xl border dark:border-white/[0.04] border-black/[0.04] bg-muted/40 text-center text-sm text-muted-foreground">
+                  <div className="mt-3 py-8 rounded-2xl border dark:border-white/4 border-black/4 bg-muted/40 text-center text-sm text-muted-foreground">
                     Sin sesiones registradas.
                   </div>
                 ) : (
@@ -324,8 +223,8 @@ export function UserDetailDialog({
                           className={cn(
                             'flex items-center gap-3 px-4 py-3 rounded-xl border transition-colors',
                             isActive
-                              ? 'dark:border-white/[0.06] border-black/[0.06] bg-foreground/[0.02]'
-                              : 'dark:border-white/[0.03] border-black/[0.03] bg-muted/30 opacity-60',
+                              ? 'dark:border-white/6 border-black/6 bg-foreground/2'
+                              : 'dark:border-white/3 border-black/3 bg-muted/30 opacity-60',
                           )}
                         >
                           <div className="size-8 rounded-lg bg-foreground/5 border border-foreground/10 flex items-center justify-center shrink-0">
@@ -356,11 +255,11 @@ export function UserDetailDialog({
                               <span className="mx-1 opacity-30">·</span>
                               {isActive ? (
                                 <span className="text-emerald-500 font-semibold">
-                                  {formatTimeAgo(session.expiresAt)} expira
+                                  {formatRelativeTime(session.expiresAt)} expira
                                 </span>
                               ) : (
                                 <span className="text-muted-foreground">
-                                  Expirada {formatTimeAgo(session.expiresAt)}
+                                  Expirada {formatRelativeTime(session.expiresAt)}
                                 </span>
                               )}
                             </p>
@@ -380,11 +279,9 @@ export function UserDetailDialog({
                               variant="ghost"
                               size="icon-xs"
                               className="text-red-500 hover:text-red-600 hover:bg-red-50 shrink-0"
+                              disabled={isRevoking}
                               onClick={() =>
-                                handleRevokeSession(
-                                  session.id,
-                                  user?.name || '',
-                                )
+                                handleRevokeSession(session.id, user.name)
                               }
                             >
                               <XCircle className="size-3.5" />
@@ -404,7 +301,7 @@ export function UserDetailDialog({
                   label="Actividad reciente (últimos 50 eventos)"
                 />
                 {auditLogs.length === 0 ? (
-                  <div className="mt-3 py-8 rounded-2xl border dark:border-white/[0.04] border-black/[0.04] bg-muted/40 text-center text-sm text-muted-foreground">
+                  <div className="mt-3 py-8 rounded-2xl border dark:border-white/4 border-black/4 bg-muted/40 text-center text-sm text-muted-foreground">
                     Sin actividad registrada.
                   </div>
                 ) : (
@@ -412,7 +309,7 @@ export function UserDetailDialog({
                     {auditLogs.map((log) => (
                       <div
                         key={log.id}
-                        className="flex items-start gap-3 px-4 py-2.5 rounded-xl hover:bg-foreground/[0.02] transition-colors"
+                        className="flex items-start gap-3 px-4 py-2.5 rounded-xl hover:bg-foreground/2 transition-colors"
                       >
                         <div className="size-6 rounded-md bg-foreground/5 border border-foreground/10 flex items-center justify-center shrink-0 mt-0.5">
                           {log.action === 'LOGIN' ? (
@@ -466,62 +363,25 @@ export function UserDetailDialog({
           </div>
         )}
 
-        <DialogFooter className="px-6 py-4 border-t dark:border-white/[0.05] border-black/[0.05]">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        <div className="px-6 py-4 border-t dark:border-white/5 border-black/5 flex justify-center items-center shrink-0 w-full">
+          <Button
+            variant="outline"
+            className="rounded-full"
+            onClick={() => onOpenChange(false)}
+          >
             Cerrar
           </Button>
-        </DialogFooter>
+        </div>
       </DialogContent>
 
-      {/* Reset Password Dialog */}
-      <SubDialog open={isResetPwOpen} onOpenChange={setIsResetPwOpen}>
-        <SubDialogContent>
-          <SubDialogHeader>
-            <SubDialogTitle>Resetear Contraseña</SubDialogTitle>
-          </SubDialogHeader>
-          <form onSubmit={handleResetPassword} className="space-y-4">
-            <div className="space-y-1">
-              <label className="text-sm font-medium">Nueva Contraseña</label>
-              <Input
-                type="text"
-                placeholder="Mín. 6 caracteres"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                minLength={6}
-                required
-              />
-            </div>
-            <div className="bg-amber-500/10 p-3 rounded-lg flex gap-2 text-xs text-amber-800 border border-amber-500/20">
-              <Info className="size-5 shrink-0" />
-              <span>
-                La contraseña debe tener al menos 6 caracteres. Recomendamos
-                generar una contraseña segura y compartirla de forma segura con
-                el usuario. Todas las sesiones activas del usuario seguirán
-                vigentes.
-              </span>
-            </div>
-            <SubDialogFooter className="pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsResetPwOpen(false)}
-              >
-                Cancelar
-              </Button>
-              <Button
-                type="submit"
-                disabled={
-                  resetPwMutation.isPending || newPassword.trim().length < 6
-                }
-              >
-                {resetPwMutation.isPending
-                  ? 'Reseteando...'
-                  : 'Resetear Contraseña'}
-              </Button>
-            </SubDialogFooter>
-          </form>
-        </SubDialogContent>
-      </SubDialog>
+      <ResetPasswordDialog
+        open={isResetPwOpen}
+        onOpenChange={setIsResetPwOpen}
+        newPassword={newPassword}
+        onNewPasswordChange={setNewPassword}
+        isPending={isResettingPw}
+        onSubmit={handleResetPassword}
+      />
 
       <ConfirmDialog
         open={revokingSessionId !== null}
@@ -538,7 +398,12 @@ export function UserDetailDialog({
   )
 }
 
-function SectionTitle({ icon: Icon, label }: { icon: any; label: string }) {
+interface SectionTitleProps {
+  icon: LucideIcon
+  label: string
+}
+
+function SectionTitle({ icon: Icon, label }: SectionTitleProps) {
   return (
     <div className="flex items-center gap-1.5">
       <Icon className="size-3.5 text-primary" />
@@ -549,18 +414,16 @@ function SectionTitle({ icon: Icon, label }: { icon: any; label: string }) {
   )
 }
 
-function DataRow({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: any
+interface DataRowProps {
+  icon: LucideIcon
   label: string
   value: string
-}) {
+}
+
+function DataRow({ icon: Icon, label, value }: DataRowProps) {
   return (
     <div className="flex items-start gap-2.5 min-w-0">
-      <div className="size-6 rounded-md dark:bg-white/5 bg-black/5 border dark:border-white/[0.06] border-black/[0.06] flex items-center justify-center shrink-0 mt-0.5">
+      <div className="size-6 rounded-md dark:bg-white/5 bg-black/5 border dark:border-white/6 border-black/6 flex items-center justify-center shrink-0 mt-0.5">
         <Icon className="size-3 text-muted-foreground" />
       </div>
       <div className="min-w-0 flex-1">

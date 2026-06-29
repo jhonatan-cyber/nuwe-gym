@@ -1,10 +1,24 @@
-import { useState  } from 'react'
-import type {ReactNode} from 'react';
-import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
+import { useState } from 'react'
+import type { ReactNode } from 'react'
+import {
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react'
 import { Card, CardContent } from '#/shared/components/ui/card.tsx'
 import { Skeleton } from '#/shared/components/ui/skeleton.tsx'
 import { ErrorState } from '#/shared/components/ui/error-state.tsx'
 import { EmptyState } from '#/shared/components/ui/empty-state.tsx'
+import { Button } from '#/shared/components/ui/button.tsx'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '#/shared/components/ui/select.tsx'
 import {
   Table,
   TableBody,
@@ -36,6 +50,13 @@ interface DataTableProps<T> {
   loadingMessage?: string
   keyExtractor: (item: T) => string | number
   skeletonRows?: number
+  // Pagination props
+  currentPage?: number
+  pageSize?: number
+  totalPages?: number
+  totalFiltered?: number
+  onPageChange?: (page: number) => void
+  onPageSizeChange?: (size: number) => void
 }
 
 export function DataTable<T>({
@@ -49,6 +70,12 @@ export function DataTable<T>({
   loadingMessage = 'Cargando...',
   keyExtractor,
   skeletonRows = 3,
+  currentPage,
+  pageSize,
+  totalPages,
+  totalFiltered,
+  onPageChange,
+  onPageSizeChange,
 }: DataTableProps<T>) {
   const [sortKey, setSortKey] = useState<string | null>(null)
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
@@ -90,7 +117,36 @@ export function DataTable<T>({
   }
 
   return (
-    <Card>
+    <Card className="overflow-hidden">
+      {/* Table Header inside the Card */}
+      {!isLoading && !isError && data.length > 0 && currentPage !== undefined && pageSize !== undefined && totalFiltered !== undefined && onPageSizeChange !== undefined && (
+        <div className="flex justify-between items-center px-6 py-3 border-b dark:border-white/5 border-black/5 bg-muted/20">
+          <span className="text-xs text-muted-foreground font-medium">
+            Mostrando {totalFiltered === 0 ? 0 : (currentPage - 1) * pageSize + 1} a{' '}
+            {Math.min(currentPage * pageSize, totalFiltered)} de {totalFiltered} registros
+          </span>
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span>Por página:</span>
+            <Select
+              value={String(pageSize)}
+              onValueChange={(val) => {
+                onPageSizeChange(Number(val))
+              }}
+            >
+              <SelectTrigger className="h-7 w-[70px] text-xs rounded-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="5">5</SelectItem>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="20">20</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      )}
+
       <CardContent className="p-0">
         {isError ? (
           <ErrorState message={errorMessage} onRetry={onRetry} />
@@ -144,6 +200,46 @@ export function DataTable<T>({
           </Table>
         )}
       </CardContent>
+
+      {/* Table Footer inside the Card */}
+      {!isLoading && !isError && data.length > 0 && currentPage !== undefined && totalPages !== undefined && onPageChange !== undefined && totalPages > 1 && (
+        <div className="flex items-center justify-center gap-1 py-3 border-t dark:border-white/5 border-black/5 bg-muted/10">
+          <Button
+            variant="outline"
+            size="icon"
+            className="size-8 rounded-full"
+            onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+            disabled={currentPage === 1}
+          >
+            <ChevronLeft className="size-4" />
+          </Button>
+
+          {Array.from({ length: totalPages }).map((_, idx) => {
+            const pageNum = idx + 1
+            return (
+              <Button
+                key={pageNum}
+                variant={currentPage === pageNum ? 'default' : 'outline'}
+                size="sm"
+                className="size-8 text-xs font-bold rounded-full"
+                onClick={() => onPageChange(pageNum)}
+              >
+                {pageNum}
+              </Button>
+            )
+          })}
+
+          <Button
+            variant="outline"
+            size="icon"
+            className="size-8 rounded-full"
+            onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+            disabled={currentPage === totalPages || totalPages === 0}
+          >
+            <ChevronRight className="size-4" />
+          </Button>
+        </div>
+      )}
     </Card>
   )
 }

@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 import { Link } from '@tanstack/react-router'
-import { User, Camera } from 'lucide-react'
+import { User, Camera, Phone } from 'lucide-react'
 import { capitalizeWords } from '#/shared/lib/formatters.ts'
 import { Button } from '#/shared/components/ui/button'
 import { Input } from '#/shared/components/ui/input'
@@ -9,12 +9,14 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from '#/shared/components/ui/toggle-group'
+import { CountryCodeSelect } from '#/shared/components/ui/country-code-select.tsx'
 
 export interface PersonalInfoState {
   firstName: string
   lastName: string
   documentNumber: string
   phone: string
+  countryCode: string
   gender: 'MALE' | 'FEMALE'
   birthDate: string
   photoBase64: string | null
@@ -201,27 +203,35 @@ export function Step1PersonalInfo({
             </ToggleGroup>
           </div>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div className="grid gap-1.5">
-            <Label className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
-              Número de Celular{' '}
-              <span className="size-1.5 rounded-full bg-muted-foreground/50 inline-block" />
-            </Label>
-            <div className="flex rounded-full border dark:border-input border-input overflow-hidden h-10 focus-within:ring-1 focus-within:ring-ring">
-              <div className="flex items-center px-4 bg-muted/30 border-r dark:border-white/10 border-black/10 shrink-0">
-                <span className="text-sm font-semibold text-muted-foreground whitespace-nowrap">
-                  591
-                </span>
-              </div>
-              <input
+        <div className="grid gap-1.5">
+          <Label className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
+            Número de Celular{' '}
+            <span className="size-1.5 rounded-full bg-muted-foreground/50 inline-block" />
+          </Label>
+          <div className="flex gap-2">
+            <CountryCodeSelect
+              value={state.countryCode}
+              onValueChange={(val) => onChange({ ...state, countryCode: val })}
+            />
+            <div className="relative flex-1">
+              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
+              <Input
                 type="tel"
-                placeholder=""
+                placeholder="Ej. 71234567"
                 value={state.phone}
                 onChange={(e) => onChange({ ...state, phone: e.target.value })}
-                className="flex-1 bg-transparent px-4 text-sm outline-none text-foreground placeholder:text-muted-foreground"
+                className={`pl-8 text-sm ${errors.phone ? 'border-destructive' : ''}`}
               />
             </div>
           </div>
+          {errors.phone && (
+            <p className="text-[10px] font-semibold text-destructive">
+              {errors.phone}
+            </p>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="grid gap-1.5">
             <Label className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
               Fecha de Nacimiento{' '}
@@ -236,37 +246,40 @@ export function Step1PersonalInfo({
               className="text-sm"
             />
           </div>
-        </div>
-        <div>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handlePhoto}
-          />
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => fileInputRef.current?.click()}
-            className="w-full"
-          >
-            {state.photoBase64 ? (
-              <>
-                <img
-                  src={state.photoBase64}
-                  alt="Preview"
-                  className="size-5 rounded-full object-cover"
-                />
-                <span>Cambiar Foto</span>
-              </>
-            ) : (
-              <>
-                <Camera className="size-4" />
-                <span>Agregar Foto (Opcional)</span>
-              </>
-            )}
-          </Button>
+          <div className="grid gap-1.5">
+            <Label className="text-xs font-semibold text-muted-foreground">
+              Foto de Perfil
+            </Label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handlePhoto}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => fileInputRef.current?.click()}
+              className="w-full flex items-center gap-2 justify-center h-10"
+            >
+              {state.photoBase64 ? (
+                <>
+                  <img
+                    src={state.photoBase64}
+                    alt="Preview"
+                    className="size-5 rounded-full object-cover"
+                  />
+                  <span>Cambiar Foto</span>
+                </>
+              ) : (
+                <>
+                  <Camera className="size-4" />
+                  <span>Agregar Foto (Opcional)</span>
+                </>
+              )}
+            </Button>
+          </div>
         </div>
       </div>
     </div>

@@ -99,3 +99,11 @@ export const getStockSnapshots = createServerFn({ method: 'GET' })
 
     return snapshots
   })
+
+export const generateCategoryDescription = createServerFn({ method: 'POST' })
+  .inputValidator(z.object({ name: z.string() }))
+  .handler(async ({ data }) => {
+    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    const { generateDescriptionForCategory } = await import('#/shared/lib/ai.ts')
+    return await generateDescriptionForCategory(data.name)
+  })

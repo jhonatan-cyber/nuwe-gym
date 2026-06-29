@@ -66,6 +66,7 @@ export function MemberEnrollmentWizard({
     lastName: '',
     documentNumber: '',
     phone: '',
+    countryCode: '+591',
     gender: 'MALE',
     birthDate: '',
     photoBase64: null,
@@ -113,6 +114,9 @@ export function MemberEnrollmentWizard({
           newErrors.lastName = 'El apellido es obligatorio'
         if (!personalInfo.documentNumber.trim())
           newErrors.documentNumber = 'El documento es obligatorio'
+        if (personalInfo.phone.trim() && !/^\+?[\d\s-]+$/.test(personalInfo.phone.trim())) {
+          newErrors.phone = 'Formato de teléfono inválido'
+        }
       }
       if (currentStep === 2 && !selectedPackageId) {
         newErrors.selectedPackageId = 'Seleccioná un paquete'
@@ -161,7 +165,9 @@ export function MemberEnrollmentWizard({
         data: {
           fullName,
           documentNumber: personalInfo.documentNumber,
-          phone: personalInfo.phone || undefined,
+          phone: personalInfo.phone.trim()
+            ? `${personalInfo.countryCode} ${personalInfo.phone.trim()}`
+            : undefined,
           birthDate: personalInfo.birthDate || undefined,
           gender: personalInfo.gender,
         },
@@ -242,6 +248,7 @@ export function MemberEnrollmentWizard({
       lastName: '',
       documentNumber: '',
       phone: '',
+      countryCode: '+591',
       gender: 'MALE',
       birthDate: '',
       photoBase64: null,

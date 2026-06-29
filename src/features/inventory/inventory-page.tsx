@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   ChevronRight,
@@ -133,6 +133,18 @@ export function InventoryPage() {
     queryFn: () => getStockSnapshots({ data: { daysBack: trendDays } }),
   })
 
+  // Set default category when categories are loaded
+  useEffect(() => {
+    if (selectedCategoryId === undefined && categories.length > 0) {
+      const active = categories.filter((c: any) => c.isActive)
+      if (active.length > 0) {
+        setSelectedCategoryId(active[0].id)
+      } else {
+        setSelectedCategoryId(null)
+      }
+    }
+  }, [categories, selectedCategoryId])
+
   // Derived data
   const productCountByCategory = useMemo(() => {
     const counts: Record<string, number> = {}
@@ -175,26 +187,6 @@ export function InventoryPage() {
     return stats
   }, [allProducts, productCountByCategory])
 
-  const allCategoryStats = useMemo(() => {
-    let avg = 0,
-      stock = 0,
-      oos = 0
-    const prods: { id: string; name: string; stock: number }[] = []
-    for (const p of allProducts) {
-      avg += Number(p.salePrice)
-      stock += p.stockCurrent
-      prods.push({ id: p.id, name: p.name, stock: p.stockCurrent })
-      if (p.stockCurrent <= 0) oos += 1
-    }
-    if (allProducts.length > 0) avg /= allProducts.length
-    return {
-      avgSalePrice: avg,
-      totalStock: stock,
-      outOfStock: oos,
-      products: prods,
-    }
-  }, [allProducts])
-
   const categoryTrends = useMemo(() => {
     const t: Record<string, { totalChange: number; totalPrev: number }> = {}
     for (const snap of stockSnapshots) {
@@ -203,20 +195,6 @@ export function InventoryPage() {
       t[snap.categoryId].totalPrev += snap.previousStock
     }
     return t
-  }, [stockSnapshots])
-
-  const allTrend = useMemo(() => {
-    let change = 0,
-      prev = 0
-    for (const snap of stockSnapshots) {
-      change += snap.change
-      prev += snap.previousStock
-    }
-    return {
-      totalChange: change,
-      totalPrev: prev,
-      totalChangePercent: prev > 0 ? Math.round((change / prev) * 100) : 0,
-    }
   }, [stockSnapshots])
 
   const productTrendMap = useMemo(() => {
@@ -329,7 +307,10 @@ export function InventoryPage() {
 
   function openCreateProductModal() {
     setSelectedProduct(null)
-    setForm(EMPTY_FORM)
+    setForm({
+      ...EMPTY_FORM,
+      categoryId: selectedCategoryId ? selectedCategoryId.toString() : '',
+    })
     setShowProductForm(true)
   }
 
@@ -606,7 +587,7 @@ export function InventoryPage() {
               }}
             >
               <ToggleGroupItem value="products">
-                <Package className="size-3.5" /> Productos
+                <Package className="size-3.5" /> Categorías
               </ToggleGroupItem>
               <ToggleGroupItem value="kardex">
                 <Search className="size-3.5" /> Kardex
@@ -625,10 +606,10 @@ export function InventoryPage() {
                         <Button
                           type="button"
                           onClick={openCreateCategoryModal}
-                          size="icon"
-                          className="size-5 rounded-lg bg-foreground text-primary-foreground hover:bg-foreground/90 transition-colors"
+                          size="sm"
+                          className="h-6 rounded-full bg-foreground text-primary-foreground hover:bg-foreground/90 transition-colors gap-0.5 text-xs font-bold"
                         >
-                          <Plus className="size-3.5" />
+                          <Plus className="size-4" /> Nuevo
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent side="bottom">
@@ -661,136 +642,7 @@ export function InventoryPage() {
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 gap-2 max-h-[440px] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] scrollbar-none">
-                    <Tooltip delayDuration={300}>
-                      <TooltipTrigger asChild>
-                        <button
-                          type="button"
-                          onClick={() => handleCategoryClick(null)}
-                          className={`group flex flex-col items-center justify-center p-3 rounded-2xl text-center border transition-all duration-300 min-h-[104px] hover:-translate-y-0.5 hover:shadow-md active:scale-95 ${selectedCategoryId === null ? 'bg-primary/10 border-primary/30 text-primary shadow-sm' : 'bg-muted/20 border-border/30 hover:bg-muted/40 hover:border-border/60 hover:text-foreground'}`}
-                        >
-                          <div
-                            className={`size-9 rounded-xl flex items-center justify-center shrink-0 mb-2 transition-all duration-300 ${selectedCategoryId === null ? 'bg-primary text-primary-foreground scale-105 shadow-sm' : 'bg-background/80 border border-border/10 text-muted-foreground group-hover:bg-background group-hover:text-foreground group-hover:scale-105 shadow-inner'}`}
-                          >
-                            <Package className="size-4" />
-                          </div>
-                          <p className="text-xs font-black truncate w-full tracking-wide">
-                            Todos
-                          </p>
-                          <span
-                            className={`mt-1.5 px-2 py-0.5 rounded-full text-[8px] font-bold tracking-wider uppercase transition-colors duration-300 ${selectedCategoryId === null ? 'bg-primary/20 text-primary' : 'bg-muted-foreground/10 text-muted-foreground group-hover:bg-muted-foreground/20'}`}
-                          >
-                            {allProducts.length} prod
-                          </span>
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent
-                        side="right"
-                        className="bg-popover text-foreground border-border/10 shadow-lg rounded-xl px-4 py-3 max-w-[240px]"
-                      >
-                        <div className="flex flex-col gap-2">
-                          <p className="text-xs font-black">Resumen Total</p>
-                          <div className="h-px bg-border/10" />
-                          <div className="flex items-center justify-between">
-                            <span className="text-[10px] text-muted-foreground font-bold">
-                              Precio Prom.
-                            </span>
-                            <span className="text-xs font-bold text-primary">
-                              {formatCurrency(allCategoryStats.avgSalePrice)}
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-[10px] text-muted-foreground font-bold">
-                              Stock Total
-                            </span>
-                            <span className="text-xs font-bold">
-                              {allCategoryStats.totalStock} uds.
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-[10px] text-muted-foreground font-bold">
-                              Agotados
-                            </span>
-                            <span
-                              className={`text-xs font-bold ${allCategoryStats.outOfStock > 0 ? 'text-red-500' : 'text-emerald-500'}`}
-                            >
-                              {allCategoryStats.outOfStock}
-                            </span>
-                          </div>
-                          {allTrend.totalChange !== 0 && (
-                            <div className="flex items-center justify-between">
-                              <span className="text-[10px] text-muted-foreground font-bold">
-                                Tendencia {trendDays}d
-                              </span>
-                              <TrendBadge
-                                value={allTrend.totalChange}
-                                percent={allTrend.totalChangePercent}
-                                size="sm"
-                                showPercent
-                              />
-                            </div>
-                          )}
-                          {allCategoryStats.products.length > 0 && (
-                            <>
-                              <div className="h-px bg-border/10" />
-                              <div className="flex flex-col gap-1">
-                                <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest">
-                                  Stock por Producto
-                                </p>
-                                {(() => {
-                                  const maxStock = Math.max(
-                                    ...allCategoryStats.products.map(
-                                      (p) => p.stock,
-                                    ),
-                                    1,
-                                  )
-                                  return allCategoryStats.products
-                                    .slice(0, 6)
-                                    .map((p, i) => {
-                                      const trend = productTrendMap[p.id]
-                                      return (
-                                        <div
-                                          key={i}
-                                          className="flex items-center gap-2"
-                                        >
-                                          <span
-                                            className="text-[9px] text-muted-foreground truncate w-[70px] shrink-0"
-                                            title={p.name}
-                                          >
-                                            {p.name}
-                                          </span>
-                                          <div className="flex-1 h-2 rounded-full bg-muted/50 overflow-hidden">
-                                            <div
-                                              className={`h-full rounded-full transition-all ${p.stock <= 0 ? 'bg-red-400' : p.stock <= 5 ? 'bg-amber-400' : 'bg-primary'}`}
-                                              style={{
-                                                width: `${Math.max((p.stock / maxStock) * 100, p.stock > 0 ? 8 : 3)}%`,
-                                              }}
-                                            />
-                                          </div>
-                                          <span className="text-[9px] font-bold tabular-nums w-6 text-right shrink-0">
-                                            {p.stock}
-                                          </span>
-                                          {trend && trend.change !== 0 && (
-                                            <TrendBadge
-                                              value={trend.change}
-                                              size="sm"
-                                              className="text-[8px] px-1 py-0"
-                                            />
-                                          )}
-                                        </div>
-                                      )
-                                    })
-                                })()}
-                                {allCategoryStats.products.length > 6 && (
-                                  <p className="text-[9px] text-muted-foreground font-bold">
-                                    +{allCategoryStats.products.length - 6} más
-                                  </p>
-                                )}
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      </TooltipContent>
-                    </Tooltip>
+
 
                     {categories
                       .filter((c) => c.isActive)
@@ -880,10 +732,10 @@ export function InventoryPage() {
               </div>
               {!showProductForm && (
                 <div className="flex items-center gap-2">
-                  {isAdmin && (
+                  {isAdmin && selectedCategoryId && (
                     <Button
                       size="sm"
-                      className="h-8 rounded-xl text-xs font-bold gap-1 shrink-0"
+                      className="h-8 rounded-full text-xs font-bold gap-1 shrink-0"
                       onClick={openCreateProductModal}
                     >
                       <Plus className="size-3.5" /> Producto
@@ -915,14 +767,14 @@ export function InventoryPage() {
                     type="button"
                     variant="outline"
                     onClick={() => setShowProductForm(false)}
-                    className="rounded-xl"
+                    className="rounded-full"
                   >
                     Cancelar
                   </Button>
                   <LoadingButton
                     type="submit"
                     isLoading={createMutation.isPending}
-                    className="rounded-xl font-bold"
+                    className="rounded-full font-bold"
                   >
                     Crear Producto
                   </LoadingButton>
@@ -1001,14 +853,14 @@ export function InventoryPage() {
                 type="button"
                 variant="outline"
                 onClick={closeProductModal}
-                className="rounded-xl"
+                className="rounded-full"
               >
                 Cancelar
               </Button>
               <LoadingButton
                 type="submit"
                 isLoading={createMutation.isPending || updateMutation.isPending}
-                className="rounded-xl font-bold"
+                className="rounded-full font-bold"
               >
                 {selectedProduct ? 'Guardar Cambios' : 'Crear Producto'}
               </LoadingButton>

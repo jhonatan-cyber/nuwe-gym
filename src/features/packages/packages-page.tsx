@@ -1,12 +1,4 @@
-import { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { ChevronRight, List, PackageIcon, Plus } from 'lucide-react'
-import { toast } from 'sonner'
-import {
-  getPackages,
-  deletePackage,
-  updatePackage,
-} from '#/features/packages/server.ts'
 import { ModuleLayout } from '#/shared/components/layout/module-layout.tsx'
 import {
   ToggleGroup,
@@ -20,84 +12,30 @@ import { LoadingSpinner } from '#/shared/components/ui/loading-spinner'
 import { EmptyState } from '#/shared/components/ui/empty-state'
 import { getTypeLabel } from '#/features/packages/utils.ts'
 import type { Package } from '#/features/packages/types.ts'
+import { usePackagesPage } from '#/features/packages/hooks/use-packages-page.ts'
 
 interface PackagesPageProps {
   userRole: string
 }
 
 export function PackagesPage({ userRole }: PackagesPageProps) {
-  const queryClient = useQueryClient()
-  const isReadOnly = userRole === 'TRAINER'
-
-  const [activeView, setActiveView] = useState<'list' | 'form'>('list')
-  const [editingPackageId, setEditingPackageId] = useState<string | null>(null)
-  const [search, setSearch] = useState('')
-  const [filterType, setFilterType] = useState('ALL')
-
-  const { data: packagesList = [], isLoading } = useQuery({
-    queryKey: ['packages'],
-    queryFn: () => getPackages(),
-  })
-
-  const deleteMutation = useMutation({
-    mutationFn: deletePackage,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['packages'] })
-      toast.success('Paquete eliminado')
-    },
-    onError: (err: Error) => {
-      toast.error(err.message || 'Error al eliminar el paquete', {
-        position: 'top-center',
-      })
-    },
-  })
-
-  const toggleMutation = useMutation({
-    mutationFn: updatePackage,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['packages'] })
-    },
-    onError: () => toast.error('Error al cambiar estado'),
-  })
-
-  const filtered = packagesList.filter((p) => {
-    if (filterType !== 'ALL' && p.type !== filterType) return false
-    if (search) return p.name.toLowerCase().includes(search.toLowerCase())
-    return true
-  })
-
-  const totalPackages = packagesList.length
-  const activePackages = packagesList.filter((p) => p.isActive).length
-
-  function handleToggleActive(pkg: Package) {
-    toggleMutation.mutate({
-      data: {
-        id: pkg.id,
-        name: pkg.name,
-        description: pkg.description ?? '',
-        imageBase64: pkg.imageBase64 ?? '',
-        price: pkg.price,
-        durationDays: pkg.durationDays,
-        type: pkg.type,
-        isActive: !pkg.isActive,
-        items: pkg.items.map((i) => ({
-          description: i.description,
-          sortOrder: i.sortOrder,
-        })),
-      },
-    })
-  }
-
-  function handleOpenForm(pkgId?: string) {
-    setEditingPackageId(pkgId ?? null)
-    setActiveView('form')
-  }
-
-  function handleBackToList() {
-    setEditingPackageId(null)
-    setActiveView('list')
-    queryClient.invalidateQueries({ queryKey: ['packages'] })
-  }
+  const {
+    activeView,
+    editingPackageId,
+    search,
+    setSearch,
+    filterType,
+    setFilterType,
+    filtered,
+    isLoading,
+    totalPackages,
+    activePackages,
+    isReadOnly,
+    deleteMutation,
+    handleToggleActive,
+    handleOpenForm,
+    handleBackToList,
+  } = usePackagesPage(userRole)
 
   if (activeView === 'form' && !isReadOnly) {
     return (

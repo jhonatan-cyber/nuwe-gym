@@ -154,11 +154,12 @@ a {
   * {
     @apply border-border outline-ring/50;
   }
+  button,
+  [role="button"] {
+    cursor: pointer;
+  }
 }
 
-/* Dialog / Modal background fix:
-   --background es un gradient y background-color no acepta gradients.
-   Usamos background (shorthand) via esta clase utilitaria. */
 .dialog-bg {
-  background: var(--surface);
+  background: var(--card);
 }

@@ -9,7 +9,6 @@ import { sales, saleItems } from '#/shared/db/schema/sales.ts'
 import { membershipPayments } from '#/shared/db/schema/membership-payments.ts'
 import { cashRegisterSessions } from '#/shared/db/schema/cash-register.ts'
 import { products } from '#/shared/db/schema/products.ts'
-import type { UserRole } from '#/shared/lib/permissions.ts'
 
 export const getDashboardData = createServerFn({ method: 'GET' }).handler(
   async () => {

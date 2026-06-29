@@ -154,7 +154,7 @@ export function ProductCard({
         <Button
           size="sm"
           variant="outline"
-          className="flex-1 h-8 rounded-xl text-xs font-bold"
+          className="flex-1 h-8 rounded-full text-xs font-bold"
           onClick={() => onAdjust(product)}
         >
           <ArrowUpDown className="size-3" /> Stock
@@ -163,7 +163,7 @@ export function ProductCard({
           <Button
             size="sm"
             variant="ghost"
-            className="h-8 rounded-xl"
+            className="h-8 rounded-full"
             onClick={() => onEdit(product)}
           >
             <Edit className="size-3" />

@@ -4,17 +4,11 @@ import { Eye, EyeOff, Sun, Moon, Monitor, ArrowLeft } from 'lucide-react'
 import { Input } from '#/shared/components/ui/input'
 import { Label } from '#/shared/components/ui/label'
 import { Button } from '#/shared/components/ui/button'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '#/shared/components/ui/select'
+import { CountryCodeSelect } from '#/shared/components/ui/country-code-select.tsx'
 import { authClient } from '#/shared/lib/auth-client.ts'
 import { getSession } from '#/shared/lib/server-utils.ts'
 import { useTheme } from 'next-themes'
-import { checkDbEmpty, createInitialAdmin } from '#/features/users/server.ts'
+import { checkDbEmpty, createInitialAdmin } from '#/features/users/setup.ts'
 import { toast } from 'sonner'
 
 function capitalizeEach(str: string) {
@@ -294,27 +288,11 @@ function LoginPage() {
                 Teléfono (opcional)
               </Label>
               <div className="flex gap-2">
-                <Select value={countryCode} onValueChange={setCountryCode}>
-                  <SelectTrigger className="w-[130px] h-11 rounded-full shrink-0">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="+591">🇧🇴 +591</SelectItem>
-                    <SelectItem value="+54">🇦🇷 +54</SelectItem>
-                    <SelectItem value="+55">🇧🇷 +55</SelectItem>
-                    <SelectItem value="+56">🇨🇱 +56</SelectItem>
-                    <SelectItem value="+57">🇨🇴 +57</SelectItem>
-                    <SelectItem value="+593">🇪🇨 +593</SelectItem>
-                    <SelectItem value="+502">🇬🇹 +502</SelectItem>
-                    <SelectItem value="+52">🇲🇽 +52</SelectItem>
-                    <SelectItem value="+595">🇵🇾 +595</SelectItem>
-                    <SelectItem value="+51">🇵🇪 +51</SelectItem>
-                    <SelectItem value="+1">🇺🇸 +1</SelectItem>
-                    <SelectItem value="+598">🇺🇾 +598</SelectItem>
-                    <SelectItem value="+58">🇻🇪 +58</SelectItem>
-                    <SelectItem value="+34">🇪🇸 +34</SelectItem>
-                  </SelectContent>
-                </Select>
+                <CountryCodeSelect
+                  value={countryCode}
+                  onValueChange={setCountryCode}
+                  className="w-[130px] h-11 rounded-full shrink-0"
+                />
                 <Input
                   id="setup-phone"
                   placeholder="Ej. 70012345"

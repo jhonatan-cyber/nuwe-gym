@@ -1,248 +1,212 @@
 import { useState } from 'react'
-import { createFileRoute, useRouter } from '@tanstack/react-router'
-import { useMutation } from '@tanstack/react-query'
-import { User, Lock, Eye, EyeOff } from 'lucide-react'
-import { toast } from 'sonner'
-import { updateProfile, changePassword } from '#/features/profile/server.ts'
+import { createFileRoute } from '@tanstack/react-router'
+import { User, Lock, ChevronRight, Activity, Globe } from 'lucide-react'
+import { useProfilePage } from '#/features/profile/hooks/use-profile-page.ts'
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '#/shared/components/ui/card'
-import { Button } from '#/shared/components/ui/button'
-import { LoadingButton } from '#/shared/components/ui/loading-button'
-import { Input } from '#/shared/components/ui/input'
-import { Label } from '#/shared/components/ui/label'
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
 } from '#/shared/components/ui/avatar'
-import { Badge } from '#/shared/components/ui/badge'
+import { ModuleLayout } from '#/shared/components/layout/module-layout.tsx'
+import {
+  ToggleGroup,
+  ToggleGroupItem,
+} from '#/shared/components/ui/toggle-group'
+import { ConfirmDialog } from '#/shared/components/ui/confirm-dialog'
+import { RoleBadge } from '#/features/users/components/role-badge.tsx'
+
+import { LoadingSkeleton } from './components/loading-skeleton'
+import { ErrorDisplay } from './components/error-display'
+import { InfoTab } from './components/info-tab'
+import { EditInfoForm } from './components/edit-info-form'
+import { SecurityTab } from './components/security-tab'
+import { SessionsTab } from './components/sessions-tab'
+import { ActivityTab } from './components/activity-tab'
 
 export const Route = createFileRoute('/_authed/profile')({
   component: ProfilePage,
 })
 
-const ROLE_LABELS: Record<string, string> = {
-  ADMIN: 'Administrador',
-  RECEPTIONIST: 'Recepcionista',
-  TRAINER: 'Entrenador',
-}
-
 export function ProfilePage() {
   const { session } = Route.useRouteContext()
-  const user = session.user
-  const router = useRouter()
+  const sUser = session.user
 
-  const [showCurrent, setShowCurrent] = useState(false)
-  const [showNew, setShowNew] = useState(false)
-  const [showConfirm, setShowConfirm] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
 
-  const [name, setName] = useState(user.name)
-  const [currentPassword, setCurrentPassword] = useState('')
-  const [newPassword, setNewPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-
-  const profileMutation = useMutation({
-    mutationFn: updateProfile,
-    onSuccess: () => {
-      toast.success('Perfil actualizado')
-      router.invalidate()
-    },
-    onError: (err: Error) =>
-      toast.error(err.message || 'Error al actualizar el perfil'),
+  const {
+    activeTab,
+    setActiveTab,
+    user,
+    userSessions,
+    activeSessions,
+    auditLogs,
+    isLoading,
+    isError,
+    name,
+    setName,
+    phone,
+    setPhone,
+    address,
+    setAddress,
+    currentPassword,
+    setCurrentPassword,
+    newPassword,
+    setNewPassword,
+    confirmPassword,
+    setConfirmPassword,
+    showCurrent,
+    setShowCurrent,
+    showNew,
+    setShowNew,
+    showConfirm,
+    setShowConfirm,
+    revokingSessionId,
+    setRevokingSessionId,
+    isPending,
+    isPasswordPending,
+    isRevoking,
+    handleProfileSubmit,
+    handlePasswordSubmit,
+    handleRevokeSession,
+    handleConfirmRevoke,
+  } = useProfilePage(sUser.name, sUser.phone, sUser.address, {
+    onSuccess: () => setIsEditing(false),
   })
 
-  const passwordMutation = useMutation({
-    mutationFn: changePassword,
-    onSuccess: () => {
-      toast.success('Contraseña cambiada exitosamente')
-      setCurrentPassword('')
-      setNewPassword('')
-      setConfirmPassword('')
-    },
-    onError: (err: Error) =>
-      toast.error(err.message || 'Error al cambiar la contraseña'),
-  })
-
-  const handleProfileSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!name.trim()) return toast.error('El nombre es obligatorio')
-    profileMutation.mutate({ data: { name: name.trim() } })
-  }
-
-  const handlePasswordSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!currentPassword) return toast.error('Ingresá tu contraseña actual')
-    if (newPassword.length < 6)
-      return toast.error('La nueva contraseña debe tener al menos 6 caracteres')
-    if (newPassword !== confirmPassword)
-      return toast.error('Las contraseñas nuevas no coinciden')
-    passwordMutation.mutate({ data: { currentPassword, newPassword } })
-  }
+  const dbUser = user || sUser
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Mi Perfil</h1>
-        <p className="text-muted-foreground">
-          Gestioná tu información personal y contraseña.
-        </p>
-      </div>
+    <>
+      <ModuleLayout
+        breadcrumb={
+          <div className="flex items-center gap-1">
+            <span className="text-muted-foreground">Mi Cuenta</span>
+            <ChevronRight className="size-3 text-muted-foreground/50" />
+            <span className="text-foreground">Perfil</span>
+          </div>
+        }
+        title="Mi Perfil"
+        leftPanel={
+          <div className="flex flex-col gap-6 z-10 w-full">
+            {/* ── Tarjeta de resumen ── */}
+            <div className="flex flex-col items-center text-center p-5 rounded-2xl bg-black/5 dark:bg-white/5 border dark:border-white/5 border-black/5">
+              <Avatar
+                size="lg"
+                className="size-20! border-2 border-primary/20 shadow-sm"
+              >
+                {sUser.image && (
+                  <AvatarImage src={sUser.image} alt={sUser.name} />
+                )}
+                <AvatarFallback className="text-2xl bg-primary/10 text-primary font-black">
+                  {sUser.name.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="mt-4 space-y-1">
+                <h3 className="font-black text-lg leading-tight truncate max-w-[200px] text-foreground">
+                  {sUser.name}
+                </h3>
+                <p className="text-xs text-muted-foreground truncate max-w-[200px]">
+                  {sUser.email}
+                </p>
+                <div className="pt-2 flex justify-center">
+                  <RoleBadge role={sUser.role} />
+                </div>
+              </div>
+            </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-4">
-            <Avatar size="lg">
-              {user.image && <AvatarImage src={user.image} alt={user.name} />}
-              <AvatarFallback className="text-lg bg-primary text-primary-foreground">
-                {user.name.charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                {user.name}
-                <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                  {ROLE_LABELS[user.role] ?? user.role}
-                </Badge>
-              </CardTitle>
-              <CardDescription>{user.email}</CardDescription>
+            {/* ── Navegación ── */}
+            <div className="space-y-2">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">
+                Navegación
+              </p>
+              <ToggleGroup
+                type="single"
+                value={activeTab}
+                onValueChange={(v) => {
+                  if (v) setActiveTab(v as any)
+                }}
+              >
+                <ToggleGroupItem value="info">
+                  <User className="size-3.5" /> Datos
+                </ToggleGroupItem>
+                <ToggleGroupItem value="security">
+                  <Lock className="size-3.5" /> Seguridad
+                </ToggleGroupItem>
+                <ToggleGroupItem value="sessions">
+                  <Activity className="size-3.5" /> Sesiones
+                </ToggleGroupItem>
+                <ToggleGroupItem value="activity">
+                  <Globe className="size-3.5" /> Actividad
+                </ToggleGroupItem>
+              </ToggleGroup>
             </div>
           </div>
-        </CardHeader>
-      </Card>
+        }
+      >
+        {isLoading ? (
+          <LoadingSkeleton />
+        ) : isError ? (
+          <ErrorDisplay />
+        ) : activeTab === 'info' ? (
+          isEditing ? (
+            <EditInfoForm
+              dbUser={dbUser}
+              name={name}
+              setName={setName}
+              phone={phone}
+              setPhone={setPhone}
+              address={address}
+              setAddress={setAddress}
+              isPending={isPending}
+              onSubmit={handleProfileSubmit}
+              onCancel={() => setIsEditing(false)}
+            />
+          ) : (
+            <InfoTab dbUser={dbUser} onEdit={() => setIsEditing(true)} />
+          )
+        ) : activeTab === 'security' ? (
+          <SecurityTab
+            {...{
+              currentPassword,
+              setCurrentPassword,
+              newPassword,
+              setNewPassword,
+              confirmPassword,
+              setConfirmPassword,
+              showCurrent,
+              setShowCurrent,
+              showNew,
+              setShowNew,
+              showConfirm,
+              setShowConfirm,
+            }}
+            isPending={isPasswordPending}
+            onSubmit={handlePasswordSubmit}
+          />
+        ) : activeTab === 'sessions' ? (
+          <SessionsTab
+            userSessions={userSessions}
+            activeSessions={activeSessions}
+            onRevoke={handleRevokeSession}
+          />
+        ) : (
+          <ActivityTab auditLogs={auditLogs} />
+        )}
+      </ModuleLayout>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <User className="size-4" />
-            Información Personal
-          </CardTitle>
-          <CardDescription>Actualizá tu nombre de usuario.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleProfileSubmit} className="space-y-4">
-            <div className="grid gap-2">
-              <Label htmlFor="name">Nombre</Label>
-              <Input
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                value={user.email}
-                disabled
-                className="text-muted-foreground"
-              />
-            </div>
-            <LoadingButton type="submit" isLoading={profileMutation.isPending}>
-              Guardar Cambios
-            </LoadingButton>
-          </form>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Lock className="size-4" />
-            Contraseña
-          </CardTitle>
-          <CardDescription>
-            Cambiá tu contraseña actual por una nueva.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handlePasswordSubmit} className="space-y-4">
-            <div className="grid gap-2">
-              <Label htmlFor="currentPassword">Contraseña Actual</Label>
-              <div className="relative">
-                <Input
-                  id="currentPassword"
-                  type={showCurrent ? 'text' : 'password'}
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowCurrent(!showCurrent)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {showCurrent ? (
-                    <EyeOff className="size-4" />
-                  ) : (
-                    <Eye className="size-4" />
-                  )}
-                </button>
-              </div>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="newPassword">Nueva Contraseña</Label>
-              <div className="relative">
-                <Input
-                  id="newPassword"
-                  type={showNew ? 'text' : 'password'}
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  required
-                  minLength={6}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowNew(!showNew)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {showNew ? (
-                    <EyeOff className="size-4" />
-                  ) : (
-                    <Eye className="size-4" />
-                  )}
-                </button>
-              </div>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="confirmPassword">
-                Confirmar Nueva Contraseña
-              </Label>
-              <div className="relative">
-                <Input
-                  id="confirmPassword"
-                  type={showConfirm ? 'text' : 'password'}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirm(!showConfirm)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {showConfirm ? (
-                    <EyeOff className="size-4" />
-                  ) : (
-                    <Eye className="size-4" />
-                  )}
-                </button>
-              </div>
-            </div>
-            <Button type="submit" disabled={passwordMutation.isPending}>
-              {passwordMutation.isPending
-                ? 'Cambiando...'
-                : 'Cambiar Contraseña'}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+      <ConfirmDialog
+        open={revokingSessionId !== null}
+        onOpenChange={(open) => {
+          if (!open) setRevokingSessionId(null)
+        }}
+        title="Cerrar Sesión"
+        description="¿Estás seguro de que deseas cerrar esta sesión? Tendrás que volver a iniciar sesión en ese dispositivo."
+        confirmText="Cerrar Sesión"
+        variant="destructive"
+        onConfirm={handleConfirmRevoke}
+        isLoading={isRevoking}
+      />
+    </>
   )
 }

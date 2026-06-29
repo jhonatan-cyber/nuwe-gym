@@ -24,7 +24,6 @@ import { auditLogs } from './audit-logs.ts'
 import { branches, userBranches } from './branches.ts'
 import { packages, packageItems } from './packages.ts'
 
-// Auth relations
 export const usersRelations = relations(users, ({ many, one }) => ({
   sessions: many(sessions),
   accounts: many(accounts),
@@ -43,7 +42,6 @@ export const accountsRelations = relations(accounts, ({ one }) => ({
   user: one(users, { fields: [accounts.userId], references: [users.id] }),
 }))
 
-// Members relations
 export const membersRelations = relations(members, ({ many }) => ({
   subscriptions: many(subscriptions),
   membershipPayments: many(membershipPayments),
@@ -52,7 +50,6 @@ export const membersRelations = relations(members, ({ many }) => ({
   freezes: many(membershipFreezes),
 }))
 
-// Plans relations
 export const membershipPlansRelations = relations(
   membershipPlans,
   ({ many }) => ({
@@ -60,7 +57,6 @@ export const membershipPlansRelations = relations(
   }),
 )
 
-// Subscriptions relations
 export const subscriptionsRelations = relations(
   subscriptions,
   ({ one, many }) => ({
@@ -81,7 +77,6 @@ export const subscriptionsRelations = relations(
   }),
 )
 
-// Membership payments relations
 export const membershipPaymentsRelations = relations(
   membershipPayments,
   ({ one }) => ({
@@ -100,7 +95,6 @@ export const membershipPaymentsRelations = relations(
   }),
 )
 
-// Check-ins relations
 export const checkInsRelations = relations(checkIns, ({ one }) => ({
   member: one(members, {
     fields: [checkIns.memberId],
@@ -112,7 +106,6 @@ export const checkInsRelations = relations(checkIns, ({ one }) => ({
   }),
 }))
 
-// Product categories relations
 export const productCategoriesRelations = relations(
   productCategories,
   ({ many }) => ({
@@ -120,7 +113,6 @@ export const productCategoriesRelations = relations(
   }),
 )
 
-// Products relations
 export const productsRelations = relations(products, ({ one, many }) => ({
   category: one(productCategories, {
     fields: [products.categoryId],
@@ -131,12 +123,9 @@ export const productsRelations = relations(products, ({ one, many }) => ({
   inventoryMovements: many(inventoryMovements),
 }))
 
-// Suppliers relations
 export const suppliersRelations = relations(suppliers, ({ many }) => ({
   purchases: many(purchases),
 }))
-
-// Purchases relations
 export const purchasesRelations = relations(purchases, ({ one, many }) => ({
   supplier: one(suppliers, {
     fields: [purchases.supplierId],
@@ -160,7 +149,6 @@ export const purchaseItemsRelations = relations(purchaseItems, ({ one }) => ({
   }),
 }))
 
-// Sales relations
 export const salesRelations = relations(sales, ({ one, many }) => ({
   user: one(users, { fields: [sales.userId], references: [users.id] }),
   member: one(members, { fields: [sales.memberId], references: [members.id] }),
@@ -175,7 +163,6 @@ export const saleItemsRelations = relations(saleItems, ({ one }) => ({
   }),
 }))
 
-// Inventory relations
 export const inventoryMovementsRelations = relations(
   inventoryMovements,
   ({ one }) => ({
@@ -190,7 +177,6 @@ export const inventoryMovementsRelations = relations(
   }),
 )
 
-// Cash register relations
 export const cashRegisterSessionsRelations = relations(
   cashRegisterSessions,
   ({ one, many }) => ({
@@ -209,7 +195,6 @@ export const cashMovementsRelations = relations(cashMovements, ({ one }) => ({
   }),
 }))
 
-// Classes relations
 export const classesRelations = relations(classes, ({ many }) => ({
   schedules: many(classSchedules),
 }))
@@ -236,7 +221,6 @@ export const classBookingsRelations = relations(classBookings, ({ one }) => ({
   }),
 }))
 
-// Trainer relations
 export const trainerProfilesRelations = relations(
   trainerProfiles,
   ({ one, many }) => ({
@@ -273,7 +257,6 @@ export const trainerAvailabilityRelations = relations(
   }),
 )
 
-// Audit log relations
 export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
   user: one(users, {
     fields: [auditLogs.userId],
@@ -281,7 +264,6 @@ export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
   }),
 }))
 
-// Membership freezes relations
 export const membershipFreezesRelations = relations(
   membershipFreezes,
   ({ one }) => ({
@@ -296,7 +278,6 @@ export const membershipFreezesRelations = relations(
   }),
 )
 
-// Branch relations
 export const branchesRelations = relations(branches, ({ many }) => ({
   userBranches: many(userBranches),
 }))
@@ -309,7 +290,6 @@ export const userBranchesRelations = relations(userBranches, ({ one }) => ({
   }),
 }))
 
-// Package relations
 export const packagesRelations = relations(packages, ({ many }) => ({
   items: many(packageItems),
   subscriptions: many(subscriptions),

@@ -1,6 +1,3 @@
-import { useState } from 'react'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { toast } from 'sonner'
 import {
   Check,
   User,
@@ -12,130 +9,33 @@ import {
   MapPin,
   IdCard,
 } from 'lucide-react'
-import { createStaffUser } from '#/features/users/server.ts'
 import { Button } from '#/shared/components/ui/button'
 import { Input } from '#/shared/components/ui/input'
 import { Label } from '#/shared/components/ui/label'
+import { CountryCodeSelect } from '#/shared/components/ui/country-code-select.tsx'
 import { LoadingButton } from '#/shared/components/ui/loading-button'
 import {
   ToggleGroup,
   ToggleGroupItem,
 } from '#/shared/components/ui/toggle-group'
+import { useUserCreationWizard } from '#/features/users/hooks/use-user-creation-wizard.ts'
 import type { UserRole } from '#/features/users/types.ts'
+import { capitalizeWords } from '#/shared/lib/formatters'
 
 interface UserCreationWizardProps {
   onClose: () => void
 }
 
-interface StaffFormState {
-  firstName: string
-  lastName: string
-  documentNumber: string
-  phone: string
-  address: string
-  email: string
-  role: UserRole
-}
-
-const defaultFormState: StaffFormState = {
-  firstName: '',
-  lastName: '',
-  documentNumber: '',
-  phone: '',
-  address: '',
-  email: '',
-  role: 'TRAINER',
-}
-
 export function UserCreationWizard({ onClose }: UserCreationWizardProps) {
-  const queryClient = useQueryClient()
-  const [form, setForm] = useState<StaffFormState>(defaultFormState)
-  const [errors, setErrors] = useState<Record<string, string>>({})
-  const [created, setCreated] = useState<{
-    name: string
-    email: string
-    ci: string
-    role: string
-  } | null>(null)
-
-  const createMutation = useMutation({
-    mutationFn: createStaffUser,
-    onSuccess: (_, variables: any) => {
-      queryClient.invalidateQueries({ queryKey: ['admin-users'] })
-      const data = variables?.data
-      if (!data) return
-      const roleLabel =
-        data.role === 'ADMIN'
-          ? 'Administrador'
-          : data.role === 'RECEPTIONIST'
-            ? 'Recepcionista'
-            : 'Entrenador'
-      setCreated({
-        name: `${data.firstName} ${data.lastName}`,
-        email: data.email,
-        ci: data.documentNumber,
-        role: roleLabel,
-      })
-      toast.success('Usuario del staff creado con éxito')
-    },
-    onError: (err: Error) =>
-      toast.error(err.message || 'Error al crear usuario'),
-  })
-
-  const updateField = <TKey extends keyof StaffFormState>(
-    key: TKey,
-    value: StaffFormState[TKey],
-  ) => {
-    setForm((prev) => ({ ...prev, [key]: value }))
-    if (errors[key]) {
-      setErrors((prev) => {
-        const next = { ...prev }
-        delete next[key]
-        return next
-      })
-    }
-  }
-
-  const validate = (): boolean => {
-    const newErrors: Record<string, string> = {}
-    if (!form.firstName.trim()) newErrors.firstName = 'El nombre es obligatorio'
-    if (!form.lastName.trim()) newErrors.lastName = 'El apellido es obligatorio'
-    if (!form.documentNumber.trim()) {
-      newErrors.documentNumber = 'El CI es obligatorio'
-    } else if (!/^\d+$/.test(form.documentNumber.trim())) {
-      newErrors.documentNumber = 'El CI debe contener solo números'
-    }
-    if (form.phone.trim() && !/^\+?[\d\s-]+$/.test(form.phone.trim())) {
-      newErrors.phone = 'Formato de teléfono inválido'
-    }
-    if (!form.email.trim()) newErrors.email = 'El email es obligatorio'
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
-      newErrors.email = 'Email inválido'
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-
-  const handleSubmit = () => {
-    if (!validate()) return
-    createMutation.mutate({
-      data: {
-        firstName: form.firstName.trim(),
-        lastName: form.lastName.trim(),
-        documentNumber: form.documentNumber.trim(),
-        phone: form.phone.trim() || undefined,
-        address: form.address.trim() || undefined,
-        email: form.email.trim(),
-        role: form.role,
-      },
-    })
-  }
-
-  const resetAndClose = () => {
-    setForm(defaultFormState)
-    setErrors({})
-    setCreated(null)
-    onClose()
-  }
+  const {
+    form,
+    errors,
+    created,
+    isPending,
+    updateField,
+    handleSubmit,
+    resetAndClose,
+  } = useUserCreationWizard({ onClose })
 
   // Success screen
   if (created) {
@@ -260,7 +160,8 @@ export function UserCreationWizard({ onClose }: UserCreationWizardProps) {
                       placeholder="Ej. Juan"
                       value={form.firstName}
                       onChange={(e) => updateField('firstName', e.target.value)}
-                      className={`pl-8 text-sm ${errors.firstName ? 'border-destructive' : ''}`}
+                      onBlur={() => updateField('firstName', capitalizeWords(form.firstName))}
+                      className={`pl-8 text-sm capitalize ${errors.firstName ? 'border-destructive' : ''}`}
                     />
                   </div>
                   {errors.firstName && (
@@ -280,7 +181,8 @@ export function UserCreationWizard({ onClose }: UserCreationWizardProps) {
                       placeholder="Ej. Pérez"
                       value={form.lastName}
                       onChange={(e) => updateField('lastName', e.target.value)}
-                      className={`pl-8 text-sm ${errors.lastName ? 'border-destructive' : ''}`}
+                      onBlur={() => updateField('lastName', capitalizeWords(form.lastName))}
+                      className={`pl-8 text-sm capitalize ${errors.lastName ? 'border-destructive' : ''}`}
                     />
                   </div>
                   {errors.lastName && (
@@ -291,27 +193,17 @@ export function UserCreationWizard({ onClose }: UserCreationWizardProps) {
                 </div>
               </div>
 
-              {/* Dirección y Teléfono */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="grid gap-1.5">
-                  <Label className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
-                    Dirección
-                  </Label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
-                    <Input
-                      placeholder="Ej. Av. Siempre Viva 123"
-                      value={form.address}
-                      onChange={(e) => updateField('address', e.target.value)}
-                      className="pl-8 text-sm"
-                    />
-                  </div>
-                </div>
-                <div className="grid gap-1.5">
-                  <Label className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
-                    Teléfono
-                  </Label>
-                  <div className="relative">
+              {/* Teléfono */}
+              <div className="grid gap-1.5">
+                <Label className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
+                  Teléfono
+                </Label>
+                <div className="flex gap-2">
+                  <CountryCodeSelect
+                    value={form.countryCode}
+                    onValueChange={(val) => updateField('countryCode', val)}
+                  />
+                  <div className="relative flex-1">
                     <Phone className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
                     <Input
                       type="tel"
@@ -321,12 +213,12 @@ export function UserCreationWizard({ onClose }: UserCreationWizardProps) {
                       className={`pl-8 text-sm ${errors.phone ? 'border-destructive' : ''}`}
                     />
                   </div>
-                  {errors.phone && (
-                    <p className="text-[10px] font-semibold text-destructive">
-                      {errors.phone}
-                    </p>
-                  )}
                 </div>
+                {errors.phone && (
+                  <p className="text-[10px] font-semibold text-destructive">
+                    {errors.phone}
+                  </p>
+                )}
               </div>
 
               {/* Email */}
@@ -350,6 +242,23 @@ export function UserCreationWizard({ onClose }: UserCreationWizardProps) {
                     {errors.email}
                   </p>
                 )}
+              </div>
+
+              {/* Dirección */}
+              <div className="grid gap-1.5">
+                <Label className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
+                  Dirección
+                </Label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
+                  <Input
+                    placeholder="Ej. Av. Siempre Viva 123"
+                    value={form.address}
+                    onChange={(e) => updateField('address', e.target.value)}
+                    onBlur={() => updateField('address', capitalizeWords(form.address))}
+                    className="pl-8 text-sm capitalize"
+                  />
+                </div>
               </div>
 
               {/* Rol */}
@@ -425,11 +334,11 @@ export function UserCreationWizard({ onClose }: UserCreationWizardProps) {
             <div className="justify-self-center">
               <LoadingButton
                 onClick={handleSubmit}
-                isLoading={createMutation.isPending}
-                loadingText="Creando..."
+                isLoading={isPending}
+                loadingText="Guardando..."
                 className="font-black bg-gray-900 hover:bg-gray-800 text-white dark:bg-white dark:hover:bg-black dark:hover:text-white dark:text-black"
               >
-                Crear Usuario <Check className="size-4 ml-1" />
+                Guardar
               </LoadingButton>
             </div>
             <div className="justify-self-end" />

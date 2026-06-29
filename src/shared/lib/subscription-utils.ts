@@ -27,6 +27,8 @@ export function isSubscriptionActive(
   return sub.status === 'ACTIVE' && !isExpired(sub.endDate)
 }
 
+export type PaymentMethod = 'CASH' | 'CARD' | 'TRANSFER' | 'QR'
+
 export const PAYMENT_METHOD_LABELS: Record<string, string> = {
   CASH: 'Efectivo',
   CARD: 'Tarjeta',

@@ -1,8 +1,39 @@
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { admin } from 'better-auth/plugins'
+import { createAccessControl } from 'better-auth/plugins/access'
 import { db } from '#/shared/db/index.ts'
 import * as schema from '#/shared/db/schema/index.ts'
+
+const ac = createAccessControl({
+  user: [
+    'create',
+    'list',
+    'set-role',
+    'ban',
+    'impersonate',
+    'delete',
+    'set-password',
+    'get',
+    'update',
+  ],
+  session: ['list', 'revoke', 'delete'],
+})
+
+const adminAc = ac.newRole({
+  user: [
+    'create',
+    'list',
+    'set-role',
+    'ban',
+    'impersonate',
+    'delete',
+    'set-password',
+    'get',
+    'update',
+  ],
+  session: ['list', 'revoke', 'delete'],
+})
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -47,8 +78,7 @@ export const auth = betterAuth({
             user: 'TRAINER',
             admin: 'ADMIN',
           }
-          const mappedRole =
-            roleMap[user.role as string] ?? user.role ?? 'TRAINER'
+          const mappedRole = roleMap[user.role as string] ?? user.role
           return { data: { ...user, role: mappedRole } }
         },
       },
@@ -58,7 +88,14 @@ export const auth = betterAuth({
     expiresIn: 60 * 60 * 24 * 7,
     updateAge: 60 * 60 * 24,
   },
-  plugins: [admin()],
+  plugins: [
+    admin({
+      adminRoles: ['ADMIN'],
+      roles: {
+        ADMIN: adminAc,
+      },
+    }),
+  ],
 })
 
 export type Session = typeof auth.$Infer.Session
