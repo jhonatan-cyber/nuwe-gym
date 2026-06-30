@@ -9,6 +9,7 @@ import {
   Mail,
   Clock,
   ChevronRight,
+  Trash2,
 } from 'lucide-react'
 import {
   Tooltip,
@@ -23,6 +24,13 @@ import { StatCard } from '#/shared/components/ui/stat-card'
 import { FilterBar } from '#/shared/components/ui/filter-bar'
 import { DataTable } from '#/shared/components/data-table'
 import { cn } from '#/shared/lib/utils.ts'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '#/shared/components/ui/dialog'
 import { useBranchesPage } from '#/features/branches/hooks/use-branches-page.ts'
 import type { Branch } from '#/features/branches/types.ts'
 import {
@@ -38,9 +46,11 @@ export function BranchesPage() {
     form,
     search,
     statusFilter,
+    branchToDelete,
     setForm,
     setSearch,
     setStatusFilter,
+    setBranchToDelete,
     isLoading,
     filteredBranches,
     totalBranches,
@@ -51,6 +61,7 @@ export function BranchesPage() {
     closeModal,
     handleSubmit,
     handleToggleActive,
+    handleDelete,
     isPending,
   } = useBranchesPage()
 
@@ -219,6 +230,14 @@ export function BranchesPage() {
                           <Power className="size-4 text-green-500" />
                         )}
                       </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="size-8 rounded-full text-red-500 hover:text-red-600 hover:bg-red-50"
+                        onClick={() => setBranchToDelete(b)}
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
                     </div>
                   ),
                 },
@@ -244,12 +263,13 @@ export function BranchesPage() {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {filteredBranches.map((branch) => (
+                {filteredBranches.map((branch: any) => (
                   <BranchCard
                     key={branch.id}
                     branch={branch}
                     onEdit={openEdit}
                     onToggleActive={handleToggleActive}
+                    onDelete={setBranchToDelete}
                   />
                 ))}
               </div>
@@ -267,6 +287,44 @@ export function BranchesPage() {
         onSubmit={handleSubmit}
         onClose={closeModal}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={!!branchToDelete}
+        onOpenChange={(open) => {
+          if (!open) setBranchToDelete(null)
+        }}
+      >
+        <DialogContent className="rounded-2xl max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-black">Eliminar Sucursal</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            ¿Estás seguro que deseas eliminar la sucursal{' '}
+            <span className="font-bold text-foreground">{branchToDelete?.name}</span>?
+            Esta acción no se puede deshacer.
+          </p>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setBranchToDelete(null)}
+              className="rounded-full"
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={isPending}
+              className="rounded-full"
+            >
+              {isPending ? 'Eliminando...' : 'Eliminar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

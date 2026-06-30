@@ -8,6 +8,7 @@ import {
   XCircle,
   Tag,
   FileText,
+  Package,
 } from 'lucide-react'
 import {
   Tooltip,
@@ -47,7 +48,7 @@ export function ProductCategoriesPage() {
 
   const { data: categories = [], isLoading } = useQuery({
     queryKey: ['product-categories'],
-    queryFn: () => getCategories(),
+    queryFn: () => getCategories({ data: {} }),
   })
 
   const createMutation = useMutation({
@@ -193,6 +194,28 @@ export function ProductCategoriesPage() {
                 ) : (
                   <Badge variant="secondary">Inactivo</Badge>
                 ),
+            },
+            {
+              key: 'productCount',
+              label: (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="cursor-default">Productos</span>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    <p>Cantidad de productos en esta categoría</p>
+                  </TooltipContent>
+                </Tooltip>
+              ),
+              sortable: true,
+              sortValue: (cat: (typeof categories)[number]) =>
+                cat.productCount ?? 0,
+              render: (cat: (typeof categories)[number]) => (
+                <span className="inline-flex items-center gap-1.5 font-semibold">
+                  <Package className="size-3 text-muted-foreground" />
+                  {cat.productCount ?? 0}
+                </span>
+              ),
             },
             {
               key: 'actions',

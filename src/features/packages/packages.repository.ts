@@ -3,6 +3,7 @@ import {
   packages,
   packageItems,
   packageAllowedDays,
+  packageBenefits,
 } from '#/shared/db/schema/packages.ts'
 import { subscriptions } from '#/shared/db/schema/subscriptions.ts'
 import { eq, desc } from 'drizzle-orm'
@@ -10,7 +11,7 @@ import type { CreatePackageInput, UpdatePackageInput } from './packages.schema.t
 
 export function findAll() {
   return db.query.packages.findMany({
-    with: { items: true, allowedDays: true },
+    with: { items: true, allowedDays: true, benefits: true },
     orderBy: [desc(packages.createdAt)],
   })
 }
@@ -18,32 +19,45 @@ export function findAll() {
 export function findActive() {
   return db.query.packages.findMany({
     where: eq(packages.isActive, true),
-    with: { items: true, allowedDays: true },
+    with: { items: true, allowedDays: true, benefits: true },
     orderBy: [desc(packages.createdAt)],
   })
 }
 
 export async function insert(data: CreatePackageInput) {
-  const [pkg] = await db
-    .insert(packages)
-    .values({
-      name: data.name,
-      description: data.description,
-      imageBase64: data.imageBase64,
-      price: data.price,
-      durationDays: data.durationDays,
-      type: data.type,
-      renewalType: data.renewalType,
-      graceDays: data.graceDays,
-      maxFreezes: data.maxFreezes,
-      maxFreezeDays: data.maxFreezeDays,
-      allowedStartTime: data.allowedStartTime,
-      allowedEndTime: data.allowedEndTime,
-      dailyAccessLimit: data.dailyAccessLimit,
-      color: data.color,
-    })
-    .returning()
-  return pkg
+  console.log('[packages:repo] insert values:', {
+    name: data.name,
+    price: data.price,
+    durationDays: data.durationDays,
+    type: data.type,
+    benefitsCount: data.benefits?.length,
+  })
+  try {
+    const [pkg] = await db
+      .insert(packages)
+      .values({
+        name: data.name,
+        description: data.description,
+        imageBase64: data.imageBase64,
+        price: data.price,
+        durationDays: data.durationDays,
+        type: data.type,
+        renewalType: data.renewalType,
+        graceDays: data.graceDays,
+        maxFreezes: data.maxFreezes,
+        maxFreezeDays: data.maxFreezeDays,
+        allowedStartTime: data.allowedStartTime,
+        allowedEndTime: data.allowedEndTime,
+        dailyAccessLimit: data.dailyAccessLimit,
+        color: data.color,
+      })
+      .returning()
+    console.log('[packages:repo] insert OK:', pkg.id)
+    return pkg
+  } catch (err) {
+    console.error('[packages:repo] insert ERROR:', err)
+    throw err
+  }
 }
 
 export async function update(id: string, data: UpdatePackageInput) {
@@ -114,6 +128,31 @@ export async function replaceAllowedDays(
         endTime: d.endTime,
       })),
     )
+  }
+}
+
+export async function replacePackageBenefits(
+  packageId: string,
+  benefits: { benefitKey: string; enabled: boolean }[],
+) {
+  console.log('[packages:repo] replacePackageBenefits:', { packageId, count: benefits.length })
+  try {
+    await db
+      .delete(packageBenefits)
+      .where(eq(packageBenefits.packageId, packageId))
+    if (benefits.length > 0) {
+      await db.insert(packageBenefits).values(
+        benefits.map((b) => ({
+          packageId,
+          benefitKey: b.benefitKey,
+          enabled: b.enabled,
+        })),
+      )
+    }
+    console.log('[packages:repo] replacePackageBenefits OK')
+  } catch (err) {
+    console.error('[packages:repo] replacePackageBenefits ERROR:', err)
+    throw err
   }
 }
 

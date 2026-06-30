@@ -20,7 +20,7 @@ import {
 } from '#/shared/components/ui/alert-dialog'
 import { formatCurrency } from '#/shared/lib/formatters.ts'
 import { getDurationLabel, getTypeIcon, getTypeLabel } from '../utils.ts'
-import { DAY_LABELS } from '../types.ts'
+import { DAY_LABELS, BENEFIT_CATALOG } from '../types.ts'
 import type { Package } from '../types.ts'
 
 interface PackageCardProps {
@@ -210,27 +210,35 @@ export function PackageCard({
             </span>
           </div>
         )}
-        {pkg.items.length > 0 && (
+        {pkg.benefits && pkg.benefits.length > 0 && (
           <div className="mt-3 pt-3 border-t dark:border-white/5 border-black/5">
             <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5">
               Beneficios
             </p>
-            <ul className="space-y-1">
-              {pkg.items.slice(0, 3).map((item, idx) => (
-                <li
-                  key={idx}
-                  className="text-[11px] text-muted-foreground flex items-center gap-1.5"
-                >
-                  <span className="size-1 rounded-full bg-foreground/40 shrink-0" />
-                  <span className="truncate">{item.description}</span>
-                </li>
-              ))}
-              {pkg.items.length > 3 && (
-                <li className="text-[10px] text-muted-foreground font-semibold">
-                  +{pkg.items.length - 3} mas
-                </li>
+            <div className="flex flex-wrap gap-1">
+              {pkg.benefits
+                .filter((b: any) => b.enabled)
+                .slice(0, 5)
+                .map((b: any) => {
+                  const catalogItem = BENEFIT_CATALOG.find(
+                    (c) => c.key === b.benefitKey,
+                  )
+                  return (
+                    <Badge
+                      key={b.benefitKey}
+                      variant="secondary"
+                      className="text-[9px] font-bold"
+                    >
+                      {catalogItem?.label ?? b.benefitKey}
+                    </Badge>
+                  )
+                })}
+              {pkg.benefits.filter((b: any) => b.enabled).length > 5 && (
+                <span className="text-[9px] text-muted-foreground font-semibold self-center ml-0.5">
+                  +{pkg.benefits.filter((b: any) => b.enabled).length - 5}
+                </span>
               )}
-            </ul>
+            </div>
           </div>
         )}
       </div>

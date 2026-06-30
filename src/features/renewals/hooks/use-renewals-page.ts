@@ -23,6 +23,8 @@ export function useRenewalsPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedMember, setSelectedMember] =
     useState<MemberWithSubscriptions | null>(null)
+  const [searchPage, setSearchPage] = useState(1)
+  const searchPageSize = 5
   const [isChangingPlan, setIsChangingPlan] = useState(false)
 
   const [formData, setFormData] = useState({
@@ -44,12 +46,23 @@ export function useRenewalsPage() {
     queryFn: () => getActivePackages(),
   })
 
-  const { data: memberSearchResults = [], isLoading: searchingMembers } =
+  const { data: allSearchResults = [], isLoading: searchingMembers } =
     useQuery({
       queryKey: ['member-search', searchQuery],
       queryFn: () => getMembers({ data: { search: searchQuery, branchId: branchId ?? undefined } }),
       enabled: searchQuery.length >= 2,
     })
+
+  const searchTotal = allSearchResults.length
+  const searchTotalPages = Math.max(
+    1,
+    Math.ceil(searchTotal / searchPageSize),
+  )
+  const safeSearchPage = Math.min(searchPage, searchTotalPages)
+  const memberSearchResults = allSearchResults.slice(
+    (safeSearchPage - 1) * searchPageSize,
+    safeSearchPage * searchPageSize,
+  )
 
   const { data: renewalHistory = [], isLoading: loadingHistory } = useQuery({
     queryKey: ['member-renewal-history', selectedMember?.id],
@@ -72,6 +85,11 @@ export function useRenewalsPage() {
     },
   })
 
+  // Reset search page when query changes
+  useEffect(() => {
+    setSearchPage(1)
+  }, [searchQuery])
+
   function handleReset() {
     setStep(1)
     setSelectedMember(null)
@@ -93,7 +111,7 @@ export function useRenewalsPage() {
           setFormData((prev) => ({
             ...prev,
             packageId: lastSub.packageId!,
-            amount: lastSub.package?.price || lastSub.plan?.price || '',
+            amount: lastSub.package?.price || '',
           }))
           setIsChangingPlan(false)
         } else {
@@ -143,6 +161,10 @@ export function useRenewalsPage() {
     loadingHistory,
     renewMutation,
     selectedPkg,
+    searchPage,
+    setSearchPage,
+    searchTotalPages,
+    searchTotal,
     handleReset,
     handleSelectMember,
     handleSubmit,

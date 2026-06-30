@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
@@ -6,6 +6,7 @@ import {
   cancelSubscription,
 } from '#/features/subscriptions/server.ts'
 import { useCurrentBranch } from '#/shared/hooks/use-current-branch.ts'
+import { usePersistedState } from '#/shared/hooks/use-persisted-state.ts'
 import { getSubscriptionStatus } from '#/features/subscriptions/utils.ts'
 import type { StatusFilter } from '#/features/subscriptions/types.ts'
 
@@ -19,11 +20,16 @@ export function useSubscriptionsPage(userRole: string) {
   const [activeView, setActiveView] = useState<ViewMode>('list')
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState<StatusFilter>('ALL')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = usePersistedState<number>(
+    'dataTablePageSize',
+    10,
+    (v) => ([5, 10, 20, 50].includes(v) ? v : 10),
+  )
 
   const { data: subsList = [], isLoading } = useQuery({
     queryKey: ['subscriptions', branchId],
     queryFn: () => getSubscriptions({ data: { branchId: branchId ?? undefined } }),
-    enabled: !!branchId,
   })
 
   const cancelMutation = useMutation({
@@ -44,13 +50,25 @@ export function useSubscriptionsPage(userRole: string) {
       const memberName = sub.member.fullName.toLowerCase()
       const packageName = (
         sub.package?.name ||
-        sub.plan?.name ||
         ''
       ).toLowerCase()
       return memberName.includes(q) || packageName.includes(q)
     }
     return true
   })
+
+  const totalFiltered = filtered.length
+  const totalPages = Math.max(1, Math.ceil(totalFiltered / pageSize))
+  const safePage = Math.min(currentPage, totalPages)
+  const paginated = filtered.slice(
+    (safePage - 1) * pageSize,
+    safePage * pageSize,
+  )
+
+  // Reset to page 1 when search or filter changes
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [search, filterStatus])
 
   const totalSubscriptions = subsList.length
   const activeSubscriptions = subsList.filter(
@@ -97,7 +115,9 @@ export function useSubscriptionsPage(userRole: string) {
     setSearch: handleSearchChange,
     filterStatus,
     setFilterStatus: handleFilterChange,
-    filtered,
+    filtered: paginated,
+    allFiltered: filtered,
+    totalFiltered,
     subsList,
     isLoading,
     cancelMutation,
@@ -106,6 +126,11 @@ export function useSubscriptionsPage(userRole: string) {
     expiredSubscriptions,
     statusLabel,
     isReadOnly,
+    currentPage: safePage,
+    pageSize,
+    totalPages,
+    setCurrentPage,
+    setPageSize,
     handleOpenForm,
     handleBackToList,
     handleCancel,

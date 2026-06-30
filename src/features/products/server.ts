@@ -2,25 +2,86 @@ import { createServerFn } from '@tanstack/react-start'
 import { db } from '#/shared/db/index.ts'
 import { productCategories } from '#/shared/db/schema/product-categories.ts'
 import { products } from '#/shared/db/schema/products.ts'
+import { productStock } from '#/shared/db/schema/product-stock.ts'
 import { inventoryMovements } from '#/shared/db/schema/inventory.ts'
-import { eq, desc, ilike, or, and } from 'drizzle-orm'
+import { eq, desc, ilike, or, and, inArray, sql } from 'drizzle-orm'
 import { z } from 'zod'
+import { branchIdField, moneyString, optionalString, uuidField } from '#/shared/lib/schemas.ts'
 import { requireRole } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 
-export const getCategories = createServerFn({ method: 'GET' }).handler(
-  async () => {
+export const getCategories = createServerFn({ method: 'GET' })
+  .inputValidator((data: { branchId?: string }) => data)
+  .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
-    return await db.query.productCategories.findMany({
+    const categories = await db.query.productCategories.findMany({
       orderBy: [desc(productCategories.createdAt)],
     })
-  },
-)
+
+    // Get product stats per category
+    const productStats = await db
+      .select({
+        categoryId: products.categoryId,
+        count: sql<number>`count(*)::int`,
+        avgSalePrice: sql<string>`coalesce(avg(${products.salePrice}::numeric), 0)::text`,
+      })
+      .from(products)
+      .groupBy(products.categoryId)
+
+    const statsMap = new Map(
+      productStats.map((s) => [s.categoryId, s]),
+    )
+
+    // Get stock per branch if branchId provided
+    let stockMap = new Map<string, { total: number; outOfStock: number }>()
+    if (data.branchId) {
+      const stockData = await db
+        .select({
+          productId: productStock.productId,
+          stockCurrent: productStock.stockCurrent,
+        })
+        .from(productStock)
+        .where(eq(productStock.branchId, data.branchId))
+
+      // Get category mapping for stock
+      const productCategories2 = await db
+        .select({
+          id: products.id,
+          categoryId: products.categoryId,
+        })
+        .from(products)
+
+      const productToCategory = new Map(
+        productCategories2.map((p) => [p.id, p.categoryId]),
+      )
+
+      for (const s of stockData) {
+        const catId = productToCategory.get(s.productId)
+        if (!catId) continue
+        const existing = stockMap.get(catId) || { total: 0, outOfStock: 0 }
+        existing.total += s.stockCurrent
+        if (s.stockCurrent <= 0) existing.outOfStock += 1
+        stockMap.set(catId, existing)
+      }
+    }
+
+    return categories.map((cat) => {
+      const stats = statsMap.get(cat.id)
+      const stock = stockMap.get(cat.id)
+      return {
+        ...cat,
+        productCount: stats?.count ?? 0,
+        avgSalePrice: stats?.avgSalePrice ?? '0',
+        totalStock: stock?.total ?? 0,
+        outOfStock: stock?.outOfStock ?? 0,
+      }
+    })
+  })
 
 const createCategorySchema = z.object({
   name: z.string(),
-  description: z.string().optional(),
+  description: optionalString,
 })
 
 export const createCategory = createServerFn({ method: 'POST' })
@@ -47,7 +108,7 @@ export const createCategory = createServerFn({ method: 'POST' })
   })
 
 const updateCategorySchema = z.object({
-  id: z.string().uuid(),
+  id: uuidField,
   name: z.string(),
   description: z.string().optional(),
   isActive: z.boolean().optional(),
@@ -80,9 +141,9 @@ export const updateCategory = createServerFn({ method: 'POST' })
   })
 
 const getProductsSchema = z.object({
-  search: z.string().optional(),
+  search: optionalString,
   categoryId: z.string().uuid().optional(),
-  branchId: z.string().optional(),
+  branchId: branchIdField,
 })
 
 export const getProducts = createServerFn({ method: 'GET' })
@@ -104,16 +165,46 @@ export const getProducts = createServerFn({ method: 'GET' })
       filters.push(eq(products.categoryId, data.categoryId))
     }
 
-    if (data.branchId) {
-      filters.push(eq(products.branchId, data.branchId))
-    }
-
-    return await db.query.products.findMany({
+    const productList = await db.query.products.findMany({
       where: filters.length > 0 ? and(...filters) : undefined,
       orderBy: [desc(products.createdAt)],
       with: {
         category: true,
       },
+    })
+
+    if (!data.branchId || productList.length === 0) {
+      // Sin sucursal o sin productos: devolver sin datos de stock
+      return productList.map((p) => ({
+        ...p,
+        stockCurrent: 0,
+        stockMinimum: 0,
+      }))
+    }
+
+    // Con sucursal: obtener stock de product_stock
+    const productIds = productList.map((p) => p.id)
+    const stockEntries = await db
+      .select()
+      .from(productStock)
+      .where(
+        and(
+          eq(productStock.branchId, data.branchId),
+          inArray(productStock.productId, productIds),
+        ),
+      )
+
+    const stockMap = new Map(
+      stockEntries.map((s) => [s.productId, s]),
+    )
+
+    return productList.map((p) => {
+      const stock = stockMap.get(p.id)
+      return {
+        ...p,
+        stockCurrent: stock?.stockCurrent ?? 0,
+        stockMinimum: stock?.stockMinimum ?? 0,
+      }
     })
   })
 
@@ -122,13 +213,10 @@ const createProductSchema = z.object({
   barcode: z.string().optional(),
   name: z.string(),
   description: z.string().optional(),
-  categoryId: z.string().uuid(),
-  purchasePrice: z.string(),
-  salePrice: z.string(),
-  stockCurrent: z.number(),
-  stockMinimum: z.number(),
-  imageUrl: z.string().optional(),
-  branchId: z.string().optional(),
+  categoryId: uuidField,
+  purchasePrice: moneyString,
+  salePrice: moneyString,
+  imageUrl: optionalString,
 })
 
 export const createProduct = createServerFn({ method: 'POST' })
@@ -145,10 +233,7 @@ export const createProduct = createServerFn({ method: 'POST' })
         categoryId: data.categoryId,
         purchasePrice: data.purchasePrice,
         salePrice: data.salePrice,
-        stockCurrent: data.stockCurrent,
-        stockMinimum: data.stockMinimum,
         imageUrl: data.imageUrl || null,
-        branchId: data.branchId ?? null,
       })
       .returning()
     createAuditLog({
@@ -162,17 +247,15 @@ export const createProduct = createServerFn({ method: 'POST' })
   })
 
 const updateProductSchema = z.object({
-  id: z.string().uuid(),
+  id: uuidField,
   sku: z.string(),
   barcode: z.string().optional(),
   name: z.string(),
   description: z.string().optional(),
-  categoryId: z.string().uuid(),
-  purchasePrice: z.string(),
-  salePrice: z.string(),
-  stockCurrent: z.number(),
-  stockMinimum: z.number(),
-  imageUrl: z.string().optional(),
+  categoryId: uuidField,
+  purchasePrice: moneyString,
+  salePrice: moneyString,
+  imageUrl: optionalString,
   isActive: z.boolean().optional(),
 })
 
@@ -190,8 +273,6 @@ export const updateProduct = createServerFn({ method: 'POST' })
         categoryId: data.categoryId,
         purchasePrice: data.purchasePrice,
         salePrice: data.salePrice,
-        stockCurrent: data.stockCurrent,
-        stockMinimum: data.stockMinimum,
         imageUrl: data.imageUrl || null,
         isActive: data.isActive !== undefined ? data.isActive : undefined,
         updatedAt: new Date(),
@@ -209,10 +290,11 @@ export const updateProduct = createServerFn({ method: 'POST' })
   })
 
 const adjustStockSchema = z.object({
-  productId: z.string().uuid(),
+  productId: uuidField,
   quantity: z.number(),
   movementType: z.enum(['MANUAL_ADJUSTMENT', 'LOSS', 'RETURN']),
-  notes: z.string().optional(),
+  branchId: branchIdField,
+  notes: optionalString,
 })
 
 export const adjustStock = createServerFn({ method: 'POST' })
@@ -222,23 +304,36 @@ export const adjustStock = createServerFn({ method: 'POST' })
       data: { roles: ['ADMIN', 'RECEPTIONIST'] },
     })
 
+    const branchId = data.branchId
+    if (!branchId) {
+      throw new Error('Se requiere una sucursal para ajustar stock.')
+    }
+
     const newStock = await db.transaction(async (tx) => {
-      const results = await tx
-        .select()
-        .from(products)
-        .where(eq(products.id, data.productId))
-        .limit(1)
+      // Buscar o crear entry en product_stock
+      const stockEntry = await tx.query.productStock.findFirst({
+        where: and(
+          eq(productStock.productId, data.productId),
+          eq(productStock.branchId, branchId),
+        ),
+      })
 
-      if (results.length === 0) throw new Error('Product not found')
-      const product = results[0]
-
-      const previousStock = product.stockCurrent
+      const previousStock = stockEntry?.stockCurrent ?? 0
       const calculatedNewStock = previousStock + data.quantity
 
-      await tx
-        .update(products)
-        .set({ stockCurrent: calculatedNewStock, updatedAt: new Date() })
-        .where(eq(products.id, data.productId))
+      if (stockEntry) {
+        await tx
+          .update(productStock)
+          .set({ stockCurrent: calculatedNewStock, updatedAt: new Date() })
+          .where(eq(productStock.id, stockEntry.id))
+      } else {
+        await tx.insert(productStock).values({
+          productId: data.productId,
+          branchId,
+          stockCurrent: calculatedNewStock,
+          stockMinimum: 0,
+        })
+      }
 
       await tx.insert(inventoryMovements).values({
         productId: data.productId,

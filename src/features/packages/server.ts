@@ -16,18 +16,26 @@ export const getActivePackages = createServerFn({ method: 'GET' }).handler(
 export const createPackage = createServerFn({ method: 'POST' })
   .inputValidator((data) => createPackageSchema.parse(data))
   .handler(async ({ data }) => {
+    console.log('[packages] createPackage input:', JSON.stringify(data, null, 2))
+
     const session = await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST'] },
     })
 
+    console.log('[packages] insertando package...')
     const pkg = await repo.insert(data)
+    console.log('[packages] package creado:', pkg.id)
 
     if (data.items.length > 0) {
+      console.log('[packages] reemplazando items:', data.items.length)
       await repo.replacePackageItems(pkg.id, data.items)
     }
     if (data.allowedDays.length > 0) {
+      console.log('[packages] reemplazando allowedDays:', data.allowedDays.length)
       await repo.replaceAllowedDays(pkg.id, data.allowedDays)
     }
+    console.log('[packages] reemplazando benefits:', data.benefits.length)
+    await repo.replacePackageBenefits(pkg.id, data.benefits)
 
     createAuditLog({
       ...getAuditContext(session),
@@ -43,13 +51,20 @@ export const createPackage = createServerFn({ method: 'POST' })
 export const updatePackage = createServerFn({ method: 'POST' })
   .inputValidator((data) => updatePackageSchema.parse(data))
   .handler(async ({ data }) => {
+    console.log('[packages] updatePackage input:', JSON.stringify({ id: data.id, name: data.name }, null, 2))
+
     const session = await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST'] },
     })
 
+    console.log('[packages] actualizando package...')
     const pkg = await repo.update(data.id, data)
+    console.log('[packages] reemplazando items:', data.items.length)
     await repo.replacePackageItems(data.id, data.items)
+    console.log('[packages] reemplazando allowedDays:', data.allowedDays.length)
     await repo.replaceAllowedDays(data.id, data.allowedDays)
+    console.log('[packages] reemplazando benefits:', data.benefits.length)
+    await repo.replacePackageBenefits(data.id, data.benefits)
 
     createAuditLog({
       ...getAuditContext(session),

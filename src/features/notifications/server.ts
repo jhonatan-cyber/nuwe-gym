@@ -1,9 +1,11 @@
 import { createServerFn } from '@tanstack/react-start'
 import { z } from 'zod'
+import { uuidField } from '#/shared/lib/schemas.ts'
 import { db } from '#/shared/db/index.ts'
 import { notifications } from '#/shared/db/schema/notifications.ts'
 import { subscriptions } from '#/shared/db/schema/subscriptions.ts'
 import { products } from '#/shared/db/schema/products.ts'
+import { productStock } from '#/shared/db/schema/product-stock.ts'
 import {
   eq,
   desc,
@@ -59,7 +61,7 @@ export const getUnreadCount = createServerFn({ method: 'GET' }).handler(
   },
 )
 
-const markAsReadSchema = z.object({ id: z.string().uuid() })
+const markAsReadSchema = z.object({ id: uuidField })
 
 export const markAsRead = createServerFn({ method: 'POST' })
   .inputValidator((data) => markAsReadSchema.parse(data))
@@ -194,30 +196,37 @@ export const generateNotifications = createServerFn({ method: 'POST' })
       }
     }
 
-    // ── Low stock products ──
+    // ── Low stock products (todas las sucursales) ──
     const lowStockProducts = await db
-      .select()
-      .from(products)
+      .select({
+        id: products.id,
+        name: products.name,
+        stockCurrent: productStock.stockCurrent,
+        stockMinimum: productStock.stockMinimum,
+        branchId: productStock.branchId,
+      })
+      .from(productStock)
+      .innerJoin(products, eq(productStock.productId, products.id))
       .where(
         and(
           eq(products.isActive, true),
-          sql`${products.stockCurrent} <= ${products.stockMinimum}`,
+          sql`${productStock.stockCurrent} <= ${productStock.stockMinimum}`,
         ),
       )
 
-    for (const product of lowStockProducts) {
+    for (const ps of lowStockProducts) {
       const existing = await db.query.notifications.findFirst({
         where: and(
           eq(notifications.type, 'LOW_STOCK'),
-          eq(notifications.referenceId, product.id),
+          eq(notifications.referenceId, ps.id),
         ),
       })
       if (!existing) {
         newNotifications.push({
           type: 'LOW_STOCK',
           title: 'Stock bajo',
-          message: `${product.name} tiene ${product.stockCurrent} unidades (mínimo: ${product.stockMinimum})`,
-          referenceId: product.id,
+          message: `${ps.name} tiene ${ps.stockCurrent} unidades (mínimo: ${ps.stockMinimum})`,
+          referenceId: ps.id,
           referenceType: 'product',
         })
       }

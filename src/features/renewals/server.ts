@@ -14,10 +14,11 @@ import { requireRole } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { z } from 'zod'
+import { branchIdField, moneyString, optionalString, paymentMethodEnum, uuidField } from '#/shared/lib/schemas.ts'
 
 const getExpiringSubscriptionsSchema = z.object({
   days: z.number().optional().default(7),
-  branchId: z.string().optional(),
+  branchId: branchIdField,
 })
 
 export const getExpiringSubscriptions = createServerFn({ method: 'GET' })
@@ -50,7 +51,7 @@ export const getExpiringSubscriptions = createServerFn({ method: 'GET' })
   })
 
 const getExpiredSubscriptionsSchema = z.object({
-  branchId: z.string().optional(),
+  branchId: branchIdField,
 })
 
 export const getExpiredSubscriptions = createServerFn({
@@ -78,12 +79,12 @@ export const getExpiredSubscriptions = createServerFn({
   })
 
 const renewSubscriptionSchema = z.object({
-  memberId: z.string().uuid(),
-  packageId: z.string().uuid(),
-  paymentMethod: z.enum(['CASH', 'CARD', 'TRANSFER', 'QR']),
-  amount: z.string(),
-  notes: z.string().optional(),
-  branchId: z.string().optional(),
+  memberId: uuidField,
+  packageId: uuidField,
+  paymentMethod: paymentMethodEnum,
+  amount: moneyString,
+  notes: optionalString,
+  branchId: branchIdField,
 })
 
 export type RenewSubscriptionData = z.infer<typeof renewSubscriptionSchema>
@@ -128,7 +129,6 @@ export const renewSubscription = createServerFn({ method: 'POST' })
         .insert(subscriptions)
         .values({
           memberId: data.memberId,
-          planId: null,
           packageId: data.packageId,
           startDate,
           endDate,
@@ -218,12 +218,8 @@ export const processAutoRenewals = createServerFn({ method: 'POST' }).handler(
             where: eq(cashRegisterSessions.status, 'OPEN'),
           })
 
-          const durationDays = sub.package
-            ? sub.package.durationDays
-            : sub.plan?.durationDays || 30
-          const amount = sub.package
-            ? sub.package.price
-            : sub.plan?.price || '0'
+          const durationDays = sub.package?.durationDays || 30
+          const amount = sub.package?.price || '0'
 
           const startDate = new Date()
           const endDate = new Date()
@@ -233,7 +229,6 @@ export const processAutoRenewals = createServerFn({ method: 'POST' }).handler(
             .insert(subscriptions)
             .values({
               memberId: sub.memberId,
-              planId: sub.planId,
               packageId: sub.packageId,
               startDate,
               endDate,
@@ -290,7 +285,7 @@ export const processAutoRenewals = createServerFn({ method: 'POST' }).handler(
 
 export const getMemberRenewalHistory = createServerFn({ method: 'GET' })
   .inputValidator((data: unknown) =>
-    z.object({ memberId: z.string().uuid() }).parse(data),
+    z.object({ memberId: uuidField }).parse(data),
   )
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })

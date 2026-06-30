@@ -12,9 +12,10 @@ import { requireRole } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { z } from 'zod'
+import { branchIdField, dateString, moneyString, paymentMethodEnum, uuidField } from '#/shared/lib/schemas.ts'
 
 const getSubscriptionsSchema = z.object({
-  branchId: z.string().optional(),
+  branchId: branchIdField,
 })
 
 export const getSubscriptions = createServerFn({ method: 'GET' })
@@ -28,21 +29,24 @@ export const getSubscriptions = createServerFn({ method: 'GET' })
       where: memberIds ? inArray(subscriptions.memberId, memberIds) : undefined,
       orderBy: [desc(subscriptions.createdAt)],
       with: {
-        member: true,
-        plan: true,
+        member: {
+          with: {
+            branch: true,
+          },
+        },
         package: true,
       },
     })
   })
 
 const createSubscriptionSchema = z.object({
-  memberId: z.string().uuid(),
-  packageId: z.string().uuid(),
-  startDate: z.string(),
-  endDate: z.string(),
-  amountPaid: z.string(),
-  paymentMethod: z.enum(['CASH', 'CARD', 'TRANSFER', 'QR']),
-  branchId: z.string().optional(),
+  memberId: uuidField,
+  packageId: uuidField,
+  startDate: dateString,
+  endDate: dateString,
+  amountPaid: moneyString,
+  paymentMethod: paymentMethodEnum,
+  branchId: branchIdField,
 })
 
 export type CreateSubscriptionData = z.infer<typeof createSubscriptionSchema>
@@ -75,7 +79,6 @@ export const createSubscription = createServerFn({ method: 'POST' })
         .insert(subscriptions)
         .values({
           memberId: data.memberId,
-          planId: null,
           packageId: data.packageId,
           startDate: new Date(data.startDate),
           endDate: new Date(data.endDate),
@@ -126,7 +129,7 @@ export const createSubscription = createServerFn({ method: 'POST' })
   })
 
 export const cancelSubscription = createServerFn({ method: 'POST' })
-  .inputValidator((id) => z.string().uuid().parse(id))
+  .inputValidator((id) => uuidField.parse(id))
   .handler(async ({ data: id }) => {
     const session = await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST'] },

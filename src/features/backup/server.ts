@@ -8,7 +8,6 @@ import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { settings } from '#/shared/db/schema/settings.ts'
 import { branches, userBranches } from '#/shared/db/schema/branches.ts'
 import { members } from '#/shared/db/schema/members.ts'
-import { membershipPlans } from '#/shared/db/schema/membership-plans.ts'
 import { subscriptions } from '#/shared/db/schema/subscriptions.ts'
 import { membershipPayments } from '#/shared/db/schema/membership-payments.ts'
 import { productCategories } from '#/shared/db/schema/product-categories.ts'
@@ -43,7 +42,6 @@ const TABLES = {
   userBranches,
   users,
   members,
-  membershipPlans,
   subscriptions,
   membershipPayments,
   productCategories,
@@ -75,7 +73,6 @@ const IMPORT_ORDER: TableName[] = [
   'branches',
   'users',
   'productCategories',
-  'membershipPlans',
   'suppliers',
   'classes',
   'notifications',

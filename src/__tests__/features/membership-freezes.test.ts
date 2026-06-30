@@ -4,7 +4,7 @@ import { membershipFreezes } from '#/shared/db/schema/membership-freezes.ts'
 import { eq, desc, count, and, isNull } from 'drizzle-orm'
 import {
   createMember,
-  createPlan,
+  createPackage,
   createSubscription,
   createFreeze,
   cleanDatabase,
@@ -17,7 +17,7 @@ beforeAll(async () => {
 describe('Membership Freezes', () => {
   it('should create a freeze and verify dates', async () => {
     const member = await createMember()
-    const plan = await createPlan()
+    const plan = await createPackage()
     const sub = await createSubscription(member.id, plan.id)
 
     const freeze = await createFreeze(sub.id, member.id)
@@ -32,7 +32,7 @@ describe('Membership Freezes', () => {
 
   it('should query freeze with subscription and member relations', async () => {
     const member = await createMember()
-    const plan = await createPlan()
+    const plan = await createPackage()
     const sub = await createSubscription(member.id, plan.id)
     await createFreeze(sub.id, member.id)
 
@@ -49,7 +49,7 @@ describe('Membership Freezes', () => {
 
   it('should list freezes ordered by creation date', async () => {
     const member = await createMember()
-    const plan = await createPlan()
+    const plan = await createPackage()
     const sub = await createSubscription(member.id, plan.id)
     await createFreeze(sub.id, member.id)
     await createFreeze(sub.id, member.id)
@@ -66,7 +66,7 @@ describe('Membership Freezes', () => {
 
   it('should get freezes for a specific member', async () => {
     const member = await createMember()
-    const plan = await createPlan()
+    const plan = await createPackage()
     const sub = await createSubscription(member.id, plan.id)
     await createFreeze(sub.id, member.id)
 
@@ -80,7 +80,7 @@ describe('Membership Freezes', () => {
 
   it('should have resumedAt null for active freezes', async () => {
     const member = await createMember()
-    const plan = await createPlan()
+    const plan = await createPackage()
     const sub = await createSubscription(member.id, plan.id)
     await createFreeze(sub.id, member.id)
 

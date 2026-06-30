@@ -52,6 +52,7 @@ import {
   getMembersReport,
 } from '#/features/reports/server.ts'
 import { formatCurrency } from '#/shared/lib/formatters.ts'
+import { CopilotSummary } from './components/copilot-summary.tsx'
 
 type Tab = 'financial' | 'attendance' | 'sales' | 'members'
 type Preset = 'today' | 'week' | 'month' | 'year' | 'custom'
@@ -194,6 +195,10 @@ export function ReportsPage() {
             Exportar PDF
           </Button>
         </div>
+      </div>
+
+      <div className="no-print">
+        <CopilotSummary startDate={range.startDate} endDate={range.endDate} />
       </div>
 
       <div className="flex gap-1 border-b pb-1 no-print">

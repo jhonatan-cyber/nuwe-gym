@@ -2,9 +2,8 @@ import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { createPackage, updatePackage } from '#/features/packages/server.ts'
-import { capitalizeWords } from '#/shared/lib/formatters.ts'
-import { EMPTY_FORM } from '#/features/packages/types.ts'
-import type { PackageFormData, Package } from '#/features/packages/types.ts'
+import { EMPTY_FORM, BENEFIT_CATALOG } from '#/features/packages/types.ts'
+import type { PackageFormData, Package, BenefitKey } from '#/features/packages/types.ts'
 
 interface UsePackageFormProps {
   editingPackageId: string | null
@@ -28,15 +27,17 @@ function pkgToForm(pkg: Package): PackageFormData {
     dailyAccessLimit: pkg.dailyAccessLimit ?? undefined,
     color: pkg.color ?? '',
     isActive: pkg.isActive,
-    items: pkg.items.map((i: any) => ({
-      description: i.description,
-      sortOrder: i.sortOrder,
-    })),
     allowedDays: (pkg.allowedDays ?? []).map((d: any) => ({
       dayOfWeek: d.dayOfWeek,
       startTime: d.startTime ?? undefined,
       endTime: d.endTime ?? undefined,
     })),
+    benefits: pkg.benefits?.length
+      ? pkg.benefits.map((b: any) => ({
+          benefitKey: b.benefitKey,
+          enabled: b.enabled,
+        }))
+      : BENEFIT_CATALOG.map((b) => ({ benefitKey: b.key, enabled: false })),
   }
 }
 
@@ -62,7 +63,10 @@ export function usePackageForm({ editingPackageId, onBack }: UsePackageFormProps
       toast.success('Paquete creado exitosamente')
       onBack()
     },
-    onError: () => toast.error('Error al crear el paquete'),
+    onError: (err) => {
+      console.error('[packages] Error al crear:', err)
+      toast.error(err instanceof Error ? err.message : 'Error al crear el paquete')
+    },
   })
 
   const updateMutation = useMutation({
@@ -72,7 +76,10 @@ export function usePackageForm({ editingPackageId, onBack }: UsePackageFormProps
       toast.success('Paquete actualizado')
       onBack()
     },
-    onError: () => toast.error('Error al actualizar el paquete'),
+    onError: (err) => {
+      console.error('[packages] Error al actualizar:', err)
+      toast.error(err instanceof Error ? err.message : 'Error al actualizar el paquete')
+    },
   })
 
   function handleSubmit(e: React.FormEvent) {
@@ -83,6 +90,15 @@ export function usePackageForm({ editingPackageId, onBack }: UsePackageFormProps
       const { isActive: _, ...createData } = formData
       createMutation.mutate({ data: createData })
     }
+  }
+
+  function toggleBenefit(key: BenefitKey) {
+    setFormData({
+      ...formData,
+      benefits: formData.benefits.map((b) =>
+        b.benefitKey === key ? { ...b, enabled: !b.enabled } : b,
+      ),
+    })
   }
 
   function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -117,29 +133,6 @@ export function usePackageForm({ editingPackageId, onBack }: UsePackageFormProps
       setFormData({ ...formData, imageBase64: event.target?.result as string })
     }
     reader.readAsDataURL(file)
-  }
-
-  function addItem() {
-    setFormData({
-      ...formData,
-      items: [
-        ...formData.items,
-        { description: '', sortOrder: formData.items.length },
-      ],
-    })
-  }
-
-  function removeItem(idx: number) {
-    setFormData({
-      ...formData,
-      items: formData.items.filter((_, i) => i !== idx),
-    })
-  }
-
-  function updateItem(idx: number, description: string) {
-    const items = [...formData.items]
-    items[idx] = { ...items[idx], description: capitalizeWords(description) }
-    setFormData({ ...formData, items })
   }
 
   function toggleDay(day: number) {
@@ -187,10 +180,8 @@ export function usePackageForm({ editingPackageId, onBack }: UsePackageFormProps
     handleDragOver,
     handleDragLeave,
     handleDrop,
-    addItem,
-    removeItem,
-    updateItem,
     toggleDay,
     updateDayTime,
+    toggleBenefit,
   }
 }

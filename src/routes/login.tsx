@@ -188,7 +188,7 @@ function LoginPage() {
             <Button
               type="button"
               onClick={() => setShowSetupModal(true)}
-              className="w-full font-bold"
+              className="w-full h-11 font-bold bg-black text-white border border-transparent hover:bg-white hover:text-black hover:border-black dark:bg-white dark:text-black dark:hover:bg-black dark:hover:text-white dark:hover:border-white"
             >
               Crear Administrador Inicial
             </Button>
@@ -326,7 +326,7 @@ function LoginPage() {
 
             <Button
               type="submit"
-              className="w-full h-11 font-semibold transition-all"
+              className="w-full h-11 font-semibold transition-all bg-black text-white border border-transparent hover:bg-white hover:text-black hover:border-black dark:bg-white dark:text-black dark:hover:bg-black dark:hover:text-white dark:hover:border-white"
               disabled={setupLoading}
             >
               {setupLoading ? 'Creando...' : 'Crear Administrador'}
@@ -402,7 +402,7 @@ function LoginPage() {
 
             <Button
               type="submit"
-              className="w-full h-11 font-semibold transition-all"
+              className="w-full h-11 font-semibold transition-all bg-black text-white border border-transparent hover:bg-white hover:text-black hover:border-black dark:bg-white dark:text-black dark:hover:bg-black dark:hover:text-white dark:hover:border-white"
               disabled={loading}
             >
               {loading ? 'Ingresando...' : 'Iniciar sesión'}

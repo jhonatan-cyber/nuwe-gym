@@ -326,7 +326,7 @@ export function AdminUsersPage({ currentUserId }: AdminUsersPageProps) {
 
                   {/* Grid de Cards */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {paginatedUsers.map((user) => (
+                    {paginatedUsers.map((user: any) => (
                       <UserCard
                         key={user.id}
                         user={user}

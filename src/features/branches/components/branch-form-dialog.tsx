@@ -13,6 +13,7 @@ import {
   CountryCodeSelect,
   COUNTRIES,
 } from '#/shared/components/ui/country-code-select.tsx'
+import { LoadingButton } from '#/shared/components/ui/loading-button'
 
 interface BranchFormDialogProps {
   isOpen: boolean
@@ -181,13 +182,14 @@ export function BranchFormDialog({
             >
               Cancelar
             </Button>
-            <Button
+            <LoadingButton
               type="submit"
-              disabled={isPending || !form.name}
+              isLoading={isPending}
+              disabled={!form.name}
               className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
             >
               {editingId ? 'Guardar Cambios' : 'Crear Sucursal'}
-            </Button>
+            </LoadingButton>
           </DialogFooter>
         </form>
       </DialogContent>

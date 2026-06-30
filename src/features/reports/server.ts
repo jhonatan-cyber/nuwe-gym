@@ -1,5 +1,7 @@
 import { createServerFn } from '@tanstack/react-start'
 import { z } from 'zod'
+import { dateString } from '#/shared/lib/schemas.ts'
+import { getGroq, GROQ_MODEL } from '#/shared/lib/ai.ts'
 import { db } from '#/shared/db/index.ts'
 import { count, sum, eq, and, gte, lte, sql } from 'drizzle-orm'
 import { requireRole } from '#/shared/lib/server-utils.ts'
@@ -12,8 +14,8 @@ import { cashMovements } from '#/shared/db/schema/cash-register.ts'
 import { products } from '#/shared/db/schema/products.ts'
 
 const dateRangeSchema = z.object({
-  startDate: z.string(),
-  endDate: z.string(),
+  startDate: dateString,
+  endDate: dateString,
 })
 
 export const getFinancialReport = createServerFn({ method: 'GET' })
@@ -266,5 +268,63 @@ export const getMembersReport = createServerFn({ method: 'GET' })
       active: activeRes[0]?.count ?? 0,
       inactive: inactiveRes[0]?.count ?? 0,
       churned: churnedRes[0]?.count ?? 0,
+    }
+  })
+
+export const getAICopilotSummary = createServerFn({ method: 'GET' })
+  .inputValidator((data: unknown) => dateRangeSchema.parse(data))
+  .handler(async ({ data }) => {
+    await requireRole({
+      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
+    })
+
+    // 1. Obtener todos los reportes del mismo rango de fechas
+    const [financials, attendance, sales, membersData] = await Promise.all([
+      getFinancialReport({ data }),
+      getAttendanceReport({ data }),
+      getSalesReport({ data }),
+      getMembersReport({ data }),
+    ])
+
+    // 2. Consolidar métricas para la IA
+    const summaryData = {
+      periodo: `${data.startDate} a ${data.endDate}`,
+      finanzas: financials.summary,
+      asistencia: attendance.summary,
+      ventasPOS: sales.summary,
+      socios: membersData,
+    }
+
+    // 3. Invocar a Groq
+    const groq = getGroq()
+    const systemPrompt = `Eres un consultor de negocios experto para gimnasios y centros deportivos.
+Tu tarea es redactar un resumen ejecutivo y de análisis financiero para la administración en base a las métricas del periodo.
+REGLAS:
+- Responde siempre en español de Argentina (voseo natural, cálido y profesional: "tenés", "observás", "che").
+- Sé analítico pero muy directo y accionable.
+- Estructura tu respuesta en 3 secciones cortas con títulos claros en negrita:
+  1. 📈 **Desempeño General** (un breve párrafo del balance financiero y asistencia)
+  2. ⚠️ **Alertas & Puntos Críticos** (puntos donde el negocio tiene cuellos de botella o pérdidas)
+  3. 💡 **Recomendaciones Clave** (2 o 3 consejos prácticos de negocio para el dueño del gimnasio)
+- Mantén la respuesta concisa y profesional (máximo 250 palabras).`
+
+    const userPrompt = `Datos Consolidados del Gimnasio:
+${JSON.stringify(summaryData, null, 2)}`
+
+    try {
+      const completion = await groq.chat.completions.create({
+        model: GROQ_MODEL,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ],
+        temperature: 0.6,
+        max_tokens: 800
+      })
+
+      return completion.choices?.[0]?.message?.content || 'No se pudo generar el análisis.'
+    } catch (err) {
+      console.error('Error al generar resumen ejecutivo financiero con IA:', err)
+      return 'Ocurrió un error al intentar conectarse con la IA de Groq. Asegúrate de tener configurada la GROQ_API_KEY.'
     }
   })

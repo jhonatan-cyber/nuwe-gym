@@ -5,6 +5,7 @@ import { db } from '#/shared/db/index.ts'
 import { branches, userBranches } from '#/shared/db/schema/branches.ts'
 import { requireRole } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
+import { optionalString, requiredString, timeString, uuidField } from '#/shared/lib/schemas.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 
 export const getBranches = createServerFn({ method: 'GET' }).handler(
@@ -15,7 +16,7 @@ export const getBranches = createServerFn({ method: 'GET' }).handler(
 )
 
 export const getBranch = createServerFn({ method: 'GET' })
-  .inputValidator((id: unknown) => z.string().uuid().parse(id))
+  .inputValidator((id: unknown) => uuidField.parse(id))
   .handler(async ({ data: id }) => {
     const result = await db
       .select()
@@ -27,11 +28,11 @@ export const getBranch = createServerFn({ method: 'GET' })
 
 const createBranchSchema = z.object({
   name: z.string().min(1, 'El nombre es obligatorio'),
-  address: z.string().optional().default(''),
-  phone: z.string().optional().default(''),
-  email: z.string().optional().default(''),
-  openingTime: z.string().optional().default('08:00'),
-  closingTime: z.string().optional().default('22:00'),
+  address: optionalString.default(''),
+  phone: optionalString.default(''),
+  email: optionalString.default(''),
+  openingTime: timeString.optional().default('08:00'),
+  closingTime: timeString.optional().default('22:00'),
 })
 
 export const createBranch = createServerFn({ method: 'POST' })
@@ -50,14 +51,14 @@ export const createBranch = createServerFn({ method: 'POST' })
   })
 
 const updateBranchSchema = z.object({
-  id: z.string().uuid(),
-  name: z.string().min(1),
-  address: z.string().optional(),
-  phone: z.string().optional(),
-  email: z.string().optional(),
+  id: uuidField,
+  name: requiredString,
+  address: optionalString,
+  phone: optionalString,
+  email: optionalString,
   isActive: z.boolean().optional(),
-  openingTime: z.string().optional(),
-  closingTime: z.string().optional(),
+  openingTime: timeString.optional(),
+  closingTime: timeString.optional(),
 })
 
 export const updateBranch = createServerFn({ method: 'POST' })
@@ -124,9 +125,41 @@ export const getUserBranches = createServerFn({ method: 'GET' }).handler(
   },
 )
 
+export const deleteBranch = createServerFn({ method: 'POST' })
+  .inputValidator((data) => z.object({ id: uuidField }).parse(data))
+  .handler(async ({ data }) => {
+    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+
+    // Check if branch has users assigned
+    const usersWithBranch = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(userBranches)
+      .where(eq(userBranches.branchId, data.id))
+
+    if (usersWithBranch[0]?.count > 0) {
+      throw new Error('No se puede eliminar una sucursal con usuarios asignados. Desasígnalos primero.')
+    }
+
+    // Hard delete
+    const [branch] = await db
+      .delete(branches)
+      .where(eq(branches.id, data.id))
+      .returning()
+
+    createAuditLog({
+      ...getAuditContext(session),
+      action: 'DELETE',
+      entityType: 'BRANCH',
+      entityId: branch.id,
+      description: `Eliminó sucursal ${branch.name}`,
+    })
+
+    return branch
+  })
+
 export const setDefaultBranch = createServerFn({ method: 'POST' })
   .inputValidator((data) =>
-    z.object({ branchId: z.string().uuid() }).parse(data),
+    z.object({ branchId: uuidField }).parse(data),
   )
   .handler(async ({ data }) => {
     const session = await requireRole({

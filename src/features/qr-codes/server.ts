@@ -3,16 +3,17 @@ import { db } from '#/shared/db/index.ts'
 import { members } from '#/shared/db/schema/members.ts'
 import { checkIns } from '#/shared/db/schema/check-ins.ts'
 import { users } from '#/shared/db/schema/auth.ts'
-import { eq } from 'drizzle-orm'
+import { eq, SQL } from 'drizzle-orm'
 import { requireRole, getSession } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { z } from 'zod'
+import { optionalString, uuidField } from '#/shared/lib/schemas.ts'
 import { validateCheckIn } from '#/features/check-ins/server.ts'
 
 export const generateMemberQR = createServerFn({ method: 'POST' })
   .inputValidator((data) =>
-    z.object({ memberId: z.string().uuid() }).parse(data),
+    z.object({ memberId: uuidField }).parse(data),
   )
   .handler(async ({ data }) => {
     const session = await requireRole({
@@ -46,7 +47,7 @@ export const generateMemberQR = createServerFn({ method: 'POST' })
 
 export const getMemberQRCode = createServerFn({ method: 'GET' })
   .inputValidator((data) =>
-    z.object({ memberId: z.string().uuid() }).parse(data),
+    z.object({ memberId: uuidField }).parse(data),
   )
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
@@ -61,12 +62,12 @@ export const getMemberQRCode = createServerFn({ method: 'GET' })
 
 export const getMembersWithQR = createServerFn({ method: 'GET' })
   .inputValidator((data) =>
-    z.object({ search: z.string().optional() }).parse(data),
+    z.object({ search: optionalString }).parse(data),
   )
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
 
-    let whereClause = undefined
+    let whereClause: SQL | undefined = undefined
     if (data.search) {
       const { ilike, or } = await import('drizzle-orm')
       whereClause = or(

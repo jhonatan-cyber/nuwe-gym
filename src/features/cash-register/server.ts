@@ -1,42 +1,33 @@
 import { createServerFn } from '@tanstack/react-start'
 import { db } from '#/shared/db/index.ts'
-import {
-  cashRegisterSessions,
-  cashMovements,
-} from '#/shared/db/schema/cash-register.ts'
-import { eq, and, desc } from 'drizzle-orm'
+import { cashMovements, cashRegisterSessions } from '#/shared/db/schema/cash-register.ts'
+import { eq, and } from 'drizzle-orm'
 import { requireRole } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
-import { z } from 'zod'
-
-const getCurrentCashSessionSchema = z.object({
-  branchId: z.string().optional(),
-})
+import {
+  getCurrentCashSessionSchema,
+  openCashSessionSchema,
+  closeCashSessionSchema,
+  createManualMovementSchema,
+  getCashSessionDetailsSchema,
+  getCashSessionsListSchema,
+  deleteCashSessionSchema,
+} from './cash-register.schema.ts'
+import * as repo from './cash-register.repository.ts'
 
 export const getCurrentCashSession = createServerFn({ method: 'GET' })
   .inputValidator((data) => getCurrentCashSessionSchema.parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
-    const session = await db.query.cashRegisterSessions.findFirst({
-      where: data.branchId
-        ? and(
-            eq(cashRegisterSessions.status, 'OPEN'),
-            eq(cashRegisterSessions.branchId, data.branchId),
-          )
-        : eq(cashRegisterSessions.status, 'OPEN'),
-      with: {
-        openedBy: true,
-      },
-    })
-    return session || null
+    return (await repo.findOpenSession(data.branchId)) || null
   })
 
-const openCashSessionSchema = z.object({
-  openingAmount: z.string(),
-  notes: z.string().optional(),
-  branchId: z.string().optional(),
-})
+export const getAllOpenCashSessions = createServerFn({ method: 'GET' })
+  .handler(async () => {
+    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    return await repo.findAllOpenSessions()
+  })
 
 export const openCashSession = createServerFn({ method: 'POST' })
   .inputValidator((data) => openCashSessionSchema.parse(data))
@@ -45,30 +36,15 @@ export const openCashSession = createServerFn({ method: 'POST' })
       data: { roles: ['ADMIN', 'RECEPTIONIST'] },
     })
 
-    const openSession = await db.query.cashRegisterSessions.findFirst({
-      where: data.branchId
-        ? and(
-            eq(cashRegisterSessions.status, 'OPEN'),
-            eq(cashRegisterSessions.branchId, data.branchId),
-          )
-        : eq(cashRegisterSessions.status, 'OPEN'),
-    })
-
-    if (openSession) {
+    const existing = await repo.findOpenSession(data.branchId)
+    if (existing) {
       throw new Error('Ya existe una sesión de caja abierta.')
     }
 
-    const [newSession] = await db
-      .insert(cashRegisterSessions)
-      .values({
-        openedByUserId: session.user.id,
-        openingAmount: data.openingAmount,
-        expectedClosingAmount: data.openingAmount,
-        status: 'OPEN',
-        notes: data.notes || null,
-        branchId: data.branchId ?? null,
-      })
-      .returning()
+    const [newSession] = await repo.insertSession({
+      ...data,
+      openedByUserId: session.user.id,
+    })
 
     createAuditLog({
       ...getAuditContext(session),
@@ -82,12 +58,6 @@ export const openCashSession = createServerFn({ method: 'POST' })
     return newSession
   })
 
-const closeCashSessionSchema = z.object({
-  actualClosingAmount: z.string(),
-  notes: z.string().optional(),
-  branchId: z.string().optional(),
-})
-
 export const closeCashSession = createServerFn({ method: 'POST' })
   .inputValidator((data) => closeCashSessionSchema.parse(data))
   .handler(async ({ data }) => {
@@ -98,13 +68,10 @@ export const closeCashSession = createServerFn({ method: 'POST' })
     const closedSession = await db.transaction(async (tx) => {
       const openSession = await tx.query.cashRegisterSessions.findFirst({
         where: data.branchId
-          ? and(
-              eq(cashRegisterSessions.status, 'OPEN'),
-              eq(cashRegisterSessions.branchId, data.branchId),
-            )
+          ? and(eq(cashRegisterSessions.status, 'OPEN'), eq(cashRegisterSessions.branchId, data.branchId))
           : eq(cashRegisterSessions.status, 'OPEN'),
+        with: { openedBy: true },
       })
-
       if (!openSession) {
         throw new Error('No hay ninguna sesión de caja abierta.')
       }
@@ -117,19 +84,14 @@ export const closeCashSession = createServerFn({ method: 'POST' })
       let cashBalance = Number(openSession.openingAmount)
       for (const m of movements) {
         if (m.paymentMethod === 'CASH') {
-          if (m.movementType === 'INCOME') {
-            cashBalance += Number(m.amount)
-          } else {
-            cashBalance -= Number(m.amount)
-          }
+          cashBalance += m.movementType === 'INCOME' ? Number(m.amount) : -Number(m.amount)
         }
       }
 
       const expectedClosingAmount = cashBalance.toFixed(2)
-      const actualClosingAmount = Number(data.actualClosingAmount)
-      const difference = (actualClosingAmount - cashBalance).toFixed(2)
+      const difference = (Number(data.actualClosingAmount) - cashBalance).toFixed(2)
 
-      const [newClosedSession] = await tx
+      const [closed] = await tx
         .update(cashRegisterSessions)
         .set({
           closedByUserId: userSession.user.id,
@@ -142,8 +104,7 @@ export const closeCashSession = createServerFn({ method: 'POST' })
         })
         .where(eq(cashRegisterSessions.id, openSession.id))
         .returning()
-
-      return newClosedSession
+      return closed
     })
 
     createAuditLog({
@@ -161,13 +122,6 @@ export const closeCashSession = createServerFn({ method: 'POST' })
     return closedSession
   })
 
-const createManualMovementSchema = z.object({
-  amount: z.string(),
-  movementType: z.enum(['INCOME', 'EXPENSE']),
-  description: z.string(),
-  branchId: z.string().optional(),
-})
-
 export const createManualMovement = createServerFn({ method: 'POST' })
   .inputValidator((data) => createManualMovementSchema.parse(data))
   .handler(async ({ data }) => {
@@ -178,18 +132,14 @@ export const createManualMovement = createServerFn({ method: 'POST' })
     const movement = await db.transaction(async (tx) => {
       const openSession = await tx.query.cashRegisterSessions.findFirst({
         where: data.branchId
-          ? and(
-              eq(cashRegisterSessions.status, 'OPEN'),
-              eq(cashRegisterSessions.branchId, data.branchId),
-            )
+          ? and(eq(cashRegisterSessions.status, 'OPEN'), eq(cashRegisterSessions.branchId, data.branchId))
           : eq(cashRegisterSessions.status, 'OPEN'),
       })
-
       if (!openSession) {
         throw new Error('Debe abrir la caja antes de registrar un movimiento.')
       }
 
-      const [newMovement] = await tx
+      const [m] = await tx
         .insert(cashMovements)
         .values({
           cashSessionId: openSession.id,
@@ -200,8 +150,7 @@ export const createManualMovement = createServerFn({ method: 'POST' })
           description: data.description,
         })
         .returning()
-
-      return newMovement
+      return m
     })
 
     createAuditLog({
@@ -216,48 +165,40 @@ export const createManualMovement = createServerFn({ method: 'POST' })
     return movement
   })
 
-const getCashSessionDetailsSchema = z.object({
-  sessionId: z.string().uuid(),
-  branchId: z.string().optional(),
-})
-
 export const getCashSessionDetails = createServerFn({ method: 'GET' })
   .inputValidator((data) => getCashSessionDetailsSchema.parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
-    const session = await db.query.cashRegisterSessions.findFirst({
-      where: eq(cashRegisterSessions.id, data.sessionId),
-      with: {
-        openedBy: true,
-      },
-    })
-
-    const movements = await db.query.cashMovements.findMany({
-      where: eq(cashMovements.cashSessionId, data.sessionId),
-      orderBy: [desc(cashMovements.createdAt)],
-    })
-
-    return {
-      session,
-      movements,
-    }
+    const [session, movements] = await Promise.all([
+      repo.findSessionById(data.sessionId),
+      repo.findMovementsBySession(data.sessionId),
+    ])
+    return { session, movements }
   })
-
-const getCashSessionsListSchema = z.object({
-  branchId: z.string().optional(),
-})
 
 export const getCashSessionsList = createServerFn({ method: 'GET' })
   .inputValidator((data) => getCashSessionsListSchema.parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN'] } })
-    return await db.query.cashRegisterSessions.findMany({
-      where: data.branchId
-        ? eq(cashRegisterSessions.branchId, data.branchId)
-        : undefined,
-      orderBy: [desc(cashRegisterSessions.openedAt)],
-      with: {
-        openedBy: true,
-      },
+    return repo.findAllSessions(data.branchId)
+  })
+
+export const deleteCashSession = createServerFn({ method: 'POST' })
+  .inputValidator((data) => deleteCashSessionSchema.parse(data))
+  .handler(async ({ data }) => {
+    const user = await requireRole({ data: { roles: ['ADMIN'] } })
+
+    const session = await repo.findSessionById(data.sessionId)
+    if (!session) throw new Error('Sesión no encontrada')
+
+    await repo.deleteCashSession(data.sessionId)
+
+    createAuditLog({
+      ...getAuditContext(user),
+      action: 'DELETE',
+      entityType: 'CASH_REGISTER',
+      entityId: data.sessionId,
+      description: `Eliminó sesión de caja (${session.branchId || 'sin sucursal'})`,
+      details: { openingAmount: session.openingAmount, status: session.status },
     })
   })

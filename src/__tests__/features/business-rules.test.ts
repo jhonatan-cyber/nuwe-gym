@@ -7,7 +7,7 @@ import { cashMovements } from '#/shared/db/schema/cash-register.ts'
 import { eq, sql } from 'drizzle-orm'
 import {
   createMember,
-  createPlan,
+  createPackage,
   createSubscription,
   createCheckIn,
   createProduct,
@@ -26,7 +26,7 @@ beforeAll(async () => {
 describe('Check-In Business Rules', () => {
   it('should ALLOW check-in for member with active subscription', async () => {
     const member = await createMember()
-    const plan = await createPlan()
+    const plan = await createPackage()
     await createSubscription(member.id, plan.id, { status: 'ACTIVE' })
 
     const checkIn = await createCheckIn(member.id, { resultStatus: 'ALLOWED' })
@@ -35,7 +35,7 @@ describe('Check-In Business Rules', () => {
 
   it('should DENY_EXPIRED check-in when subscription is expired', async () => {
     const member = await createMember()
-    const plan = await createPlan()
+    const plan = await createPackage()
     await createSubscription(member.id, plan.id, {
       status: 'EXPIRED',
       endDate: new Date('2020-01-01'),
@@ -102,7 +102,7 @@ describe('FK Constraint Violations', () => {
 
 describe('FK RESTRICT Deletes', () => {
   it('should block deleting a sale with existing saleItems (FK RESTRICT)', async () => {
-    const p = await createProduct({ stockCurrent: 10 })
+    const p = await createProduct()
     const sale = await createSale([
       { productId: p.id, quantity: 1, unitPrice: '100' },
     ])
@@ -113,7 +113,7 @@ describe('FK RESTRICT Deletes', () => {
   })
 
   it('should block deleting a purchase with existing purchaseItems (FK RESTRICT)', async () => {
-    const p = await createProduct({ stockCurrent: 10 })
+    const p = await createProduct()
     const purchase = await createPurchase([
       { productId: p.id, quantity: 5, unitCost: '50' },
     ])

@@ -1,4 +1,5 @@
-import { Search, X, Check, RefreshCw } from 'lucide-react'
+import { useState, useCallback, useRef, useEffect } from 'react'
+import { Search, X, Check, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Input } from '#/shared/components/ui/input'
 import { Separator } from '#/shared/components/ui/separator'
 import { getInitials } from '#/shared/lib/formatters.ts'
@@ -14,6 +15,10 @@ interface WizardSidebarProps {
   selectedMember: MemberWithSubscriptions | null
   onSelectMember: (member: any) => void
   handleReset: () => void
+  searchPage: number
+  setSearchPage: (page: number) => void
+  searchTotalPages: number
+  searchTotal: number
 }
 
 export function WizardSidebar({
@@ -25,7 +30,29 @@ export function WizardSidebar({
   selectedMember,
   onSelectMember,
   handleReset,
+  searchPage,
+  setSearchPage,
+  searchTotalPages,
+  searchTotal,
 }: WizardSidebarProps) {
+  const [pageChanging, setPageChanging] = useState(false)
+  const pageTimerRef = useRef<ReturnType<typeof setTimeout>>(null)
+
+  const handleSearchPageChange = useCallback(
+    (page: number) => {
+      setPageChanging(true)
+      if (pageTimerRef.current) clearTimeout(pageTimerRef.current)
+      pageTimerRef.current = setTimeout(() => setPageChanging(false), 350)
+      setSearchPage(page)
+    },
+    [setSearchPage],
+  )
+
+  useEffect(() => {
+    return () => {
+      if (pageTimerRef.current) clearTimeout(pageTimerRef.current)
+    }
+  }, [])
   return (
     <div className="flex flex-col gap-5 z-10 w-full">
       <div>
@@ -156,61 +183,124 @@ export function WizardSidebar({
 
       {searchQuery.length >= 2 && (
         <div className="space-y-2.5">
-          <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground px-1">
-            Resultado de Busqueda:
-          </p>
-          <div className="space-y-2 max-h-[160px] overflow-y-auto pr-1 scrollbar-none">
-            {searchingMembers ? (
-              <div className="py-4 text-center text-xs text-muted-foreground flex items-center justify-center gap-1.5">
-                <RefreshCw className="size-3 animate-spin text-primary" />
-                <span>Buscando...</span>
+          <div className="flex items-center justify-between px-1">
+            <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
+              Resultado de Busqueda:
+            </p>
+            <p className="text-[9px] font-semibold text-muted-foreground/70">
+              {searchTotal} socio{searchTotal !== 1 ? 's' : ''}
+            </p>
+          </div>
+          <div className="relative">
+            {pageChanging && (
+              <div className="absolute top-0 left-0 right-0 z-10 h-0.5 bg-muted/30">
+                <div
+                  className="h-full bg-primary rounded-full"
+                  style={{ animation: 'pageLoadBar 0.35s ease-out' }}
+                />
               </div>
-            ) : memberSearchResults.length === 0 ? (
-              <p className="text-xs text-muted-foreground text-center py-4">
-                No se encontraron socios
-              </p>
-            ) : (
-              memberSearchResults.map((m) => {
-                const isSelected = selectedMember?.id === m.id
+            )}
+            <div
+              key={searchPage}
+              style={{ animation: 'fadeSlideIn 0.3s ease-out' }}
+            >
+              <div className="space-y-2 max-h-[160px] overflow-y-auto pr-1 scrollbar-none">
+                {searchingMembers ? (
+                  <div className="py-4 text-center text-xs text-muted-foreground flex items-center justify-center gap-1.5">
+                    <RefreshCw className="size-3 animate-spin text-primary" />
+                    <span>Buscando...</span>
+                  </div>
+                ) : memberSearchResults.length === 0 ? (
+                  <p className="text-xs text-muted-foreground text-center py-4">
+                    No se encontraron socios
+                  </p>
+                ) : (
+                  memberSearchResults.map((m) => {
+                    const isSelected = selectedMember?.id === m.id
+                    return (
+                      <div
+                        key={m.id}
+                        onClick={() => onSelectMember(m)}
+                        className={`p-2.5 rounded-xl border transition-all duration-300 flex items-center gap-3 cursor-pointer select-none ${
+                          isSelected
+                            ? 'bg-primary/5 border-primary shadow-sm'
+                            : 'bg-muted/30 border-border/10 hover:bg-muted hover:border-border/20'
+                        }`}
+                      >
+                        {m.photoUrl ? (
+                          <img
+                            src={m.photoUrl}
+                            alt={m.fullName}
+                            className="size-8 rounded-full object-cover shrink-0 border border-foreground/10 shadow-sm"
+                          />
+                        ) : (
+                          <div className="size-8 rounded-full bg-gradient-to-br from-foreground/10 to-foreground/5 border border-foreground/10 flex items-center justify-center font-bold text-[10px] uppercase shrink-0 text-foreground tracking-wider shadow-inner">
+                            {getInitials(m.fullName)}
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <p className="font-bold text-xs truncate leading-tight">
+                            {m.fullName}
+                          </p>
+                          <p className="text-[9px] font-semibold text-muted-foreground mt-0.5">
+                            CI: {m.documentNumber || '—'}
+                          </p>
+                        </div>
+                        {isSelected && (
+                          <div className="size-4.5 rounded-full bg-primary flex items-center justify-center shrink-0">
+                            <Check className="size-2.5 text-primary-foreground stroke-[3px]" />
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })
+                )}
+              </div>
+            </div>
+          </div>
+          {searchTotalPages > 1 && memberSearchResults.length > 0 && (
+            <div className="flex items-center justify-center gap-1 pt-1">
+              <button
+                type="button"
+                onClick={() =>
+                  handleSearchPageChange(Math.max(1, searchPage - 1))
+                }
+                disabled={searchPage === 1}
+                className="size-6 flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all disabled:opacity-30 disabled:pointer-events-none"
+              >
+                <ChevronLeft className="size-3.5" />
+              </button>
+              {Array.from({ length: searchTotalPages }).map((_, idx) => {
+                const p = idx + 1
                 return (
-                  <div
-                    key={m.id}
-                    onClick={() => onSelectMember(m)}
-                    className={`p-2.5 rounded-xl border transition-all duration-300 flex items-center gap-3 cursor-pointer select-none ${
-                      isSelected
-                        ? 'bg-primary/5 border-primary shadow-sm'
-                        : 'bg-muted/30 border-border/10 hover:bg-muted hover:border-border/20'
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => handleSearchPageChange(p)}
+                    className={`size-6 text-[10px] font-bold rounded-full transition-all ${
+                      searchPage === p
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                     }`}
                   >
-                    {m.photoUrl ? (
-                      <img
-                        src={m.photoUrl}
-                        alt={m.fullName}
-                        className="size-8 rounded-full object-cover shrink-0 border border-foreground/10 shadow-sm"
-                      />
-                    ) : (
-                      <div className="size-8 rounded-full bg-gradient-to-br from-foreground/10 to-foreground/5 border border-foreground/10 flex items-center justify-center font-bold text-[10px] uppercase shrink-0 text-foreground tracking-wider shadow-inner">
-                        {getInitials(m.fullName)}
-                      </div>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <p className="font-bold text-xs truncate leading-tight">
-                        {m.fullName}
-                      </p>
-                      <p className="text-[9px] font-semibold text-muted-foreground mt-0.5">
-                        CI: {m.documentNumber || '—'}
-                      </p>
-                    </div>
-                    {isSelected && (
-                      <div className="size-4.5 rounded-full bg-primary flex items-center justify-center shrink-0">
-                        <Check className="size-2.5 text-primary-foreground stroke-[3px]" />
-                      </div>
-                    )}
-                  </div>
+                    {p}
+                  </button>
                 )
-              })
-            )}
-          </div>
+              })}
+              <button
+                type="button"
+                onClick={() =>
+                  handleSearchPageChange(
+                    Math.min(searchTotalPages, searchPage + 1),
+                  )
+                }
+                disabled={searchPage === searchTotalPages}
+                className="size-6 flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all disabled:opacity-30 disabled:pointer-events-none"
+              >
+                <ChevronRight className="size-3.5" />
+              </button>
+            </div>
+          )}
         </div>
       )}
 

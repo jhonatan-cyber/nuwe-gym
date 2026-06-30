@@ -9,6 +9,7 @@ import { auditLogs } from '#/shared/db/schema/audit-logs.ts'
 import { eq, and, desc } from 'drizzle-orm'
 import { requireRole } from '#/shared/lib/server-utils.ts'
 import { z } from 'zod'
+import { optionalString } from '#/shared/lib/schemas.ts'
 
 export const getProfile = createServerFn({ method: 'GET' }).handler(
   async () => {
@@ -130,7 +131,7 @@ const updateProfileInfoSchema = z.object({
     .min(1, 'El nombre es obligatorio')
     .max(80, 'El nombre no puede superar los 80 caracteres'),
   phone: z.string().optional().or(z.literal('')),
-  address: z.string().optional(),
+  address: optionalString,
 })
 
 export const updateProfileInfo = createServerFn({ method: 'POST' })

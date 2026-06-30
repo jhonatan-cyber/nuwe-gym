@@ -1,18 +1,22 @@
-import { useState } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useState, useEffect } from 'react'
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import {
   ChevronRight,
   Edit2,
   Eye,
   List,
   Plus,
+  Trash2,
   Users,
   CheckCircle2,
   Clock,
   Package,
+  ToggleLeft,
+  ToggleRight,
 } from 'lucide-react'
-import { getMembers } from '#/features/members/server.ts'
+import { getMembers, deleteMember, toggleMemberStatus } from '#/features/members/server.ts'
 import { useDebounce } from '#/shared/hooks/use-debounce.ts'
+import { usePersistedState } from '#/shared/hooks/use-persisted-state.ts'
 import { useCurrentBranch } from '#/shared/hooks/use-current-branch.ts'
 import {
   isExpired,
@@ -33,12 +37,14 @@ import {
   TooltipContent,
   TooltipProvider,
 } from '#/shared/components/ui/tooltip'
+import { toast } from 'sonner'
 
 import { cn } from '#/shared/lib/utils.ts'
-import { MemberEnrollmentWizard } from '#/features/members/member-enrollment-wizard.tsx'
+import { MemberEnrollmentWizard } from '#/features/members/components/member-enrollment-wizard.tsx'
 import { ModuleLayout } from '#/shared/components/layout/module-layout.tsx'
 import { MemberEditDialog } from '#/features/members/components/member-edit-dialog.tsx'
 import { MemberDetailDialog } from '#/features/members/components/member-detail-dialog.tsx'
+import { ConfirmDialog } from '#/shared/components/ui/confirm-dialog'
 import { StatCard } from '#/shared/components/ui/stat-card'
 import { FilterBar } from '#/shared/components/ui/filter-bar'
 import { MemberAvatar } from '#/shared/components/ui/member-avatar'
@@ -61,6 +67,31 @@ export function MembersPage({ userRole }: MembersPageProps) {
   const [editingMember, setEditingMember] =
     useState<MemberWithSubscriptions | null>(null)
   const [viewMemberId, setViewMemberId] = useState<string | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<MemberWithSubscriptions | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = usePersistedState<number>(
+    'dataTablePageSize',
+    10,
+    (v) => ([5, 10, 20, 50].includes(v) ? v : 10),
+  )
+
+  const deleteMutation = useMutation({
+    mutationFn: (memberId: string) => deleteMember({ data: { memberId } }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['members'] })
+      setDeleteTarget(null)
+    },
+  })
+
+  const toggleStatusMutation = useMutation({
+    mutationFn: ({ memberId, status }: { memberId: string; status: 'ACTIVE' | 'INACTIVE' }) =>
+      toggleMemberStatus({ data: { memberId, status } }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['members'] })
+      toast.success('Estado del socio actualizado')
+    },
+    onError: () => toast.error('Error al actualizar el estado'),
+  })
 
   const debouncedSearch = useDebounce(search, 300)
   const { branchId } = useCurrentBranch()
@@ -68,7 +99,6 @@ export function MembersPage({ userRole }: MembersPageProps) {
   const { data: membersList = [], isLoading } = useQuery({
     queryKey: ['members', debouncedSearch, branchId],
     queryFn: () => getMembers({ data: { search: debouncedSearch, branchId: branchId ?? undefined } }),
-    enabled: !!branchId,
   })
 
   const totalMembers = membersList.length
@@ -95,6 +125,19 @@ export function MembersPage({ userRole }: MembersPageProps) {
     }
     return m.subscriptions.length === 0
   })
+
+  const totalFiltered = filteredMembers.length
+  const totalPages = Math.max(1, Math.ceil(totalFiltered / pageSize))
+  const safePage = Math.min(currentPage, totalPages)
+  const paginatedMembers = filteredMembers.slice(
+    (safePage - 1) * pageSize,
+    safePage * pageSize,
+  )
+
+  // Reset to page 1 when search or filter changes
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [debouncedSearch, statusFilter])
 
   if (activeView === 'enroll') {
     return (
@@ -237,15 +280,38 @@ export function MembersPage({ userRole }: MembersPageProps) {
                       )}
                     >
                       <Package className="size-2.5" />
-                      {sub.package?.name || sub.plan?.name || 'N/A'}
+                      {sub.package?.name || 'N/A'}
                     </Badge>
                   )
                 },
               },
+              ...(!branchId
+                ? [
+                    {
+                      key: 'sucursal' as string,
+                      label: 'Sucursal',
+                      render: (member: MemberWithSubscriptions) => (
+                        <span className="text-sm text-muted-foreground">
+                          {member.branch?.name ?? (
+                            <span className="text-xs italic text-muted-foreground/50">
+                              Sin sucursal
+                            </span>
+                          )}
+                        </span>
+                      ),
+                    },
+                  ]
+                : []),
               {
                 key: 'status',
-                label: '',
+                label: 'Estado',
                 render: (member: MemberWithSubscriptions) => {
+                  if (member.status === 'INACTIVE')
+                    return (
+                      <Badge variant="secondary" className="text-[10px] font-bold">
+                        Inactivo
+                      </Badge>
+                    )
                   const sub = getActiveSubscription(member)
                   const expired = sub && isExpired(sub.endDate)
                   if (!sub) return null
@@ -273,48 +339,108 @@ export function MembersPage({ userRole }: MembersPageProps) {
                       key: 'actions' as string,
                       label: '',
                       className: 'text-right',
-                      render: (member: MemberWithSubscriptions) => (
-                        <div className="flex justify-end gap-0.5">
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon-xs"
-                                onClick={() => setViewMemberId(member.id)}
-                              >
-                                <Eye className="size-3.5" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent side="bottom">
-                              <p>Ver detalle</p>
-                            </TooltipContent>
-                          </Tooltip>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon-xs"
-                                onClick={() => setEditingMember(member)}
-                              >
-                                <Edit2 className="size-3.5" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent side="bottom">
-                              <p>Editar</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </div>
-                      ),
+                      render: (member: MemberWithSubscriptions) => {
+                        const isActive = member.status === 'ACTIVE'
+                        return (
+                          <div className="flex justify-end gap-0.5">
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon-xs"
+                                  className="text-blue-500 hover:text-blue-600 hover:bg-blue-500/10"
+                                  onClick={() => setViewMemberId(member.id)}
+                                >
+                                  <Eye className="size-3.5" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent side="bottom">
+                                <p>Ver detalle</p>
+                              </TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon-xs"
+                                  className="text-amber-500 hover:text-amber-600 hover:bg-amber-500/10"
+                                  onClick={() => setEditingMember(member)}
+                                >
+                                  <Edit2 className="size-3.5" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent side="bottom">
+                                <p>Editar</p>
+                              </TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon-xs"
+                                  className={cn(
+                                    isActive
+                                      ? 'text-amber-500 hover:text-amber-600 hover:bg-amber-500/10'
+                                      : 'text-emerald-500 hover:text-emerald-600 hover:bg-emerald-500/10',
+                                  )}
+                                  onClick={() =>
+                                    toggleStatusMutation.mutate({
+                                      memberId: member.id,
+                                      status: isActive ? 'INACTIVE' : 'ACTIVE',
+                                    })
+                                  }
+                                  disabled={toggleStatusMutation.isPending}
+                                >
+                                  {isActive ? (
+                                    <ToggleLeft className="size-3.5" />
+                                  ) : (
+                                    <ToggleRight className="size-3.5" />
+                                  )}
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent side="bottom">
+                                <p>
+                                  {isActive ? 'Desactivar socio' : 'Activar socio'}
+                                </p>
+                              </TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon-xs"
+                                  className="text-red-500 hover:text-red-600 hover:bg-red-500/10"
+                                  onClick={() => setDeleteTarget(member)}
+                                >
+                                  <Trash2 className="size-3.5" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent side="bottom">
+                                <p>Eliminar</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </div>
+                        )
+                      },
                     },
                   ]
                 : []),
             ]}
-            data={filteredMembers}
+            data={paginatedMembers}
             isLoading={isLoading}
             loadingMessage="Cargando..."
             emptyMessage="No se encontraron socios."
             keyExtractor={(member: MemberWithSubscriptions) => member.id}
             skeletonRows={5}
+            currentPage={safePage}
+            pageSize={pageSize}
+            totalPages={totalPages}
+            totalFiltered={totalFiltered}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={(size) => {
+              setPageSize(size)
+              setCurrentPage(1)
+            }}
           />
         </TooltipProvider>
       </ModuleLayout>
@@ -334,6 +460,24 @@ export function MembersPage({ userRole }: MembersPageProps) {
         onOpenChange={(open) => {
           if (!open) setViewMemberId(null)
         }}
+      />
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title="Eliminar Socio"
+        description={
+          deleteTarget ? (
+            <span>
+              Vas a eliminar a <strong>{deleteTarget.fullName}</strong> (CI{' '}
+              {deleteTarget.documentNumber || '—'}). Se desactivará su acceso al
+              gimnasio. Los registros históricos se conservan. ¿Estás seguro?
+            </span>
+          ) : null
+        }
+        confirmText="Eliminar Socio"
+        isLoading={deleteMutation.isPending}
+        onConfirm={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
       />
     </>
   )

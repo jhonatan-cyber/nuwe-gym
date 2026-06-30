@@ -8,6 +8,7 @@ import { eq, desc, and, gte, lte } from 'drizzle-orm'
 import { requireRole } from '#/shared/lib/server-utils.ts'
 import { formatDate } from '#/shared/lib/formatters.ts'
 import { z } from 'zod'
+import { optionalDateString } from '#/shared/lib/schemas.ts'
 
 function csvEscape(value: string): string {
   if (value.includes(',') || value.includes('"') || value.includes('\n')) {
@@ -70,8 +71,8 @@ export const exportMembers = createServerFn({ method: 'GET' })
 
 const dateRangeSchema = z.object({
   format: z.enum(['csv']),
-  startDate: z.string().optional(),
-  endDate: z.string().optional(),
+  startDate: optionalDateString,
+  endDate: optionalDateString,
 })
 
 export const exportSales = createServerFn({ method: 'GET' })

@@ -1,60 +1,68 @@
 import { z } from 'zod'
+import { dayOfWeek, moneyString, optionalString, positiveInt, positiveIntMin1, requiredString, timeString, uuidField } from '#/shared/lib/schemas.ts'
 
 export const packageItemSchema = z.object({
-  description: z.string().min(1),
+  description: requiredString,
   sortOrder: z.number().optional(),
 })
 
 export const allowedDaySchema = z.object({
-  dayOfWeek: z.number().min(0).max(6),
-  startTime: z.string().optional(),
-  endTime: z.string().optional(),
+  dayOfWeek: dayOfWeek,
+  startTime: timeString.optional(),
+  endTime: timeString.optional(),
 })
 
 const renewalTypeSchema = z.enum(['MANUAL', 'AUTO']).default('MANUAL')
 
+export const benefitSchema = z.object({
+  benefitKey: requiredString,
+  enabled: z.boolean(),
+})
+
 export const createPackageSchema = z.object({
-  name: z.string().min(1),
-  description: z.string().optional(),
-  imageBase64: z.string().optional(),
-  price: z.string(),
-  durationDays: z.number().min(1),
+  name: requiredString,
+  description: optionalString,
+  imageBase64: optionalString,
+  price: moneyString,
+  durationDays: positiveIntMin1,
   type: z.enum(['PACKAGE', 'PROMOTION', 'SPECIAL']).default('PACKAGE'),
   renewalType: renewalTypeSchema,
-  graceDays: z.number().min(0).default(0),
-  maxFreezes: z.number().min(0).default(0),
-  maxFreezeDays: z.number().min(0).default(0),
-  allowedStartTime: z.string().optional(),
-  allowedEndTime: z.string().optional(),
-  dailyAccessLimit: z.number().min(0).optional(),
-  color: z.string().optional(),
+  graceDays: positiveInt.default(0),
+  maxFreezes: positiveInt.default(0),
+  maxFreezeDays: positiveInt.default(0),
+  allowedStartTime: timeString.optional(),
+  allowedEndTime: timeString.optional(),
+  dailyAccessLimit: positiveInt.optional(),
+  color: optionalString,
   items: z.array(packageItemSchema).default([]),
   allowedDays: z.array(allowedDaySchema).default([]),
+  benefits: z.array(benefitSchema).default([]),
 })
 
 export const updatePackageSchema = z.object({
-  id: z.string().uuid(),
-  name: z.string().min(1),
-  description: z.string().optional(),
-  imageBase64: z.string().optional(),
-  price: z.string(),
-  durationDays: z.number().min(1),
+  id: uuidField,
+  name: requiredString,
+  description: optionalString,
+  imageBase64: optionalString,
+  price: moneyString,
+  durationDays: positiveIntMin1,
   type: z.enum(['PACKAGE', 'PROMOTION', 'SPECIAL']),
   renewalType: renewalTypeSchema,
-  graceDays: z.number().min(0).default(0),
-  maxFreezes: z.number().min(0).default(0),
-  maxFreezeDays: z.number().min(0).default(0),
-  allowedStartTime: z.string().optional(),
-  allowedEndTime: z.string().optional(),
-  dailyAccessLimit: z.number().min(0).optional(),
-  color: z.string().optional(),
+  graceDays: positiveInt.default(0),
+  maxFreezes: positiveInt.default(0),
+  maxFreezeDays: positiveInt.default(0),
+  allowedStartTime: timeString.optional(),
+  allowedEndTime: timeString.optional(),
+  dailyAccessLimit: positiveInt.optional(),
+  color: optionalString,
   isActive: z.boolean(),
   items: z.array(packageItemSchema).default([]),
   allowedDays: z.array(allowedDaySchema).default([]),
+  benefits: z.array(benefitSchema).default([]),
 })
 
 export const deletePackageSchema = z.object({
-  id: z.string().uuid(),
+  id: uuidField,
 })
 
 export type CreatePackageInput = z.infer<typeof createPackageSchema>

@@ -1,6 +1,7 @@
 import { createServerFn } from '@tanstack/react-start'
 import { z } from 'zod'
-import { and, desc, gte, eq, count } from 'drizzle-orm'
+import { optionalDateString, optionalString, uuidField } from '#/shared/lib/schemas.ts'
+import { and, desc, gte, eq, count, SQL } from 'drizzle-orm'
 import { db } from '#/shared/db/index.ts'
 import { auditLogs } from '#/shared/db/schema/audit-logs.ts'
 import { requireRole, getSession } from '#/shared/lib/server-utils.ts'
@@ -20,11 +21,11 @@ export interface AuditLogRow {
 }
 
 const getAuditLogsSchema = z.object({
-  action: z.string().optional(),
-  entityType: z.string().optional(),
-  userId: z.string().optional(),
-  dateFrom: z.string().optional(),
-  dateTo: z.string().optional(),
+  action: optionalString,
+  entityType: optionalString,
+  userId: optionalString,
+  dateFrom: optionalDateString,
+  dateTo: optionalDateString,
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(25),
 })
@@ -41,7 +42,7 @@ export const getAuditLogs = createServerFn({ method: 'GET' })
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN'] } })
 
-    const conditions = []
+    const conditions: SQL[] = []
     if (data.action)
       conditions.push(
         eq(
@@ -85,7 +86,7 @@ export const getAuditLogs = createServerFn({ method: 'GET' })
   })
 
 export const getAuditLog = createServerFn({ method: 'GET' })
-  .inputValidator((id: unknown) => z.string().uuid().parse(id))
+  .inputValidator((id: unknown) => uuidField.parse(id))
   .handler(async ({ data: id }) => {
     await requireRole({ data: { roles: ['ADMIN'] } })
 

@@ -1,4 +1,4 @@
-import { AlertTriangle, Calendar, Clock, XCircle } from 'lucide-react'
+import { AlertTriangle, Calendar, Clock, XCircle, Eye } from 'lucide-react'
 import { formatCurrency, formatDate } from '#/shared/lib/formatters.ts'
 import { Badge } from '#/shared/components/ui/badge'
 import { Button } from '#/shared/components/ui/button'
@@ -24,6 +24,8 @@ interface SubscriptionCardProps {
   sub: Subscription
   isReadOnly: boolean
   onCancel: (id: string) => void
+  onViewDetails?: (sub: Subscription) => void
+  showBranch?: boolean
 }
 
 function StatusBadge({ status, endDate }: { status: string; endDate: Date }) {
@@ -57,6 +59,8 @@ export function SubscriptionCard({
   sub,
   isReadOnly,
   onCancel,
+  onViewDetails,
+  showBranch,
 }: SubscriptionCardProps) {
   const status = getSubscriptionStatus(sub)
   const { daysRemaining, daysExpired, percent, progressColor } =
@@ -87,6 +91,11 @@ export function SubscriptionCard({
             <p className="text-[10px] font-semibold text-muted-foreground mt-0.5">
               CI: {sub.member.documentNumber || '—'}
             </p>
+            {showBranch && sub.member.branch && (
+              <p className="text-[10px] font-semibold text-primary mt-0.5">
+                {sub.member.branch.name}
+              </p>
+            )}
           </div>
         </div>
         <div className="shrink-0">
@@ -102,14 +111,14 @@ export function SubscriptionCard({
             </p>
             <p
               className="text-xs font-black text-foreground mt-0.5 truncate"
-              title={sub.package?.name || sub.plan?.name || 'N/A'}
+              title={sub.package?.name || 'N/A'}
             >
-              {sub.package?.name || sub.plan?.name || 'N/A'}
+              {sub.package?.name || 'N/A'}
             </p>
           </div>
           <div className="text-right shrink-0">
             <p className="font-black text-sm text-primary">
-              {formatCurrency(sub.package?.price || sub.plan?.price || 0)}
+              {formatCurrency(sub.package?.price || 0)}
             </p>
           </div>
         </div>
@@ -164,46 +173,62 @@ export function SubscriptionCard({
         </div>
       </div>
 
-      {!isReadOnly && status === 'ACTIVE' && (
-        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center p-4 z-10">
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                variant="destructive"
-                className="rounded-full flex items-center gap-1.5 h-10 px-5 shadow-lg transform translate-y-2 group-hover:translate-y-0 transition-all duration-300 font-bold text-xs"
-              >
-                <XCircle className="size-4 animate-pulse" /> Cancelar
-                Suscripción
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent className="rounded-3xl">
-              <AlertDialogHeader>
-                <AlertDialogTitle className="font-black">
-                  Cancelar Suscripción
-                </AlertDialogTitle>
-                <AlertDialogDescription className="text-xs font-semibold leading-relaxed">
-                  ¿Está seguro de cancelar esta suscripción? El socio perderá el
-                  acceso inmediatamente.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter className="gap-2">
-                <AlertDialogCancel asChild>
-                  <Button className="rounded-full h-10 px-5 border">
-                    Volver
-                  </Button>
-                </AlertDialogCancel>
-                <AlertDialogAction asChild>
-                  <Button
-                    variant="destructive"
-                    onClick={() => onCancel(sub.id)}
-                    className="rounded-full h-10 px-5"
-                  >
-                    Confirmar Cancelación
-                  </Button>
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+      {!isReadOnly && (
+        <div className="grid transition-[grid-template-rows] duration-300 ease-in-out grid-rows-[0fr] group-hover:grid-rows-[1fr]">
+          <div className="overflow-hidden">
+            <div className="flex flex-col gap-1.5 pt-1">
+              {onViewDetails && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full rounded-full gap-1.5 h-8 text-xs font-semibold"
+                  onClick={() => onViewDetails(sub)}
+                >
+                  <Eye className="size-3.5" /> Ver Detalles
+                </Button>
+              )}
+              {status === 'ACTIVE' && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="w-full rounded-full gap-1.5 h-8 text-xs font-semibold"
+                    >
+                      <XCircle className="size-3.5" /> Cancelar Suscripción
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent className="rounded-3xl">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle className="font-black">
+                        Cancelar Suscripción
+                      </AlertDialogTitle>
+                      <AlertDialogDescription className="text-xs font-semibold leading-relaxed">
+                        ¿Está seguro de cancelar esta suscripción? El socio perderá el
+                        acceso inmediatamente.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="gap-2">
+                      <AlertDialogCancel asChild>
+                        <Button className="rounded-full h-10 px-5 border">
+                          Volver
+                        </Button>
+                      </AlertDialogCancel>
+                      <AlertDialogAction asChild>
+                        <Button
+                          variant="destructive"
+                          onClick={() => onCancel(sub.id)}
+                          className="rounded-full h-10 px-5"
+                        >
+                          Confirmar Cancelación
+                        </Button>
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>

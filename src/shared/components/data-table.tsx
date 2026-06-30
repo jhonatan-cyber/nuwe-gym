@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import type { ReactNode } from 'react'
 import {
   ArrowUpDown,
@@ -7,8 +7,8 @@ import {
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react'
+import { TableSkeleton } from '#/shared/components/table-skeleton.tsx'
 import { Card, CardContent } from '#/shared/components/ui/card.tsx'
-import { Skeleton } from '#/shared/components/ui/skeleton.tsx'
 import { ErrorState } from '#/shared/components/ui/error-state.tsx'
 import { EmptyState } from '#/shared/components/ui/empty-state.tsx'
 import { Button } from '#/shared/components/ui/button.tsx'
@@ -79,6 +79,25 @@ export function DataTable<T>({
 }: DataTableProps<T>) {
   const [sortKey, setSortKey] = useState<string | null>(null)
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
+  const [pageChanging, setPageChanging] = useState(false)
+  const pageTimerRef = useRef<ReturnType<typeof setTimeout>>(null)
+
+  const handlePageChange = useCallback(
+    (page: number) => {
+      setPageChanging(true)
+      if (pageTimerRef.current) clearTimeout(pageTimerRef.current)
+      pageTimerRef.current = setTimeout(() => setPageChanging(false), 350)
+      onPageChange?.(page)
+    },
+    [onPageChange],
+  )
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (pageTimerRef.current) clearTimeout(pageTimerRef.current)
+    }
+  }, [])
 
   const handleSort = (col: Column<T>) => {
     if (!col.sortable) return
@@ -117,98 +136,113 @@ export function DataTable<T>({
   }
 
   return (
-    <Card className="overflow-hidden">
-      {/* Table Header inside the Card */}
-      {!isLoading && !isError && data.length > 0 && currentPage !== undefined && pageSize !== undefined && totalFiltered !== undefined && onPageSizeChange !== undefined && (
-        <div className="flex justify-between items-center px-6 py-3 border-b dark:border-white/5 border-black/5 bg-muted/20">
-          <span className="text-xs text-muted-foreground font-medium">
-            Mostrando {totalFiltered === 0 ? 0 : (currentPage - 1) * pageSize + 1} a{' '}
-            {Math.min(currentPage * pageSize, totalFiltered)} de {totalFiltered} registros
-          </span>
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span>Por página:</span>
-            <Select
-              value={String(pageSize)}
-              onValueChange={(val) => {
-                onPageSizeChange(Number(val))
+    <>
+      <Card className="overflow-hidden relative">
+        {/* Page loading indicator */}
+        {pageChanging && (
+          <div className="absolute top-0 left-0 right-0 z-10 h-0.5 bg-muted/30">
+            <div
+              className="h-full bg-primary rounded-full"
+              style={{
+                animation: `pageLoadBar 0.35s ease-out`,
               }}
-            >
-              <SelectTrigger className="h-7 w-[70px] text-xs rounded-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="5">5</SelectItem>
-                <SelectItem value="10">10</SelectItem>
-                <SelectItem value="20">20</SelectItem>
-                <SelectItem value="50">50</SelectItem>
-              </SelectContent>
-            </Select>
+            />
           </div>
-        </div>
-      )}
-
-      <CardContent className="p-0">
-        {isError ? (
-          <ErrorState message={errorMessage} onRetry={onRetry} />
-        ) : isLoading ? (
-          skeletonRows > 0 ? (
-            <div className="p-6 space-y-3">
-              {Array.from({ length: skeletonRows }).map((_, i) => (
-                <Skeleton key={i} className="h-10 w-full" />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              {loadingMessage}
-            </div>
-          )
-        ) : data.length === 0 ? (
-          <EmptyState description={emptyMessage} />
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                {columns.map((col) => (
-                  <TableHead
-                    key={col.key}
-                    className={cn(
-                      'cursor-default',
-                      col.headerClassName,
-                      col.sortable && 'cursor-pointer select-none group',
-                    )}
-                    onClick={() => handleSort(col)}
-                  >
-                    <span className="inline-flex items-center">
-                      {col.label}
-                      {col.sortable && <SortIcon colKey={col.key} />}
-                    </span>
-                  </TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sortedData.map((item) => (
-                <TableRow key={keyExtractor(item)}>
-                  {columns.map((col) => (
-                    <TableCell key={col.key} className={col.className}>
-                      {col.render(item)}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
         )}
-      </CardContent>
+        <CardContent className="p-0">
+          {isError ? (
+            <ErrorState message={errorMessage} onRetry={onRetry} />
+          ) : isLoading ? (
+            skeletonRows > 0 ? (
+              <TableSkeleton rows={skeletonRows} columns={columns.length || 4} />
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                {loadingMessage}
+              </div>
+            )
+          ) : data.length === 0 ? (
+            <EmptyState description={emptyMessage} />
+          ) : (
+            <div
+              key={currentPage ?? 1}
+              style={{ animation: `fadeSlideIn 0.3s ease-out` }}
+            >
+              {/* Page size selector at the top inside the table */}
+              {currentPage !== undefined && pageSize !== undefined && totalFiltered !== undefined && onPageSizeChange !== undefined && (
+                <div className="flex justify-end items-center px-4 pt-3 pb-1">
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <span>Por página:</span>
+                    <Select
+                      value={String(pageSize)}
+                      onValueChange={(val) => {
+                        onPageSizeChange(Number(val))
+                      }}
+                    >
+                      <SelectTrigger className="h-7 w-[70px] text-xs rounded-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="5">5</SelectItem>
+                        <SelectItem value="10">10</SelectItem>
+                        <SelectItem value="20">20</SelectItem>
+                        <SelectItem value="50">50</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    {columns.map((col) => (
+                      <TableHead
+                        key={col.key}
+                        className={cn(
+                          'cursor-default',
+                          col.headerClassName,
+                          col.sortable && 'cursor-pointer select-none group',
+                        )}
+                        onClick={() => handleSort(col)}
+                      >
+                        <span className="inline-flex items-center">
+                          {col.label}
+                          {col.sortable && <SortIcon colKey={col.key} />}
+                        </span>
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {sortedData.map((item, idx) => (
+                    <TableRow
+                      key={keyExtractor(item)}
+                      style={{
+                        animation: `fadeSlideIn 0.35s ease-out both`,
+                        animationDelay: `${idx * 25}ms`,
+                      }}
+                    >
+                      {columns.map((col) => (
+                        <TableCell key={col.key} className={col.className}>
+                          {col.render(item)}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-      {/* Table Footer inside the Card */}
+      {/* Pagination outside the Card, centered */}
       {!isLoading && !isError && data.length > 0 && currentPage !== undefined && totalPages !== undefined && onPageChange !== undefined && totalPages > 1 && (
-        <div className="flex items-center justify-center gap-1 py-3 border-t dark:border-white/5 border-black/5 bg-muted/10">
+        <div className="flex items-center justify-center gap-1 mt-4">
           <Button
             variant="outline"
             size="icon"
             className="size-8 rounded-full"
-            onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+            onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
             disabled={currentPage === 1}
           >
             <ChevronLeft className="size-4" />
@@ -222,7 +256,7 @@ export function DataTable<T>({
                 variant={currentPage === pageNum ? 'default' : 'outline'}
                 size="sm"
                 className="size-8 text-xs font-bold rounded-full"
-                onClick={() => onPageChange(pageNum)}
+                onClick={() => handlePageChange(pageNum)}
               >
                 {pageNum}
               </Button>
@@ -233,13 +267,13 @@ export function DataTable<T>({
             variant="outline"
             size="icon"
             className="size-8 rounded-full"
-            onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+            onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
             disabled={currentPage === totalPages || totalPages === 0}
           >
             <ChevronRight className="size-4" />
           </Button>
         </div>
       )}
-    </Card>
+    </>
   )
 }

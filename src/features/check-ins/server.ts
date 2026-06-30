@@ -8,6 +8,7 @@ import { requireRole } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { z } from 'zod'
+import { branchIdField, optionalString, uuidField } from '#/shared/lib/schemas.ts'
 
 export type CheckInResultStatus =
   | 'ALLOWED'
@@ -120,7 +121,7 @@ export async function validateCheckIn(memberId: string): Promise<{
 }
 
 const getRecentCheckInsSchema = z.object({
-  branchId: z.string().optional(),
+  branchId: branchIdField,
 })
 
 export const getRecentCheckIns = createServerFn({ method: 'GET' })
@@ -144,9 +145,9 @@ export const getRecentCheckIns = createServerFn({ method: 'GET' })
   })
 
 const createCheckInSchema = z.object({
-  memberId: z.string().uuid(),
-  notes: z.string().optional(),
-  branchId: z.string().optional(),
+  memberId: uuidField,
+  notes: optionalString,
+  branchId: branchIdField,
 })
 
 export type CreateCheckInData = z.infer<typeof createCheckInSchema>

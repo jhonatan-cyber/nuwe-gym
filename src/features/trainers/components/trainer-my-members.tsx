@@ -1,5 +1,6 @@
 import { Phone, Mail } from 'lucide-react'
 import { DataTable } from '#/shared/components/data-table.tsx'
+import { TrainerAIRoutineDialog } from './trainer-ai-routine-dialog.tsx'
 
 interface TrainerMyMembersProps {
   members: any[]
@@ -50,6 +51,15 @@ export function TrainerMyMembers({ members }: TrainerMyMembersProps) {
               <Mail className="size-3 text-muted-foreground" />
               {member.email || '\u2014'}
             </span>
+          ),
+        },
+        {
+          key: 'actions',
+          label: 'Planificación',
+          render: (member: any) => (
+            <div className="flex justify-start pr-2">
+              <TrainerAIRoutineDialog member={member} />
+            </div>
           ),
         },
       ]}

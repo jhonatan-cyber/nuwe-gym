@@ -7,7 +7,7 @@ import { checkIns } from '#/shared/db/schema/check-ins.ts'
 import { eq, desc, ilike, or, and, gte, lte, sql } from 'drizzle-orm'
 import {
   createMember,
-  createPlan,
+  createPackage,
   createSubscription,
   createMembershipPayment as createPayment,
   createCheckIn,
@@ -88,7 +88,7 @@ describe('Members', () => {
 
   it('should get member by id with active subscriptions', async () => {
     const member = await createMember()
-    const plan = await createPlan()
+    const plan = await createPackage()
     await createSubscription(member.id, plan.id, { status: 'ACTIVE' })
     await createSubscription(member.id, plan.id, { status: 'EXPIRED' })
 
@@ -97,14 +97,14 @@ describe('Members', () => {
       with: {
         subscriptions: {
           where: eq(subscriptions.status, 'ACTIVE'),
-          with: { plan: true },
+          with: { package: true },
         },
       },
     })
     expect(found).toBeDefined()
     expect(found!.subscriptions.length).toBe(1)
     expect(found!.subscriptions[0].status).toBe('ACTIVE')
-    expect(found!.subscriptions[0].plan?.name).toBeDefined()
+    expect(found!.subscriptions[0].package?.name).toBeDefined()
   })
 
   it('should get all members ordered by creation date', async () => {
@@ -120,33 +120,33 @@ describe('Members', () => {
 describe('Subscriptions', () => {
   it('should create a subscription for a member', async () => {
     const member = await createMember()
-    const plan = await createPlan({ durationDays: 30, price: '15000.00' })
+    const plan = await createPackage({ durationDays: 30, price: '15000.00' })
     const sub = await createSubscription(member.id, plan.id)
     expect(sub.memberId).toBe(member.id)
-    expect(sub.planId).toBe(plan.id)
+    expect(sub.packageId).toBe(plan.id)
     expect(sub.status).toBe('ACTIVE')
   })
 
   it('should list active subscriptions with member and plan', async () => {
     const member = await createMember({ fullName: 'Suscripto Activo' })
-    const plan = await createPlan({ name: 'Premium' })
+    const plan = await createPackage({ name: 'Premium' })
     await createSubscription(member.id, plan.id, { status: 'ACTIVE' })
 
     const activeSubs = await db.query.subscriptions.findMany({
       where: eq(subscriptions.status, 'ACTIVE'),
-      with: { member: true, plan: true },
+      with: { member: true, package: true },
     })
     expect(activeSubs.length).toBeGreaterThanOrEqual(1)
     const found = activeSubs.find(
       (s) => s.member.fullName === 'Suscripto Activo',
     )
     expect(found).toBeDefined()
-    expect(found!.plan?.name).toBe('Premium')
+    expect(found!.package?.name).toBe('Premium')
   })
 
   it('should expire a subscription', async () => {
     const member = await createMember()
-    const plan = await createPlan()
+    const plan = await createPackage()
     const sub = await createSubscription(member.id, plan.id, {
       status: 'ACTIVE',
     })
@@ -164,7 +164,7 @@ describe('Subscriptions', () => {
 
   it('should find subscriptions ending within next 7 days', async () => {
     const member = await createMember()
-    const plan = await createPlan()
+    const plan = await createPackage()
     const nearEnd = new Date()
     nearEnd.setDate(nearEnd.getDate() + 3)
     const farEnd = new Date()
@@ -189,7 +189,7 @@ describe('Subscriptions', () => {
         gte(subscriptions.endDate, now),
         lte(subscriptions.endDate, weekLater),
       ),
-      with: { member: true, plan: true },
+      with: { member: true, package: true },
     })
     expect(endingSoon.length).toBeGreaterThanOrEqual(1)
     endingSoon.forEach((s) => {
@@ -202,7 +202,7 @@ describe('Subscriptions', () => {
 describe('Membership Payments', () => {
   it('should create a payment for a subscription', async () => {
     const member = await createMember()
-    const plan = await createPlan()
+    const plan = await createPackage()
     const sub = await createSubscription(member.id, plan.id)
     const payment = await createPayment(sub.id, member.id, {
       amount: '15000.00',
@@ -219,7 +219,7 @@ describe('Membership Payments', () => {
 
   it('should list payments with relations', async () => {
     const member = await createMember()
-    const plan = await createPlan({ name: 'Plan Test' })
+    const plan = await createPackage({ name: 'Plan Test' })
     const sub = await createSubscription(member.id, plan.id)
     await createPayment(sub.id, member.id, { paymentMethod: 'CASH' })
 
@@ -227,18 +227,18 @@ describe('Membership Payments', () => {
       where: eq(membershipPayments.memberId, member.id),
       with: {
         member: true,
-        subscription: { with: { plan: true } },
+        subscription: { with: { package: true } },
       },
     })
     expect(payments.length).toBeGreaterThanOrEqual(1)
     expect(payments[0].member.fullName).toBe(member.fullName)
-    expect(payments[0].subscription.plan?.name).toBe('Plan Test')
+    expect(payments[0].subscription.package?.name).toBe('Plan Test')
     expect(payments[0].paymentMethod).toBe('CASH')
   })
 
   it('should verify payment amount and method are stored correctly', async () => {
     const member = await createMember()
-    const plan = await createPlan()
+    const plan = await createPackage()
     const sub = await createSubscription(member.id, plan.id)
     await createPayment(sub.id, member.id, {
       amount: '38000.00',

@@ -1,4 +1,4 @@
-import { Check, List, Plus, X } from 'lucide-react'
+import { Check, List, Lock, Plus, X } from 'lucide-react'
 import { Button } from '#/shared/components/ui/button'
 import {
   ToggleGroup,
@@ -31,6 +31,7 @@ const STEPS = [
 
 interface WizardSidebarProps {
   step: number
+  memberCreated?: boolean
   variant?: 'dialog' | 'inline'
   onClose: () => void
   insideLayout?: boolean
@@ -38,6 +39,7 @@ interface WizardSidebarProps {
 
 export function WizardSidebar({
   step,
+  memberCreated = false,
   variant = 'dialog',
   onClose,
   insideLayout = false,
@@ -89,6 +91,7 @@ export function WizardSidebar({
         {STEPS.map((s, idx) => {
           const isActive = step === s.number
           const isCompleted = step > s.number
+          const isLocked = isCompleted && memberCreated
           return (
             <div
               key={s.number}
@@ -107,12 +110,16 @@ export function WizardSidebar({
                 className={`relative z-10 flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-black transition-all duration-300 border-2 ${
                   isActive
                     ? 'bg-foreground border-foreground text-primary-foreground shadow-lg shadow-foreground/10 scale-105'
-                    : isCompleted
-                      ? 'bg-foreground/10 border-foreground/20 text-foreground'
-                      : 'bg-black/2 dark:bg-white/2 text-muted-foreground/60 dark:border-white/10 border-black/10'
+                    : isLocked
+                      ? 'bg-muted border-muted-foreground/20 text-muted-foreground/40'
+                      : isCompleted
+                        ? 'bg-foreground/10 border-foreground/20 text-foreground'
+                        : 'bg-black/2 dark:bg-white/2 text-muted-foreground/60 dark:border-white/10 border-black/10'
                 }`}
               >
-                {isCompleted ? (
+                {isLocked ? (
+                  <Lock className="size-3.5" />
+                ) : isCompleted ? (
                   <Check className="size-4 stroke-3" />
                 ) : (
                   <span className="text-sm font-bold">{s.number}</span>
@@ -124,9 +131,11 @@ export function WizardSidebar({
                     className={`text-sm font-bold leading-tight transition-colors duration-300 ${
                       isActive
                         ? 'text-foreground font-black'
-                        : isCompleted
-                          ? 'text-muted-foreground hover:text-foreground'
-                          : 'text-muted-foreground/60'
+                        : isLocked
+                          ? 'text-muted-foreground/40'
+                          : isCompleted
+                            ? 'text-muted-foreground'
+                            : 'text-muted-foreground/60'
                     }`}
                   >
                     {s.label}

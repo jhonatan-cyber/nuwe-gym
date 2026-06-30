@@ -9,6 +9,7 @@ import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { auth } from '#/shared/lib/auth.ts'
 import { z } from 'zod'
+import { optionalString } from '#/shared/lib/schemas.ts'
 
 export const getUsers = createServerFn({ method: 'GET' }).handler(async () => {
   await requireRole({ data: { roles: ['ADMIN'] } })
@@ -82,7 +83,7 @@ const createStaffUserSchema = z.object({
     .regex(/^\+?[\d\s-]+$/, 'Teléfono inválido')
     .optional()
     .or(z.literal('')),
-  address: z.string().optional(),
+  address: optionalString,
   email: z.string().email('Email inválido'),
   role: z.enum(['ADMIN', 'RECEPTIONIST', 'TRAINER']),
 })
@@ -165,7 +166,7 @@ const updateUserSchema = z.object({
     .regex(/^\+?[\d\s-]+$/, 'Teléfono inválido')
     .optional()
     .or(z.literal('')),
-  address: z.string().optional(),
+  address: optionalString,
 })
 
 export const updateUser = createServerFn({ method: 'POST' })

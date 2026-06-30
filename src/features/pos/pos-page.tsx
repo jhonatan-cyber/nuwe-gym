@@ -9,6 +9,8 @@ import {
   Tag,
   Landmark,
   Check,
+  AlertTriangle,
+  Package,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { getProducts, getCategories } from '#/features/products/server.ts'
@@ -42,6 +44,13 @@ interface CartItem {
   salePrice: string
   quantity: number
   stockCurrent: number
+}
+
+function getStockLevel(stockCurrent: number, stockMinimum: number) {
+  if (stockCurrent <= 0) return { level: 'out' as const, label: 'Sin stock', color: 'bg-red-500', textColor: 'text-red-600', bgBadge: 'bg-red-500/10' }
+  if (stockCurrent <= stockMinimum * 0.5 && stockMinimum > 0) return { level: 'critical' as const, label: 'Crítico', color: 'bg-red-500', textColor: 'text-red-600', bgBadge: 'bg-red-500/10' }
+  if (stockCurrent <= stockMinimum) return { level: 'low' as const, label: 'Bajo', color: 'bg-amber-500', textColor: 'text-amber-600', bgBadge: 'bg-amber-500/10' }
+  return { level: 'ok' as const, label: 'Ok', color: 'bg-emerald-500', textColor: 'text-emerald-600', bgBadge: 'bg-emerald-500/10' }
 }
 
 export function POSPage() {
@@ -89,7 +98,7 @@ export function POSPage() {
 
   const { data: categories = [] } = useQuery({
     queryKey: ['product-categories-active'],
-    queryFn: () => getCategories(),
+    queryFn: () => getCategories({ data: {} }),
   })
 
   const { data: products = [], isLoading: isLoadingProducts } = useQuery({
@@ -113,7 +122,7 @@ export function POSPage() {
 
   const saleMutation = useMutation({
     mutationFn: createSale,
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ['products'] })
       queryClient.invalidateQueries({ queryKey: ['cash-session-details'] })
       setLastCompletedSale(data)
@@ -329,6 +338,7 @@ export function POSPage() {
                 {lastProductId && (
                   <POSRecommendations
                     currentProductId={lastProductId}
+                    memberId={selectedMemberId || null}
                     onAddToCart={(id) => {
                       const prod = products.find((p: any) => p.id === id)
                       if (prod) addToCart(prod)
@@ -340,17 +350,42 @@ export function POSPage() {
                   .filter((p: (typeof products)[number]) => p.isActive)
                   .map((prod: (typeof products)[number]) => {
                     const isOutOfStock = prod.stockCurrent <= 0
+                    const stockInfo = getStockLevel(prod.stockCurrent, prod.stockMinimum)
+                    const stockPercent = prod.stockMinimum > 0
+                      ? Math.min(100, Math.round((prod.stockCurrent / prod.stockMinimum) * 100))
+                      : prod.stockCurrent > 0 ? 100 : 0
                     return (
                       <Card
                         key={prod.id}
                         onClick={() => !isOutOfStock && addToCart(prod)}
-                        className={`cursor-pointer overflow-hidden border transition-all duration-200 hover:shadow-md hover:border-primary/40 flex flex-col justify-between ${
+                        className={`relative cursor-pointer overflow-hidden border transition-all duration-200 hover:shadow-md hover:border-primary/40 flex flex-col justify-between group ${
                           isOutOfStock
-                            ? 'opacity-60 cursor-not-allowed bg-muted/40'
-                            : ''
+                            ? 'opacity-50 cursor-not-allowed'
+                            : stockInfo.level === 'critical'
+                              ? 'ring-1 ring-red-500/20'
+                              : stockInfo.level === 'low'
+                                ? 'ring-1 ring-amber-500/20'
+                                : ''
                         }`}
                       >
+                        {/* Stock level top bar */}
+                        <div className="relative">
+                          <div className={`h-1 w-full ${stockInfo.level === 'out' ? 'bg-red-200' : stockInfo.level === 'critical' ? 'bg-red-200' : stockInfo.level === 'low' ? 'bg-amber-200' : 'bg-emerald-200'}`}>
+                            <div
+                              className={`h-full transition-all duration-500 ${stockInfo.color}`}
+                              style={{ width: `${isOutOfStock ? 0 : Math.max(stockPercent, 5)}%` }}
+                            />
+                          </div>
+                        </div>
+
                         <div className="p-3">
+                          {isOutOfStock && (
+                            <div className="absolute top-2 right-2 z-10">
+                              <Badge className="bg-red-500/90 text-white border-none text-[9px] font-bold py-0.5 px-1.5">
+                                AGOTADO
+                              </Badge>
+                            </div>
+                          )}
                           {prod.imageUrl ? (
                             <div className="aspect-square w-full rounded-md bg-muted overflow-hidden mb-2">
                               <img
@@ -360,22 +395,54 @@ export function POSPage() {
                               />
                             </div>
                           ) : (
-                            <div className="aspect-square w-full rounded-md bg-primary/5 text-primary flex items-center justify-center mb-2 text-2xl font-bold">
+                            <div className={`aspect-square w-full rounded-md mb-2 flex items-center justify-center text-2xl font-bold ${
+                              isOutOfStock
+                                ? 'bg-red-500/5 text-red-300'
+                                : stockInfo.level === 'critical'
+                                  ? 'bg-red-500/5 text-red-400'
+                                  : 'bg-primary/5 text-primary'
+                            }`}>
                               {prod.name.substring(0, 2).toUpperCase()}
                             </div>
                           )}
-                          <h3 className="font-semibold text-sm line-clamp-2 min-h-8 mb-1 leading-snug">
+                          <h3 className="font-semibold text-sm line-clamp-2 min-h-8 mb-1.5 leading-snug">
                             {prod.name}
                           </h3>
-                          <div className="flex items-center justify-between text-xs text-muted-foreground">
-                            <span>Stock: {prod.stockCurrent}</span>
-                            {prod.stockCurrent <= prod.stockMinimum && (
-                              <Badge
-                                variant="destructive"
-                                className="py-0 px-1 text-[10px] bg-amber-500/10 text-amber-600 border-none font-bold"
-                              >
-                                Bajo
-                              </Badge>
+                          {/* Stock indicator */}
+                          <div className="space-y-1.5">
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="text-muted-foreground font-bold">Stock</span>
+                              <div className="flex items-center gap-1">
+                                <span className={`font-bold tabular-nums ${isOutOfStock ? 'text-red-500' : stockInfo.textColor}`}>
+                                  {prod.stockCurrent}
+                                </span>
+                                <span className="text-muted-foreground/50 text-[10px]">
+                                  / {prod.stockMinimum} min
+                                </span>
+                              </div>
+                            </div>
+                            {/* Progress bar */}
+                            <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                              <div
+                                className={`h-full rounded-full transition-all duration-500 ${
+                                  isOutOfStock
+                                    ? 'bg-red-300'
+                                    : stockInfo.level === 'critical'
+                                      ? 'bg-red-500'
+                                      : stockInfo.level === 'low'
+                                        ? 'bg-amber-500'
+                                        : 'bg-emerald-500'
+                                }`}
+                                style={{ width: `${isOutOfStock ? 0 : Math.max(stockPercent, 5)}%` }}
+                              />
+                            </div>
+                            {!isOutOfStock && stockInfo.level !== 'ok' && (
+                              <div className="flex items-center gap-1">
+                                <AlertTriangle className={`size-3 ${stockInfo.textColor}`} />
+                                <span className={`text-[10px] font-bold ${stockInfo.textColor}`}>
+                                  {stockInfo.label}
+                                </span>
+                              </div>
                             )}
                           </div>
                         </div>
@@ -383,14 +450,18 @@ export function POSPage() {
                           <span className="font-bold text-primary text-base">
                             ${prod.salePrice}
                           </span>
-                          {!isOutOfStock && (
+                          {!isOutOfStock ? (
                             <Button
                               size="icon"
                               variant="ghost"
-                              className="size-7 rounded-full bg-primary/10 text-primary hover:bg-primary/20"
+                              className="size-7 rounded-full bg-primary/10 text-primary hover:bg-primary/20 group-hover:bg-primary group-hover:text-primary-foreground transition-all"
                             >
                               <Plus className="size-4" />
                             </Button>
+                          ) : (
+                            <div className="size-7 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center">
+                              <Package className="size-3.5" />
+                            </div>
                           )}
                         </div>
                       </Card>
@@ -418,52 +489,66 @@ export function POSPage() {
               />
             ) : (
               <div className="space-y-3">
-                {cart.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex justify-between items-center border-b pb-2 last:border-0 last:pb-0"
-                  >
-                    <div className="flex-1 min-w-0 pr-2">
-                      <h4 className="text-sm font-semibold truncate leading-tight">
-                        {item.name}
-                      </h4>
-                      <span className="text-xs text-muted-foreground block">
-                        ${item.salePrice} c/u
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center border rounded-md h-8 bg-background">
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="size-7 rounded-none"
-                          onClick={() => updateQuantity(item.id, -1)}
-                        >
-                          <Minus className="size-3" />
-                        </Button>
-                        <span className="w-8 text-center text-sm font-semibold">
-                          {item.quantity}
+                {cart.map((item) => {
+                  const remaining = item.stockCurrent - item.quantity
+                  const isLowStock = remaining <= item.stockCurrent * 0.2 || remaining <= 2
+                  return (
+                    <div
+                      key={item.id}
+                      className={`flex justify-between items-center border-b pb-2 last:border-0 last:pb-0 ${isLowStock ? 'bg-red-500/5 -mx-2 px-2 rounded-lg' : ''}`}
+                    >
+                      <div className="flex-1 min-w-0 pr-2">
+                        <div className="flex items-center gap-1.5">
+                          <h4 className="text-sm font-semibold truncate leading-tight">
+                            {item.name}
+                          </h4>
+                          {isLowStock && (
+                            <AlertTriangle className="size-3.5 text-amber-500 shrink-0" />
+                          )}
+                        </div>
+                        <span className="text-xs text-muted-foreground block">
+                          ${item.salePrice} c/u
                         </span>
+                        {isLowStock && (
+                          <span className="text-[10px] font-bold text-amber-600 block mt-0.5">
+                            Quedan {remaining} uds. disponibles
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center border rounded-md h-8 bg-background">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="size-7 rounded-none"
+                            onClick={() => updateQuantity(item.id, -1)}
+                          >
+                            <Minus className="size-3" />
+                          </Button>
+                          <span className="w-8 text-center text-sm font-semibold">
+                            {item.quantity}
+                          </span>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="size-7 rounded-none"
+                            onClick={() => updateQuantity(item.id, 1)}
+                          >
+                            <Plus className="size-3" />
+                          </Button>
+                        </div>
                         <Button
                           size="icon"
                           variant="ghost"
-                          className="size-7 rounded-none"
-                          onClick={() => updateQuantity(item.id, 1)}
+                          className="text-red-500 hover:text-red-600 size-8"
+                          onClick={() => removeFromCart(item.id)}
                         >
-                          <Plus className="size-3" />
+                          <Trash2 className="size-4" />
                         </Button>
                       </div>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="text-red-500 hover:text-red-600 size-8"
-                        onClick={() => removeFromCart(item.id)}
-                      >
-                        <Trash2 className="size-4" />
-                      </Button>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
           </CardContent>

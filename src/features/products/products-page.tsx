@@ -61,8 +61,6 @@ export function ProductsPage() {
   const [categoryId, setCategoryId] = useState('')
   const [purchasePrice, setPurchasePrice] = useState('')
   const [salePrice, setSalePrice] = useState('')
-  const [stockCurrent, setStockCurrent] = useState('0')
-  const [stockMinimum, setStockMinimum] = useState('0')
   const [imageUrl, setImageUrl] = useState('')
 
   const [adjustQty, setAdjustQty] = useState('1')
@@ -73,10 +71,12 @@ export function ProductsPage() {
 
   const { data: categories = [] } = useQuery({
     queryKey: ['product-categories-active'],
-    queryFn: () => getCategories(),
+    queryFn: () => getCategories({ data: {} }),
   })
 
   const { branchId } = useCurrentBranch()
+  // stockCurrent/stockMinimum vienen de getProducts (branch-aware)
+  // y se muestran en la tabla, pero no se editan desde esta página
 
   const { data: productsList = [], isLoading } = useQuery({
     queryKey: ['products', branchId, searchTerm, categoryIdFilter],
@@ -84,21 +84,27 @@ export function ProductsPage() {
       getProducts({
         data: {
           search: searchTerm,
-          categoryId: categoryIdFilter ? Number(categoryIdFilter) : undefined,
+          categoryId: categoryIdFilter || undefined,
           branchId,
         },
       }),
-    enabled: !!branchId,
   })
 
   const [selectedProduct, setSelectedProduct] = useState<
     (typeof productsList)[number] | null
   >(null)
 
+  const invalidateProductQueries = () => {
+    queryClient.invalidateQueries({ queryKey: ['products'] })
+    queryClient.invalidateQueries({ queryKey: ['products-all-count'] })
+    queryClient.invalidateQueries({ queryKey: ['product-categories-active'] })
+    queryClient.invalidateQueries({ queryKey: ['product-categories'] })
+  }
+
   const createMutation = useMutation({
     mutationFn: createProduct,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['products'] })
+      invalidateProductQueries()
       toast.success('Producto creado con éxito')
       closeProductModal()
     },
@@ -108,7 +114,7 @@ export function ProductsPage() {
   const updateMutation = useMutation({
     mutationFn: updateProduct,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['products'] })
+      invalidateProductQueries()
       toast.success('Producto actualizado con éxito')
       closeProductModal()
     },
@@ -119,6 +125,8 @@ export function ProductsPage() {
     mutationFn: adjustStock,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] })
+      queryClient.invalidateQueries({ queryKey: ['products-all-count'] })
+      queryClient.invalidateQueries({ queryKey: ['inventory-movements'] })
       toast.success('Stock ajustado con éxito')
       closeAdjustModal()
     },
@@ -134,8 +142,6 @@ export function ProductsPage() {
     setCategoryId(categories[0]?.id?.toString() || '')
     setPurchasePrice('0')
     setSalePrice('0')
-    setStockCurrent('0')
-    setStockMinimum('0')
     setImageUrl('')
     setIsProductModalOpen(true)
   }
@@ -149,8 +155,6 @@ export function ProductsPage() {
     setCategoryId(prod.categoryId.toString())
     setPurchasePrice(prod.purchasePrice)
     setSalePrice(prod.salePrice)
-    setStockCurrent(prod.stockCurrent.toString())
-    setStockMinimum(prod.stockMinimum.toString())
     setImageUrl(prod.imageUrl || '')
     setIsProductModalOpen(true)
   }
@@ -182,13 +186,10 @@ export function ProductsPage() {
       barcode,
       name,
       description,
-      categoryId: Number(categoryId),
+      categoryId,
       purchasePrice,
       salePrice,
-      stockCurrent: Number(stockCurrent),
-      stockMinimum: Number(stockMinimum),
       imageUrl,
-      branchId,
     }
 
     if (selectedProduct) {
@@ -214,6 +215,7 @@ export function ProductsPage() {
         productId: selectedProduct.id,
         quantity: adjustType === 'LOSS' ? -quantity : quantity,
         movementType: adjustType,
+        branchId,
         notes: adjustNotes,
       },
     })
@@ -488,36 +490,9 @@ export function ProductsPage() {
                 />
               </div>
             </div>
-            {!selectedProduct && (
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-sm font-medium">Stock Inicial</label>
-                  <Input
-                    type="number"
-                    value={stockCurrent}
-                    onChange={(e) => setStockCurrent(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-sm font-medium">Stock Mínimo</label>
-                  <Input
-                    type="number"
-                    value={stockMinimum}
-                    onChange={(e) => setStockMinimum(e.target.value)}
-                  />
-                </div>
-              </div>
-            )}
-            {selectedProduct && (
-              <div className="space-y-1">
-                <label className="text-sm font-medium">Stock Mínimo</label>
-                <Input
-                  type="number"
-                  value={stockMinimum}
-                  onChange={(e) => setStockMinimum(e.target.value)}
-                />
-              </div>
-            )}
+            <div className="text-xs text-muted-foreground p-3 bg-muted/20 rounded-md">
+              El stock se administra por sucursal desde la sección <strong>Inventario</strong>.
+            </div>
             <div className="space-y-1">
               <label className="text-sm font-medium">URL de Imagen</label>
               <Input

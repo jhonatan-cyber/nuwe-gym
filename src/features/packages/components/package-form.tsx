@@ -2,10 +2,8 @@ import {
   Plus,
   ChevronRight,
   Edit2,
-  Trash2,
   X,
   ImagePlus,
-  GripVertical,
   Zap,
   List,
 } from 'lucide-react'
@@ -26,6 +24,7 @@ import {
   DAY_LABELS,
   DAY_LABELS_FULL,
 } from '#/features/packages/types.ts'
+import { BENEFIT_CATALOG } from '#/features/packages/types.ts'
 import type { PackageType } from '#/features/packages/types.ts'
 import { usePackageForm } from '#/features/packages/hooks/use-package-form.ts'
 
@@ -47,10 +46,8 @@ export function PackageForm({ editingPackageId, onBack }: PackageFormProps) {
     handleDragOver,
     handleDragLeave,
     handleDrop,
-    addItem,
-    removeItem,
-    updateItem,
     toggleDay,
+    toggleBenefit,
     updateDayTime,
   } = usePackageForm({ editingPackageId, onBack })
 
@@ -501,55 +498,38 @@ export function PackageForm({ editingPackageId, onBack }: PackageFormProps) {
         </div>
 
         <div className="grid gap-3">
-          <div className="flex items-center justify-between">
-            <Label className="text-xs font-bold">Beneficios / Incluye</Label>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={addItem}
-              className="text-xs font-bold h-7"
-            >
-              <Plus className="size-3 mr-1" /> Agregar
-            </Button>
+          <Label className="text-xs font-bold">Beneficios del Plan</Label>
+          <p className="text-[10px] text-muted-foreground -mt-2">
+            Activá los beneficios incluidos en este plan.
+          </p>
+          <div className="grid grid-cols-2 gap-1.5 max-h-[300px] overflow-y-auto pr-1">
+            {BENEFIT_CATALOG.map((benefit) => {
+              const isEnabled = formData.benefits.find(
+                (b) => b.benefitKey === benefit.key,
+              )?.enabled ?? false
+              return (
+                <button
+                  key={benefit.key}
+                  type="button"
+                  onClick={() => toggleBenefit(benefit.key as any)}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all text-left ${
+                    isEnabled
+                      ? 'bg-primary text-primary-foreground shadow-md shadow-primary/20'
+                      : 'dark:bg-white/5 bg-black/5 text-muted-foreground hover:dark:bg-white/10 hover:bg-black/10'
+                  }`}
+                >
+                  <span className={`size-2 rounded-full shrink-0 ${
+                    isEnabled ? 'bg-current' : 'bg-muted-foreground/30'
+                  }`} />
+                  {benefit.label}
+                </button>
+              )
+            })}
           </div>
-          {formData.items.length === 0 ? (
-            <div className="text-center py-6 rounded-2xl border border-dashed dark:border-white/10 border-black/10">
-              <p className="text-xs text-muted-foreground">
-                Sin beneficios configurados
-              </p>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={addItem}
-                className="text-xs font-bold mt-2 h-7"
-              >
-                <Plus className="size-3 mr-1" /> Agregar beneficio
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {formData.items.map((item, idx) => (
-                <div key={idx} className="flex items-center gap-2">
-                  <GripVertical className="size-4 text-muted-foreground/40 shrink-0" />
-                  <Input
-                    value={item.description}
-                    onChange={(e) => updateItem(idx, e.target.value)}
-                    placeholder={`Beneficio ${idx + 1}`}
-                    className="text-sm"
-                  />
-                  <Button
-                    size="icon-sm"
-                    variant="ghost"
-                    onClick={() => removeItem(idx)}
-                    className="shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                  >
-                    <Trash2 className="size-3.5" />
-                  </Button>
-                </div>
-              ))}
-            </div>
+          {formData.benefits.filter((b) => b.enabled).length === 0 && (
+            <p className="text-[10px] text-destructive font-semibold">
+              Seleccioná al menos un beneficio.
+            </p>
           )}
         </div>
 

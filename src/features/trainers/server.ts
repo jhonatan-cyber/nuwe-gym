@@ -11,10 +11,11 @@ import { requireRole } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { z } from 'zod'
+import { branchIdField, dayOfWeek, optionalString, requiredString, uuidField } from '#/shared/lib/schemas.ts'
 
 export const getTrainers = createServerFn({ method: 'GET' })
   .inputValidator(
-    z.object({ branchId: z.string().uuid().optional() }).optional(),
+    z.object({ branchId: branchIdField }).optional(),
   )
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
@@ -39,7 +40,7 @@ export const getTrainers = createServerFn({ method: 'GET' })
 
 export const getTrainer = createServerFn({ method: 'GET' })
   .inputValidator((data: unknown) =>
-    z.object({ id: z.string().uuid() }).parse(data),
+    z.object({ id: uuidField }).parse(data),
   )
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
@@ -57,15 +58,15 @@ export const getTrainer = createServerFn({ method: 'GET' })
   })
 
 const createTrainerSchema = z.object({
-  userId: z.string().min(1),
-  branchId: z.string().uuid().optional(),
+  userId: requiredString,
+  branchId: branchIdField,
   specialty: z.string().optional(),
   bio: z.string().optional(),
   commissionRate: z.string().optional(),
 })
 
 export const createTrainer = createServerFn({ method: 'POST' })
-  .inputValidator((data) => createTrainerSchema.parse(data))
+  .inputValidator((data: unknown) => createTrainerSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
 
@@ -97,15 +98,15 @@ export const createTrainer = createServerFn({ method: 'POST' })
   })
 
 const updateTrainerSchema = z.object({
-  id: z.string().uuid(),
-  specialty: z.string().optional(),
-  bio: z.string().optional(),
-  commissionRate: z.string().optional(),
+  id: uuidField,
+  specialty: optionalString,
+  bio: optionalString,
+  commissionRate: optionalString,
   isActive: z.boolean().optional(),
 })
 
 export const updateTrainer = createServerFn({ method: 'POST' })
-  .inputValidator((data) => updateTrainerSchema.parse(data))
+  .inputValidator((data: unknown) => updateTrainerSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
     const [profile] = await db
@@ -129,12 +130,12 @@ export const updateTrainer = createServerFn({ method: 'POST' })
   })
 
 const assignMemberSchema = z.object({
-  trainerId: z.string().uuid(),
-  memberId: z.string().uuid(),
+  trainerId: uuidField,
+  memberId: uuidField,
 })
 
 export const assignMember = createServerFn({ method: 'POST' })
-  .inputValidator((data) => assignMemberSchema.parse(data))
+  .inputValidator((data: unknown) => assignMemberSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
 
@@ -166,10 +167,10 @@ export const assignMember = createServerFn({ method: 'POST' })
     return assignment
   })
 
-const unassignMemberSchema = z.object({ id: z.string().uuid() })
+const unassignMemberSchema = z.object({ id: uuidField })
 
 export const unassignMember = createServerFn({ method: 'POST' })
-  .inputValidator((data) => unassignMemberSchema.parse(data))
+  .inputValidator((data: unknown) => unassignMemberSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
     const [assignment] = await db
@@ -188,18 +189,18 @@ export const unassignMember = createServerFn({ method: 'POST' })
   })
 
 const availabilitySlotSchema = z.object({
-  dayOfWeek: z.number().min(0).max(6),
+  dayOfWeek: dayOfWeek,
   startTime: z.string(),
   endTime: z.string(),
 })
 
 const setAvailabilitySchema = z.object({
-  trainerId: z.string().uuid(),
+  trainerId: uuidField,
   slots: z.array(availabilitySlotSchema),
 })
 
 export const setAvailability = createServerFn({ method: 'POST' })
-  .inputValidator((data) => setAvailabilitySchema.parse(data))
+  .inputValidator((data: unknown) => setAvailabilitySchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
 
@@ -209,7 +210,7 @@ export const setAvailability = createServerFn({ method: 'POST' })
 
     if (data.slots.length > 0) {
       await db.insert(trainerAvailability).values(
-        data.slots.map((slot) => ({
+        data.slots.map((slot: any) => ({
           trainerId: data.trainerId,
           dayOfWeek: slot.dayOfWeek,
           startTime: slot.startTime,
@@ -281,3 +282,20 @@ export const getTrainerUsers = createServerFn({ method: 'GET' }).handler(
     })
   },
 )
+
+const generateAIRoutineSchema = z.object({
+  age: z.number(),
+  gender: z.string(),
+  objectives: z.string(),
+  experienceLevel: z.string(),
+  weeklyDays: z.number(),
+  limitations: optionalString,
+})
+
+export const generateAIRoutine = createServerFn({ method: 'POST' })
+  .inputValidator((data: unknown) => generateAIRoutineSchema.parse(data))
+  .handler(async ({ data }) => {
+    await requireRole({ data: { roles: ['ADMIN', 'TRAINER'] } })
+    const { generateRoutineProposal } = await import('./routine-generator.ts')
+    return await generateRoutineProposal(data)
+  })

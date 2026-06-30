@@ -2,6 +2,7 @@ import { createServerFn } from '@tanstack/react-start'
 import { db } from '#/shared/db/index.ts'
 import { sales, saleItems } from '#/shared/db/schema/sales.ts'
 import { products } from '#/shared/db/schema/products.ts'
+import { productStock } from '#/shared/db/schema/product-stock.ts'
 import { inventoryMovements } from '#/shared/db/schema/inventory.ts'
 import {
   cashRegisterSessions,
@@ -12,6 +13,7 @@ import { requireRole } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { z } from 'zod'
+import { branchIdField, moneyString, optionalString, paymentMethodEnum, positiveNumber, uuidField } from '#/shared/lib/schemas.ts'
 
 // ── Date helpers ──────────────────────────────────────────────────
 
@@ -349,7 +351,7 @@ export function calcPercentChange(
 // ── Public server functions ───────────────────────────────────────
 
 const getDailySalesSummarySchema = z.object({
-  branchId: z.string().optional(),
+  branchId: branchIdField,
 })
 
 export const getDailySalesSummary = createServerFn({ method: 'GET' })
@@ -389,7 +391,7 @@ export const getDailySalesSummary = createServerFn({ method: 'GET' })
 )
 
 const getRecentSalesSchema = z.object({
-  branchId: z.string().optional(),
+  branchId: branchIdField,
 })
 
 export const getRecentSales = createServerFn({ method: 'GET' })
@@ -415,7 +417,7 @@ export const getRecentSales = createServerFn({ method: 'GET' })
   })
 
 const getSaleStatsSchema = z.object({
-  branchId: z.string().optional(),
+  branchId: branchIdField,
 })
 
 export const getSaleStats = createServerFn({ method: 'GET' })
@@ -454,15 +456,15 @@ export const getSaleStats = createServerFn({ method: 'GET' })
 
 const createSaleSchema = z.object({
   memberId: z.string().uuid().optional(),
-  customerName: z.string().optional(),
-  paymentMethod: z.enum(['CASH', 'QR', 'TRANSFER', 'CARD']),
-  discount: z.string().optional(),
-  branchId: z.string().optional(),
+  customerName: optionalString,
+  paymentMethod: paymentMethodEnum,
+  discount: optionalString,
+  branchId: branchIdField,
   items: z.array(
     z.object({
-      productId: z.string().uuid(),
-      quantity: z.number(),
-      unitPrice: z.string(),
+      productId: uuidField,
+      quantity: positiveNumber,
+      unitPrice: moneyString,
     }),
   ),
 })
@@ -524,9 +526,25 @@ export const createSale = createServerFn({ method: 'POST' })
           ? await tx
               .select()
               .from(products)
-              .where(inArray(products.id, productIds))
+              .where(inArray(products.id, productIds as string[]))
           : []
       const productMap = new Map(productsFound.map((p) => [p.id, p]))
+
+      // Cargar stock actual de la sucursal
+      const branchId = data.branchId
+      let stockCache = new Map<string, typeof productStock.$inferSelect>()
+      if (branchId && productIds.length > 0) {
+        const existingStocks = await tx
+          .select()
+          .from(productStock)
+          .where(
+            and(
+              eq(productStock.branchId, branchId),
+              inArray(productStock.productId, productIds as string[]),
+            ),
+          )
+        stockCache = new Map(existingStocks.map((s) => [s.productId, s]))
+      }
 
       for (const item of data.items) {
         const itemSubtotal = (Number(item.unitPrice) * item.quantity).toFixed(2)
@@ -545,30 +563,55 @@ export const createSale = createServerFn({ method: 'POST' })
           throw new Error(`Producto no encontrado (ID: ${item.productId})`)
         }
 
-        const newStock = product.stockCurrent - item.quantity
+        const existingStock = stockCache.get(item.productId)
+        const currentStock = existingStock?.stockCurrent ?? 0
+        const newStock = currentStock - item.quantity
         if (newStock < 0) {
           throw new Error(
-            `Stock insuficiente para el producto "${product.name}". Stock actual: ${product.stockCurrent}`,
+            `Stock insuficiente para el producto "${product.name}". Stock actual: ${currentStock}`,
           )
         }
 
-        await tx
-          .update(products)
-          .set({ stockCurrent: newStock, updatedAt: new Date() })
-          .where(eq(products.id, item.productId))
+        if (branchId) {
+          if (existingStock) {
+            await tx
+              .update(productStock)
+              .set({ stockCurrent: newStock, updatedAt: new Date() })
+              .where(eq(productStock.id, existingStock.id))
+          } else {
+            await tx.insert(productStock).values({
+              productId: item.productId,
+              branchId,
+              stockCurrent: newStock,
+              stockMinimum: 0,
+            })
+          }
+          stockCache.set(item.productId, {
+            ...(existingStock ?? {
+              id: '',
+              productId: item.productId,
+              branchId,
+              stockCurrent: newStock,
+              stockMinimum: 0,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            }),
+            stockCurrent: newStock,
+            updatedAt: new Date(),
+          })
+        }
 
         await tx.insert(inventoryMovements).values({
           productId: item.productId,
           movementType: 'SALE',
           quantity: -item.quantity,
-          previousStock: product.stockCurrent,
+          previousStock: currentStock,
           newStock,
           referenceType: 'SALE',
           referenceId: newSale.id,
           createdByUserId: session.user.id,
         })
 
-        product.stockCurrent = newStock
       }
 
       await tx.insert(cashMovements).values({

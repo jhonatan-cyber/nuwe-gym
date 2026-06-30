@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll } from 'vitest'
 import { db } from '#/shared/db/index.ts'
 import { products } from '#/shared/db/schema/products.ts'
+import { productStock } from '#/shared/db/schema/product-stock.ts'
 import { sales, saleItems } from '#/shared/db/schema/sales.ts'
 import { inventoryMovements } from '#/shared/db/schema/inventory.ts'
 import {
@@ -14,6 +15,7 @@ import {
   createSale,
   createInventoryMovement,
   createCashRegisterSession as openCashSession,
+  createBranch,
   cleanDatabase,
 } from '../factories.ts'
 
@@ -59,27 +61,45 @@ describe('Products', () => {
   })
 
   it('should update product stock', async () => {
-    const product = await createProduct({ stockCurrent: 10 })
-    await db
-      .update(products)
-      .set({ stockCurrent: 25 })
-      .where(eq(products.id, product.id))
+    const branch = await createBranch()
+    const product = await createProduct()
+    const [stock] = await db
+      .insert(productStock)
+      .values({
+        productId: product.id,
+        branchId: branch.id,
+        stockCurrent: 10,
+        stockMinimum: 0,
+      })
+      .returning()
 
-    const updated = await db.query.products.findFirst({
-      where: eq(products.id, product.id),
+    await db
+      .update(productStock)
+      .set({ stockCurrent: 25 })
+      .where(eq(productStock.id, stock.id))
+
+    const updated = await db.query.productStock.findFirst({
+      where: eq(productStock.productId, product.id),
     })
     expect(updated!.stockCurrent).toBe(25)
   })
 
   it('should find low-stock products', async () => {
-    await createProduct({ name: 'Low Stock', stockCurrent: 3 })
-    await createProduct({ name: 'Enough Stock', stockCurrent: 50 })
+    const branch = await createBranch()
+    const p1 = await createProduct({ name: 'Low Stock' })
+    const p2 = await createProduct({ name: 'Enough Stock' })
 
-    const lowStock = await db.query.products.findMany({
+    await db.insert(productStock).values([
+      { productId: p1.id, branchId: branch.id, stockCurrent: 3, stockMinimum: 5 },
+      { productId: p2.id, branchId: branch.id, stockCurrent: 50, stockMinimum: 5 },
+    ])
+
+    const lowStock = await db.query.productStock.findMany({
       where: (fields, { lte }) => lte(fields.stockCurrent, 5),
+      with: { product: true },
     })
     expect(lowStock.length).toBeGreaterThanOrEqual(1)
-    expect(lowStock.some((p) => p.name === 'Low Stock')).toBe(true)
+    expect(lowStock.some((ps) => ps.product.name === 'Low Stock')).toBe(true)
   })
 
   it('should get products with category relation', async () => {
@@ -158,7 +178,7 @@ describe('Sales / POS', () => {
 
 describe('Inventory', () => {
   it('should record a purchase movement', async () => {
-    const p = await createProduct({ stockCurrent: 0 })
+    const p = await createProduct()
     const movement = await createInventoryMovement(p.id, {
       movementType: 'PURCHASE',
       quantity: 10,
@@ -169,7 +189,7 @@ describe('Inventory', () => {
   })
 
   it('should record a sale movement (negative)', async () => {
-    const p = await createProduct({ stockCurrent: 10 })
+    const p = await createProduct()
     const movement = await createInventoryMovement(p.id, {
       movementType: 'SALE',
       quantity: -2,

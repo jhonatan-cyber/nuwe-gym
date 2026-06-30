@@ -71,7 +71,7 @@ export function WizardFooter({
             loadingText="Registrando..."
             className="font-black bg-gray-900 hover:bg-gray-800 text-white dark:bg-white dark:hover:bg-black dark:hover:text-white dark:text-black"
           >
-            Confirmar y Finalizar <ChevronRight className="size-4 ml-1" />
+            Siguiente <ChevronRight className="size-4 ml-1" />
           </LoadingButton>
         ) : (
           <Button

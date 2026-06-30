@@ -6,13 +6,27 @@ const BRANCH_STORAGE_KEY = 'currentBranchId'
 
 export function useCurrentBranch() {
   const [mounted, setMounted] = useState(false)
-  const [branchId, setBranchIdState] = useState<string | null>(() => {
-    if (typeof window === 'undefined') return null
-    return localStorage.getItem(BRANCH_STORAGE_KEY)
+  const [branchId, setBranchIdState] = useState<string | undefined>(() => {
+    if (typeof window === 'undefined') return undefined
+    const stored = localStorage.getItem(BRANCH_STORAGE_KEY)
+    if (stored && stored !== '__ALL__') {
+      return stored
+    }
+    return undefined // '__ALL__' or null → undefined = "Todas"
   })
 
   useEffect(() => {
     setMounted(true)
+
+    const handleBranchChange = () => {
+      const stored = localStorage.getItem(BRANCH_STORAGE_KEY)
+      setBranchIdState(stored && stored !== '__ALL__' ? stored : undefined)
+    }
+
+    window.addEventListener('branch-changed', handleBranchChange)
+    return () => {
+      window.removeEventListener('branch-changed', handleBranchChange)
+    }
   }, [])
 
   const { data: branches = [] } = useQuery({
@@ -21,11 +35,11 @@ export function useCurrentBranch() {
     enabled: mounted,
   })
 
-  // Si el branchId guardado no está en la lista, usar el default o el primero
-  const currentBranch =
-    branches.find((b) => b.id === branchId) ??
-    branches.find((b) => b.isDefault) ??
-    branches[0]
+  const currentBranch = branchId
+    ? (branches.find((b) => b.id === branchId) ??
+        branches.find((b) => b.isDefault) ??
+        branches[0]) as (typeof branches)[number] | undefined
+    : undefined
 
   const setBranchId = useCallback((id: string) => {
     localStorage.setItem(BRANCH_STORAGE_KEY, id)
@@ -33,8 +47,8 @@ export function useCurrentBranch() {
   }, [])
 
   return {
-    branchId: currentBranch?.id ?? null,
-    branchName: currentBranch?.name ?? null,
+    branchId: currentBranch?.id,
+    branchName: currentBranch?.name,
     branches,
     setBranchId,
     isLoading: !mounted,

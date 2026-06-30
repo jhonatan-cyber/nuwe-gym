@@ -1,6 +1,6 @@
 import { Moon, Sun, User, Settings as SettingsIcon, LogOut } from 'lucide-react'
 import { useTheme } from 'next-themes'
-import { Link } from '@tanstack/react-router'
+import { Link, useMatches } from '@tanstack/react-router'
 import { authClient } from '#/shared/lib/auth-client.ts'
 import {
   Avatar,
@@ -28,6 +28,9 @@ interface AppHeaderProps {
 export function AppHeader({ userName, userImage, userEmail }: AppHeaderProps) {
   const { theme, setTheme } = useTheme()
   const isDark = theme === 'dark'
+  const matches = useMatches()
+  const currentPath = matches[matches.length - 1]?.fullPath ?? ''
+  const isSuppliersPage = currentPath.startsWith('/suppliers')
 
   const handleLogout = async () => {
     try {
@@ -39,7 +42,7 @@ export function AppHeader({ userName, userImage, userEmail }: AppHeaderProps) {
 
   return (
     <div className="absolute top-6 right-6 z-50 flex items-center gap-1.5">
-      <BranchSelector />
+      {!isSuppliersPage && <BranchSelector />}
 
       <button
         type="button"

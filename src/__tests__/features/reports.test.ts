@@ -8,7 +8,7 @@ import { inventoryMovements } from '#/shared/db/schema/inventory.ts'
 import { eq, count, sum, and, lte, gte } from 'drizzle-orm'
 import {
   createMember,
-  createPlan,
+  createPackage,
   createSubscription,
   createCheckIn,
   createProduct,
@@ -25,7 +25,7 @@ describe('Reports — Aggregations', () => {
   it('should count members, active subs, and today checkins', async () => {
     await createMember()
     const m = await createMember()
-    const plan = await createPlan()
+    const plan = await createPackage()
     await createSubscription(m.id, plan.id, { status: 'ACTIVE' })
     await createCheckIn(m.id, { resultStatus: 'ALLOWED' })
 
@@ -66,7 +66,7 @@ describe('Reports — Aggregations', () => {
 
   it('should find expiring subscriptions', async () => {
     const m = await createMember()
-    const plan = await createPlan()
+    const plan = await createPackage()
     const nearEnd = new Date()
     nearEnd.setDate(nearEnd.getDate() + 3)
     await createSubscription(m.id, plan.id, {
@@ -82,12 +82,12 @@ describe('Reports — Aggregations', () => {
         eq(subscriptions.status, 'ACTIVE'),
         lte(subscriptions.endDate, weekFromNow),
       ),
-      with: { member: true, plan: true },
+      with: { member: true, package: true },
     })
 
     expect(expiring.length).toBeGreaterThanOrEqual(1)
     expect(expiring[0].member).toBeDefined()
-    expect(expiring[0].plan).toBeDefined()
+    expect(expiring[0].package).toBeDefined()
   })
 
   it('should aggregate inventory movements', async () => {

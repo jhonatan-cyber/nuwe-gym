@@ -70,7 +70,6 @@ const TABLE_LABELS: Record<string, string> = {
   userBranches: 'Sucursales de usuarios',
   users: 'Usuarios',
   members: 'Socios',
-  membershipPlans: 'Planes',
   subscriptions: 'Suscripciones',
   membershipPayments: 'Pagos',
   productCategories: 'Categorías',
@@ -95,8 +94,10 @@ const TABLE_LABELS: Record<string, string> = {
   auditLogs: 'Auditoría',
 }
 
+type BackupInfo = { counts: Record<string, number>; dbSize: string }
+
 function ExportSection() {
-  const { data: info, isLoading } = useQuery({
+  const { data: info, isLoading } = useQuery<BackupInfo>({
     queryKey: ['backup-info'],
     queryFn: () => getBackupInfo(),
   })
@@ -141,7 +142,7 @@ function ExportSection() {
             <div className="flex items-center gap-2 text-muted-foreground">
               <Database className="size-4" />
               <span>
-                {Object.values(info.counts)
+                {(Object.values(info.counts) as number[])
                   .reduce((a, b) => a + b, 0)
                   .toLocaleString()}{' '}
                 registros totales
@@ -174,7 +175,8 @@ function ImportSection() {
     mutationFn: (data: Parameters<typeof importDatabase>[0]) =>
       importDatabase(data),
     onSuccess: (counts) => {
-      const lines = Object.entries(counts)
+      const entries = Object.entries(counts as Record<string, number>)
+      const lines = entries
         .filter(([, c]) => c > 0)
         .map(([table, c]) => `${TABLE_LABELS[table] ?? table}: ${c}`)
         .join('\n')
@@ -436,7 +438,7 @@ function AutoBackupSection() {
 }
 
 export function BackupPage() {
-  const { data: info } = useQuery({
+  const { data: info } = useQuery<BackupInfo>({
     queryKey: ['backup-info'],
     queryFn: () => getBackupInfo(),
   })
@@ -451,7 +453,7 @@ export function BackupPage() {
 
       {info && (
         <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
-          {Object.entries(info.counts)
+          {(Object.entries(info.counts) as [string, number][])
             .filter(([, c]) => c > 0)
             .sort(([, a], [, b]) => b - a)
             .slice(0, 8)

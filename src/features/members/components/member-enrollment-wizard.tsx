@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { ChevronRight } from 'lucide-react'
-import { createMember, uploadMemberPhoto } from '#/features/members/server.ts'
+import { createMember, getMemberByDocumentNumber, uploadMemberPhoto } from '#/features/members/server.ts'
 import { useCurrentBranch } from '#/shared/hooks/use-current-branch.ts'
 import { createSubscription } from '#/features/subscriptions/server.ts'
 import { getActivePackages } from '#/features/packages/server.ts'
@@ -56,6 +56,7 @@ export function MemberEnrollmentWizard({
   const { branchId } = useCurrentBranch()
   const {
     stream: cameraStream,
+    status: cameraStatus,
     videoRef,
     start: startCamera,
     capture: capturePhoto,
@@ -81,6 +82,7 @@ export function MemberEnrollmentWizard({
   >('CASH')
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isCheckingDocument, setIsCheckingDocument] = useState(false)
   const [isSavingPhoto, setIsSavingPhoto] = useState(false)
   const [createdMemberName, setCreatedMemberName] = useState('')
   const [createdPlanName, setCreatedPlanName] = useState('')
@@ -158,10 +160,20 @@ export function MemberEnrollmentWizard({
     toast.success('Rostro capturado desde el lector biométrico')
   }
 
-  const handleSubmit = async () => {
-    if (!selectedPackage) return
-    setIsSubmitting(true)
+  // ── Step 1: Crear socio ──────────────────────────────────────────
+
+  const handleCreateMember = async () => {
+    setIsCheckingDocument(true)
     try {
+      // Verificar que el documento no exista ya
+      const existing = await getMemberByDocumentNumber({
+        data: { documentNumber: personalInfo.documentNumber },
+      })
+      if (existing) {
+        setErrors({ documentNumber: 'Ya existe un socio con ese documento' })
+        return
+      }
+
       const fullName = `${personalInfo.firstName.trim()} ${personalInfo.lastName.trim()}`
       const member = await createMember({
         data: {
@@ -175,16 +187,36 @@ export function MemberEnrollmentWizard({
           branchId,
         },
       })
-      if (personalInfo.photoBase64) {
-        await uploadMemberPhoto({
-          data: { memberId: member.id, photoBase64: personalInfo.photoBase64 },
-        })
+
+      setCreatedMemberId(member.id)
+      setCreatedMemberName(member.fullName)
+      queryClient.invalidateQueries({ queryKey: ['members'] })
+      setStep(2)
+      toast.success(`Socio ${member.fullName} registrado correctamente`)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : ''
+      if (msg.includes('members_document_number_idx') || msg.includes('duplicate key')) {
+        setErrors({ documentNumber: 'Ya existe un socio con ese documento' })
+      } else if (msg.includes('branch_id') && msg.includes('foreign key')) {
+        toast.error('La sucursal seleccionada no existe. Recargá la página.')
+      } else {
+        toast.error(msg || 'Error al registrar el socio')
       }
+    } finally {
+      setIsCheckingDocument(false)
+    }
+  }
+
+  // ── Step 3: Crear suscripción ────────────────────────────────────
+
+  const handleCreateSubscription = async () => {
+    if (!selectedPackage || !createdMemberId) return
+    setIsSubmitting(true)
+    try {
       await createSubscription({
         data: {
-          memberId: member.id,
-          planId: null,
-          packageId: selectedPackageId,
+          memberId: createdMemberId,
+          packageId: selectedPackageId!,
           startDate: getTodayString(),
           endDate: getEndDateString(selectedPackage.durationDays),
           amountPaid: selectedPackage.price.toString(),
@@ -192,21 +224,24 @@ export function MemberEnrollmentWizard({
           branchId,
         },
       })
-      setCreatedMemberName(member.fullName)
+
       setCreatedPlanName(selectedPackage.name)
-      setCreatedMemberId(member.id)
-      queryClient.invalidateQueries({ queryKey: ['members'] })
       queryClient.invalidateQueries({ queryKey: ['subscriptions'] })
       setStep(4)
-      toast.success('Socio registrado. Pasemos al enrolamiento facial.')
+      toast.success('Suscripción creada. Pasemos al enrolamiento facial.')
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : 'Error al registrar el socio',
-      )
+      const msg = err instanceof Error ? err.message : ''
+      if (msg.includes('Debe abrir la caja')) {
+        toast.error(msg)
+      } else {
+        toast.error(msg || 'Error al crear la suscripción')
+      }
     } finally {
       setIsSubmitting(false)
     }
   }
+
+  // ── Step 4: Guardar foto ─────────────────────────────────────────
 
   const handleSavePhoto = async () => {
     if (!createdMemberId || !personalInfo.photoBase64) {
@@ -231,17 +266,26 @@ export function MemberEnrollmentWizard({
     }
   }
 
+  // ── Navegación ───────────────────────────────────────────────────
+
   const goNext = () => {
     if (step === 5) return
+    if (isSubmitting || isCheckingDocument) return
     if (!validateStep(step)) return
+    if (step === 1) {
+      handleCreateMember()
+      return
+    }
     if (step === 3) {
-      handleSubmit()
+      handleCreateSubscription()
       return
     }
     setStep((s) => Math.min(s + 1, 5) as Step)
   }
 
   const goBack = () => {
+    // Una vez creado el socio en paso 1, se bloquea la navegación hacia atrás
+    if (createdMemberId) return
     if (step > 1) setStep((s) => Math.max(s - 1, 1) as Step)
   }
 
@@ -261,6 +305,7 @@ export function MemberEnrollmentWizard({
     setPaymentMethod('CASH')
     setErrors({})
     setIsSubmitting(false)
+    setIsCheckingDocument(false)
     setCreatedMemberName('')
     setCreatedPlanName('')
     setCreatedMemberId(null)
@@ -301,7 +346,8 @@ export function MemberEnrollmentWizard({
       const t1 = setTimeout(() => {
         setCameraStatus('Rostro enfocado. Capturando en 2s...')
         setTimeout(() => {
-          capturePhoto()
+          const p = capturePhoto()
+          if (p) setPersonalInfo((prev) => ({ ...prev, photoBase64: p }))
           setCameraStatus('')
         }, 2000)
       }, 1200)
@@ -361,7 +407,7 @@ export function MemberEnrollmentWizard({
           <Step4FacialEnrollment
             photoBase64={personalInfo.photoBase64}
             cameraStream={cameraStream}
-            cameraStatus=""
+            cameraStatus={cameraStatus}
             enrollmentMode={enrollmentMode}
             isConnectingDevice={isConnectingDevice}
             biometricStatus={biometricStatus}
@@ -417,7 +463,7 @@ export function MemberEnrollmentWizard({
             </div>
             <WizardFooter
               step={step}
-              isSubmitting={isSubmitting}
+              isSubmitting={isSubmitting || isCheckingDocument}
               isSavingPhoto={isSavingPhoto}
               hasPhoto={!!personalInfo.photoBase64}
               onNext={goNext}
@@ -449,6 +495,7 @@ export function MemberEnrollmentWizard({
           leftPanel={
             <WizardSidebar
               step={step}
+              memberCreated={!!createdMemberId}
               variant={variant}
               onClose={handleClose}
               insideLayout
@@ -462,7 +509,7 @@ export function MemberEnrollmentWizard({
 
     return (
       <div className="flex flex-col md:flex-row gap-6 items-start justify-start w-full">
-        <WizardSidebar step={step} variant={variant} onClose={handleClose} />
+        <WizardSidebar step={step} memberCreated={!!createdMemberId} variant={variant} onClose={handleClose} />
         {formContent}
       </div>
     )

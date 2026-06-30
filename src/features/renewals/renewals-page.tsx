@@ -25,6 +25,10 @@ export function RenewalsPage() {
     loadingHistory,
     renewMutation,
     selectedPkg,
+    searchPage,
+    setSearchPage,
+    searchTotalPages,
+    searchTotal,
     handleReset,
     handleSelectMember,
     handleSubmit,
@@ -55,6 +59,10 @@ export function RenewalsPage() {
           selectedMember={selectedMember}
           onSelectMember={handleSelectMember}
           handleReset={handleReset}
+          searchPage={searchPage}
+          setSearchPage={setSearchPage}
+          searchTotalPages={searchTotalPages}
+          searchTotal={searchTotal}
         />
       }
     >

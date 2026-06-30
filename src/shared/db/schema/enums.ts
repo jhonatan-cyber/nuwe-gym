@@ -4,6 +4,7 @@ export const memberStatusEnum = pgEnum('member_status', [
   'ACTIVE',
   'INACTIVE',
   'SUSPENDED',
+  'CANCELED',
 ])
 export const subscriptionStatusEnum = pgEnum('subscription_status', [
   'ACTIVE',

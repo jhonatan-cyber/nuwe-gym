@@ -1,7 +1,7 @@
-import type { getMembers } from '#/features/members/server.ts'
+import type { findMembers } from './members.repository.ts'
 
 export type MemberWithSubscriptions = Awaited<
-  ReturnType<typeof getMembers>
+  ReturnType<typeof findMembers>
 >[number]
 
 export interface SubscriptionRow {

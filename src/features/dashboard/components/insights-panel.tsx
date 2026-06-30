@@ -8,7 +8,6 @@ import {
 } from 'lucide-react'
 import { getInsights } from '#/features/analytics/server.ts'
 import { cn } from '#/shared/lib/utils.ts'
-import type { Insight } from '#/features/analytics/types.ts'
 
 const typeConfig = {
   trend_up: { icon: TrendingUp, class: 'text-emerald-500 bg-emerald-500/10' },

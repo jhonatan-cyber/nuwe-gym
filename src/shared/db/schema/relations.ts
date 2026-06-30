@@ -2,12 +2,12 @@ import { relations } from 'drizzle-orm'
 import { users, sessions, accounts } from './auth.ts'
 import { roles } from './roles.ts'
 import { members } from './members.ts'
-import { membershipPlans } from './membership-plans.ts'
 import { subscriptions } from './subscriptions.ts'
 import { membershipPayments } from './membership-payments.ts'
 import { checkIns } from './check-ins.ts'
 import { productCategories } from './product-categories.ts'
 import { products } from './products.ts'
+import { productStock } from './product-stock.ts'
 import { suppliers } from './suppliers.ts'
 import { purchases, purchaseItems } from './purchases.ts'
 import { sales, saleItems } from './sales.ts'
@@ -22,7 +22,7 @@ import {
 import { membershipFreezes } from './membership-freezes.ts'
 import { auditLogs } from './audit-logs.ts'
 import { branches, userBranches } from './branches.ts'
-import { packages, packageItems, packageAllowedDays } from './packages.ts'
+import { packages, packageItems, packageAllowedDays, packageBenefits } from './packages.ts'
 
 export const usersRelations = relations(users, ({ many, one }) => ({
   sessions: many(sessions),
@@ -42,7 +42,11 @@ export const accountsRelations = relations(accounts, ({ one }) => ({
   user: one(users, { fields: [accounts.userId], references: [users.id] }),
 }))
 
-export const membersRelations = relations(members, ({ many }) => ({
+export const membersRelations = relations(members, ({ many, one }) => ({
+  branch: one(branches, {
+    fields: [members.branchId],
+    references: [branches.id],
+  }),
   subscriptions: many(subscriptions),
   membershipPayments: many(membershipPayments),
   checkIns: many(checkIns),
@@ -50,23 +54,12 @@ export const membersRelations = relations(members, ({ many }) => ({
   freezes: many(membershipFreezes),
 }))
 
-export const membershipPlansRelations = relations(
-  membershipPlans,
-  ({ many }) => ({
-    subscriptions: many(subscriptions),
-  }),
-)
-
 export const subscriptionsRelations = relations(
   subscriptions,
   ({ one, many }) => ({
     member: one(members, {
       fields: [subscriptions.memberId],
       references: [members.id],
-    }),
-    plan: one(membershipPlans, {
-      fields: [subscriptions.planId],
-      references: [membershipPlans.id],
     }),
     package: one(packages, {
       fields: [subscriptions.packageId],
@@ -118,9 +111,21 @@ export const productsRelations = relations(products, ({ one, many }) => ({
     fields: [products.categoryId],
     references: [productCategories.id],
   }),
+  stockEntries: many(productStock),
   saleItems: many(saleItems),
   purchaseItems: many(purchaseItems),
   inventoryMovements: many(inventoryMovements),
+}))
+
+export const productStockRelations = relations(productStock, ({ one }) => ({
+  product: one(products, {
+    fields: [productStock.productId],
+    references: [products.id],
+  }),
+  branch: one(branches, {
+    fields: [productStock.branchId],
+    references: [branches.id],
+  }),
 }))
 
 export const suppliersRelations = relations(suppliers, ({ many }) => ({
@@ -183,6 +188,10 @@ export const cashRegisterSessionsRelations = relations(
     openedBy: one(users, {
       fields: [cashRegisterSessions.openedByUserId],
       references: [users.id],
+    }),
+    branch: one(branches, {
+      fields: [cashRegisterSessions.branchId],
+      references: [branches.id],
     }),
     movements: many(cashMovements),
   }),
@@ -280,6 +289,8 @@ export const membershipFreezesRelations = relations(
 
 export const branchesRelations = relations(branches, ({ many }) => ({
   userBranches: many(userBranches),
+  members: many(members),
+  productStock: many(productStock),
 }))
 
 export const userBranchesRelations = relations(userBranches, ({ one }) => ({
@@ -294,6 +305,14 @@ export const packagesRelations = relations(packages, ({ many }) => ({
   items: many(packageItems),
   allowedDays: many(packageAllowedDays),
   subscriptions: many(subscriptions),
+  benefits: many(packageBenefits),
+}))
+
+export const packageBenefitsRelations = relations(packageBenefits, ({ one }) => ({
+  package: one(packages, {
+    fields: [packageBenefits.packageId],
+    references: [packages.id],
+  }),
 }))
 
 export const packageItemsRelations = relations(packageItems, ({ one }) => ({

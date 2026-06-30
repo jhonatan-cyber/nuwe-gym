@@ -19,7 +19,6 @@ export function DashboardPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['dashboard', branchId],
     queryFn: () => getDashboardData({ data: { branchId: branchId ?? undefined } }),
-    enabled: !!branchId,
   })
 
   if (isLoading) {

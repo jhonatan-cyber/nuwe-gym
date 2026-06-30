@@ -49,6 +49,7 @@ export function MemberEditDialog({
     birthDate: member.birthDate
       ? new Date(member.birthDate).toISOString().split('T')[0]
       : '',
+    gender: member.gender || '',
     emergencyContactName: member.emergencyContactName || '',
     emergencyContactPhone: member.emergencyContactPhone || '',
     address: member.address || '',
@@ -106,7 +107,7 @@ export function MemberEditDialog({
               Actualizá los datos personales y de contacto del miembro.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto px-1">
+          <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto scrollbar-none px-1">
             <div className="grid grid-cols-1 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="edit-fullName">Nombre Completo</Label>
@@ -171,6 +172,26 @@ export function MemberEditDialog({
                 />
               </div>
               <div className="grid gap-2">
+                <Label htmlFor="edit-gender">Género</Label>
+                <Select
+                  value={formData.gender}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, gender: value })
+                  }
+                >
+                  <SelectTrigger id="edit-gender" className="w-full">
+                    <SelectValue placeholder="Seleccionar..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="MASCULINO">Masculino</SelectItem>
+                    <SelectItem value="FEMENINO">Femenino</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
                 <Label htmlFor="edit-birthDate">Fecha de Nacimiento</Label>
                 <Input
                   id="edit-birthDate"
@@ -181,9 +202,6 @@ export function MemberEditDialog({
                   }
                 />
               </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="edit-phone">Teléfono</Label>
                 <Input
@@ -195,17 +213,18 @@ export function MemberEditDialog({
                   }
                 />
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="edit-email">Email</Label>
-                <Input
-                  id="edit-email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
-                />
-              </div>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="edit-email">Email</Label>
+              <Input
+                id="edit-email"
+                type="email"
+                value={formData.email}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
+              />
             </div>
 
             <Separator />

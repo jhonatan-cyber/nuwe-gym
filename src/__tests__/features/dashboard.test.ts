@@ -4,15 +4,16 @@ import { members } from '#/shared/db/schema/members.ts'
 import { subscriptions } from '#/shared/db/schema/subscriptions.ts'
 import { checkIns } from '#/shared/db/schema/check-ins.ts'
 import { sales } from '#/shared/db/schema/sales.ts'
-import { products } from '#/shared/db/schema/products.ts'
+import { productStock } from '#/shared/db/schema/product-stock.ts'
 import {
   createMember,
-  createPlan,
+  createPackage,
   createSubscription,
   createCheckIn,
   createProduct,
   createSale,
   cleanDatabase,
+  createBranch,
 } from '../factories.ts'
 import { eq, and, gte, lte, count } from 'drizzle-orm'
 
@@ -32,7 +33,7 @@ describe('Dashboard Queries', () => {
 
   it('should count active subscriptions', async () => {
     const member = await createMember()
-    const plan = await createPlan()
+    const plan = await createPackage()
     await createSubscription(member.id, plan.id, { status: 'ACTIVE' })
     await createSubscription(member.id, plan.id, { status: 'ACTIVE' })
     await createSubscription(member.id, plan.id, { status: 'EXPIRED' })
@@ -71,7 +72,7 @@ describe('Dashboard Queries', () => {
 
   it('should find members with expiring subscriptions', async () => {
     const m = await createMember()
-    const plan = await createPlan()
+    const plan = await createPackage()
     const nearEnd = new Date()
     nearEnd.setDate(nearEnd.getDate() + 3)
     await createSubscription(m.id, plan.id, {
@@ -89,12 +90,12 @@ describe('Dashboard Queries', () => {
         gte(subscriptions.endDate, now),
         lte(subscriptions.endDate, weekLater),
       ),
-      with: { member: true, plan: true },
+      with: { member: true, package: true },
     })
 
     expect(expiring.length).toBeGreaterThanOrEqual(1)
     expect(expiring[0].member).toBeDefined()
-    expect(expiring[0].plan).toBeDefined()
+    expect(expiring[0].package).toBeDefined()
   })
 
   it('should get today sales total', async () => {
@@ -119,16 +120,23 @@ describe('Dashboard Queries', () => {
   })
 
   it('should find low-stock products', async () => {
-    await createProduct({ name: 'Low Stock 1', stockCurrent: 3 })
-    await createProduct({ name: 'Low Stock 2', stockCurrent: 5 })
+    const branch = await createBranch()
+    const p1 = await createProduct({ name: 'Low Stock 1' })
+    const p2 = await createProduct({ name: 'Low Stock 2' })
 
-    const lowStock = await db.query.products.findMany({
-      where: lte(products.stockCurrent, 5),
+    await db.insert(productStock).values([
+      { productId: p1.id, branchId: branch.id, stockCurrent: 3, stockMinimum: 5 },
+      { productId: p2.id, branchId: branch.id, stockCurrent: 5, stockMinimum: 5 },
+    ])
+
+    const lowStock = await db.query.productStock.findMany({
+      where: lte(productStock.stockCurrent, 5),
+      with: { product: true },
     })
 
     expect(lowStock.length).toBeGreaterThanOrEqual(2)
-    lowStock.forEach((p) => {
-      expect(Number(p.stockCurrent)).toBeLessThanOrEqual(5)
+    lowStock.forEach((ps) => {
+      expect(Number(ps.stockCurrent)).toBeLessThanOrEqual(5)
     })
   })
 })

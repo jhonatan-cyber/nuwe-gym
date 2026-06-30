@@ -21,6 +21,10 @@ import {
   Store,
   Database as DatabaseIcon,
   Package,
+  Bell,
+  QrCode,
+  ClipboardList,
+  Building2,
 } from 'lucide-react'
 import { Link, useMatches } from '@tanstack/react-router'
 import type { UserRole } from '#/shared/lib/permissions.ts'
@@ -95,6 +99,18 @@ const navItems: NavItem[] = [
     icon: Dumbbell,
     permission: 'trainers:read',
   },
+  {
+    title: 'Compras',
+    url: '/purchases',
+    icon: ClipboardList,
+    permission: 'purchases:read',
+  },
+  {
+    title: 'Proveedores',
+    url: '/suppliers',
+    icon: Building2,
+    permission: 'suppliers:read',
+  },
   { title: 'POS', url: '/pos', icon: ShoppingBag, permission: 'pos:use' },
   {
     title: 'Ventas',
@@ -134,6 +150,18 @@ const navItems: NavItem[] = [
     permission: 'branches:read',
   },
   {
+    title: 'Notificaciones',
+    url: '/notifications',
+    icon: Bell,
+    permission: 'notifications:read',
+  },
+  {
+    title: 'Códigos QR',
+    url: '/qr-codes',
+    icon: QrCode,
+    permission: 'settings:read',
+  },
+  {
     title: 'Auditoría',
     url: '/audit-logs',
     icon: ScrollText,
@@ -167,9 +195,11 @@ export function AppSidebar({
 
   const visibleItems = useMemo(
     () =>
-      navItems.filter(
-        (item) => !item.permission || hasPermission(role, item.permission),
-      ),
+      role === 'ADMIN'
+        ? navItems
+        : navItems.filter(
+            (item) => !item.permission || hasPermission(role, item.permission),
+          ),
     [role],
   )
 

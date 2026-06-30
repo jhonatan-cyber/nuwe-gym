@@ -51,8 +51,8 @@ export function MembershipPaymentsPage() {
     0,
   )
 
-  const paymentMethodsTotal = filteredPayments.reduce(
-    (acc: Record<string, number>, pay: (typeof paymentsList)[number]) => {
+  const paymentMethodsTotal = filteredPayments.reduce<Record<string, number>>(
+    (acc, pay) => {
       const method = pay.paymentMethod
       acc[method] = (acc[method] || 0) + Number(pay.amount)
       return acc
@@ -85,8 +85,8 @@ export function MembershipPaymentsPage() {
           </CardContent>
         </Card>
 
-        {Object.entries(paymentMethodsTotal).map(
-          ([method, total]: [string, number]) => (
+        {Object.entries(paymentMethodsTotal as Record<string, number>).map(
+          ([method, total]) => (
             <Card key={method}>
               <CardContent className="p-6 flex items-center gap-4">
                 <div className="p-3 bg-muted rounded-lg">
@@ -166,13 +166,13 @@ export function MembershipPaymentsPage() {
               sortable: true,
               sortValue: (pay: (typeof filteredPayments)[number]) =>
                 pay.subscription.package?.name ||
-                pay.subscription.plan?.name ||
+                pay.subscription.package?.name ||
                 '',
               render: (pay: (typeof filteredPayments)[number]) => (
                 <span className="inline-flex items-center gap-1.5">
                   <Package className="size-3 text-muted-foreground" />
                   {pay.subscription.package?.name ||
-                    pay.subscription.plan?.name ||
+                    pay.subscription.package?.name ||
                     'N/A'}
                 </span>
               ),

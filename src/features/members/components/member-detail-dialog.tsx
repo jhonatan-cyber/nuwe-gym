@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   RefreshCw,
@@ -8,10 +9,14 @@ import {
   Heart,
   MapPin,
   CreditCard,
+  Sparkles,
+  Loader2,
+  Copy,
+  Check,
 } from 'lucide-react'
 import { getMemberById } from '#/features/members/server.ts'
 import { getMemberRenewalHistory } from '#/features/renewals/server.ts'
-import { getMemberChurnRisk } from '#/features/analytics/server.ts'
+import { getMemberChurnRisk, getAIChurnMessage } from '#/features/analytics/server.ts'
 import { formatCurrency, formatDate } from '#/shared/lib/formatters.ts'
 import { Button } from '#/shared/components/ui/button'
 import {
@@ -21,6 +26,7 @@ import {
 } from '#/shared/components/ui/dialog'
 import { Badge } from '#/shared/components/ui/badge'
 import { cn } from '#/shared/lib/utils.ts'
+import { toast } from 'sonner'
 
 interface MemberDetailDialogProps {
   memberId: string | null
@@ -192,7 +198,7 @@ export function MemberDetailDialog({
                               )}
                             />
                             <p className="font-bold text-sm truncate flex-1">
-                              {sub.package?.name || sub.plan?.name || 'N/A'}
+                              {sub.package?.name || 'N/A'}
                             </p>
                           </div>
 
@@ -274,11 +280,32 @@ function SectionTitle({ icon: Icon, label }: { icon: any; label: string }) {
 }
 
 function ChurnRiskSection({ memberId }: { memberId: string }) {
-  const { data: risk, isLoading } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ['member-churn-risk', memberId],
     queryFn: () => getMemberChurnRisk({ data: { memberId } }),
     enabled: !!memberId,
   })
+
+  const risk = data
+
+  const [generatingMessage, setGeneratingMessage] = useState(false)
+  const [aiMessage, setAiMessage] = useState('')
+  const [copied, setCopied] = useState(false)
+
+  const handleGenerateMessage = async () => {
+    setGeneratingMessage(true)
+    setAiMessage('')
+    try {
+      const msg = await getAIChurnMessage({ data: { memberId } })
+      setAiMessage(msg)
+      toast.success('Mensaje redactado con éxito')
+    } catch (err) {
+      console.error(err)
+      toast.error('Error al generar el mensaje')
+    } finally {
+      setGeneratingMessage(false)
+    }
+  }
 
   if (isLoading || !risk) return null
 
@@ -305,7 +332,7 @@ function ChurnRiskSection({ memberId }: { memberId: string }) {
           <div className="space-y-1">
             <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Factores</p>
             <ul className="space-y-0.5">
-              {risk.factors.map((f, i) => (
+              {risk.factors.map((f: string, i: number) => (
                 <li key={i} className="text-[10px] text-muted-foreground flex items-start gap-1.5">
                   <span className="size-1 rounded-full bg-foreground/30 mt-1.5 shrink-0" />
                   {f}
@@ -314,6 +341,60 @@ function ChurnRiskSection({ memberId }: { memberId: string }) {
             </ul>
           </div>
         )}
+
+        <div className="pt-3 border-t border-dashed dark:border-white/[0.06] border-black/[0.06] mt-2 space-y-2">
+          {!aiMessage && !generatingMessage ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleGenerateMessage}
+              className="w-full text-[10px] h-7 flex items-center justify-center gap-1.5 hover:bg-violet-500/5 hover:text-violet-600 border-violet-500/20"
+            >
+              <Sparkles className="size-3 text-violet-500 animate-pulse" />
+              <span>Generar Mensaje de Retención</span>
+            </Button>
+          ) : generatingMessage ? (
+            <div className="flex items-center justify-center gap-2 py-2 text-[10px] text-muted-foreground">
+              <Loader2 className="size-3 animate-spin text-violet-500" />
+              <span>Redactando propuesta personalizada...</span>
+            </div>
+          ) : (
+            <div className="space-y-1.5">
+              <p className="text-[8px] font-bold uppercase tracking-widest text-violet-500 flex items-center gap-1">
+                <Sparkles className="size-2.5" /> Mensaje Redactado por IA
+              </p>
+              <textarea
+                readOnly
+                value={aiMessage}
+                className="w-full text-[10px] p-2 rounded-lg border dark:border-white/[0.06] border-black/[0.06] bg-foreground/[0.01] resize-none h-20 focus:outline-none text-zinc-800"
+              />
+              <div className="flex gap-1.5">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    navigator.clipboard.writeText(aiMessage)
+                    setCopied(true)
+                    toast.success('Mensaje copiado')
+                    setTimeout(() => setCopied(false), 2000)
+                  }}
+                  className="flex-1 text-[9px] h-6 flex items-center justify-center gap-1"
+                >
+                  {copied ? <Check className="size-3 text-green-600" /> : <Copy className="size-3" />}
+                  <span>{copied ? 'Copiado' : 'Copiar'}</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setAiMessage('')}
+                  className="text-[9px] h-6 px-2 hover:bg-red-500/5 hover:text-red-600"
+                >
+                  Descartar
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </section>
   )

@@ -5,7 +5,7 @@ import { subscriptions } from '#/shared/db/schema/subscriptions.ts'
 import { membershipPayments } from '#/shared/db/schema/membership-payments.ts'
 import {
   createMember,
-  createPlan,
+  createPackage,
   createSubscription,
   createMembershipPayment,
   cleanDatabase,
@@ -18,7 +18,7 @@ beforeAll(async () => {
 describe('Renewals', () => {
   it('should find expiring subscriptions', async () => {
     const m = await createMember()
-    const plan = await createPlan()
+    const plan = await createPackage()
     const nearEnd = new Date()
     nearEnd.setDate(nearEnd.getDate() + 3)
     await createSubscription(m.id, plan.id, {
@@ -39,7 +39,7 @@ describe('Renewals', () => {
 
   it('should find expired subscriptions', async () => {
     const m = await createMember()
-    const plan = await createPlan()
+    const plan = await createPackage()
     await createSubscription(m.id, plan.id, { status: 'EXPIRED' })
 
     const expired = await db.query.subscriptions.findMany({
@@ -51,7 +51,7 @@ describe('Renewals', () => {
 
   it('should record a payment for renewal', async () => {
     const m = await createMember()
-    const plan = await createPlan()
+    const plan = await createPackage()
     const sub = await createSubscription(m.id, plan.id)
 
     const payment = await createMembershipPayment(sub.id, m.id, {
@@ -65,21 +65,21 @@ describe('Renewals', () => {
 
   it('should get renewal history with plan', async () => {
     const m = await createMember()
-    const plan = await createPlan()
+    const plan = await createPackage()
     const sub = await createSubscription(m.id, plan.id)
     await createMembershipPayment(sub.id, m.id)
 
     const history = await db.query.membershipPayments.findMany({
       where: eq(membershipPayments.memberId, m.id),
-      with: { subscription: { with: { plan: true } } },
+      with: { subscription: { with: { package: true } } },
     })
     expect(history.length).toBeGreaterThanOrEqual(1)
-    expect(history[0].subscription.plan).toBeDefined()
+    expect(history[0].subscription.package).toBeDefined()
   })
 
   it('should list payments by method', async () => {
     const m = await createMember()
-    const plan = await createPlan()
+    const plan = await createPackage()
     const sub = await createSubscription(m.id, plan.id)
     await createMembershipPayment(sub.id, m.id, { paymentMethod: 'CASH' })
     await createMembershipPayment(sub.id, m.id, { paymentMethod: 'TRANSFER' })

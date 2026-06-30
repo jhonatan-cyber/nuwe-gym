@@ -1,13 +1,13 @@
 export { MembersPage } from './members-page.tsx'
-export { MemberEnrollmentWizard } from './member-enrollment-wizard.tsx'
 export {
   getMembers,
   getMemberById,
   createMember,
   updateMember,
   uploadMemberPhoto,
+  deleteMember,
 } from './server.ts'
-export type { CreateMemberData, UpdateMemberData } from './server.ts'
+export type { CreateMemberData, UpdateMemberData } from './members.schema.ts'
 export type {
   MemberWithSubscriptions,
   SubscriptionRow,

@@ -6,6 +6,7 @@ import {
   numeric,
   boolean,
   timestamp,
+  unique,
 } from 'drizzle-orm/pg-core'
 import { packageTypeEnum, renewalTypeEnum } from './enums.ts'
 
@@ -51,3 +52,14 @@ export const packageAllowedDays = pgTable('package_allowed_days', {
   startTime: text('start_time'),
   endTime: text('end_time'),
 })
+
+export const packageBenefits = pgTable('package_benefits', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  packageId: uuid('package_id')
+    .notNull()
+    .references(() => packages.id, { onDelete: 'cascade' }),
+  benefitKey: text('benefit_key').notNull(),
+  enabled: boolean('enabled').notNull().default(true),
+}, (table) => ({
+  uniqPackageBenefit: unique().on(table.packageId, table.benefitKey),
+}))

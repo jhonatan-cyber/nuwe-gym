@@ -4,6 +4,7 @@ import { users } from '#/shared/db/schema/auth.ts'
 import { eq } from 'drizzle-orm'
 import { auth } from '#/shared/lib/auth.ts'
 import { z } from 'zod'
+import { optionalString, requiredString } from '#/shared/lib/schemas.ts'
 
 export const checkDbEmpty = createServerFn({ method: 'GET' }).handler(
   async () => {
@@ -15,9 +16,9 @@ export const checkDbEmpty = createServerFn({ method: 'GET' }).handler(
 const createInitialAdminSchema = z.object({
   name: z.string(),
   email: z.string().email(),
-  documentNumber: z.string().min(1),
-  phone: z.string().optional(),
-  address: z.string().optional(),
+  documentNumber: requiredString,
+  phone: optionalString,
+  address: optionalString,
 })
 
 export const createInitialAdmin = createServerFn({ method: 'POST' })

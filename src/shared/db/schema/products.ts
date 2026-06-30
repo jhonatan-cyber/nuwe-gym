@@ -1,7 +1,6 @@
 import {
   uuid,
   pgTable,
-  integer,
   text,
   numeric,
   boolean,
@@ -25,10 +24,7 @@ export const products = pgTable(
       .notNull()
       .default('0'),
     salePrice: numeric('sale_price', { precision: 10, scale: 2 }).notNull(),
-    stockCurrent: integer('stock_current').notNull().default(0),
-    stockMinimum: integer('stock_minimum').notNull().default(0),
     imageUrl: text('image_url'),
-    branchId: uuid('branch_id'),
     isActive: boolean('is_active').notNull().default(true),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at')

@@ -17,10 +17,11 @@ import { requireRole } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { z } from 'zod'
+import { branchIdField, dateString, optionalString, uuidField } from '#/shared/lib/schemas.ts'
 
 export const getFreezes = createServerFn({ method: 'GET' })
   .inputValidator(
-    z.object({ branchId: z.string().uuid().optional() }).optional(),
+    z.object({ branchId: branchIdField }).optional(),
   )
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
@@ -33,7 +34,6 @@ export const getFreezes = createServerFn({ method: 'GET' })
         subscription: {
           with: {
             member: true,
-            plan: true,
             package: true,
           },
         },
@@ -44,7 +44,7 @@ export const getFreezes = createServerFn({ method: 'GET' })
 
 export const getMemberFreezes = createServerFn({ method: 'GET' })
   .inputValidator((data: { memberId: number }) =>
-    z.object({ memberId: z.string().uuid() }).parse(data),
+    z.object({ memberId: uuidField }).parse(data),
   )
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
@@ -55,7 +55,6 @@ export const getMemberFreezes = createServerFn({ method: 'GET' })
       with: {
         subscription: {
           with: {
-            plan: true,
             package: true,
           },
         },
@@ -64,10 +63,10 @@ export const getMemberFreezes = createServerFn({ method: 'GET' })
   })
 
 const createFreezeSchema = z.object({
-  subscriptionId: z.string().uuid(),
-  startDate: z.string(),
-  endDate: z.string(),
-  reason: z.string().optional(),
+  subscriptionId: uuidField,
+  startDate: dateString,
+  endDate: dateString,
+  reason: optionalString,
 })
 
 export type CreateFreezeData = z.infer<typeof createFreezeSchema>
@@ -152,7 +151,7 @@ export const createFreeze = createServerFn({ method: 'POST' })
 
 export const resumeSubscription = createServerFn({ method: 'POST' })
   .inputValidator((data: { freezeId: string }) =>
-    z.object({ freezeId: z.string().uuid() }).parse(data),
+    z.object({ freezeId: uuidField }).parse(data),
   )
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
@@ -221,7 +220,7 @@ export const getFreezeRules = createServerFn({ method: 'GET' }).handler(
 
 export const getFrozenSubscriptions = createServerFn({ method: 'GET' })
   .inputValidator(
-    z.object({ branchId: z.string().uuid().optional() }).optional(),
+    z.object({ branchId: branchIdField }).optional(),
   )
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
@@ -243,7 +242,6 @@ export const getFrozenSubscriptions = createServerFn({ method: 'GET' })
         subscription: {
           with: {
             member: true,
-            plan: true,
             package: true,
           },
         },

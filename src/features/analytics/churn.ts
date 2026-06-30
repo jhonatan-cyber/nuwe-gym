@@ -3,6 +3,7 @@ import { members } from '#/shared/db/schema/members.ts'
 import { subscriptions } from '#/shared/db/schema/subscriptions.ts'
 import { checkIns } from '#/shared/db/schema/check-ins.ts'
 import { eq, desc, and, gte, lte, count, sql } from 'drizzle-orm'
+import { getGroq, GROQ_MODEL } from '#/shared/lib/ai.ts'
 import type { ChurnRisk } from './types.ts'
 
 export async function computeChurnRisk(
@@ -22,7 +23,7 @@ export async function computeChurnRisk(
     .from(checkIns)
     .where(eq(checkIns.memberId, memberId))
     .orderBy(desc(checkIns.checkedInAt))
-    .limit(1)
+    .limit(1) as any[]
 
   const daysSinceLastCheckIn = lastCI
     ? Math.floor(
@@ -168,4 +169,38 @@ export async function computeAllChurnRisks(
   // Sort by score descending
   results.sort((a, b) => b.score - a.score)
   return results
+}
+
+export async function generateChurnReengagementMessage(memberId: string): Promise<string> {
+  const risk = await computeChurnRisk(memberId)
+  const groq = getGroq()
+
+  const systemPrompt = `Eres un asistente de marketing y retención experto para un gimnasio moderno.
+Tu tarea es redactar un mensaje corto, persuasivo, cálido y motivador en español de Argentina (tono amigable, voseo natural: "che", "venís", "tenés", "te extrañamos").
+El objetivo del mensaje es re-enganchar a un socio que está en riesgo de abandonar el gimnasio.
+Adapta el mensaje a los factores específicos que causan el riesgo (ej: no asiste, membresía vencida, etc.).
+Ofrece una propuesta atractiva (ej: clase especial gratis, pase para un amigo, o charla con un profe).
+Devuelve UNICAMENTE el texto del mensaje redactado, listo para ser copiado. No agregues comillas al inicio ni al final, ni texto de introducción.`
+
+  const userPrompt = `Socio: ${risk.memberName}
+Nivel de riesgo de abandono: ${risk.level} (Score: ${risk.score}/100)
+Días desde el último check-in: ${risk.daysSinceLastCheckIn ?? 'Nunca asistió'}
+Factores de riesgo detectados: ${risk.factors.join(', ')}`
+
+  try {
+    const completion = await groq.chat.completions.create({
+      model: GROQ_MODEL,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ],
+      temperature: 0.7,
+      max_tokens: 300
+    })
+
+    return completion.choices[0].message.content?.trim() || ''
+  } catch (err) {
+    console.error('Error al generar mensaje de retención con IA:', err)
+    return `¡Hola ${risk.memberName}! Hace un tiempo que no te vemos por el gimnasio. ¿Todo bien? Te extrañamos en los entrenamientos. Si tenés alguna duda o querés reanudar, avisanos y te damos una mano con tu plan. ¡Te esperamos!`
+  }
 }

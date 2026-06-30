@@ -5,6 +5,7 @@ import {
   getBranches,
   createBranch,
   updateBranch,
+  deleteBranch,
 } from '#/features/branches/server.ts'
 import type { Branch, BranchForm, StatusFilter } from '#/features/branches/types.ts'
 import { EMPTY_BRANCH_FORM } from '#/features/branches/types.ts'
@@ -17,6 +18,7 @@ export function useBranchesPage() {
   const [form, setForm] = useState<BranchForm>(EMPTY_BRANCH_FORM)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL')
+  const [branchToDelete, setBranchToDelete] = useState<Branch | null>(null)
 
   const { data: branchesList = [], isLoading } = useQuery({
     queryKey: ['branches'],
@@ -39,6 +41,16 @@ export function useBranchesPage() {
       queryClient.invalidateQueries({ queryKey: ['branches'] })
       toast.success('Sucursal actualizada con éxito')
       closeModal()
+    },
+    onError: (err: Error) => toast.error(err.message),
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteBranch,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['branches'] })
+      toast.success('Sucursal eliminada con éxito')
+      setBranchToDelete(null)
     },
     onError: (err: Error) => toast.error(err.message),
   })
@@ -99,7 +111,7 @@ export function useBranchesPage() {
     })
   }
 
-  const isPending = createMutation.isPending || updateMutation.isPending
+  const isPending = createMutation.isPending || updateMutation.isPending || deleteMutation.isPending
 
   const totalBranches = branchesList.length
   const activeCount = branchesList.filter((b) => b.isActive).length
@@ -126,9 +138,11 @@ export function useBranchesPage() {
     form,
     search,
     statusFilter,
+    branchToDelete,
     setForm,
     setSearch,
     setStatusFilter,
+    setBranchToDelete,
     // Data
     branchesList,
     isLoading,
@@ -143,6 +157,11 @@ export function useBranchesPage() {
     closeModal,
     handleSubmit,
     handleToggleActive,
+    handleDelete: () => {
+      if (branchToDelete) {
+        deleteMutation.mutate({ data: { id: branchToDelete.id } })
+      }
+    },
     isPending,
   }
 }

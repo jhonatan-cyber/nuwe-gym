@@ -3,7 +3,7 @@ import { db } from '#/shared/db/index.ts'
 import { eq } from 'drizzle-orm'
 import { members } from '#/shared/db/schema/members.ts'
 import { users } from '#/shared/db/schema/auth.ts'
-import { membershipPlans } from '#/shared/db/schema/membership-plans.ts'
+import { packages as packagesTable } from '#/shared/db/schema/packages.ts'
 import { subscriptions } from '#/shared/db/schema/subscriptions.ts'
 import { membershipPayments } from '#/shared/db/schema/membership-payments.ts'
 import { checkIns } from '#/shared/db/schema/check-ins.ts'
@@ -69,31 +69,24 @@ export async function createMember(
   return member
 }
 
-export const planData = [
-  { name: 'Mensual', durationDays: 30, price: '15000.00' },
-  { name: 'Trimestral', durationDays: 90, price: '38000.00' },
-  { name: 'Semestral', durationDays: 180, price: '68000.00' },
-  { name: 'Anual', durationDays: 365, price: '120000.00' },
-] as const
-
-export async function createPlan(
-  overrides: Partial<InferInsertModel<typeof membershipPlans>> = {},
+export async function createPackage(
+  overrides: Partial<InferInsertModel<typeof packagesTable>> = {},
 ) {
-  const [plan] = await db
-    .insert(membershipPlans)
+  const [pkg] = await db
+    .insert(packagesTable)
     .values({
-      name: 'Mensual',
+      name: 'Test Plan',
+      price: '10000.00',
       durationDays: 30,
-      price: '15000.00',
       ...overrides,
     })
     .returning()
-  return plan
+  return pkg
 }
 
 export function buildSubscription(
   memberId: string,
-  planId: string,
+  packageId: string,
   overrides: Partial<InferInsertModel<typeof subscriptions>> = {},
 ) {
   const startDate = faker.date.past()
@@ -101,7 +94,7 @@ export function buildSubscription(
   endDate.setDate(endDate.getDate() + 30)
   return {
     memberId,
-    planId,
+    packageId,
     startDate,
     endDate,
     status: 'ACTIVE' as const,
@@ -111,12 +104,12 @@ export function buildSubscription(
 
 export async function createSubscription(
   memberId: string,
-  planId: string,
+  packageId: string,
   overrides: Partial<InferInsertModel<typeof subscriptions>> = {},
 ) {
   const [sub] = await db
     .insert(subscriptions)
-    .values(buildSubscription(memberId, planId, overrides))
+    .values(buildSubscription(memberId, packageId, overrides))
     .returning()
   return sub
 }

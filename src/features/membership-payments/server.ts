@@ -11,9 +11,10 @@ import { requireRole } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { z } from 'zod'
+import { branchIdField, moneyString, optionalString, paymentMethodEnum, uuidField } from '#/shared/lib/schemas.ts'
 
 const getMembershipPaymentsSchema = z.object({
-  branchId: z.string().optional(),
+  branchId: branchIdField,
 })
 
 export const getMembershipPayments = createServerFn({ method: 'GET' })
@@ -40,12 +41,12 @@ export const getMembershipPayments = createServerFn({ method: 'GET' })
   })
 
 const createDirectPaymentSchema = z.object({
-  memberId: z.string().uuid(),
-  subscriptionId: z.string().uuid(),
-  amount: z.string(),
-  paymentMethod: z.enum(['CASH', 'CARD', 'TRANSFER', 'QR']),
-  notes: z.string().optional(),
-  branchId: z.string().optional(),
+  memberId: uuidField,
+  subscriptionId: uuidField,
+  amount: moneyString,
+  paymentMethod: paymentMethodEnum,
+  notes: optionalString,
+  branchId: branchIdField,
 })
 
 export const createDirectPayment = createServerFn({ method: 'POST' })

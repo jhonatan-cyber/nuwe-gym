@@ -2,16 +2,18 @@ import { createServerFn } from '@tanstack/react-start'
 import { db } from '#/shared/db/index.ts'
 import { purchases, purchaseItems } from '#/shared/db/schema/purchases.ts'
 import { products } from '#/shared/db/schema/products.ts'
+import { productStock } from '#/shared/db/schema/product-stock.ts'
 import { inventoryMovements } from '#/shared/db/schema/inventory.ts'
-import { eq, desc, inArray } from 'drizzle-orm'
+import { eq, desc, inArray, and } from 'drizzle-orm'
 import { requireRole } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { z } from 'zod'
+import { branchIdField, moneyString, optionalString, positiveNumber, uuidField } from '#/shared/lib/schemas.ts'
 
 export const getPurchases = createServerFn({ method: 'GET' })
   .inputValidator(
-    z.object({ branchId: z.string().uuid().optional() }).optional(),
+    z.object({ branchId: branchIdField }).optional(),
   )
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
@@ -33,15 +35,15 @@ export const getPurchases = createServerFn({ method: 'GET' })
   })
 
 const createPurchaseSchema = z.object({
-  supplierId: z.string().uuid(),
-  branchId: z.string().uuid().optional(),
+  supplierId: uuidField,
+  branchId: branchIdField,
   purchaseNumber: z.string(),
-  notes: z.string().optional(),
+  notes: optionalString,
   items: z.array(
     z.object({
-      productId: z.string().uuid(),
-      quantity: z.number(),
-      unitCost: z.string(),
+      productId: uuidField,
+      quantity: positiveNumber,
+      unitCost: moneyString,
     }),
   ),
 })
@@ -73,6 +75,8 @@ export const createPurchase = createServerFn({ method: 'POST' })
         })
         .returning()
 
+      const branchId = data.branchId
+
       const productIds = Array.from(
         new Set(data.items.map((item) => item.productId)),
       )
@@ -81,9 +85,24 @@ export const createPurchase = createServerFn({ method: 'POST' })
           ? await tx
               .select()
               .from(products)
-              .where(inArray(products.id, productIds))
+              .where(inArray(products.id, productIds as string[]))
           : []
       const productMap = new Map(productsFound.map((p) => [p.id, p]))
+
+      // Cargar stock actual de la sucursal
+      let stockCache = new Map<string, typeof productStock.$inferSelect>()
+      if (branchId && productIds.length > 0) {
+        const existingStocks = await tx
+          .select()
+          .from(productStock)
+          .where(
+            and(
+              eq(productStock.branchId, branchId),
+              inArray(productStock.productId, productIds as string[]),
+            ),
+          )
+        stockCache = new Map(existingStocks.map((s) => [s.productId, s]))
+      }
 
       for (const item of data.items) {
         const itemSubtotal = (Number(item.unitCost) * item.quantity).toFixed(2)
@@ -102,29 +121,46 @@ export const createPurchase = createServerFn({ method: 'POST' })
           throw new Error(`Producto no encontrado (ID: ${item.productId})`)
         }
 
-        const newStock = product.stockCurrent + item.quantity
-
+        // Actualizar precio de compra global del producto
         await tx
           .update(products)
           .set({
-            stockCurrent: newStock,
             purchasePrice: item.unitCost,
             updatedAt: new Date(),
           })
           .where(eq(products.id, item.productId))
 
-        await tx.insert(inventoryMovements).values({
-          productId: item.productId,
-          movementType: 'PURCHASE',
-          quantity: item.quantity,
-          previousStock: product.stockCurrent,
-          newStock,
-          referenceType: 'PURCHASE',
-          referenceId: newPurchase.id,
-          createdByUserId: session.user.id,
-        })
+        // Actualizar stock por sucursal
+        if (branchId) {
+          const existingStock = stockCache.get(item.productId)
+          const prevStock = existingStock?.stockCurrent ?? 0
+          const newStock = prevStock + item.quantity
 
-        product.stockCurrent = newStock
+          if (existingStock) {
+            await tx
+              .update(productStock)
+              .set({ stockCurrent: newStock, updatedAt: new Date() })
+              .where(eq(productStock.id, existingStock.id))
+          } else {
+            await tx.insert(productStock).values({
+              productId: item.productId,
+              branchId,
+              stockCurrent: newStock,
+              stockMinimum: 0,
+            })
+          }
+
+          await tx.insert(inventoryMovements).values({
+            productId: item.productId,
+            movementType: 'PURCHASE',
+            quantity: item.quantity,
+            previousStock: prevStock,
+            newStock,
+            referenceType: 'PURCHASE',
+            referenceId: newPurchase.id,
+            createdByUserId: session.user.id,
+          })
+        }
       }
 
       return newPurchase

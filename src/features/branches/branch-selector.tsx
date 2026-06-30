@@ -19,8 +19,10 @@ export function BranchSelector() {
   useEffect(() => {
     setMounted(true)
     const stored = localStorage.getItem(BRANCH_STORAGE_KEY)
-    if (stored) {
+    if (stored && stored !== '__ALL__') {
       setCurrentBranchId(stored)
+    } else {
+      setCurrentBranchId(null) // '__ALL__' → null significa "Todas"
     }
   }, [])
 
@@ -30,29 +32,45 @@ export function BranchSelector() {
   })
 
   const currentBranch =
-    branches.find((b) => b.id === currentBranchId) ??
-    branches.find((b) => b.isDefault) ??
-    branches[0]
+    currentBranchId
+      ? branches.find((b) => b.id === currentBranchId) ??
+        branches.find((b) => b.isDefault) ??
+        branches[0]
+      : null
 
-  const handleSwitch = (branchId: string) => {
-    localStorage.setItem(BRANCH_STORAGE_KEY, String(branchId))
+  const handleSwitch = (branchId: string | null) => {
+    if (branchId) {
+      localStorage.setItem(BRANCH_STORAGE_KEY, branchId)
+    } else {
+      localStorage.setItem(BRANCH_STORAGE_KEY, '__ALL__')
+    }
     setCurrentBranchId(branchId)
+    window.dispatchEvent(new Event('branch-changed'))
   }
 
   if (!mounted || branches.length <= 1) return null
-
-  const displayName = currentBranch.name
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="gap-1.5 px-2 text-sm h-9">
           <Building2 className="size-4" />
-          <span className="max-w-[120px] truncate">{displayName}</span>
+          <span className="max-w-[120px] truncate">
+            {currentBranch?.name ?? 'Todas'}
+          </span>
           <ChevronDown className="size-3 text-muted-foreground" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
+        <DropdownMenuItem
+          onClick={() => handleSwitch(null)}
+          className="flex items-center justify-between"
+        >
+          <span>Todas las sucursales</span>
+          {!currentBranchId && (
+            <span className="text-primary font-bold ml-2">✔️</span>
+          )}
+        </DropdownMenuItem>
         {branches.map((branch) => (
           <DropdownMenuItem
             key={branch.id}
@@ -60,7 +78,7 @@ export function BranchSelector() {
             className="flex items-center justify-between"
           >
             <span>{branch.name}</span>
-            {branch.id === currentBranch.id && (
+            {branch.id === currentBranchId && (
               <span className="text-primary font-bold ml-2">✔️</span>
             )}
           </DropdownMenuItem>

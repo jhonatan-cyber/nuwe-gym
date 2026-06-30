@@ -1,6 +1,7 @@
 import { createServerFn } from '@tanstack/react-start'
 import { z } from 'zod'
 import { eq } from 'drizzle-orm'
+import { optionalString, timeString } from '#/shared/lib/schemas.ts'
 import { db } from '#/shared/db/index.ts'
 import { settings } from '#/shared/db/schema/settings.ts'
 import { requireRole } from '#/shared/lib/server-utils.ts'
@@ -18,20 +19,20 @@ export const getSettings = createServerFn({ method: 'GET' }).handler(
 
 const updateSettingsSchema = z.object({
   gymName: z.string().min(1, 'El nombre del gimnasio es obligatorio'),
-  gymAddress: z.string().optional().default(''),
-  gymPhone: z.string().optional().default(''),
-  gymEmail: z.string().optional().default(''),
-  logoBase64: z.string().optional().default(''),
-  taxRate: z.string().optional().default('0.00'),
-  currencySymbol: z.string().optional().default('$'),
-  currencyCode: z.string().optional().default('ARS'),
+  gymAddress: optionalString.default(''),
+  gymPhone: optionalString.default(''),
+  gymEmail: optionalString.default(''),
+  logoBase64: optionalString.default(''),
+  taxRate: optionalString.default('0.00'),
+  currencySymbol: optionalString.default('$'),
+  currencyCode: optionalString.default('ARS'),
   decimalPlaces: z.coerce.number().int().min(0).max(10).optional().default(2),
   lowStockThreshold: z.coerce.number().int().min(0).optional().default(5),
   membershipReminderDays: z.coerce.number().int().min(0).optional().default(7),
   checkInWindowMinutes: z.coerce.number().int().min(0).optional().default(60),
   enableAutoRenew: z.boolean().optional().default(false),
-  openingTime: z.string().optional().default('08:00'),
-  closingTime: z.string().optional().default('22:00'),
+  openingTime: timeString.optional().default('08:00'),
+  closingTime: timeString.optional().default('22:00'),
   mondayOpen: z.boolean().optional().default(true),
   tuesdayOpen: z.boolean().optional().default(true),
   wednesdayOpen: z.boolean().optional().default(true),

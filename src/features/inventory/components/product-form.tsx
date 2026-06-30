@@ -9,8 +9,6 @@ interface ProductFormValues {
   categoryId: string
   purchasePrice: string
   salePrice: string
-  stockCurrent: string
-  stockMinimum: string
   imageUrl: string
 }
 
@@ -18,7 +16,6 @@ interface ProductFormFieldsProps {
   values: ProductFormValues
   categories: Array<{ id: string; name: string }>
   onChange: (values: ProductFormValues) => void
-  showStock?: boolean
 }
 
 export type { ProductFormValues }
@@ -27,7 +24,6 @@ export function ProductFormFields({
   values,
   categories,
   onChange,
-  showStock = true,
 }: ProductFormFieldsProps) {
   function set<TKey extends keyof ProductFormValues>(
     key: TKey,
@@ -110,39 +106,9 @@ export function ProductFormFields({
           />
         </div>
       </div>
-      {showStock && (
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1">
-            <label className="text-sm font-bold">Stock Inicial</label>
-            <Input
-              type="number"
-              value={values.stockCurrent}
-              onChange={(e) => set('stockCurrent', e.target.value)}
-              className="rounded-xl"
-            />
-          </div>
-          <div className="space-y-1">
-            <label className="text-sm font-bold">Stock Mínimo</label>
-            <Input
-              type="number"
-              value={values.stockMinimum}
-              onChange={(e) => set('stockMinimum', e.target.value)}
-              className="rounded-xl"
-            />
-          </div>
-        </div>
-      )}
-      {!showStock && (
-        <div className="space-y-1">
-          <label className="text-sm font-bold">Stock Mínimo</label>
-          <Input
-            type="number"
-            value={values.stockMinimum}
-            onChange={(e) => set('stockMinimum', e.target.value)}
-            className="rounded-xl"
-          />
-        </div>
-      )}
+      <div className="text-xs text-muted-foreground p-3 bg-muted/20 rounded-xl">
+        El stock se administra por sucursal. Usá la sección <strong>Inventario</strong> para ajustar stock.
+      </div>
       <div className="space-y-1">
         <label className="text-sm font-bold">URL de Imagen</label>
         <Input

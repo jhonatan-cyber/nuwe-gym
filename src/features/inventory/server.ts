@@ -2,13 +2,16 @@ import { createServerFn } from '@tanstack/react-start'
 import { db } from '#/shared/db/index.ts'
 import { inventoryMovements } from '#/shared/db/schema/inventory.ts'
 import { products } from '#/shared/db/schema/products.ts'
-import { desc, eq, inArray, sql } from 'drizzle-orm'
+import { productStock } from '#/shared/db/schema/product-stock.ts'
+import { productCategories } from '#/shared/db/schema/product-categories.ts'
+import { desc, eq, and, sql } from 'drizzle-orm'
 import { z } from 'zod'
+import { branchIdField } from '#/shared/lib/schemas.ts'
 import { requireRole } from '#/shared/lib/server-utils.ts'
 
 export const getInventoryMovements = createServerFn({ method: 'GET' })
   .inputValidator(
-    z.object({ branchId: z.string().uuid().optional() }).optional(),
+    z.object({ branchId: branchIdField }).optional(),
   )
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
@@ -21,15 +24,16 @@ export const getInventoryMovements = createServerFn({ method: 'GET' })
       })
     }
 
-    const productIds = await db
-      .select({ id: products.id })
-      .from(products)
-      .where(eq(products.branchId, branchId))
-    const ids = productIds.map((p) => p.id)
+    // Filtrar movimientos por productos que tienen stock en la sucursal
+    const stocks = await db
+      .select({ productId: productStock.productId })
+      .from(productStock)
+      .where(eq(productStock.branchId, branchId))
+    const ids = [...new Set(stocks.map((s) => s.productId))]
     if (ids.length === 0) return []
 
     return await db.query.inventoryMovements.findMany({
-      where: inArray(inventoryMovements.productId, ids),
+      where: sql`${inventoryMovements.productId} = ANY(ARRAY[${sql.join(ids.map((id) => sql`${id}::uuid`), sql`, `)}]::uuid[])`,
       orderBy: [desc(inventoryMovements.createdAt)],
       with: { product: true, createdBy: true },
     })
@@ -47,47 +51,45 @@ interface StockSnapshot {
 }
 
 export const getStockSnapshots = createServerFn({ method: 'GET' })
-  .inputValidator(z.object({ daysBack: z.number().default(30) }))
+  .inputValidator(z.object({
+    daysBack: z.number().default(30),
+    branchId: branchIdField,
+  }))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
 
     const cutoffDate = new Date()
     cutoffDate.setDate(cutoffDate.getDate() - data.daysBack)
 
-    // Get current stock per product directly from products table
-    const productsList = await db
-      .select({
-        id: inventoryMovements.productId,
-        productName: sql<string>`"products"."name"`,
-        categoryId: sql<string>`"products"."category_id"`,
-        categoryName: sql<string>`"product_categories"."name"`,
-        currentStock: sql<number>`"products"."stock_current"`,
-      })
-      .from(inventoryMovements)
-      .innerJoin(
-        sql`"products"`,
-        sql`"products"."id" = ${inventoryMovements.productId}`,
-      )
-      .innerJoin(
-        sql`"product_categories"`,
-        sql`"product_categories"."id" = "products"."category_id"`,
-      )
-      .groupBy(
-        inventoryMovements.productId,
-        sql`"products"."name"`,
-        sql`"products"."category_id"`,
-        sql`"product_categories"."name"`,
-        sql`"products"."stock_current"`,
-      )
+    if (!data.branchId) return []
 
-    // Get last movement before cutoff for each product in a single query
+    // Get current stock per product from product_stock for this branch
+    const stockRows = await db
+      .select({
+        productId: productStock.productId,
+        currentStock: productStock.stockCurrent,
+        productName: products.name,
+        categoryId: products.categoryId,
+        categoryName: productCategories.name,
+      })
+      .from(productStock)
+      .innerJoin(products, eq(productStock.productId, products.id))
+      .innerJoin(productCategories, eq(products.categoryId, productCategories.id))
+      .where(eq(productStock.branchId, data.branchId))
+
+    // Get last movement before cutoff for each product
     const lastMovements = await db
       .select({
         productId: inventoryMovements.productId,
         lastStock: sql<number>`MAX(${inventoryMovements.newStock})`,
       })
       .from(inventoryMovements)
-      .where(sql`${inventoryMovements.createdAt} <= ${cutoffDate}`)
+      .where(
+        and(
+          sql`${inventoryMovements.createdAt} <= ${cutoffDate}`,
+          sql`${inventoryMovements.productId} IN (${sql.join(stockRows.map((r) => sql`${r.productId}`), sql`, `)})`,
+        ),
+      )
       .groupBy(inventoryMovements.productId)
 
     const lastStockMap = new Map(
@@ -96,14 +98,14 @@ export const getStockSnapshots = createServerFn({ method: 'GET' })
 
     const snapshots: StockSnapshot[] = []
 
-    for (const item of productsList) {
-      const prevStock = lastStockMap.get(item.id) ?? item.currentStock
+    for (const item of stockRows) {
+      const prevStock = lastStockMap.get(item.productId) ?? item.currentStock
       const change = item.currentStock - prevStock
       const changePercent =
         prevStock > 0 ? Math.round((change / prevStock) * 100) : 0
 
       snapshots.push({
-        productId: item.id,
+        productId: item.productId,
         productName: item.productName,
         categoryId: item.categoryId,
         categoryName: item.categoryName,

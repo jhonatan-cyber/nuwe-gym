@@ -9,10 +9,12 @@ import { sales, saleItems } from '#/shared/db/schema/sales.ts'
 import { membershipPayments } from '#/shared/db/schema/membership-payments.ts'
 import { cashRegisterSessions } from '#/shared/db/schema/cash-register.ts'
 import { products } from '#/shared/db/schema/products.ts'
+import { productStock } from '#/shared/db/schema/product-stock.ts'
 import { z } from 'zod'
+import { branchIdField } from '#/shared/lib/schemas.ts'
 
 const getDashboardDataSchema = z.object({
-  branchId: z.string().optional(),
+  branchId: branchIdField,
 })
 
 export const getDashboardData = createServerFn({ method: 'GET' })
@@ -137,19 +139,33 @@ export const getDashboardData = createServerFn({ method: 'GET' })
       ),
       with: {
         member: true,
-        plan: true,
+        package: true,
       },
       orderBy: (s, { asc }) => [asc(s.endDate)],
     })
 
-    const lowStockProducts = await db.query.products.findMany({
-      where: and(
-        eq(products.isActive, true),
-        sql`stock_current <= stock_minimum`,
-        data.branchId ? eq(products.branchId, data.branchId) : undefined,
-      ),
-      orderBy: (p, { asc }) => [asc(p.stockCurrent)],
-    })
+    let lowStockProducts: any[] = []
+    if (data.branchId) {
+      const lowStockRows = await db
+        .select({
+          id: products.id,
+          name: products.name,
+          sku: products.sku,
+          stockCurrent: productStock.stockCurrent,
+          stockMinimum: productStock.stockMinimum,
+        })
+        .from(productStock)
+        .innerJoin(products, eq(productStock.productId, products.id))
+        .where(
+          and(
+            eq(products.isActive, true),
+            eq(productStock.branchId, data.branchId),
+            sql`${productStock.stockCurrent} <= ${productStock.stockMinimum}`,
+          ),
+        )
+        .orderBy(productStock.stockCurrent)
+      lowStockProducts = lowStockRows
+    }
 
     let membershipIncome = 0
     let posIncome = 0
@@ -227,11 +243,7 @@ export const getDashboardData = createServerFn({ method: 'GET' })
       const activeProductsRes = await db
         .select({ count: count() })
         .from(products)
-        .where(
-          data.branchId
-            ? and(eq(products.isActive, true), eq(products.branchId, data.branchId))
-            : eq(products.isActive, true),
-        )
+        .where(eq(products.isActive, true))
       activeProductsCount = activeProductsRes[0]?.count ?? 0
     }
 

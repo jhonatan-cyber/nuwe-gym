@@ -1,758 +1,424 @@
 import { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  Landmark,
+  ChevronRight,
+  List,
+  WalletCards,
   ArrowUpRight,
   ArrowDownLeft,
   Plus,
   Lock,
   Unlock,
-  History,
+  Store,
+  Trash2,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import {
-  getCurrentCashSession,
-  openCashSession,
-  closeCashSession,
-  createManualMovement,
-  getCashSessionDetails,
-  getCashSessionsList,
-} from '#/features/cash-register/server.ts'
-import { useCurrentBranch } from '#/shared/hooks/use-current-branch.ts'
-import { Button } from '#/shared/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from '#/shared/components/ui/card'
-import { Input } from '#/shared/components/ui/input'
-import { Textarea } from '#/shared/components/ui/textarea'
-import { Badge } from '#/shared/components/ui/badge'
-import { PageHeader } from '#/shared/components/page-header'
-import { formatDateTime } from '#/shared/lib/formatters.ts'
 import { Route as authedRoute } from '#/routes/_authed.tsx'
+import { useCurrentBranch } from '#/shared/hooks/use-current-branch.ts'
+import { ModuleLayout } from '#/shared/components/layout/module-layout.tsx'
+import { ToggleGroup, ToggleGroupItem } from '#/shared/components/ui/toggle-group'
+import { StatCard } from '#/shared/components/ui/stat-card'
+import { LoadingSpinner } from '#/shared/components/ui/loading-spinner'
+import { EmptyState } from '#/shared/components/ui/empty-state'
+import { Button } from '#/shared/components/ui/button'
+import { Badge } from '#/shared/components/ui/badge'
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
-} from '#/shared/components/ui/dialog'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '#/shared/components/ui/table'
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '#/shared/components/ui/alert-dialog'
+import { useCashRegister } from '#/features/cash-register/hooks/use-cash-register.ts'
+import { CashRegisterMovementsTable } from '#/features/cash-register/components/cash-register-movements-table.tsx'
+import { CashRegisterHistoryTable } from '#/features/cash-register/components/cash-register-history-table.tsx'
+import { CashRegisterOpenDialog } from '#/features/cash-register/components/cash-register-open-dialog.tsx'
+import { CashRegisterCloseDialog } from '#/features/cash-register/components/cash-register-close-dialog.tsx'
+import { CashRegisterMovementDialog } from '#/features/cash-register/components/cash-register-movement-dialog.tsx'
+import { CashRegisterHistoryDetailDialog } from '#/features/cash-register/components/cash-register-history-detail-dialog.tsx'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '#/shared/components/ui/card'
+import { formatCurrency } from '#/shared/lib/formatters.ts'
 
 export function CashRegisterPage() {
-  const queryClient = useQueryClient()
   const { userRole } = authedRoute.useRouteContext()
   const isAdmin = userRole === 'ADMIN'
   const { branchId } = useCurrentBranch()
+  const c = useCashRegister(branchId, isAdmin)
+  const [activeTab, setActiveTab] = useState<'movements' | 'history'>('movements')
 
-  const [isOpenModalOpen, setIsOpenModalOpen] = useState(false)
-  const [isCloseModalOpen, setIsCloseModalOpen] = useState(false)
-  const [isMovementModalOpen, setIsMovementModalOpen] = useState(false)
-  const [selectedHistorySessionId, setSelectedHistorySessionId] = useState<
-    string | null
-  >(null)
-
-  const [openingAmount, setOpeningAmount] = useState('10000.00')
-  const [openingNotes, setOpeningNotes] = useState('')
-
-  const [closingAmount, setClosingAmount] = useState('')
-  const [closingNotes, setClosingNotes] = useState('')
-
-  const [movementAmount, setMovementAmount] = useState('')
-  const [movementType, setMovementType] = useState<'INCOME' | 'EXPENSE'>(
-    'INCOME',
-  )
-  const [movementDescription, setMovementDescription] = useState('')
-
-  const { data: currentSession, isLoading: isLoadingSession } = useQuery({
-    queryKey: ['current-cash-session', branchId],
-    queryFn: () => getCurrentCashSession({ data: { branchId } }),
-    enabled: !!branchId,
-  })
-
-  const { data: sessionDetails, isLoading: isLoadingDetails } = useQuery({
-    queryKey: ['cash-session-details', branchId, currentSession?.id],
-    queryFn: () =>
-      getCashSessionDetails({ data: { sessionId: currentSession!.id } }),
-    enabled: !!currentSession?.id,
-  })
-
-  const { data: historySessions = [], isLoading: isLoadingHistory } = useQuery({
-    queryKey: ['cash-sessions-list', branchId],
-    queryFn: () => getCashSessionsList({ data: { branchId } }),
-    enabled: !!branchId && isAdmin,
-  })
-
-  const { data: selectedHistoryDetails } = useQuery({
-    queryKey: ['cash-session-details', branchId, selectedHistorySessionId],
-    queryFn: () =>
-      getCashSessionDetails({ data: { sessionId: selectedHistorySessionId! } }),
-    enabled: !!selectedHistorySessionId,
-  })
-
-  const openMutation = useMutation({
-    mutationFn: openCashSession,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['current-cash-session'] })
-      toast.success('Caja abierta correctamente')
-      setIsOpenModalOpen(false)
-    },
-    onError: (err: Error) => toast.error(err.message || 'Error al abrir caja'),
-  })
-
-  const closeMutation = useMutation({
-    mutationFn: closeCashSession,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['current-cash-session'] })
-      queryClient.invalidateQueries({ queryKey: ['cash-sessions-list'] })
-      toast.success('Caja cerrada con éxito')
-      setIsCloseModalOpen(false)
-      setClosingAmount('')
-      setClosingNotes('')
-    },
-    onError: (err: Error) => toast.error(err.message || 'Error al cerrar caja'),
-  })
-
-  const movementMutation = useMutation({
-    mutationFn: createManualMovement,
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ['cash-session-details', currentSession?.id],
-      })
-      toast.success('Movimiento registrado con éxito')
-      setIsMovementModalOpen(false)
-      setMovementAmount('')
-      setMovementDescription('')
-    },
-    onError: (err: Error) =>
-      toast.error(err.message || 'Error al registrar movimiento'),
-  })
-
-  const calculateExpectedCash = () => {
-    if (!currentSession || !sessionDetails) return '0.00'
-    let balance = Number(currentSession.openingAmount)
-    sessionDetails.movements.forEach((m) => {
-      if (m.paymentMethod === 'CASH') {
-        if (m.movementType === 'INCOME') balance += Number(m.amount)
-        else balance -= Number(m.amount)
-      }
-    })
-    return balance.toFixed(2)
-  }
-
-  const handleOpenSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!openingAmount) return
-    openMutation.mutate({ data: { openingAmount, notes: openingNotes, branchId } })
-  }
-
-  const handleCloseSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!closingAmount) return
-    closeMutation.mutate({
-      data: { actualClosingAmount: closingAmount, notes: closingNotes, branchId },
-    })
-  }
-
-  const handleMovementSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!movementAmount || !movementDescription) return
-    movementMutation.mutate({
-      data: {
-        amount: movementAmount,
-        movementType,
-        description: movementDescription,
-        branchId,
-      },
-    })
-  }
-
-  if (isLoadingSession) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        Cargando estado de la caja...
-      </div>
-    )
+  function handleOpenClick() {
+    if (!branchId) {
+      toast.error('Seleccioná una sucursal específica para abrir caja')
+      return
+    }
+    c.setIsOpenModalOpen(true)
   }
 
   return (
-    <div className="space-y-6">
-      <PageHeader
+    <>
+      <ModuleLayout
+        breadcrumb={
+          <div className="flex items-center gap-1">
+            <span className="text-muted-foreground">Caja</span>
+            <ChevronRight className="size-3 text-muted-foreground/50" />
+            <span className="text-foreground">Control</span>
+          </div>
+        }
         title="Control de Caja"
-        description="Aperturas, cierres de caja diaria y arqueo de movimientos de efectivo."
-        icon={<Landmark className="size-8 text-primary" />}
-      />
+        leftPanel={
+          <div className="flex flex-col gap-6 z-10 w-full">
+            <ToggleGroup type="single" value="list">
+              <ToggleGroupItem value="list">
+                <List className="size-3.5" /> Caja
+              </ToggleGroupItem>
+            </ToggleGroup>
 
-      {!currentSession ? (
-        <Card className="max-w-md mx-auto border-red-500/20 shadow-lg mt-8">
-          <CardHeader className="text-center pb-4">
-            <div className="size-16 rounded-full bg-red-500/10 text-red-600 flex items-center justify-center mx-auto mb-4 border border-red-500/20">
-              <Lock className="size-8" />
-            </div>
-            <CardTitle className="text-2xl font-bold text-red-600">
-              Caja Cerrada
-            </CardTitle>
-            <CardDescription>
-              Para registrar ventas de productos o cobrar suscripciones, debés
-              realizar la apertura de caja primero.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex justify-center pb-6">
-            <Button
-              size="lg"
-              className="w-full flex gap-2"
-              onClick={() => setIsOpenModalOpen(true)}
-            >
-              <Unlock className="size-5" /> Abrir Caja Diaria
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-6 md:grid-cols-3">
-          <Card className="md:col-span-1 border-primary/20 shadow-md">
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <div>
-                  <CardTitle className="text-lg">
-                    Sesión de Caja Activa
-                  </CardTitle>
-                  <CardDescription>
-                    ID Sesión: #{currentSession.id}
-                  </CardDescription>
-                </div>
-                <Badge className="bg-emerald-500/10 text-emerald-600 border-none">
-                  Abierta
+            <div className="space-y-3">
+              <div className="flex items-center justify-between px-1">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                  Métricas
+                </p>
+                <Badge
+                  className={c.currentSession
+                    ? 'bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/10 border-none font-bold text-[10px] py-0.5 px-2 rounded-full'
+                    : 'bg-gray-100 text-gray-500 hover:bg-gray-100 dark:bg-white/10 dark:text-white/60 border-none font-bold text-[10px] py-0.5 px-2 rounded-full'}
+                >
+                  {c.currentSession ? 'Abierta' : 'Cerrada'}
                 </Badge>
               </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <span className="text-xs text-muted-foreground block">
-                  Abierta por
-                </span>
-                <span className="font-semibold text-sm">
-                  {currentSession.openedBy.name}
-                </span>
+              <div className="grid grid-cols-1 gap-3">
+                {c.currentSession && (
+                  <>
+                    <StatCard
+                      label="Ingresos"
+                      value={`$${c.totalIncome.toFixed(2)}`}
+                      icon={ArrowUpRight}
+                      variant="emerald"
+                    />
+                    <StatCard
+                      label="Egresos"
+                      value={`$${c.totalExpenses.toFixed(2)}`}
+                      icon={ArrowDownLeft}
+                      variant="orange"
+                    />
+                    <StatCard
+                      label="Efectivo Esperado"
+                      value={`$${c.calculateExpectedCash()}`}
+                      icon={WalletCards}
+                      variant="foreground"
+                    />
+                  </>
+                )}
               </div>
-              <div>
-                <span className="text-xs text-muted-foreground block">
-                  Fecha / Hora de Apertura
-                </span>
-                <span className="font-semibold text-sm">
-                  {formatDateTime(currentSession.openedAt)}
-                </span>
-              </div>
-              <div className="border-t pt-4 space-y-3">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Monto Apertura:</span>
-                  <span className="font-semibold">
-                    ${currentSession.openingAmount}
-                  </span>
-                </div>
-                <div className="flex justify-between text-lg font-bold border-t pt-2">
-                  <span>Efectivo Esperado:</span>
-                  <span className="text-primary">
-                    ${calculateExpectedCash()}
-                  </span>
-                </div>
-              </div>
-              <div className="flex flex-col gap-2 pt-4">
-                <Button
-                  variant="outline"
-                  className="w-full flex gap-2"
-                  onClick={() => setIsMovementModalOpen(true)}
-                >
-                  <Plus className="size-4" /> Movimiento Manual
-                </Button>
-                <Button
-                  variant="destructive"
-                  className="w-full flex gap-2"
-                  onClick={() => setIsCloseModalOpen(true)}
-                >
-                  <Lock className="size-4" /> Cerrar Caja Diaria
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+            </div>
 
-          <Card className="md:col-span-2 shadow-md">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg">
-                Movimientos de la Sesión
-              </CardTitle>
-              <CardDescription>
-                Efectivo y cobros electrónicos registrados.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
-              {isLoadingDetails ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  Cargando movimientos...
-                </div>
-              ) : sessionDetails?.movements.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  No hay movimientos en esta sesión.
-                </div>
+            <div className="space-y-2 pt-2 border-t dark:border-white/5 border-black/5">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">
+                Acciones
+              </p>
+              {!c.currentSession ? (
+                <Button
+                  className="w-full flex gap-2"
+                  onClick={handleOpenClick}
+                >
+                  <Unlock className="size-4" /> Abrir Caja
+                </Button>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Hora</TableHead>
-                      <TableHead>Descripción</TableHead>
-                      <TableHead>Método</TableHead>
-                      <TableHead>Tipo</TableHead>
-                      <TableHead className="text-right">Monto</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {sessionDetails?.movements.map((move) => {
-                      const isIncome = move.movementType === 'INCOME'
-                      return (
-                        <TableRow key={move.id}>
-                          <TableCell className="text-xs text-muted-foreground">
-                            {formatDateTime(move.createdAt).split(', ')[1]}
-                          </TableCell>
-                          <TableCell className="font-medium">
-                            {move.description}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline" className="text-xs">
-                              {move.paymentMethod}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            {isIncome ? (
-                              <Badge className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/10 border-none flex w-fit items-center gap-0.5">
-                                <ArrowUpRight className="size-3" /> Ingreso
-                              </Badge>
-                            ) : (
-                              <Badge className="bg-red-500/10 text-red-600 hover:bg-red-500/10 border-none flex w-fit items-center gap-0.5">
-                                <ArrowDownLeft className="size-3" /> Egreso
-                              </Badge>
-                            )}
-                          </TableCell>
-                          <TableCell
-                            className={`text-right font-semibold ${isIncome ? 'text-emerald-600' : 'text-red-600'}`}
-                          >
-                            {isIncome ? '+' : '-'}${move.amount}
-                          </TableCell>
-                        </TableRow>
-                      )
-                    })}
-                  </TableBody>
-                </Table>
+                <div className="flex flex-col gap-2">
+                  <Button
+                    variant="outline"
+                    className="w-full flex gap-2"
+                    onClick={() => c.setIsMovementModalOpen(true)}
+                  >
+                    <Plus className="size-4" /> Movimiento Manual
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    className="w-full flex gap-2"
+                    onClick={() => c.setIsCloseModalOpen(true)}
+                  >
+                    <Lock className="size-4" /> Cerrar Caja
+                  </Button>
+                </div>
               )}
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {isAdmin && (
-        <Card className="mt-8">
-          <CardHeader className="flex flex-row items-center gap-2">
-            <History className="size-5 text-muted-foreground" />
-            <div>
-              <CardTitle className="text-lg">
-                Historial de Cajas Cerradas
-              </CardTitle>
-              <CardDescription>
-                Reporte consolidado de arqueos de caja anteriores.
-              </CardDescription>
             </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            {isLoadingHistory ? (
-              <div className="text-center py-6 text-muted-foreground">
-                Cargando historial...
-              </div>
-            ) : historySessions.length === 0 ? (
-              <div className="text-center py-6 text-muted-foreground">
-                No hay sesiones pasadas registradas.
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>ID</TableHead>
-                    <TableHead>Abierta</TableHead>
-                    <TableHead>Cerrada</TableHead>
-                    <TableHead>Apertura</TableHead>
-                    <TableHead>Esperado</TableHead>
-                    <TableHead>Cierre Real</TableHead>
-                    <TableHead>Diferencia</TableHead>
-                    <TableHead className="text-right">Detalles</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {historySessions.map((session) => {
-                    const diffNum = Number(session.difference) || 0
-                    return (
-                      <TableRow key={session.id}>
-                        <TableCell>#{session.id}</TableCell>
-                        <TableCell className="text-xs">
-                          {formatDateTime(session.openedAt)}
-                        </TableCell>
-                        <TableCell className="text-xs">
-                          {session.closedAt
-                            ? formatDateTime(session.closedAt)
-                            : 'Sesión Activa'}
-                        </TableCell>
-                        <TableCell>${session.openingAmount}</TableCell>
-                        <TableCell>
-                          ${session.expectedClosingAmount || '-'}
-                        </TableCell>
-                        <TableCell>
-                          ${session.actualClosingAmount || '-'}
-                        </TableCell>
-                        <TableCell>
-                          {session.closedAt ? (
-                            diffNum === 0 ? (
-                              <Badge className="bg-emerald-500/10 text-emerald-600 border-none">
-                                Concordante
-                              </Badge>
-                            ) : diffNum > 0 ? (
-                              <Badge className="bg-teal-500/10 text-teal-600 border-none">
-                                +${session.difference}
-                              </Badge>
-                            ) : (
-                              <Badge
-                                variant="destructive"
-                                className="bg-red-500/10 text-red-600 border-none"
-                              >
-                                -${Math.abs(diffNum).toFixed(2)}
-                              </Badge>
-                            )
-                          ) : (
-                            '-'
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() =>
-                              setSelectedHistorySessionId(session.id)
-                            }
-                          >
-                            Ver
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    )
-                  })}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      <Dialog open={isOpenModalOpen} onOpenChange={setIsOpenModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Apertura de Caja Diaria</DialogTitle>
-            <DialogDescription>
-              Por favor contá el efectivo en caja para establecer el fondo
-              inicial.
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleOpenSubmit} className="space-y-4">
-            <div className="space-y-1">
-              <label className="text-sm font-medium">
-                Monto Inicial en Efectivo ($) *
-              </label>
-              <Input
-                type="number"
-                step="0.01"
-                value={openingAmount}
-                onChange={(e) => setOpeningAmount(e.target.value)}
-                required
-                className="text-lg font-bold"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-sm font-medium">Notas de Apertura</label>
-              <Textarea
-                placeholder="Observaciones de la caja..."
-                value={openingNotes}
-                onChange={(e) => setOpeningNotes(e.target.value)}
-                rows={2}
-              />
-            </div>
-            <DialogFooter className="pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsOpenModalOpen(false)}
-              >
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={openMutation.isPending}>
-                Confirmar Apertura
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isCloseModalOpen} onOpenChange={setIsCloseModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="text-red-600 flex items-center gap-2">
-              <Lock className="size-5" /> Arqueo y Cierre de Caja
-            </DialogTitle>
-            <DialogDescription>
-              Realizá el conteo físico del efectivo en caja y comparalo con el
-              sistema.
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleCloseSubmit} className="space-y-4">
-            <div className="p-4 bg-muted rounded-lg space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span>Efectivo en Sistema:</span>
-                <span className="font-semibold">
-                  ${calculateExpectedCash()}
-                </span>
-              </div>
-            </div>
-            <div className="space-y-1">
-              <label className="text-sm font-medium">
-                Efectivo Físico Contado ($) *
-              </label>
-              <Input
-                type="number"
-                step="0.01"
-                value={closingAmount}
-                onChange={(e) => setClosingAmount(e.target.value)}
-                placeholder="0.00"
-                required
-                className="text-lg font-bold"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-sm font-medium">
-                Notas del Cierre / Arqueo
-              </label>
-              <Textarea
-                placeholder="Justificación en caso de sobrante o faltante..."
-                value={closingNotes}
-                onChange={(e) => setClosingNotes(e.target.value)}
-                rows={3}
-              />
-            </div>
-            <DialogFooter className="pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsCloseModalOpen(false)}
-              >
-                Cancelar
-              </Button>
-              <Button
-                type="submit"
-                variant="destructive"
-                disabled={closeMutation.isPending}
-              >
-                Cerrar Caja
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isMovementModalOpen} onOpenChange={setIsMovementModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Registrar Movimiento Manual</DialogTitle>
-            <DialogDescription>
-              Registrá una entrada o salida de efectivo (ej. retiro de caja,
-              compra de insumos, etc).
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleMovementSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-sm font-medium">Tipo</label>
-                <select
-                  value={movementType}
-                  onChange={(e) =>
-                    setMovementType(e.target.value as 'INCOME' | 'EXPENSE')
-                  }
-                  className="w-full h-10 px-3 border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-                >
-                  <option value="INCOME">Ingreso (Entrada)</option>
-                  <option value="EXPENSE">Egreso (Salida)</option>
-                </select>
-              </div>
-              <div className="space-y-1">
-                <label className="text-sm font-medium">Monto ($) *</label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={movementAmount}
-                  onChange={(e) => setMovementAmount(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
-            <div className="space-y-1">
-              <label className="text-sm font-medium">
-                Descripción / Concepto *
-              </label>
-              <Input
-                placeholder="Ej: Retiro para depósito bancario, Compra de café..."
-                value={movementDescription}
-                onChange={(e) => setMovementDescription(e.target.value)}
-                required
-              />
-            </div>
-            <DialogFooter className="pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsMovementModalOpen(false)}
-              >
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={movementMutation.isPending}>
-                Registrar Movimiento
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog
-        open={!!selectedHistorySessionId}
-        onOpenChange={(open) => !open && setSelectedHistorySessionId(null)}
+          </div>
+        }
       >
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>
-              Detalle de Sesión de Caja #{selectedHistorySessionId}
-            </DialogTitle>
-          </DialogHeader>
-          {selectedHistoryDetails && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4 text-sm border-b pb-4">
-                <div>
-                  <span className="text-muted-foreground block">Abierta:</span>
-                  <span className="font-semibold">
-                    {selectedHistoryDetails.session?.openedAt
-                      ? formatDateTime(selectedHistoryDetails.session.openedAt)
-                      : '-'}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground block">Cerrada:</span>
-                  <span className="font-semibold">
-                    {selectedHistoryDetails.session?.closedAt
-                      ? formatDateTime(selectedHistoryDetails.session.closedAt)
-                      : 'Abierta'}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground block">
-                    Monto Inicial:
-                  </span>
-                  <span className="font-semibold">
-                    ${selectedHistoryDetails.session?.openingAmount}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground block">
-                    Cierre Real:
-                  </span>
-                  <span className="font-semibold">
-                    $
-                    {selectedHistoryDetails.session?.actualClosingAmount || '-'}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground block">
-                    Diferencia:
-                  </span>
-                  <span className="font-semibold text-primary">
-                    ${selectedHistoryDetails.session?.difference || '0.00'}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground block">Notas:</span>
-                  <span className="font-medium text-xs block max-w-xs">
-                    {selectedHistoryDetails.session?.notes || '-'}
-                  </span>
-                </div>
-              </div>
+        {/* Loading state */}
+        {(c.isLoadingSession || c.isLoadingAllOpen) && (
+          <LoadingSpinner label="Cargando estado de la caja..." />
+        )}
 
-              <div>
-                <h4 className="text-sm font-semibold mb-2">
-                  Movimientos Registrados
-                </h4>
-                <div className="max-h-60 overflow-y-auto border rounded-lg">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Hora</TableHead>
-                        <TableHead>Descripción</TableHead>
-                        <TableHead>Método</TableHead>
-                        <TableHead>Tipo</TableHead>
-                        <TableHead className="text-right">Monto</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {selectedHistoryDetails.movements.map((move) => {
-                        const isIncome = move.movementType === 'INCOME'
-                        return (
-                          <TableRow key={move.id}>
-                            <TableCell className="text-xs text-muted-foreground">
-                              {formatDateTime(move.createdAt).split(', ')[1]}
-                            </TableCell>
-                            <TableCell className="font-medium">
-                              {move.description}
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="outline" className="text-xs">
-                                {move.paymentMethod}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              {isIncome ? (
-                                <Badge className="bg-emerald-500/10 text-emerald-600 border-none flex w-fit items-center gap-0.5">
-                                  <ArrowUpRight className="size-3" /> Ingreso
-                                </Badge>
-                              ) : (
-                                <Badge className="bg-red-500/10 text-red-600 border-none flex w-fit items-center gap-0.5">
-                                  <ArrowDownLeft className="size-3" /> Egreso
-                                </Badge>
-                              )}
-                            </TableCell>
-                            <TableCell
-                              className={`text-right font-semibold ${isIncome ? 'text-emerald-600' : 'text-red-600'}`}
+        {/* ALL BRANCHES: Show list of all open sessions */}
+        {!branchId && !c.isLoadingAllOpen && (
+          <>
+            {c.selectedAllBranchSession ? (
+              <Card className="shadow-md flex flex-col h-fit border-none">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 border-b dark:border-white/5 border-black/5">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-1 rounded-full bg-black text-white hover:bg-white hover:text-black dark:bg-white dark:text-black dark:hover:bg-black dark:hover:text-white transition-colors"
+                        onClick={() => c.setSelectedAllBranchSession(null)}
+                      >
+                        ← Volver al listado
+                      </Button>
+                    </div>
+                    <CardTitle className="text-lg font-bold">
+                      Caja — {c.selectedAllBranchSession.branch?.name || 'Sin sucursal'}
+                    </CardTitle>
+                    <CardDescription>
+                      Apertura: {formatCurrency(Number(c.selectedAllBranchSession.openingAmount))} · Abierto por {c.selectedAllBranchSession.openedBy?.name || 'N/A'}
+                    </CardDescription>
+                  </div>
+                  {isAdmin && (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="gap-2"
+                      onClick={() => c.setSessionToDelete(c.selectedAllBranchSession)}
+                    >
+                      <Trash2 className="size-4" /> Eliminar
+                    </Button>
+                  )}
+                </CardHeader>
+                <CardContent className="p-4 flex-1 overflow-auto">
+                  <CashRegisterMovementsTable
+                    movements={c.selectedAllBranchDetails?.movements}
+                    isLoading={c.isLoadingAllBranchDetails}
+                  />
+                </CardContent>
+              </Card>
+            ) : c.allOpenSessions.length === 0 ? (
+              <EmptyState
+                icon={Lock}
+                title="Sin Cajas Abiertas"
+                description="No hay sesiones de caja abiertas en ninguna sucursal."
+                action={
+                  <Button onClick={() => toast.error('Seleccioná una sucursal específica para abrir caja')}>
+                    <Unlock className="size-4 mr-2" /> Abrir Caja
+                  </Button>
+                }
+              />
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <Store className="size-5 text-primary" />
+                  <h2 className="text-lg font-bold">Cajas Abiertas por Sucursal</h2>
+                  <Badge className="bg-primary/10 text-primary border-none font-bold text-[10px] py-0.5 px-2 rounded-full">
+                    {c.allOpenSessions.length} {c.allOpenSessions.length === 1 ? 'sesión' : 'sesiones'}
+                  </Badge>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {c.allOpenSessions.map((session) => (
+                    <Card
+                      key={session.id}
+                      className="border-none shadow-md hover:shadow-lg transition-all cursor-pointer group"
+                      onClick={() => c.setSelectedAllBranchSession(session)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="p-2.5 rounded-xl bg-emerald-500/10 group-hover:bg-emerald-500/20 transition-colors">
+                            <Unlock className="size-5 text-emerald-600" />
+                          </div>
+                          <Badge className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/10 border-none font-bold text-[10px] py-0.5 px-2 rounded-full">
+                            Abierta
+                          </Badge>
+                        </div>
+                        <div className="space-y-1.5">
+                          <p className="font-semibold text-sm truncate">
+                            {session.branch?.name || 'Sin sucursal'}
+                          </p>
+                          <p className="text-2xl font-bold text-emerald-600">
+                            {formatCurrency(Number(session.openingAmount))}
+                          </p>
+                          <div className="flex items-center justify-between pt-2 border-t dark:border-white/5 border-black/5">
+                            <p className="text-[11px] text-muted-foreground truncate">
+                              {session.openedBy?.name || 'N/A'}
+                            </p>
+                            <p className="text-[11px] text-muted-foreground">
+                              {new Date(session.openedAt).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                          </div>
+                        </div>
+                        {isAdmin && (
+                          <div className="flex justify-end mt-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-7 text-destructive hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                c.setSessionToDelete(session)
+                              }}
                             >
-                              {isIncome ? '+' : '-'}${move.amount}
-                            </TableCell>
-                          </TableRow>
-                        )
-                      })}
-                    </TableBody>
-                  </Table>
+                              <Trash2 className="size-3.5" />
+                            </Button>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
               </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-    </div>
+            )}
+          </>
+        )}
+
+        {/* SPECIFIC BRANCH: Show current session */}
+        {branchId && !c.isLoadingSession && (
+          <>
+            {!c.currentSession ? (
+              <EmptyState
+                icon={Lock}
+                title="Caja Cerrada"
+                description="Para registrar ventas o cobrar suscripciones, debés realizar la apertura de caja primero."
+                action={
+                  <Button onClick={handleOpenClick}>
+                    <Unlock className="size-4 mr-2" /> Abrir Caja Diaria
+                  </Button>
+                }
+              />
+            ) : (
+              <Card className="md:col-span-2 shadow-md flex flex-col h-fit border-none">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 border-b dark:border-white/5 border-black/5">
+                  <div className="space-y-1">
+                    <CardTitle className="text-lg font-bold">
+                      {activeTab === 'movements' ? 'Movimientos de la Sesión' : 'Historial de Cajas Cerradas'}
+                    </CardTitle>
+                    <CardDescription>
+                      {activeTab === 'movements'
+                        ? 'Efectivo y cobros electrónicos registrados.'
+                        : 'Reporte consolidado de arqueos de caja anteriores.'}
+                    </CardDescription>
+                  </div>
+                  {isAdmin && (
+                    <ToggleGroup
+                      type="single"
+                      value={activeTab}
+                      onValueChange={(val) => {
+                        if (val) setActiveTab(val as 'movements' | 'history')
+                      }}
+                      className="bg-gray-100 dark:bg-white/5 p-1 rounded-full border dark:border-white/5 border-black/5"
+                    >
+                      <ToggleGroupItem value="movements" className="text-xs px-3 py-1.5 rounded-full font-medium">
+                        Movimientos
+                      </ToggleGroupItem>
+                      <ToggleGroupItem value="history" className="text-xs px-3 py-1.5 rounded-full font-medium">
+                        Historial
+                      </ToggleGroupItem>
+                    </ToggleGroup>
+                  )}
+                </CardHeader>
+                <CardContent className="p-4 flex-1 overflow-auto">
+                  {activeTab === 'movements' ? (
+                    <CashRegisterMovementsTable
+                      movements={c.sessionDetails?.movements}
+                      isLoading={c.isLoadingDetails}
+                    />
+                  ) : (
+                    <CashRegisterHistoryTable
+                      sessions={c.historySessions}
+                      isLoading={c.isLoadingHistory}
+                      onViewDetails={(id) => c.setSelectedHistorySessionId(id)}
+                    />
+                  )}
+                </CardContent>
+              </Card>
+            )}
+          </>
+        )}
+      </ModuleLayout>
+
+      <CashRegisterOpenDialog
+        open={c.isOpenModalOpen}
+        onOpenChange={c.setIsOpenModalOpen}
+        openingAmount={c.openingAmount}
+        onOpeningAmountChange={c.setOpeningAmount}
+        openingNotes={c.openingNotes}
+        onOpeningNotesChange={c.setOpeningNotes}
+        onSubmit={(e) => {
+          e.preventDefault()
+          if (!c.openingAmount) return
+          c.openMutation.mutate({ data: { openingAmount: c.openingAmount, notes: c.openingNotes, branchId } })
+        }}
+        isPending={c.openMutation.isPending}
+      />
+
+      <CashRegisterCloseDialog
+        open={c.isCloseModalOpen}
+        onOpenChange={c.setIsCloseModalOpen}
+        expectedCash={c.calculateExpectedCash()}
+        closingAmount={c.closingAmount}
+        onClosingAmountChange={c.setClosingAmount}
+        closingNotes={c.closingNotes}
+        onClosingNotesChange={c.setClosingNotes}
+        onSubmit={(e) => {
+          e.preventDefault()
+          if (!c.closingAmount) return
+          c.closeMutation.mutate({ data: { actualClosingAmount: c.closingAmount, notes: c.closingNotes, branchId } })
+        }}
+        isPending={c.closeMutation.isPending}
+      />
+
+      <CashRegisterMovementDialog
+        open={c.isMovementModalOpen}
+        onOpenChange={c.setIsMovementModalOpen}
+        movementAmount={c.movementAmount}
+        onMovementAmountChange={c.setMovementAmount}
+        movementType={c.movementType}
+        onMovementTypeChange={c.setMovementType}
+        movementDescription={c.movementDescription}
+        onMovementDescriptionChange={c.setMovementDescription}
+        onSubmit={(e) => {
+          e.preventDefault()
+          if (!c.movementAmount || !c.movementDescription) return
+          c.movementMutation.mutate({ data: { amount: c.movementAmount, movementType: c.movementType, description: c.movementDescription, branchId } })
+        }}
+        isPending={c.movementMutation.isPending}
+      />
+
+      <CashRegisterHistoryDetailDialog
+        sessionId={c.selectedHistorySessionId}
+        open={!!c.selectedHistorySessionId}
+        onOpenChange={(open) => !open && c.setSelectedHistorySessionId(null)}
+        selectedHistoryDetails={c.selectedHistoryDetails}
+      />
+
+      <AlertDialog open={!!c.sessionToDelete} onOpenChange={(open) => !open && c.setSessionToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar sesión de caja?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se eliminará la sesión de caja de <strong>{c.sessionToDelete?.branch?.name || 'sin sucursal'}</strong> y todos sus movimientos. Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel asChild>
+              <Button variant="outline">Cancelar</Button>
+            </AlertDialogCancel>
+            <AlertDialogAction asChild>
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  if (c.sessionToDelete) {
+                    c.deleteMutation.mutate({ data: { sessionId: c.sessionToDelete.id } })
+                  }
+                }}
+                disabled={c.deleteMutation.isPending}
+              >
+                {c.deleteMutation.isPending ? 'Eliminando...' : 'Eliminar'}
+              </Button>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   )
 }

@@ -7,6 +7,7 @@ import {
   Pencil,
   PowerOff,
   Power,
+  Trash2,
 } from 'lucide-react'
 import { Button } from '#/shared/components/ui/button'
 import { Badge } from '#/shared/components/ui/badge'
@@ -47,9 +48,10 @@ interface BranchCardProps {
   branch: Branch
   onEdit: (branch: Branch) => void
   onToggleActive: (branch: Branch) => void
+  onDelete: (branch: Branch) => void
 }
 
-export function BranchCard({ branch, onEdit, onToggleActive }: BranchCardProps) {
+export function BranchCard({ branch, onEdit, onToggleActive, onDelete }: BranchCardProps) {
   return (
     <div
       className={cn(
@@ -143,6 +145,14 @@ export function BranchCard({ branch, onEdit, onToggleActive }: BranchCardProps) 
               <Power className="size-3.5 mr-1" /> Activar
             </>
           )}
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 rounded-full text-xs font-semibold px-3 text-red-500 hover:text-red-600 hover:bg-red-50"
+          onClick={() => onDelete(branch)}
+        >
+          <Trash2 className="size-3.5 mr-1" /> Eliminar
         </Button>
       </div>
     </div>
