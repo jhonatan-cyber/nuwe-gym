@@ -73,6 +73,8 @@ export function MemberEnrollmentWizard({
     gender: 'MALE',
     birthDate: '',
     photoBase64: null,
+    physicalRestrictions: '',
+    medicalNotes: '',
   })
   const [selectedPackageId, setSelectedPackageId] = useState<string | null>(
     null,
@@ -185,6 +187,8 @@ export function MemberEnrollmentWizard({
           birthDate: personalInfo.birthDate || undefined,
           gender: personalInfo.gender,
           branchId,
+          physicalRestrictions: personalInfo.physicalRestrictions || undefined,
+          medicalNotes: personalInfo.medicalNotes || undefined,
         },
       })
 
@@ -300,6 +304,8 @@ export function MemberEnrollmentWizard({
       gender: 'MALE',
       birthDate: '',
       photoBase64: null,
+      physicalRestrictions: '',
+      medicalNotes: '',
     })
     setSelectedPackageId(null)
     setPaymentMethod('CASH')

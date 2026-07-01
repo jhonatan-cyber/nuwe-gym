@@ -13,6 +13,8 @@ import {
   Loader2,
   Copy,
   Check,
+  AlertTriangle,
+  FileText,
 } from 'lucide-react'
 import { getMemberById } from '#/features/members/server.ts'
 import { getMemberRenewalHistory } from '#/features/renewals/server.ts'
@@ -162,6 +164,33 @@ export function MemberDetailDialog({
                   )}
                 </div>
               </section>
+
+              {/* Datos médicos */}
+              {(memberDetail.physicalRestrictions || memberDetail.medicalNotes) && (
+                <section>
+                  <SectionTitle icon={Heart} label="Datos médicos" />
+                  <div className="mt-3 space-y-3">
+                    {memberDetail.physicalRestrictions && (
+                      <div className="flex items-start gap-2.5 p-3 rounded-xl border dark:border-white/[0.04] border-black/[0.04] bg-amber-500/5">
+                        <AlertTriangle className="size-3.5 text-amber-500 mt-0.5 shrink-0" />
+                        <div>
+                          <p className="text-[9px] font-bold uppercase tracking-widest text-amber-600">Restricciones Físicas</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{memberDetail.physicalRestrictions}</p>
+                        </div>
+                      </div>
+                    )}
+                    {memberDetail.medicalNotes && (
+                      <div className="flex items-start gap-2.5 p-3 rounded-xl border dark:border-white/[0.04] border-black/[0.04] bg-blue-500/5">
+                        <FileText className="size-3.5 text-blue-500 mt-0.5 shrink-0" />
+                        <div>
+                          <p className="text-[9px] font-bold uppercase tracking-widest text-blue-600">Notas Médicas</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{memberDetail.medicalNotes}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </section>
+              )}
 
               {/* Historial de membresías */}
               <section>

@@ -25,6 +25,7 @@ import {
   QrCode,
   ClipboardList,
   Building2,
+  Salad,
 } from 'lucide-react'
 import { Link, useMatches } from '@tanstack/react-router'
 import type { UserRole } from '#/shared/lib/permissions.ts'
@@ -98,6 +99,12 @@ const navItems: NavItem[] = [
     url: '/trainers',
     icon: Dumbbell,
     permission: 'trainers:read',
+  },
+  {
+    title: 'Nutrición',
+    url: '/nutrition',
+    icon: Salad,
+    permission: 'nutrition:read',
   },
   {
     title: 'Compras',

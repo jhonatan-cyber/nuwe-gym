@@ -247,8 +247,18 @@ export const getDashboardData = createServerFn({ method: 'GET' })
       activeProductsCount = activeProductsRes[0]?.count ?? 0
     }
 
-    const femaleCount = 0
-    const maleCount = 0
+    const genderRows = await db
+      .select({ gender: members.gender, count: count() })
+      .from(members)
+      .where(memberFilter)
+      .groupBy(members.gender)
+
+    let femaleCount = 0
+    let maleCount = 0
+    for (const row of genderRows) {
+      if (row.gender === 'FEMALE') femaleCount = row.count
+      else if (row.gender === 'MALE') maleCount = row.count
+    }
 
     const topProductsRes = data.branchId
       ? await db

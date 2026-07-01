@@ -1,10 +1,11 @@
 import { useRef } from 'react'
 import { Link } from '@tanstack/react-router'
-import { User, Camera, Phone } from 'lucide-react'
+import { User, Camera, Phone, AlertTriangle, FileText } from 'lucide-react'
 import { capitalizeWords } from '#/shared/lib/formatters.ts'
 import { Button } from '#/shared/components/ui/button'
 import { Input } from '#/shared/components/ui/input'
 import { Label } from '#/shared/components/ui/label'
+import { Textarea } from '#/shared/components/ui/textarea'
 import {
   ToggleGroup,
   ToggleGroupItem,
@@ -20,6 +21,8 @@ export interface PersonalInfoState {
   gender: 'MALE' | 'FEMALE'
   birthDate: string
   photoBase64: string | null
+  physicalRestrictions: string
+  medicalNotes: string
 }
 
 interface Step1Props {
@@ -280,6 +283,36 @@ export function Step1PersonalInfo({
               )}
             </Button>
           </div>
+        </div>
+
+        <div className="grid gap-1.5">
+          <Label className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
+            <AlertTriangle className="size-3" />
+            Restricciones Físicas
+          </Label>
+          <Textarea
+            placeholder="Ej: Problemas en la rodilla izquierda, hernia discal..."
+            value={state.physicalRestrictions}
+            onChange={(e) =>
+              onChange({ ...state, physicalRestrictions: e.target.value })
+            }
+            className="text-sm min-h-[60px]"
+          />
+        </div>
+
+        <div className="grid gap-1.5">
+          <Label className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
+            <FileText className="size-3" />
+            Notas Médicas
+          </Label>
+          <Textarea
+            placeholder="Ej: Medicación actual, alergias, condiciones preexistentes..."
+            value={state.medicalNotes}
+            onChange={(e) =>
+              onChange({ ...state, medicalNotes: e.target.value })
+            }
+            className="text-sm min-h-[60px]"
+          />
         </div>
       </div>
     </div>

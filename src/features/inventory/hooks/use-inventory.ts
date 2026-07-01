@@ -297,6 +297,7 @@ export function useInventory() {
     quantity: number
     movementType: 'MANUAL_ADJUSTMENT' | 'LOSS' | 'RETURN'
     notes: string
+    expiryDate?: string
   }) {
     if (!selectedProduct) return
     adjustMutation.mutate({
@@ -306,6 +307,7 @@ export function useInventory() {
         movementType: data.movementType,
         branchId,
         notes: data.notes,
+        ...(data.expiryDate ? { expiryDate: data.expiryDate } : {}),
       },
     })
   }

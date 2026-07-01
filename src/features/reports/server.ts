@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { dateString } from '#/shared/lib/schemas.ts'
 import { getGroq, GROQ_MODEL } from '#/shared/lib/ai.ts'
 import { db } from '#/shared/db/index.ts'
-import { count, sum, eq, and, gte, lte, sql } from 'drizzle-orm'
+import { count, sum, eq, and, gte, lte, sql, inArray } from 'drizzle-orm'
 import { requireRole } from '#/shared/lib/server-utils.ts'
 import { members } from '#/shared/db/schema/members.ts'
 import { checkIns } from '#/shared/db/schema/check-ins.ts'
@@ -12,7 +12,6 @@ import { membershipPayments } from '#/shared/db/schema/membership-payments.ts'
 import { subscriptions } from '#/shared/db/schema/subscriptions.ts'
 import { cashMovements } from '#/shared/db/schema/cash-register.ts'
 import { products } from '#/shared/db/schema/products.ts'
-
 const dateRangeSchema = z.object({
   startDate: dateString,
   endDate: dateString,
@@ -326,5 +325,232 @@ ${JSON.stringify(summaryData, null, 2)}`
     } catch (err) {
       console.error('Error al generar resumen ejecutivo financiero con IA:', err)
       return 'Ocurrió un error al intentar conectarse con la IA de Groq. Asegúrate de tener configurada la GROQ_API_KEY.'
+    }
+  })
+
+// ── Reporte de Comisiones por Trainer ────────────────────────────
+
+export const getCommissionsReport = createServerFn({ method: 'GET' })
+  .inputValidator((data: unknown) => dateRangeSchema.parse(data))
+  .handler(async ({ data }) => {
+    await requireRole({ data: { roles: ['ADMIN'] } })
+
+    const { trainerProfiles } = await import('#/shared/db/schema/trainers.ts')
+    const { users } = await import('#/shared/db/schema/auth.ts')
+    const { membershipPayments: mp } = await import('#/shared/db/schema/membership-payments.ts')
+    const { trainerAssignments } = await import('#/shared/db/schema/trainers.ts')
+
+    const startDate = new Date(data.startDate)
+    const endDate = new Date(data.endDate)
+
+    // Obtener todos los trainers activos con su commissionRate
+    const trainers = await db
+      .select({
+        trainerId: trainerProfiles.id,
+        commissionRate: trainerProfiles.commissionRate,
+        userName: users.name,
+        userEmail: users.email,
+      })
+      .from(trainerProfiles)
+      .innerJoin(users, eq(users.id, trainerProfiles.userId))
+      .where(eq(trainerProfiles.isActive, true))
+
+    // Para cada trainer, sumar los pagos de membresías de sus socios asignados en el período
+    const results = await Promise.all(
+      trainers.map(async (trainer) => {
+        // Obtener miembros asignados al trainer
+        const assignments = await db
+          .select({ memberId: trainerAssignments.memberId })
+          .from(trainerAssignments)
+          .where(
+            and(
+              eq(trainerAssignments.trainerId, trainer.trainerId),
+              eq(trainerAssignments.isActive, true),
+            ),
+          )
+
+        const memberIds = assignments.map((a) => a.memberId)
+
+        if (memberIds.length === 0) {
+          return {
+            trainerId: trainer.trainerId,
+            trainerName: trainer.userName,
+            trainerEmail: trainer.userEmail,
+            commissionRate: Number(trainer.commissionRate ?? 0),
+            assignedMembers: 0,
+            totalMembershipRevenue: 0,
+            commissionAmount: 0,
+          }
+        }
+
+        // Sumar pagos de membresías en el período para esos miembros
+        const paymentSum = await db
+          .select({ total: sum(mp.amount) })
+          .from(mp)
+          .where(
+            and(
+              inArray(mp.memberId, memberIds),
+              gte(mp.paymentDate, startDate),
+              lte(mp.paymentDate, endDate),
+            ),
+          )
+
+        const totalRevenue = Number(paymentSum[0]?.total ?? 0)
+        const rate = Number(trainer.commissionRate ?? 0)
+        const commissionAmount = (totalRevenue * rate) / 100
+
+        return {
+          trainerId: trainer.trainerId,
+          trainerName: trainer.userName,
+          trainerEmail: trainer.userEmail,
+          commissionRate: rate,
+          assignedMembers: memberIds.length,
+          totalMembershipRevenue: totalRevenue,
+          commissionAmount,
+        }
+      }),
+    )
+
+    const totalCommissions = results.reduce((acc, r) => acc + r.commissionAmount, 0)
+    const totalRevenue = results.reduce((acc, r) => acc + r.totalMembershipRevenue, 0)
+
+    return {
+      trainers: results.sort((a, b) => b.commissionAmount - a.commissionAmount),
+      summary: { totalCommissions, totalRevenue },
+    }
+  })
+
+// ── Reporte de Utilidades ─────────────────────────────────────────
+
+export const getProfitabilityReport = createServerFn({ method: 'GET' })
+  .inputValidator((data: unknown) => dateRangeSchema.parse(data))
+  .handler(async ({ data }) => {
+    await requireRole({ data: { roles: ['ADMIN'] } })
+
+    const startDate = new Date(data.startDate)
+    const endDate = new Date(data.endDate)
+
+    // Ingresos por membresías
+    const membershipIncomeRes = await db
+      .select({ total: sum(membershipPayments.amount) })
+      .from(membershipPayments)
+      .where(
+        and(
+          gte(membershipPayments.paymentDate, startDate),
+          lte(membershipPayments.paymentDate, endDate),
+        ),
+      )
+
+    // Ingresos POS
+    const posIncomeRes = await db
+      .select({ total: sum(sales.total) })
+      .from(sales)
+      .where(
+        and(
+          gte(sales.soldAt, startDate),
+          lte(sales.soldAt, endDate),
+          eq(sales.status, 'COMPLETED'),
+        ),
+      )
+
+    // Egresos de caja
+    const expensesRes = await db
+      .select({ total: sum(cashMovements.amount) })
+      .from(cashMovements)
+      .where(
+        and(
+          gte(cashMovements.createdAt, startDate),
+          lte(cashMovements.createdAt, endDate),
+          eq(cashMovements.movementType, 'EXPENSE'),
+        ),
+      )
+
+    // Costo de ventas (purchasePrice * qty vendida)
+    const cogsRes = await db
+      .select({ total: sum(sql<number>`${saleItems.quantity} * CAST(${products.purchasePrice} AS numeric)`) })
+      .from(saleItems)
+      .innerJoin(sales, eq(saleItems.saleId, sales.id))
+      .innerJoin(products, eq(saleItems.productId, products.id))
+      .where(
+        and(
+          gte(sales.soldAt, startDate),
+          lte(sales.soldAt, endDate),
+          eq(sales.status, 'COMPLETED'),
+        ),
+      )
+
+    const membershipIncome = Number(membershipIncomeRes[0]?.total ?? 0)
+    const posIncome = Number(posIncomeRes[0]?.total ?? 0)
+    const totalIncome = membershipIncome + posIncome
+    const operationalExpenses = Number(expensesRes[0]?.total ?? 0)
+    const cogs = Number(cogsRes[0]?.total ?? 0)
+    const totalExpenses = operationalExpenses + cogs
+    const grossProfit = totalIncome - cogs
+    const netProfit = totalIncome - totalExpenses
+    const margin = totalIncome > 0 ? (netProfit / totalIncome) * 100 : 0
+
+    // Serie diaria para gráfico
+    const dailyMembership = await db
+      .select({
+        date: sql<string>`DATE(${membershipPayments.paymentDate})`,
+        amount: sum(membershipPayments.amount),
+      })
+      .from(membershipPayments)
+      .where(and(gte(membershipPayments.paymentDate, startDate), lte(membershipPayments.paymentDate, endDate)))
+      .groupBy(sql`DATE(${membershipPayments.paymentDate})`)
+
+    const dailyPos = await db
+      .select({
+        date: sql<string>`DATE(${sales.soldAt})`,
+        amount: sum(sales.total),
+      })
+      .from(sales)
+      .where(and(gte(sales.soldAt, startDate), lte(sales.soldAt, endDate), eq(sales.status, 'COMPLETED')))
+      .groupBy(sql`DATE(${sales.soldAt})`)
+
+    const dailyExpenses = await db
+      .select({
+        date: sql<string>`DATE(${cashMovements.createdAt})`,
+        amount: sum(cashMovements.amount),
+      })
+      .from(cashMovements)
+      .where(and(gte(cashMovements.createdAt, startDate), lte(cashMovements.createdAt, endDate), eq(cashMovements.movementType, 'EXPENSE')))
+      .groupBy(sql`DATE(${cashMovements.createdAt})`)
+
+    const dateMap = new Map<string, { income: number; expenses: number; profit: number }>()
+    for (const r of dailyMembership) {
+      const d = r.date
+      if (!dateMap.has(d)) dateMap.set(d, { income: 0, expenses: 0, profit: 0 })
+      dateMap.get(d)!.income += Number(r.amount ?? 0)
+    }
+    for (const r of dailyPos) {
+      const d = r.date
+      if (!dateMap.has(d)) dateMap.set(d, { income: 0, expenses: 0, profit: 0 })
+      dateMap.get(d)!.income += Number(r.amount ?? 0)
+    }
+    for (const r of dailyExpenses) {
+      const d = r.date
+      if (!dateMap.has(d)) dateMap.set(d, { income: 0, expenses: 0, profit: 0 })
+      dateMap.get(d)!.expenses += Number(r.amount ?? 0)
+    }
+    for (const [, v] of dateMap) v.profit = v.income - v.expenses
+
+    const chartData = Array.from(dateMap.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, v]) => ({ date, ...v }))
+
+    return {
+      summary: {
+        membershipIncome,
+        posIncome,
+        totalIncome,
+        cogs,
+        operationalExpenses,
+        totalExpenses,
+        grossProfit,
+        netProfit,
+        margin: parseFloat(margin.toFixed(2)),
+      },
+      chartData,
     }
   })

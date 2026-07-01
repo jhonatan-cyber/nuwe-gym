@@ -71,6 +71,9 @@ export interface CreateMemberData {
   emergencyContactPhone?: string | null
   address?: string | null
   branchId?: string | null
+  physicalRestrictions?: string | null
+  medicalNotes?: string | null
+  contractSignature?: string | null
 }
 
 export async function insertMember(data: CreateMemberData) {
@@ -97,6 +100,9 @@ export async function updateMemberById(data: UpdateMemberData) {
       emergencyContactPhone: data.emergencyContactPhone,
       address: data.address,
       status: data.status,
+      physicalRestrictions: data.physicalRestrictions,
+      medicalNotes: data.medicalNotes,
+      contractSignature: data.contractSignature,
       updatedAt: new Date(),
     })
     .where(eq(members.id, data.id))

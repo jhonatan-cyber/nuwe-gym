@@ -57,6 +57,8 @@ export function MemberEditDialog({
       member.status === 'SUSPENDED'
         ? ('INACTIVE' as const)
         : (member.status),
+    physicalRestrictions: member.physicalRestrictions || '',
+    medicalNotes: member.medicalNotes || '',
   })
 
   const photoMutation = useMutation({
@@ -271,6 +273,37 @@ export function MemberEditDialog({
                 value={formData.address}
                 onChange={(e) =>
                   setFormData({ ...formData, address: e.target.value })
+                }
+              />
+            </div>
+
+            <Separator />
+
+            <div className="grid gap-2">
+              <Label htmlFor="edit-physicalRestrictions">
+                Restricciones Físicas
+              </Label>
+              <Textarea
+                id="edit-physicalRestrictions"
+                placeholder="Ej: Problemas en la rodilla izquierda, hernia discal..."
+                value={formData.physicalRestrictions}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    physicalRestrictions: e.target.value,
+                  })
+                }
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="edit-medicalNotes">Notas Médicas</Label>
+              <Textarea
+                id="edit-medicalNotes"
+                placeholder="Ej: Medicación actual, alergias, condiciones preexistentes..."
+                value={formData.medicalNotes}
+                onChange={(e) =>
+                  setFormData({ ...formData, medicalNotes: e.target.value })
                 }
               />
             </div>

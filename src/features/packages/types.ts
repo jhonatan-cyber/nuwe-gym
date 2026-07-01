@@ -1,6 +1,6 @@
 import type { getPackages } from '#/features/packages/server.ts'
 
-export type PackageType = 'PACKAGE' | 'PROMOTION' | 'SPECIAL'
+export type PackageType = 'PACKAGE' | 'PROMOTION' | 'SPECIAL' | 'DAILY_PASS'
 export type RenewalType = 'MANUAL' | 'AUTO'
 
 export interface PackageItem {

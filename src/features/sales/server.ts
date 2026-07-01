@@ -593,6 +593,7 @@ export const createSale = createServerFn({ method: 'POST' })
               branchId,
               stockCurrent: newStock,
               stockMinimum: 0,
+              expiryDate: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             }),

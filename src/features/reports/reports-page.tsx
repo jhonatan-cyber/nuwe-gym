@@ -44,17 +44,21 @@ import {
   LineChartIcon,
   FileBarChart,
   Printer,
+  Dumbbell,
+  PiggyBank,
 } from 'lucide-react'
 import {
   getFinancialReport,
   getAttendanceReport,
   getSalesReport,
   getMembersReport,
+  getCommissionsReport,
+  getProfitabilityReport,
 } from '#/features/reports/server.ts'
 import { formatCurrency } from '#/shared/lib/formatters.ts'
 import { CopilotSummary } from './components/copilot-summary.tsx'
 
-type Tab = 'financial' | 'attendance' | 'sales' | 'members'
+type Tab = 'financial' | 'attendance' | 'sales' | 'members' | 'commissions' | 'profitability'
 type Preset = 'today' | 'week' | 'month' | 'year' | 'custom'
 
 const tabs: {
@@ -66,6 +70,8 @@ const tabs: {
   { id: 'attendance', label: 'Asistencia', icon: DoorOpen },
   { id: 'sales', label: 'Ventas', icon: ShoppingBag },
   { id: 'members', label: 'Socios', icon: Users },
+  { id: 'commissions', label: 'Comisiones', icon: Dumbbell },
+  { id: 'profitability', label: 'Utilidades', icon: PiggyBank },
 ]
 
 const presets: { id: Preset; label: string }[] = [
@@ -237,6 +243,12 @@ export function ReportsPage() {
         )}
         {activeTab === 'members' && (
           <MembersReport startDate={range.startDate} endDate={range.endDate} />
+        )}
+        {activeTab === 'commissions' && (
+          <CommissionsReport startDate={range.startDate} endDate={range.endDate} />
+        )}
+        {activeTab === 'profitability' && (
+          <ProfitabilityReport startDate={range.startDate} endDate={range.endDate} />
         )}
       </div>
     </div>
@@ -751,6 +763,127 @@ function SkeletonGrid() {
           <Skeleton className="h-[350px] w-full" />
         </CardContent>
       </Card>
+    </div>
+  )
+}
+
+function CommissionsReport({ startDate, endDate }: { startDate: string; endDate: string }) {
+  const { data, error, loading } = useServerData(
+    () => getCommissionsReport({ data: { startDate, endDate } }),
+    [startDate, endDate],
+  )
+  if (loading) return <SkeletonGrid />
+  if (error) return <ErrorState message={error} />
+  if (!data) return <EmptyState />
+
+  return (
+    <div className="space-y-6">
+      <div className="grid gap-4 md:grid-cols-2">
+        <SummaryCard title="Total Comisiones" value={formatCurrency(data.summary.totalCommissions)} icon={Dumbbell} trend="up" />
+        <SummaryCard title="Ingresos Base" value={formatCurrency(data.summary.totalRevenue)} icon={DollarSign} />
+      </div>
+      <Card>
+        <CardHeader><CardTitle>Comisiones por Entrenador</CardTitle></CardHeader>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Entrenador</TableHead>
+                <TableHead className="text-center">Socios asignados</TableHead>
+                <TableHead className="text-right">Tasa</TableHead>
+                <TableHead className="text-right">Ingresos base</TableHead>
+                <TableHead className="text-right font-bold">Comisión</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.trainers.length === 0 ? (
+                <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground text-sm">Sin entrenadores activos</TableCell></TableRow>
+              ) : (
+                data.trainers.map((t: any) => (
+                  <TableRow key={t.trainerId}>
+                    <TableCell>
+                      <div>
+                        <p className="font-medium text-sm">{t.trainerName}</p>
+                        <p className="text-xs text-muted-foreground">{t.trainerEmail}</p>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Badge variant="outline">{t.assignedMembers}</Badge>
+                    </TableCell>
+                    <TableCell className="text-right font-mono text-sm">{t.commissionRate}%</TableCell>
+                    <TableCell className="text-right text-sm">{formatCurrency(t.totalMembershipRevenue)}</TableCell>
+                    <TableCell className="text-right font-bold text-emerald-600">{formatCurrency(t.commissionAmount)}</TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+function ProfitabilityReport({ startDate, endDate }: { startDate: string; endDate: string }) {
+  const { data, error, loading } = useServerData(
+    () => getProfitabilityReport({ data: { startDate, endDate } }),
+    [startDate, endDate],
+  )
+  if (loading) return <SkeletonGrid />
+  if (error) return <ErrorState message={error} />
+  if (!data) return <EmptyState />
+
+  const { summary, chartData } = data
+  const marginColor = summary.margin >= 20 ? 'text-emerald-600' : summary.margin >= 0 ? 'text-yellow-600' : 'text-red-600'
+
+  return (
+    <div className="space-y-6">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <SummaryCard title="Ingresos totales" value={formatCurrency(summary.totalIncome)} icon={TrendingUp} trend="up" />
+        <SummaryCard title="Egresos totales" value={formatCurrency(summary.totalExpenses)} icon={TrendingDown} trend="down" />
+        <SummaryCard title="Utilidad bruta" value={formatCurrency(summary.grossProfit)} icon={DollarSign} trend={summary.grossProfit >= 0 ? 'up' : 'down'} />
+        <SummaryCard title="Utilidad neta" value={formatCurrency(summary.netProfit)} icon={BarChart3} trend={summary.netProfit >= 0 ? 'up' : 'down'} />
+      </div>
+
+      {/* Margen */}
+      <Card>
+        <CardContent className="pt-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">Margen de utilidad neta</p>
+              <p className={`text-4xl font-black mt-1 ${marginColor}`}>{summary.margin.toFixed(1)}%</p>
+            </div>
+            <div className="text-right space-y-1 text-sm text-muted-foreground">
+              <p>Membresías: <span className="font-bold text-foreground">{formatCurrency(summary.membershipIncome)}</span></p>
+              <p>POS: <span className="font-bold text-foreground">{formatCurrency(summary.posIncome)}</span></p>
+              <p>Costo ventas: <span className="font-bold text-foreground">{formatCurrency(summary.cogs)}</span></p>
+              <p>Gastos oper.: <span className="font-bold text-foreground">{formatCurrency(summary.operationalExpenses)}</span></p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {chartData.length > 0 && (
+        <Card>
+          <CardHeader><CardTitle>Ingresos vs Egresos vs Utilidad</CardTitle></CardHeader>
+          <CardContent>
+            <div className="h-[320px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                  <XAxis dataKey="date" tickFormatter={(d) => new Date(d).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })} tick={{ fontSize: 10 }} />
+                  <YAxis tick={{ fontSize: 10 }} />
+                  <Tooltip contentStyle={{ borderRadius: '8px' }} formatter={(v) => formatCurrency(Number(v ?? 0))} />
+                  <Legend />
+                  <Bar dataKey="income" name="Ingresos" fill="#22c55e" radius={[3, 3, 0, 0]} />
+                  <Bar dataKey="expenses" name="Egresos" fill="#ef4444" radius={[3, 3, 0, 0]} />
+                  <Bar dataKey="profit" name="Utilidad" fill="#6366f1" radius={[3, 3, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }

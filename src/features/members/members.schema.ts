@@ -17,6 +17,9 @@ export const createMemberSchema = z.object({
   emergencyContactPhone: optionalString,
   address: optionalString,
   branchId: branchIdField,
+  physicalRestrictions: optionalString,
+  medicalNotes: optionalString,
+  contractSignature: optionalString,
 })
 
 export type CreateMemberData = z.infer<typeof createMemberSchema>

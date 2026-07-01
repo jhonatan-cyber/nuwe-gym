@@ -295,6 +295,7 @@ const adjustStockSchema = z.object({
   movementType: z.enum(['MANUAL_ADJUSTMENT', 'LOSS', 'RETURN']),
   branchId: branchIdField,
   notes: optionalString,
+  expiryDate: z.string().optional(),
 })
 
 export const adjustStock = createServerFn({ method: 'POST' })
@@ -321,10 +322,18 @@ export const adjustStock = createServerFn({ method: 'POST' })
       const previousStock = stockEntry?.stockCurrent ?? 0
       const calculatedNewStock = previousStock + data.quantity
 
+      const updateData: Record<string, any> = {
+        stockCurrent: calculatedNewStock,
+        updatedAt: new Date(),
+      }
+      if (data.expiryDate) {
+        updateData.expiryDate = new Date(data.expiryDate)
+      }
+
       if (stockEntry) {
         await tx
           .update(productStock)
-          .set({ stockCurrent: calculatedNewStock, updatedAt: new Date() })
+          .set(updateData)
           .where(eq(productStock.id, stockEntry.id))
       } else {
         await tx.insert(productStock).values({
@@ -332,6 +341,7 @@ export const adjustStock = createServerFn({ method: 'POST' })
           branchId,
           stockCurrent: calculatedNewStock,
           stockMinimum: 0,
+          ...(data.expiryDate ? { expiryDate: new Date(data.expiryDate) } : {}),
         })
       }
 

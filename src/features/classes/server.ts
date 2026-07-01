@@ -5,7 +5,8 @@ import {
   classSchedules,
   classBookings,
 } from '#/shared/db/schema/classes.ts'
-import { eq, desc, and, inArray, sql, SQL } from 'drizzle-orm'
+import { classWaitlist } from '#/shared/db/schema/class-waitlist.ts'
+import { eq, desc, and, inArray, sql, SQL, asc } from 'drizzle-orm'
 import { requireRole } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
@@ -291,6 +292,12 @@ export const cancelBooking = createServerFn({ method: 'POST' })
       entityId: booking.id,
       description: `Canceló reserva #${booking.id}`,
     })
+
+    // Intentar promover al primero de la lista de espera
+    await promoteFromWaitlist({
+      data: { classScheduleId: booking.classScheduleId },
+    }).catch(() => {/* no-op si falla la promoción */})
+
     return booking
   })
 
@@ -333,4 +340,145 @@ export const getWeeklySchedule = createServerFn({ method: 'GET' })
     return data?.branchId
       ? schedules.filter((s) => s.class.branchId === data.branchId)
       : schedules
+  })
+
+// ── Lista de espera ───────────────────────────────────────────────
+
+export const getWaitlist = createServerFn({ method: 'GET' })
+  .inputValidator(z.object({ classScheduleId: uuidField }))
+  .handler(async ({ data }) => {
+    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
+    return await db.query.classWaitlist.findMany({
+      where: eq(classWaitlist.classScheduleId, data.classScheduleId),
+      orderBy: [asc(classWaitlist.addedAt)],
+      with: { member: true },
+    })
+  })
+
+const addToWaitlistSchema = z.object({
+  classScheduleId: uuidField,
+  memberId: uuidField,
+})
+
+export const addToWaitlist = createServerFn({ method: 'POST' })
+  .inputValidator((data) => addToWaitlistSchema.parse(data))
+  .handler(async ({ data }) => {
+    const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+
+    // Verificar que la clase esté llena (sólo se puede agregar a lista de espera si está llena)
+    const schedule = await db.query.classSchedules.findFirst({
+      where: eq(classSchedules.id, data.classScheduleId),
+      with: { class: true },
+    })
+    if (!schedule) throw new Error('Horario no encontrado')
+
+    const [{ count }] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(classBookings)
+      .where(
+        and(
+          eq(classBookings.classScheduleId, data.classScheduleId),
+          eq(classBookings.status, 'CONFIRMED'),
+        ),
+      )
+
+    if (Number(count) < schedule.class.capacity) {
+      throw new Error(
+        'La clase tiene cupos disponibles. Podés reservar directamente.',
+      )
+    }
+
+    const [entry] = await db
+      .insert(classWaitlist)
+      .values({
+        classScheduleId: data.classScheduleId,
+        memberId: data.memberId,
+      })
+      .returning()
+
+    createAuditLog({
+      ...getAuditContext(session),
+      action: 'CREATE',
+      entityType: 'WAITLIST',
+      entityId: entry.id,
+      description: `Agregó socio ${data.memberId} a lista de espera del horario ${data.classScheduleId}`,
+    })
+
+    return entry
+  })
+
+const removeFromWaitlistSchema = z.object({ id: uuidField })
+
+export const removeFromWaitlist = createServerFn({ method: 'POST' })
+  .inputValidator((data) => removeFromWaitlistSchema.parse(data))
+  .handler(async ({ data }) => {
+    const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    const [entry] = await db
+      .delete(classWaitlist)
+      .where(eq(classWaitlist.id, data.id))
+      .returning()
+    createAuditLog({
+      ...getAuditContext(session),
+      action: 'DELETE',
+      entityType: 'WAITLIST',
+      entityId: data.id,
+      description: `Eliminó socio de lista de espera #${data.id}`,
+    })
+    return entry
+  })
+
+/**
+ * Cuando se cancela una reserva, promueve automáticamente al primero
+ * de la lista de espera (si existe) creando una nueva reserva CONFIRMED.
+ * Retorna el nuevo booking o null si la lista estaba vacía.
+ */
+export const promoteFromWaitlist = createServerFn({ method: 'POST' })
+  .inputValidator(z.object({ classScheduleId: uuidField }))
+  .handler(async ({ data }) => {
+    const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+
+    const next = await db.query.classWaitlist.findFirst({
+      where: eq(classWaitlist.classScheduleId, data.classScheduleId),
+      orderBy: [asc(classWaitlist.addedAt)],
+    })
+
+    if (!next) return null
+
+    // Verificar que aún haya cupo (pueden haber cancelado sin llamar a este fn)
+    const schedule = await db.query.classSchedules.findFirst({
+      where: eq(classSchedules.id, data.classScheduleId),
+      with: { class: true },
+    })
+    if (!schedule) return null
+
+    const [{ count }] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(classBookings)
+      .where(
+        and(
+          eq(classBookings.classScheduleId, data.classScheduleId),
+          eq(classBookings.status, 'CONFIRMED'),
+        ),
+      )
+
+    if (Number(count) >= schedule.class.capacity) return null
+
+    // Crear reserva para el primero de la lista
+    const [booking] = await db
+      .insert(classBookings)
+      .values({ classScheduleId: data.classScheduleId, memberId: next.memberId })
+      .returning()
+
+    // Eliminar de la lista de espera
+    await db.delete(classWaitlist).where(eq(classWaitlist.id, next.id))
+
+    createAuditLog({
+      ...getAuditContext(session),
+      action: 'CREATE',
+      entityType: 'BOOKING',
+      entityId: booking.id,
+      description: `Promovió socio ${next.memberId} de lista de espera a reserva confirmada`,
+    })
+
+    return booking
   })

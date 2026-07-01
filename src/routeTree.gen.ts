@@ -28,6 +28,7 @@ import { Route as AuthedProductsRouteImport } from './routes/_authed/products'
 import { Route as AuthedProductCategoriesRouteImport } from './routes/_authed/product-categories'
 import { Route as AuthedPosRouteImport } from './routes/_authed/pos'
 import { Route as AuthedPackagesRouteImport } from './routes/_authed/packages'
+import { Route as AuthedNutritionRouteImport } from './routes/_authed/nutrition'
 import { Route as AuthedNotificationsRouteImport } from './routes/_authed/notifications'
 import { Route as AuthedMembershipPaymentsRouteImport } from './routes/_authed/membership-payments'
 import { Route as AuthedMembershipFreezesRouteImport } from './routes/_authed/membership-freezes'
@@ -138,6 +139,11 @@ const AuthedPackagesRoute = AuthedPackagesRouteImport.update({
   path: '/packages',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedNutritionRoute = AuthedNutritionRouteImport.update({
+  id: '/nutrition',
+  path: '/nutrition',
+  getParentRoute: () => AuthedRoute,
+} as any)
 const AuthedNotificationsRoute = AuthedNotificationsRouteImport.update({
   id: '/notifications',
   path: '/notifications',
@@ -232,6 +238,7 @@ export interface FileRoutesByFullPath {
   '/membership-freezes': typeof AuthedMembershipFreezesRoute
   '/membership-payments': typeof AuthedMembershipPaymentsRoute
   '/notifications': typeof AuthedNotificationsRoute
+  '/nutrition': typeof AuthedNutritionRoute
   '/packages': typeof AuthedPackagesRoute
   '/pos': typeof AuthedPosRoute
   '/product-categories': typeof AuthedProductCategoriesRoute
@@ -267,6 +274,7 @@ export interface FileRoutesByTo {
   '/membership-freezes': typeof AuthedMembershipFreezesRoute
   '/membership-payments': typeof AuthedMembershipPaymentsRoute
   '/notifications': typeof AuthedNotificationsRoute
+  '/nutrition': typeof AuthedNutritionRoute
   '/packages': typeof AuthedPackagesRoute
   '/pos': typeof AuthedPosRoute
   '/product-categories': typeof AuthedProductCategoriesRoute
@@ -304,6 +312,7 @@ export interface FileRoutesById {
   '/_authed/membership-freezes': typeof AuthedMembershipFreezesRoute
   '/_authed/membership-payments': typeof AuthedMembershipPaymentsRoute
   '/_authed/notifications': typeof AuthedNotificationsRoute
+  '/_authed/nutrition': typeof AuthedNutritionRoute
   '/_authed/packages': typeof AuthedPackagesRoute
   '/_authed/pos': typeof AuthedPosRoute
   '/_authed/product-categories': typeof AuthedProductCategoriesRoute
@@ -341,6 +350,7 @@ export interface FileRouteTypes {
     | '/membership-freezes'
     | '/membership-payments'
     | '/notifications'
+    | '/nutrition'
     | '/packages'
     | '/pos'
     | '/product-categories'
@@ -376,6 +386,7 @@ export interface FileRouteTypes {
     | '/membership-freezes'
     | '/membership-payments'
     | '/notifications'
+    | '/nutrition'
     | '/packages'
     | '/pos'
     | '/product-categories'
@@ -412,6 +423,7 @@ export interface FileRouteTypes {
     | '/_authed/membership-freezes'
     | '/_authed/membership-payments'
     | '/_authed/notifications'
+    | '/_authed/nutrition'
     | '/_authed/packages'
     | '/_authed/pos'
     | '/_authed/product-categories'
@@ -574,6 +586,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedPackagesRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/nutrition': {
+      id: '/_authed/nutrition'
+      path: '/nutrition'
+      fullPath: '/nutrition'
+      preLoaderRoute: typeof AuthedNutritionRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/notifications': {
       id: '/_authed/notifications'
       path: '/notifications'
@@ -696,6 +715,7 @@ interface AuthedRouteChildren {
   AuthedMembershipFreezesRoute: typeof AuthedMembershipFreezesRoute
   AuthedMembershipPaymentsRoute: typeof AuthedMembershipPaymentsRoute
   AuthedNotificationsRoute: typeof AuthedNotificationsRoute
+  AuthedNutritionRoute: typeof AuthedNutritionRoute
   AuthedPackagesRoute: typeof AuthedPackagesRoute
   AuthedPosRoute: typeof AuthedPosRoute
   AuthedProductCategoriesRoute: typeof AuthedProductCategoriesRoute
@@ -728,6 +748,7 @@ const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedMembershipFreezesRoute: AuthedMembershipFreezesRoute,
   AuthedMembershipPaymentsRoute: AuthedMembershipPaymentsRoute,
   AuthedNotificationsRoute: AuthedNotificationsRoute,
+  AuthedNutritionRoute: AuthedNutritionRoute,
   AuthedPackagesRoute: AuthedPackagesRoute,
   AuthedPosRoute: AuthedPosRoute,
   AuthedProductCategoriesRoute: AuthedProductCategoriesRoute,

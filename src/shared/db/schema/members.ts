@@ -23,6 +23,9 @@ export const members = pgTable(
     emergencyContactPhone: text('emergency_contact_phone'),
     qrCode: text('qr_code'),
     photoUrl: text('photo_url'),
+    physicalRestrictions: text('physical_restrictions'),
+    medicalNotes: text('medical_notes'),
+    contractSignature: text('contract_signature'),
     status: memberStatusEnum('status').notNull().default('ACTIVE'),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at')

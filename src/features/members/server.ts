@@ -67,6 +67,9 @@ export const createMember = createServerFn({ method: 'POST' })
       ...data,
       branchId: data.branchId ?? null,
       birthDate: data.birthDate ? new Date(data.birthDate) : null,
+      physicalRestrictions: data.physicalRestrictions ?? null,
+      medicalNotes: data.medicalNotes ?? null,
+      contractSignature: data.contractSignature ?? null,
     }
     console.log('[createMember] data:', JSON.stringify(insertData, (_, v) => v instanceof Date ? v.toISOString() : v))
     let member
@@ -108,6 +111,9 @@ export const updateMember = createServerFn({ method: 'POST' })
       address: data.address,
       status: data.status,
       branchId: data.branchId ?? null,
+      physicalRestrictions: data.physicalRestrictions ?? null,
+      medicalNotes: data.medicalNotes ?? null,
+      contractSignature: data.contractSignature ?? null,
     })
 
     createAuditLog({

@@ -20,6 +20,7 @@ export const productStock = pgTable(
       .references(() => branches.id, { onDelete: 'cascade' }),
     stockCurrent: integer('stock_current').notNull().default(0),
     stockMinimum: integer('stock_minimum').notNull().default(0),
+    expiryDate: timestamp('expiry_date'),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at')
       .notNull()

@@ -23,6 +23,9 @@ import { membershipFreezes } from './membership-freezes.ts'
 import { auditLogs } from './audit-logs.ts'
 import { branches, userBranches } from './branches.ts'
 import { packages, packageItems, packageAllowedDays, packageBenefits } from './packages.ts'
+import { nutritionPlans } from './nutrition-plans.ts'
+import { weightHistory } from './weight-history.ts'
+import { classWaitlist } from './class-waitlist.ts'
 
 export const usersRelations = relations(users, ({ many, one }) => ({
   sessions: many(sessions),
@@ -52,6 +55,8 @@ export const membersRelations = relations(members, ({ many, one }) => ({
   checkIns: many(checkIns),
   sales: many(sales),
   freezes: many(membershipFreezes),
+  weightHistory: many(weightHistory),
+  nutritionPlans: many(nutritionPlans),
 }))
 
 export const subscriptionsRelations = relations(
@@ -216,6 +221,7 @@ export const classSchedulesRelations = relations(
       references: [classes.id],
     }),
     bookings: many(classBookings),
+    waitlist: many(classWaitlist),
   }),
 )
 
@@ -331,3 +337,40 @@ export const packageAllowedDaysRelations = relations(
     }),
   }),
 )
+
+// ── Nutrition & Weight ────────────────────────────────────────────
+
+export const nutritionPlansRelations = relations(nutritionPlans, ({ one }) => ({
+  member: one(members, {
+    fields: [nutritionPlans.memberId],
+    references: [members.id],
+  }),
+  createdBy: one(users, {
+    fields: [nutritionPlans.createdByUserId],
+    references: [users.id],
+  }),
+}))
+
+export const weightHistoryRelations = relations(weightHistory, ({ one }) => ({
+  member: one(members, {
+    fields: [weightHistory.memberId],
+    references: [members.id],
+  }),
+  recordedBy: one(users, {
+    fields: [weightHistory.recordedByUserId],
+    references: [users.id],
+  }),
+}))
+
+// ── Class Waitlist ────────────────────────────────────────────────
+
+export const classWaitlistRelations = relations(classWaitlist, ({ one }) => ({
+  schedule: one(classSchedules, {
+    fields: [classWaitlist.classScheduleId],
+    references: [classSchedules.id],
+  }),
+  member: one(members, {
+    fields: [classWaitlist.memberId],
+    references: [members.id],
+  }),
+}))

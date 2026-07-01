@@ -55,5 +55,6 @@ export const packageTypeEnum = pgEnum('package_type', [
   'PACKAGE',
   'PROMOTION',
   'SPECIAL',
+  'DAILY_PASS',
 ])
 export const renewalTypeEnum = pgEnum('renewal_type', ['MANUAL', 'AUTO'])

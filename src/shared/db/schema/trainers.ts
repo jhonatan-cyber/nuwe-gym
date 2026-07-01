@@ -54,6 +54,25 @@ export const trainerAssignments = pgTable(
   ],
 )
 
+export const trainerObservations = pgTable(
+  'trainer_observations',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    trainerId: uuid('trainer_id')
+      .notNull()
+      .references(() => trainerProfiles.id, { onDelete: 'cascade' }),
+    memberId: uuid('member_id')
+      .notNull()
+      .references(() => members.id),
+    note: text('note').notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [
+    index('trainer_observations_trainer_id_idx').on(table.trainerId),
+    index('trainer_observations_member_id_idx').on(table.memberId),
+  ],
+)
+
 export const trainerAvailability = pgTable(
   'trainer_availability',
   {

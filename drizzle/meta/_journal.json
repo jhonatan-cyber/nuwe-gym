@@ -57,6 +57,20 @@
       "when": 1782830136744,
       "tag": "0007_blue_miek",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1782855776912,
+      "tag": "0008_add_member_health_fields",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1782855893304,
+      "tag": "0009_add_expiry_and_trainer_observations",
+      "breakpoints": true
     }
   ]
 }

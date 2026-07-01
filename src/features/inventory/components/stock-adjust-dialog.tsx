@@ -20,6 +20,7 @@ interface StockAdjustDialogProps {
     quantity: number
     movementType: 'MANUAL_ADJUSTMENT' | 'LOSS' | 'RETURN'
     notes: string
+    expiryDate?: string
   }) => void
 }
 
@@ -35,6 +36,7 @@ export function StockAdjustDialog({
     'MANUAL_ADJUSTMENT' | 'LOSS' | 'RETURN'
   >('MANUAL_ADJUSTMENT')
   const [adjustNotes, setAdjustNotes] = useState('')
+  const [expiryDate, setExpiryDate] = useState('')
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -43,10 +45,12 @@ export function StockAdjustDialog({
       quantity: Number(adjustQty),
       movementType: adjustType,
       notes: adjustNotes,
+      ...(expiryDate ? { expiryDate } : {}),
     })
     setAdjustQty('1')
     setAdjustType('MANUAL_ADJUSTMENT')
     setAdjustNotes('')
+    setExpiryDate('')
   }
 
   return (
@@ -87,6 +91,15 @@ export function StockAdjustDialog({
                 <option value="RETURN">Devolución</option>
               </select>
             </div>
+          </div>
+          <div className="space-y-1">
+            <label className="text-sm font-bold">Fecha de vencimiento</label>
+            <Input
+              type="date"
+              value={expiryDate}
+              onChange={(e) => setExpiryDate(e.target.value)}
+              className="rounded-xl"
+            />
           </div>
           <div className="space-y-1">
             <label className="text-sm font-bold">Notas / Justificación *</label>

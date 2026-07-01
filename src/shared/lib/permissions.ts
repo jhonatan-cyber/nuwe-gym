@@ -49,6 +49,8 @@ type Permission =
   | 'branches:write'
   | 'backup:read'
   | 'backup:write'
+  | 'nutrition:read'
+  | 'nutrition:write'
 
 const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   ADMIN: [
@@ -100,6 +102,8 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'branches:write',
     'backup:read',
     'backup:write',
+    'nutrition:read',
+    'nutrition:write',
   ],
   RECEPTIONIST: [
     'members:read',
@@ -138,6 +142,8 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'dashboard:read',
     'notifications:read',
     'trainers:read',
+    'nutrition:read',
+    'nutrition:write',
   ],
 }
 

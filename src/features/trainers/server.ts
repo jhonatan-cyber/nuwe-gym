@@ -5,6 +5,7 @@ import {
   trainerProfiles,
   trainerAssignments,
   trainerAvailability,
+  trainerObservations,
 } from '#/shared/db/schema/trainers.ts'
 import { eq, desc, and } from 'drizzle-orm'
 import { requireRole } from '#/shared/lib/server-utils.ts'
@@ -298,4 +299,55 @@ export const generateAIRoutine = createServerFn({ method: 'POST' })
     await requireRole({ data: { roles: ['ADMIN', 'TRAINER'] } })
     const { generateRoutineProposal } = await import('./routine-generator.ts')
     return await generateRoutineProposal(data)
+  })
+
+// --- Trainer Observations ---
+
+export const getTrainerObservations = createServerFn({ method: 'GET' })
+  .inputValidator(z.object({ memberId: uuidField }))
+  .handler(async ({ data }) => {
+    const session = await requireRole({ data: { roles: ['ADMIN', 'TRAINER'] } })
+
+    const profile = session.user.role === 'TRAINER'
+      ? await db.query.trainerProfiles.findFirst({
+          where: eq(trainerProfiles.userId, session.user.id),
+        })
+      : null
+
+    return await db.query.trainerObservations.findMany({
+      where: profile
+        ? and(
+            eq(trainerObservations.memberId, data.memberId),
+            eq(trainerObservations.trainerId, profile.id),
+          )
+        : eq(trainerObservations.memberId, data.memberId),
+      orderBy: [desc(trainerObservations.createdAt)],
+    })
+  })
+
+const createObservationSchema = z.object({
+  memberId: uuidField,
+  note: requiredString,
+})
+
+export const createTrainerObservation = createServerFn({ method: 'POST' })
+  .inputValidator((data: unknown) => createObservationSchema.parse(data))
+  .handler(async ({ data }) => {
+    const session = await requireRole({ data: { roles: ['TRAINER'] } })
+
+    const profile = await db.query.trainerProfiles.findFirst({
+      where: eq(trainerProfiles.userId, session.user.id),
+    })
+    if (!profile) throw new Error('Perfil de entrenador no encontrado')
+
+    const [obs] = await db
+      .insert(trainerObservations)
+      .values({
+        trainerId: profile.id,
+        memberId: data.memberId,
+        note: data.note,
+      })
+      .returning()
+
+    return obs
   })
