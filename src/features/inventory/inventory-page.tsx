@@ -26,6 +26,7 @@ import { CategoryCard } from './components/category-card.tsx'
 import { ProductPanel } from './components/product-panel.tsx'
 import { KardexTable } from './components/kardex-table.tsx'
 import { StockAdjustDialog } from './components/stock-adjust-dialog.tsx'
+import { StockTransferDialog } from './components/stock-transfer-dialog.tsx'
 import { CategoryDialogs } from './components/category-dialogs.tsx'
 import { ProductFormFields } from './components/product-form.tsx'
 
@@ -175,6 +176,10 @@ export function InventoryPage() {
               inv.setSelectedProduct(prod)
               inv.setIsAdjustModalOpen(true)
             }}
+            onTransferStock={(prod) => {
+              inv.setSelectedProduct(prod)
+              inv.setIsTransferModalOpen(true)
+            }}
             productTrendMap={inv.productTrendMap}
             isAdmin={inv.isAdmin}
             trendDays={inv.trendDays}
@@ -240,6 +245,17 @@ export function InventoryPage() {
         productName={inv.selectedProduct?.name || ''}
         isPending={inv.isAdjustingStock}
         onSubmit={inv.handleAdjustSubmit}
+      />
+
+      <StockTransferDialog
+        isOpen={inv.isTransferModalOpen}
+        onOpenChange={(open) => {
+          inv.setIsTransferModalOpen(open)
+          if (!open) inv.setSelectedProduct(null)
+        }}
+        productName={inv.selectedProduct?.name || ''}
+        isPending={inv.isTransferringStock}
+        onSubmit={inv.handleTransferSubmit}
       />
 
       <CategoryDialogs

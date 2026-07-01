@@ -130,6 +130,7 @@ export const renewSubscription = createServerFn({ method: 'POST' })
         .values({
           memberId: data.memberId,
           packageId: data.packageId,
+          totalAmount: pkg?.price ?? data.amount,
           startDate,
           endDate,
           status: 'ACTIVE',
@@ -230,6 +231,7 @@ export const processAutoRenewals = createServerFn({ method: 'POST' }).handler(
             .values({
               memberId: sub.memberId,
               packageId: sub.packageId,
+              totalAmount: amount,
               startDate,
               endDate,
               status: 'ACTIVE',

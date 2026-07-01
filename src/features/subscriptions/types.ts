@@ -1,7 +1,7 @@
-import type { getSubscriptions } from './server.ts'
+import type { getSubscriptionsWithBalance } from './server.ts'
 import type { PaymentMethod } from '#/shared/lib/subscription-utils.ts'
 
-export type Subscription = Awaited<ReturnType<typeof getSubscriptions>>[number]
+export type Subscription = Awaited<ReturnType<typeof getSubscriptionsWithBalance>>[number]
 
 export type { PaymentMethod }
 

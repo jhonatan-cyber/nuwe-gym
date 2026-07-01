@@ -1,4 +1,16 @@
-import { Calendar, Clock, CreditCard, MapPin } from 'lucide-react'
+import { useState } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
+import {
+  Calendar,
+  Clock,
+  CreditCard,
+  MapPin,
+  DollarSign,
+  Plus,
+  Wallet,
+  FileText,
+} from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -7,14 +19,28 @@ import {
   DialogDescription,
 } from '#/shared/components/ui/dialog'
 import { Badge } from '#/shared/components/ui/badge'
+import { Button } from '#/shared/components/ui/button'
 import { Separator } from '#/shared/components/ui/separator'
-import { formatCurrency, formatDate } from '#/shared/lib/formatters.ts'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '#/shared/components/ui/select'
+import {
+  formatCurrency,
+  formatDate,
+  formatDateTime,
+} from '#/shared/lib/formatters.ts'
 import {
   getInitials,
   getSubscriptionProgress,
   getSubscriptionStatus,
 } from '../utils.ts'
 import type { Subscription } from '../types.ts'
+import { getSubscriptionBalance, recordAdditionalPayment } from '../server.ts'
+import { useCurrentBranch } from '#/shared/hooks/use-current-branch.ts'
 
 interface SubscriptionDetailDialogProps {
   subscription: Subscription | null
@@ -48,11 +74,53 @@ export function SubscriptionDetailDialog({
   open,
   onOpenChange,
 }: SubscriptionDetailDialogProps) {
+  const queryClient = useQueryClient()
+  const { branchId } = useCurrentBranch()
+  const [showPaymentForm, setShowPaymentForm] = useState(false)
+  const [paymentAmount, setPaymentAmount] = useState('')
+  const [paymentMethod, setPaymentMethod] = useState('CASH')
+  const [paymentNotes, setPaymentNotes] = useState('')
+
+  const { data: balance, isLoading: balanceLoading } = useQuery({
+    queryKey: ['subscription-balance', sub?.id],
+    queryFn: () => getSubscriptionBalance({ data: sub!.id }),
+    enabled: !!sub && open,
+  })
+
+  const payMutation = useMutation({
+    mutationFn: recordAdditionalPayment,
+    onSuccess: () => {
+      toast.success('Pago registrado correctamente')
+      setShowPaymentForm(false)
+      setPaymentAmount('')
+      setPaymentNotes('')
+      queryClient.invalidateQueries({ queryKey: ['subscription-balance'] })
+      queryClient.invalidateQueries({ queryKey: ['subscriptions'] })
+    },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : 'Error al registrar pago')
+    },
+  })
+
   if (!sub) return null
 
   const status = getSubscriptionStatus(sub)
   const { daysRemaining, daysExpired, percent, progressColor } =
     getSubscriptionProgress(sub)
+
+  const handleRegisterPayment = () => {
+    if (!paymentAmount || !branchId) return
+    payMutation.mutate({
+      data: {
+        subscriptionId: sub.id,
+        memberId: sub.memberId,
+        amount: paymentAmount,
+        paymentMethod: paymentMethod as 'CASH' | 'CARD' | 'TRANSFER' | 'QR',
+        notes: paymentNotes || undefined,
+        branchId,
+      },
+    })
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -111,6 +179,164 @@ export function SubscriptionDetailDialog({
               )}
             </div>
           </div>
+
+          {/* Payment / Balance Section */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <DollarSign className="size-4 text-primary" />
+              <h4 className="font-bold text-sm">Estado de Pagos</h4>
+            </div>
+            <div className="bg-muted/50 rounded-2xl p-3 sm:p-4">
+              {balanceLoading ? (
+                <p className="text-xs text-muted-foreground">Cargando...</p>
+              ) : balance ? (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Total del paquete:</span>
+                    <span className="font-bold">{formatCurrency(balance.totalAmount)}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-emerald-500">Total pagado:</span>
+                    <span className="font-semibold text-emerald-500">{formatCurrency(balance.totalPaid)}</span>
+                  </div>
+                  {balance.remainingBalance > 0 && (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-amber-500">Saldo pendiente:</span>
+                      <span className="font-semibold text-amber-500">{formatCurrency(balance.remainingBalance)}</span>
+                    </div>
+                  )}
+                  <div className="text-xs text-muted-foreground">
+                    {balance.paymentCount} pago{balance.paymentCount !== 1 ? 's' : ''} registrado{balance.paymentCount !== 1 ? 's' : ''}
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">Sin información de pagos</p>
+              )}
+            </div>
+          </div>
+
+          {/* Payment History */}
+          {balance && balance.payments.length > 0 && (
+            <div className="space-y-2">
+              <h4 className="font-bold text-xs text-muted-foreground uppercase tracking-widest">
+                Historial de Pagos
+              </h4>
+              <div className="space-y-1.5">
+                {balance.payments.map((pay: any) => (
+                  <div
+                    key={pay.id}
+                    className="flex items-center justify-between bg-muted/30 rounded-xl px-3 py-2 text-xs"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Wallet className="size-3 shrink-0 text-muted-foreground" />
+                      <span className="font-semibold">{formatCurrency(Number(pay.amount))}</span>
+                      <Badge variant="outline" className="text-[9px] font-bold uppercase tracking-wider">
+                        {pay.paymentMethod}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <span>{formatDateTime(pay.createdAt)}</span>
+                      {pay.notes && (
+                        <span className="truncate max-w-[100px]" title={pay.notes}>
+                          <FileText className="size-3 inline mr-0.5" />
+                          {pay.notes}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {balance && balance.remainingBalance > 0 && status === 'ACTIVE' && (
+            <>
+              <Separator />
+              <div className="space-y-3">
+                {showPaymentForm ? (
+                  <div className="bg-muted/50 rounded-2xl p-3 sm:p-4 space-y-3">
+                    <h4 className="font-bold text-sm">Registrar Pago</h4>
+                    <div>
+                      <label className="text-xs font-semibold text-muted-foreground block mb-1">
+                        Monto
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-bold">
+                          $
+                        </span>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          max={balance.remainingBalance}
+                          value={paymentAmount}
+                          onChange={(e) => setPaymentAmount(e.target.value)}
+                          className="w-full rounded-xl border border-input bg-background px-7 py-2 text-sm font-bold"
+                          placeholder="0.00"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-muted-foreground block mb-1">
+                        Método de Pago
+                      </label>
+                      <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                        <SelectTrigger className="w-full rounded-xl">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="CASH">Efectivo</SelectItem>
+                          <SelectItem value="CARD">Tarjeta</SelectItem>
+                          <SelectItem value="TRANSFER">Transferencia</SelectItem>
+                          <SelectItem value="QR">QR</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-muted-foreground block mb-1">
+                        Notas (opcional)
+                      </label>
+                      <input
+                        type="text"
+                        value={paymentNotes}
+                        onChange={(e) => setPaymentNotes(e.target.value)}
+                        className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm"
+                        placeholder="Ej: Segundo pago parcial"
+                      />
+                    </div>
+                    <div className="flex gap-2 pt-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="rounded-full flex-1"
+                        onClick={() => setShowPaymentForm(false)}
+                      >
+                        Cancelar
+                      </Button>
+                      <Button
+                        size="sm"
+                        className="rounded-full flex-1 gap-1.5"
+                        onClick={handleRegisterPayment}
+                        disabled={!paymentAmount || Number(paymentAmount) <= 0 || payMutation.isPending}
+                      >
+                        <Plus className="size-3.5" />
+                        {payMutation.isPending ? 'Registrando...' : 'Registrar Pago'}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full rounded-full gap-1.5"
+                    onClick={() => setShowPaymentForm(true)}
+                  >
+                    <Plus className="size-3.5" /> Registrar Pago Parcial
+                  </Button>
+                )}
+              </div>
+            </>
+          )}
 
           <Separator />
 

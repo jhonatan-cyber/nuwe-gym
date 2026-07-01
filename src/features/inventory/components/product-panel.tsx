@@ -26,6 +26,7 @@ interface ProductPanelProps {
   onCreateProduct: () => void
   onEditProduct: (prod: any) => void
   onAdjustStock: (prod: any) => void
+  onTransferStock: (prod: any) => void
   productTrendMap: Record<string, any>
   isAdmin: boolean
   trendDays: number
@@ -48,6 +49,7 @@ export function ProductPanel({
   onCreateProduct,
   onEditProduct,
   onAdjustStock,
+  onTransferStock,
   productTrendMap,
   isAdmin,
   trendDays,
@@ -156,7 +158,8 @@ export function ProductPanel({
               isAdmin={isAdmin}
               trendDays={trendDays}
               onEdit={onEditProduct}
-              onAdjust={() => onAdjustStock(prod)}
+                onAdjust={() => onAdjustStock(prod)}
+                onTransfer={() => onTransferStock(prod)}
             />
           ))}
         </div>

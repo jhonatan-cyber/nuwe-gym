@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { EvaluationsSection } from '#/features/evaluations/components/evaluations-section.tsx'
+import { useNavigate } from '@tanstack/react-router'
 import {
   RefreshCw,
   User,
@@ -15,6 +17,7 @@ import {
   Check,
   AlertTriangle,
   FileText,
+  ArrowRight,
 } from 'lucide-react'
 import { getMemberById } from '#/features/members/server.ts'
 import { getMemberRenewalHistory } from '#/features/renewals/server.ts'
@@ -39,6 +42,7 @@ export function MemberDetailDialog({
   memberId,
   onOpenChange,
 }: MemberDetailDialogProps) {
+  const navigate = useNavigate()
   const { data: memberDetail, isLoading: loadingDetail } = useQuery({
     queryKey: ['member-detail', memberId],
     queryFn: () => getMemberById({ data: memberId! }),
@@ -253,22 +257,41 @@ export function MemberDetailDialog({
                             ) : (
                               <span />
                             )}
-                            <Badge
-                              className={cn(
-                                'font-bold text-[9px] py-0.5 px-2 rounded-full select-none shrink-0',
-                                active
-                                  ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
-                                  : expired
-                                    ? 'bg-red-500/10 text-red-500 border-red-500/20'
-                                    : 'bg-muted-foreground/10 text-muted-foreground border-muted-foreground/20',
+                            <div className="flex items-center gap-1.5">
+                              {expired && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    onOpenChange(false)
+                                    navigate({
+                                      to: '/renewals',
+                                      search: { memberId: memberDetail.id },
+                                    })
+                                  }}
+                                  className="text-[9px] font-bold text-emerald-500 hover:text-emerald-600 bg-emerald-500/10 hover:bg-emerald-500/20 px-2 py-0.5 rounded-full transition-colors flex items-center gap-0.5"
+                                >
+                                  Renovar
+                                  <ArrowRight className="size-2.5" />
+                                </button>
                               )}
-                            >
-                              {active
-                                ? 'Activa'
-                                : expired
-                                  ? 'Vencida'
-                                  : sub.status}
-                            </Badge>
+                              <Badge
+                                className={cn(
+                                  'font-bold text-[9px] py-0.5 px-2 rounded-full select-none shrink-0',
+                                  active
+                                    ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+                                    : expired
+                                      ? 'bg-red-500/10 text-red-500 border-red-500/20'
+                                      : 'bg-muted-foreground/10 text-muted-foreground border-muted-foreground/20',
+                                )}
+                              >
+                                {active
+                                  ? 'Activa'
+                                  : expired
+                                    ? 'Vencida'
+                                    : sub.status}
+                              </Badge>
+                            </div>
                           </div>
                         </div>
                       )
@@ -279,6 +302,9 @@ export function MemberDetailDialog({
 
               {/* Riesgo de abandono */}
               <ChurnRiskSection memberId={memberDetail.id} />
+
+              {/* Evaluaciones físicas */}
+              <EvaluationsSection memberId={memberDetail.id} />
             </div>
           </>
         ) : (

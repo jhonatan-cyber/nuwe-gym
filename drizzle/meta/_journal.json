@@ -71,6 +71,27 @@
       "when": 1782855893304,
       "tag": "0009_add_expiry_and_trainer_observations",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1782881924895,
+      "tag": "0011_add_subscription_total_amount",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1782883561380,
+      "tag": "0011_flawless_wildside",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1782883823868,
+      "tag": "0012_bitter_pixie",
+      "breakpoints": true
     }
   ]
 }

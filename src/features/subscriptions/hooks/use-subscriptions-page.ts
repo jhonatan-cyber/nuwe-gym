@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
-  getSubscriptions,
+  getSubscriptionsWithBalance,
   cancelSubscription,
 } from '#/features/subscriptions/server.ts'
 import { useCurrentBranch } from '#/shared/hooks/use-current-branch.ts'
@@ -29,7 +29,7 @@ export function useSubscriptionsPage(userRole: string) {
 
   const { data: subsList = [], isLoading } = useQuery({
     queryKey: ['subscriptions', branchId],
-    queryFn: () => getSubscriptions({ data: { branchId: branchId ?? undefined } }),
+    queryFn: () => getSubscriptionsWithBalance({ data: { branchId: branchId ?? undefined } }),
   })
 
   const cancelMutation = useMutation({

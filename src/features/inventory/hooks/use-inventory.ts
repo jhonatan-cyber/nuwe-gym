@@ -13,6 +13,7 @@ import {
 import {
   getInventoryMovements,
   getStockSnapshots,
+  transferStock,
 } from '#/features/inventory/server.ts'
 import { useCurrentBranch } from '#/shared/hooks/use-current-branch.ts'
 import { Route as authedRoute } from '#/routes/_authed.tsx'
@@ -49,6 +50,7 @@ export function useInventory() {
   // Product modal state
   const [isProductModalOpen, setIsProductModalOpen] = useState(false)
   const [isAdjustModalOpen, setIsAdjustModalOpen] = useState(false)
+  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<any>(null)
   const [showProductForm, setShowProductForm] = useState(false)
   const [form, setForm] = useState<ProductFormValues>(EMPTY_FORM)
@@ -170,6 +172,18 @@ export function useInventory() {
       setIsAdjustModalOpen(false)
     },
     onError: () => toast.error('Error al ajustar el stock'),
+  })
+
+  const transferMutation = useMutation({
+    mutationFn: transferStock,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] })
+      queryClient.invalidateQueries({ queryKey: ['inventory-movements'] })
+      toast.success('Transferencia realizada con éxito')
+      setIsTransferModalOpen(false)
+      setSelectedProduct(null)
+    },
+    onError: (err) => toast.error(err instanceof Error ? err.message : 'Error al transferir stock'),
   })
 
   const createCategoryMutation = useMutation({
@@ -312,6 +326,23 @@ export function useInventory() {
     })
   }
 
+  function handleTransferSubmit(data: {
+    destBranchId: string
+    quantity: number
+    notes: string
+  }) {
+    if (!selectedProduct || !branchId) return
+    transferMutation.mutate({
+      data: {
+        productId: selectedProduct.id,
+        sourceBranchId: branchId,
+        destBranchId: data.destBranchId,
+        quantity: data.quantity,
+        notes: data.notes,
+      },
+    })
+  }
+
   function handleCategoryClick(catId: string | null) {
     setSelectedCategoryId(catId)
     setSearchTerm('')
@@ -336,6 +367,7 @@ export function useInventory() {
     // Product state
     isProductModalOpen,
     isAdjustModalOpen,
+    isTransferModalOpen,
     selectedProduct,
     showProductForm,
     form,
@@ -360,6 +392,7 @@ export function useInventory() {
     isCreatingProduct: createMutation.isPending,
     isUpdatingProduct: updateMutation.isPending,
     isAdjustingStock: adjustMutation.isPending,
+    isTransferringStock: transferMutation.isPending,
     isCreatingCategory: createCategoryMutation.isPending,
     isUpdatingCategory: updateCategoryMutation.isPending,
     isDeletingCategory: deleteCategoryMutation.isPending,
@@ -371,6 +404,7 @@ export function useInventory() {
     setShowProductForm,
     setSelectedProduct,
     setIsAdjustModalOpen,
+    setIsTransferModalOpen,
     setIsProductModalOpen,
     setCategoryToDelete,
 
@@ -379,6 +413,7 @@ export function useInventory() {
     handleCategoryClick,
     handleProductSubmit,
     handleAdjustSubmit,
+    handleTransferSubmit,
     handleCategorySubmit,
     openEditModal,
     openCreateProductModal,

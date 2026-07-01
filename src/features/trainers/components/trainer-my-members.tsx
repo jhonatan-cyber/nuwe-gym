@@ -1,9 +1,16 @@
 import { useState } from 'react'
-import { Phone, Mail, StickyNote } from 'lucide-react'
+import { Phone, Mail, StickyNote, ClipboardList } from 'lucide-react'
 import { Button } from '#/shared/components/ui/button'
 import { DataTable } from '#/shared/components/data-table.tsx'
 import { TrainerAIRoutineDialog } from './trainer-ai-routine-dialog.tsx'
 import { TrainerObservationDialog } from './trainer-observation-dialog.tsx'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '#/shared/components/ui/dialog'
+import { EvaluationsSection } from '#/features/evaluations/components/evaluations-section.tsx'
 
 interface TrainerMyMembersProps {
   members: any[]
@@ -11,6 +18,7 @@ interface TrainerMyMembersProps {
 
 export function TrainerMyMembers({ members }: TrainerMyMembersProps) {
   const [obsMember, setObsMember] = useState<any>(null)
+  const [evalMember, setEvalMember] = useState<any>(null)
 
   return (
     <>
@@ -72,6 +80,14 @@ export function TrainerMyMembers({ members }: TrainerMyMembersProps) {
                 >
                   <StickyNote className="size-3" /> Notas
                 </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 rounded-full text-[10px] gap-1"
+                  onClick={() => setEvalMember(member)}
+                >
+                  <ClipboardList className="size-3" /> Evaluar
+                </Button>
                 <TrainerAIRoutineDialog member={member} />
               </div>
             ),
@@ -91,6 +107,24 @@ export function TrainerMyMembers({ members }: TrainerMyMembersProps) {
           }}
           member={obsMember}
         />
+      )}
+
+      {evalMember && (
+        <Dialog
+          open={!!evalMember}
+          onOpenChange={(open) => {
+            if (!open) setEvalMember(null)
+          }}
+        >
+          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl">
+            <DialogHeader>
+              <DialogTitle className="font-black text-lg">
+                Evaluación Física — {evalMember.fullName}
+              </DialogTitle>
+            </DialogHeader>
+            <EvaluationsSection memberId={evalMember.id} />
+          </DialogContent>
+        </Dialog>
       )}
     </>
   )

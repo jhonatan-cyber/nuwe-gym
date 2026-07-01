@@ -31,6 +31,7 @@ export const inventoryMovementTypeEnum = pgEnum('inventory_movement_type', [
   'MANUAL_ADJUSTMENT',
   'RETURN',
   'LOSS',
+  'TRANSFER',
 ])
 export const cashSessionStatusEnum = pgEnum('cash_session_status', [
   'OPEN',

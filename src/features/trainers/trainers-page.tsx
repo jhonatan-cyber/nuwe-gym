@@ -1,4 +1,4 @@
-import { ChevronRight, Plus, List } from 'lucide-react'
+import { ChevronRight, Plus, List, CalendarDays } from 'lucide-react'
 import { ModuleLayout } from '#/shared/components/layout/module-layout.tsx'
 import {
   ToggleGroup,
@@ -8,6 +8,7 @@ import { useTrainersPage } from '#/features/trainers/hooks/use-trainers-page.ts'
 import { TrainerMyMembers } from '#/features/trainers/components/trainer-my-members.tsx'
 import { TrainerList, TrainerStats, TrainerFilterBar } from '#/features/trainers/components/trainer-list.tsx'
 import { TrainerForm, TrainerFormSidebar } from '#/features/trainers/components/trainer-form.tsx'
+import { TrainerCalendarView } from '#/features/trainers/components/trainer-calendar.tsx'
 import type { ViewMode } from '#/features/trainers/types.ts'
 
 interface TrainersPageProps {
@@ -64,6 +65,7 @@ export function TrainersPage({ userRole }: TrainersPageProps) {
   }
 
   const isFormView = activeView === 'create' || activeView === 'edit'
+  const isCalendarView = activeView === 'calendar'
 
   return (
     <ModuleLayout
@@ -72,7 +74,7 @@ export function TrainersPage({ userRole }: TrainersPageProps) {
           <span className="text-muted-foreground">Entrenadores</span>
           <ChevronRight className="size-3 text-muted-foreground/50" />
           <span className="text-foreground">
-            {isFormView ? (editingTrainer ? 'Editar' : 'Nuevo') : 'Listado'}
+            {isFormView ? (editingTrainer ? 'Editar' : 'Nuevo') : isCalendarView ? 'Agenda' : 'Listado'}
           </span>
         </div>
       }
@@ -81,13 +83,15 @@ export function TrainersPage({ userRole }: TrainersPageProps) {
           ? editingTrainer
             ? 'Editar Entrenador'
             : 'Nuevo Entrenador'
-          : 'Entrenadores'
+          : isCalendarView
+            ? 'Agenda de Entrenadores'
+            : 'Entrenadores'
       }
       leftPanel={
         <div className="flex flex-col gap-6 z-10 w-full">
           <ToggleGroup
             type="single"
-            value={activeView === 'trainers' ? 'trainers' : 'create'}
+            value={activeView === 'calendar' ? 'calendar' : activeView === 'trainers' ? 'trainers' : 'create'}
             onValueChange={(v) => {
               if (v) {
                 setActiveView(v as ViewMode)
@@ -96,6 +100,9 @@ export function TrainersPage({ userRole }: TrainersPageProps) {
           >
             <ToggleGroupItem value="trainers">
               <List className="size-3.5" /> Listado
+            </ToggleGroupItem>
+            <ToggleGroupItem value="calendar">
+              <CalendarDays className="size-3.5" /> Agenda
             </ToggleGroupItem>
             {canWrite && (
               <ToggleGroupItem value="create">
@@ -106,7 +113,7 @@ export function TrainersPage({ userRole }: TrainersPageProps) {
 
           {isFormView ? (
             <TrainerFormSidebar />
-          ) : (
+          ) : isCalendarView ? null : (
             <>
               <TrainerStats
                 totalTrainers={totalTrainers}
@@ -139,6 +146,8 @@ export function TrainersPage({ userRole }: TrainersPageProps) {
             onCancel={handleBackToList}
           />
         </div>
+      ) : isCalendarView ? (
+        <TrainerCalendarView userRole={userRole} />
       ) : (
         <TrainerList
           filteredTrainers={filteredTrainers}

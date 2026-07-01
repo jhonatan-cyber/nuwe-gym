@@ -1,4 +1,4 @@
-import { Package, Edit, ArrowUpDown } from 'lucide-react'
+import { Package, Edit, ArrowUpDown, ArrowRightLeft } from 'lucide-react'
 import { Button } from '#/shared/components/ui/button'
 import {
   Tooltip,
@@ -33,6 +33,7 @@ interface ProductCardProps {
   trendDays: number
   onEdit: (product: any) => void
   onAdjust: (product: any) => void
+  onTransfer: (product: any) => void
 }
 
 export function ProductCard({
@@ -42,6 +43,7 @@ export function ProductCard({
   trendDays,
   onEdit,
   onAdjust,
+  onTransfer,
 }: ProductCardProps) {
   return (
     <div
@@ -158,6 +160,14 @@ export function ProductCard({
           onClick={() => onAdjust(product)}
         >
           <ArrowUpDown className="size-3" /> Stock
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-8 rounded-full text-xs font-bold"
+          onClick={() => onTransfer(product)}
+        >
+          <ArrowRightLeft className="size-3" />
         </Button>
         {isAdmin && (
           <Button

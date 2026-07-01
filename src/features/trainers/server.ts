@@ -303,6 +303,30 @@ export const generateAIRoutine = createServerFn({ method: 'POST' })
 
 // --- Trainer Observations ---
 
+export const getTrainerSchedule = createServerFn({ method: 'GET' })
+  .handler(async () => {
+    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
+    const trainers = await db.query.trainerProfiles.findMany({
+      where: eq(trainerProfiles.isActive, true),
+      with: {
+        user: true,
+        availability: true,
+        assignments: {
+          where: eq(trainerAssignments.isActive, true),
+          with: { member: true },
+        },
+      },
+      orderBy: [trainerProfiles.createdAt],
+    })
+    return trainers.map((t) => ({
+      id: t.id,
+      name: t.user.name,
+      specialty: t.specialty,
+      availability: t.availability,
+      memberCount: t.assignments.length,
+    }))
+  })
+
 export const getTrainerObservations = createServerFn({ method: 'GET' })
   .inputValidator(z.object({ memberId: uuidField }))
   .handler(async ({ data }) => {

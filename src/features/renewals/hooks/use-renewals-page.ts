@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
@@ -6,9 +6,10 @@ import {
   getMemberRenewalHistory,
 } from '#/features/renewals/server.ts'
 import { getActivePackages } from '#/features/packages/server.ts'
-import { getMembers } from '#/features/members/server.ts'
+import { getMembers, getMemberById } from '#/features/members/server.ts'
 import { getCurrentCashSession } from '#/features/cash-register/server.ts'
 import { useCurrentBranch } from '#/shared/hooks/use-current-branch.ts'
+import { Route as RenewalsRoute } from '#/routes/_authed/renewals.tsx'
 import type {
   Step,
   PaymentMethod,
@@ -18,6 +19,7 @@ import type {
 export function useRenewalsPage() {
   const queryClient = useQueryClient()
   const { branchId } = useCurrentBranch()
+  const { memberId: preselectedMemberId } = RenewalsRoute.useSearch()
 
   const [step, setStep] = useState<Step>(1)
   const [searchQuery, setSearchQuery] = useState('')
@@ -26,6 +28,20 @@ export function useRenewalsPage() {
   const [searchPage, setSearchPage] = useState(1)
   const searchPageSize = 5
   const [isChangingPlan, setIsChangingPlan] = useState(false)
+  const preselectedDone = useRef(false)
+
+  const { data: preselectedMember } = useQuery({
+    queryKey: ['member-by-id', preselectedMemberId],
+    queryFn: () => getMemberById({ data: preselectedMemberId! }),
+    enabled: !!preselectedMemberId && !preselectedDone.current,
+  })
+
+  useEffect(() => {
+    if (preselectedMember && !preselectedDone.current) {
+      preselectedDone.current = true
+      handleSelectMember(preselectedMember as any)
+    }
+  }, [preselectedMember])
 
   const [formData, setFormData] = useState({
     packageId: '',

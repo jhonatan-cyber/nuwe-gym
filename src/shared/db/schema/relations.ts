@@ -26,6 +26,7 @@ import { packages, packageItems, packageAllowedDays, packageBenefits } from './p
 import { nutritionPlans } from './nutrition-plans.ts'
 import { weightHistory } from './weight-history.ts'
 import { classWaitlist } from './class-waitlist.ts'
+import { memberEvaluations } from './member-evaluations.ts'
 
 export const usersRelations = relations(users, ({ many, one }) => ({
   sessions: many(sessions),
@@ -57,6 +58,7 @@ export const membersRelations = relations(members, ({ many, one }) => ({
   freezes: many(membershipFreezes),
   weightHistory: many(weightHistory),
   nutritionPlans: many(nutritionPlans),
+  evaluations: many(memberEvaluations),
 }))
 
 export const subscriptionsRelations = relations(
@@ -361,6 +363,22 @@ export const weightHistoryRelations = relations(weightHistory, ({ one }) => ({
     references: [users.id],
   }),
 }))
+
+// ── Member Evaluations ────────────────────────────────────────────
+
+export const memberEvaluationsRelations = relations(
+  memberEvaluations,
+  ({ one }) => ({
+    member: one(members, {
+      fields: [memberEvaluations.memberId],
+      references: [members.id],
+    }),
+    evaluatedBy: one(users, {
+      fields: [memberEvaluations.evaluatedById],
+      references: [users.id],
+    }),
+  }),
+)
 
 // ── Class Waitlist ────────────────────────────────────────────────
 

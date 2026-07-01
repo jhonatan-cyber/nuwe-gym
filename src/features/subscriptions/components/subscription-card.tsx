@@ -1,4 +1,4 @@
-import { AlertTriangle, Calendar, Clock, XCircle, Eye } from 'lucide-react'
+import { AlertTriangle, Calendar, Clock, XCircle, Eye, DollarSign } from 'lucide-react'
 import { formatCurrency, formatDate } from '#/shared/lib/formatters.ts'
 import { Badge } from '#/shared/components/ui/badge'
 import { Button } from '#/shared/components/ui/button'
@@ -172,6 +172,26 @@ export function SubscriptionCard({
           <span>{formatDate(sub.endDate)}</span>
         </div>
       </div>
+
+      {sub.remainingBalance > 0 && status === 'ACTIVE' && (
+        <div className="space-y-1">
+          <div className="flex items-center justify-between text-[10px]">
+            <span className="text-amber-500 flex items-center gap-1 font-bold">
+              <DollarSign className="size-3 shrink-0" />
+              Saldo: {formatCurrency(sub.remainingBalance)}
+            </span>
+            <span className="text-muted-foreground/60">
+              {Math.round((sub.totalPaid / sub.totalAmount) * 100)}%
+            </span>
+          </div>
+          <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+            <div
+              className="h-full rounded-full bg-amber-400"
+              style={{ width: `${(sub.totalPaid / sub.totalAmount) * 100}%` }}
+            />
+          </div>
+        </div>
+      )}
 
       {!isReadOnly && (
         <div className="grid transition-[grid-template-rows] duration-300 ease-in-out grid-rows-[0fr] group-hover:grid-rows-[1fr]">

@@ -10,5 +10,6 @@ export {
   getMyMembers,
   getTrainerDashboard,
   getTrainerUsers,
+  getTrainerSchedule,
 } from './server.ts'
-export type { TrainerWithDetails, ViewMode } from './types.ts'
+export type { TrainerWithDetails, ViewMode, TrainerCalendarEntry, AvailabilitySlot } from './types.ts'

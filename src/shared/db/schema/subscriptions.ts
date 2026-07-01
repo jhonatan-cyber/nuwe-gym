@@ -1,4 +1,4 @@
-import { uuid, pgTable, text, timestamp, index } from 'drizzle-orm/pg-core'
+import { uuid, pgTable, text, numeric, timestamp, index } from 'drizzle-orm/pg-core'
 import { subscriptionStatusEnum } from './enums.ts'
 import { members } from './members.ts'
 import { packages } from './packages.ts'
@@ -11,6 +11,7 @@ export const subscriptions = pgTable(
       .notNull()
       .references(() => members.id),
     packageId: uuid('package_id').references(() => packages.id),
+    totalAmount: numeric('total_amount', { precision: 10, scale: 2 }),
     startDate: timestamp('start_date').notNull(),
     endDate: timestamp('end_date').notNull(),
     status: subscriptionStatusEnum('status').notNull().default('ACTIVE'),

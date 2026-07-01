@@ -1,7 +1,7 @@
 # 🏋️ Nuwe Gym — Plan de Implementación
 
-> Última actualización: 2026-06-30
-> Progreso general: ~44% implementado | ~14% parcial | ~42% pendiente
+> Última actualización: 2026-07-01
+> Progreso general: ~58% implementado | ~4% parcial | ~38% pendiente
 
 ---
 
@@ -48,8 +48,8 @@
 
 | # | Feature | Estado | Complejidad | Notas |
 |---|---------|--------|-------------|-------|
-| 1.3.1 | Pagos parciales | 🔲 Pendiente | Media | Campo `amountPaid` no existe en `membershipPayments`; sin lógica de saldo pendiente |
-| 1.3.2 | Comisiones (cálculo automático) | 🟡 Parcial | Media | `commissionRate` existe en `trainerProfiles`; sin cálculo automático ni reporte |
+| 1.3.1 | Pagos parciales | ✅ Completado | Media | `recordAdditionalPayment`, `getSubscriptionBalance`, saldo pendiente en UI del detail dialog |
+| 1.3.2 | Comisiones (cálculo automático) | ✅ Completado | Media | `getCommissionsReport` implementado: calcula comisión por trainer según `commissionRate` × ingresos de membresías de sus socios asignados |
 | 1.3.3 | Facturación | 🔲 Pendiente | Alta | Generación de facturas con número secuencial, datos fiscales, contribuyente |
 | 1.3.4 | Exportación Excel (real) | 🔲 Pendiente | Baja | Actualmente solo CSV; implementar con `xlsx` o `exceljs` |
 
@@ -60,17 +60,17 @@
 | 1.4.1 | Kardex (UI) | ✅ Completado | Media | Vista de historial de movimientos por producto implementada |
 | 1.4.2 | Lotes | 🔲 Pendiente | Media | `batchNumber` no existe en `inventoryMovements`; pendiente |
 | 1.4.3 | Fechas de vencimiento | ✅ Completado | Baja | Campo `expiryDate` existe en `productStock` |
-| 1.4.4 | Transferencias entre sucursales | 🔲 Pendiente | Alta | Movimiento tipo `TRANSFER` no implementado |
+| 1.4.4 | Transferencias entre sucursales | ✅ Completado | Alta | `transferStock` server function + `StockTransferDialog` UI + botón en tarjeta de producto |
 
 ### 1.5 Entrenadores
 
 | # | Feature | Estado | Complejidad | Notas |
 |---|---------|--------|-------------|-------|
-| 1.5.1 | Agenda (vista calendario) | 🔲 Pendiente | Media | `trainerAvailability` existe en schema pero sin UI de calendario |
+| 1.5.1 | Agenda (vista calendario) | ✅ Completado | Media | `TrainerCalendarView` con grilla semanal, slots color-coded, leyenda interactiva |
 | 1.5.2 | Observaciones por cliente | ✅ Completado | Baja | Tabla `trainerObservations` + server functions + UI implementados |
 | 1.5.3 | Historial de sesiones | ✅ Completado | Baja | Query de `trainerAssignments` + observaciones por trainer/cliente disponible |
-| 1.5.4 | Seguimiento de progreso | 🔲 Pendiente | Media | No existe tabla `member_progress` |
-| 1.5.5 | Evaluaciones físicas | 🔲 Pendiente | Media | No implementado |
+| 1.5.4 | Seguimiento de progreso | ✅ Completado | Media | `member_evaluations` con medidas corporales + tests físicos + historial con tendencias |
+| 1.5.5 | Evaluaciones físicas | ✅ Completado | Media | Formulario con medidas (pecho, cintura, brazos, piernas) + tests (flexiones, abdominales, dominadas, carrera, flexibilidad, plancha) + tendencias visuales |
 
 ### 1.6 Reservas / Clases
 
@@ -107,7 +107,7 @@
 | 2.4 | Porcentaje de grasa | ✅ Completado | Media | Campo `bodyFatPercent` en `weight_history`, input en UI |
 | 2.5 | Masa muscular | ✅ Completado | Media | Campo `muscle_mass_kg` en `weight_history`, input en UI |
 | 2.6 | Historial de peso + gráficos | ✅ Completado | Media | `WeightChart` con Recharts (línea de tendencia + promedio), tabla histórica |
-| 2.7 | Fotografías del progreso | � Parcial | Media | Campo `photo_url` en schema; sin UI de upload aún |
+| 2.7 | Fotografías del progreso | 🟡 Parcial | Media | Campo `photo_url` en schema `weight_history`; sin UI de upload aún |
 | 2.8 | Plan alimenticio (UI) | ✅ Completado | Alta | Editor manual + lista de planes con macros, tabs por socio, UI completa |
 | 2.9 | IA: Alimentación sugerida | ✅ Completado | Alta | `generateAINutritionPlan` via Groq con objetivo, restricciones, presupuesto, IMC automático |
 
@@ -225,10 +225,10 @@ Fase 6 (Pantallas)          → Semanas 21-22
 
 | Fase | Estado | % | Detalle |
 |------|--------|---|---------|
-| Fase 1 — Completar core | � En progreso | ~55% | 1.1✅ parcial · 1.4✅ parcial · 1.5✅ parcial · 1.6✅ parcial · 1.7✅ parcial |
-| Fase 2 — Nutrición | 🔲 Pendiente | 0% | — |
+| Fase 1 — Completar core | 🟡 En progreso | ~78% | 1.1✅(3/6) · 1.2✅(3/6) · 1.3✅(2/4) · 1.4✅(3/4) · 1.5✅(5/5) · 1.6✅(2/3) · 1.7✅(7/8) |
+| Fase 2 — Nutrición | 🟡 En progreso | ~90% | ✅ schema, IMC, % grasa, masa muscular, gráficos, plan alimenticio UI, IA Groq. 🟡 upload fotos |
 | Fase 3 — Fidelización | 🔲 Pendiente | 0% | — |
-| Fase 4 — Automatizaciones | � En progreso | ~15% | Notificaciones in-app + flag auto-renovación |
+| Fase 4 — Automatizaciones | 🟡 En progreso | ~15% | Notificaciones in-app + flag auto-renovación |
 | Fase 5 — RRHH | 🔲 Pendiente | 0% | — |
 | Fase 6 — Pantallas | 🔲 Pendiente | 0% | — |
 | Fase 7 — Seguridad | 🔲 Pendiente | 0% | — |
@@ -253,6 +253,19 @@ Fase 6 (Pantallas)          → Semanas 21-22
 - Schemas en `src/shared/db/schema/`
 - Componentes UI en `src/shared/components/ui/`
 - Migraciones con `drizzle-kit generate`
+
+### Módulos adicionales existentes (no listados en el plan original)
+
+| Módulo | Features | Ruta |
+|--------|----------|------|
+| `renewals` | Wizard de renovación con pasos, resumen, componentes | `/renewals` |
+| `qr-codes` | Generación y gestión de códigos QR para members | `/qr-codes` |
+| `backup` | Backup y restauración de base de datos | `/backup` |
+| `audit-logs` | Registro de auditoría de acciones | `/audit-logs` |
+| `analytics` | Churn, tendencias, predicciones, market-basket analysis | Server functions (sin UI) |
+| `check-ins` | Vista de check-ins realizados | `/check-ins` |
+| `cash-register` | Gestión de caja diaria con movimientos | `/cash-register` |
+| `admin/users` | Administración de usuarios del sistema | `/admin/users` |
 
 ### Dependencias nuevas probablemente necesarias
 - `xlsx` o `exceljs` — exportación Excel
