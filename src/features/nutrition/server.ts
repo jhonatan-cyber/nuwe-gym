@@ -19,6 +19,7 @@ const weightEntrySchema = z.object({
   bodyFatPercent: z.number().min(0).max(100).optional(),
   muscleMassKg: z.number().min(0).max(200).optional(),
   notes: optionalString,
+  photoUrl: optionalString,
 })
 
 const nutritionPlanSchema = z.object({
@@ -74,6 +75,7 @@ export const addWeightEntry = createServerFn({ method: 'POST' })
         bodyFatPercent: data.bodyFatPercent?.toString(),
         muscleMassKg: data.muscleMassKg?.toString(),
         notes: data.notes,
+        photoUrl: data.photoUrl || null,
         recordedByUserId: session.user.id,
       })
       .returning()

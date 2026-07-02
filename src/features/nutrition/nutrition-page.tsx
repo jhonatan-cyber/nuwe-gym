@@ -177,7 +177,7 @@ function MembersTab({ members, loading, search, onSearch, onSelect, selectedId }
 function WeightTab({ memberId }: { memberId: string }) {
   const queryClient = useQueryClient()
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [form, setForm] = useState({ weightKg: '', heightCm: '', bodyFatPercent: '', muscleMassKg: '', notes: '' })
+  const [form, setForm] = useState({ weightKg: '', heightCm: '', bodyFatPercent: '', muscleMassKg: '', notes: '', photoUrl: '' })
 
   const { data: entries = [], isLoading } = useQuery({
     queryKey: ['weight-history', memberId],
@@ -191,7 +191,7 @@ function WeightTab({ memberId }: { memberId: string }) {
       queryClient.invalidateQueries({ queryKey: ['weight-history', memberId] })
       toast.success('Registro de peso guardado')
       setDialogOpen(false)
-      setForm({ weightKg: '', heightCm: '', bodyFatPercent: '', muscleMassKg: '', notes: '' })
+      setForm({ weightKg: '', heightCm: '', bodyFatPercent: '', muscleMassKg: '', notes: '', photoUrl: '' })
     },
     onError: () => toast.error('Error al guardar registro'),
   })
@@ -220,6 +220,7 @@ function WeightTab({ memberId }: { memberId: string }) {
       bodyFatPercent: form.bodyFatPercent ? Number(form.bodyFatPercent) : undefined,
       muscleMassKg: form.muscleMassKg ? Number(form.muscleMassKg) : undefined,
       notes: form.notes || undefined,
+      photoUrl: form.photoUrl || undefined,
     }})
   }
 
@@ -254,7 +255,7 @@ function WeightTab({ memberId }: { memberId: string }) {
         <div className="bg-card rounded-3xl border border-border/10 shadow-sm overflow-hidden">
           <table className="w-full text-sm">
             <thead><tr className="border-b border-border/10">
-              {['Fecha','Peso','Altura','% Grasa','Masa Musc.','Notas',''].map(h => (
+              {['Fecha','Foto','Peso','Altura','% Grasa','Masa Musc.','Notas',''].map(h => (
                 <th key={h} className="text-left py-3 px-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{h}</th>
               ))}
             </tr></thead>
@@ -262,6 +263,13 @@ function WeightTab({ memberId }: { memberId: string }) {
               {entries.map((e: any) => (
                 <tr key={e.id} className="border-b border-border/5 hover:bg-muted/30 transition-colors">
                   <td className="py-3 px-4 text-xs text-muted-foreground">{formatDate(e.recordedAt)}</td>
+                  <td className="py-3 px-4">
+                    {e.photoUrl ? (
+                      <img src={e.photoUrl} alt="Progreso" className="size-10 rounded-xl object-cover border border-border/10" />
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
+                  </td>
                   <td className="py-3 px-4 font-bold">{Number(e.weightKg).toFixed(1)} kg</td>
                   <td className="py-3 px-4 text-xs">{e.heightCm ? `${e.heightCm} cm` : '—'}</td>
                   <td className="py-3 px-4 text-xs">{e.bodyFatPercent ? `${Number(e.bodyFatPercent).toFixed(1)}%` : '—'}</td>
@@ -311,6 +319,33 @@ function WeightTab({ memberId }: { memberId: string }) {
               <label className="text-xs font-bold">Notas</label>
               <Input placeholder="Observaciones del registro..."
                 value={form.notes} onChange={(e) => setForm(p => ({...p, notes: e.target.value}))} className="rounded-xl" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-bold">Foto de progreso</label>
+              <div className="flex items-center gap-3">
+                {form.photoUrl ? (
+                  <div className="relative">
+                    <img src={form.photoUrl} alt="Preview" className="size-16 rounded-xl object-cover border border-border/10" />
+                    <button type="button" onClick={() => setForm(p => ({...p, photoUrl: ''}))}
+                      className="absolute -top-1.5 -right-1.5 size-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center text-[10px] font-bold shadow-md">
+                      ×
+                    </button>
+                  </div>
+                ) : null}
+                <Input type="file" accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (!file) return
+                    const reader = new FileReader()
+                    reader.onload = (ev) => {
+                      if (typeof ev.target?.result === 'string') {
+                        setForm(p => ({...p, photoUrl: ev.target!.result as string}))
+                      }
+                    }
+                    reader.readAsDataURL(file)
+                  }}
+                  className="rounded-xl text-xs file:mr-2 file:py-1 file:px-2 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-primary/10 file:text-primary" />
+              </div>
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setDialogOpen(false)} className="rounded-full">Cancelar</Button>

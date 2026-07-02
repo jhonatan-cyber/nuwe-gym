@@ -4,6 +4,7 @@ import { uuidField } from '#/shared/lib/schemas.ts'
 import { db } from '#/shared/db/index.ts'
 import { notifications } from '#/shared/db/schema/notifications.ts'
 import { subscriptions } from '#/shared/db/schema/subscriptions.ts'
+import { members } from '#/shared/db/schema/members.ts'
 import { products } from '#/shared/db/schema/products.ts'
 import { productStock } from '#/shared/db/schema/product-stock.ts'
 import {
@@ -13,11 +14,18 @@ import {
   lte,
   gte,
   sql,
+  inArray,
   count as drizzleCount,
 } from 'drizzle-orm'
 import { requireRole } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
+import { classSchedules, classBookings } from '#/shared/db/schema/classes.ts'
+import { checkIns } from '#/shared/db/schema/check-ins.ts'
+import { sendEmail, expirationEmailHtml, expiredEmailHtml, birthdayEmailHtml, classReminderEmailHtml, inactiveEmailHtml } from '#/shared/lib/email.ts'
+import { sendWhatsAppTemplate, sendSMS, templateVars_expiration, templateVars_expired, templateVars_birthday, templateVars_inactive } from '#/shared/lib/twilio.ts'
+import { sendPushToMultipleTokens } from '#/shared/lib/fcm.ts'
+import { getAllPushTokens, cleanupInvalidTokens } from '#/features/notifications/push/server.ts'
 
 export const getNotifications = createServerFn({ method: 'GET' })
   .inputValidator((data: { page?: number; pageSize?: number }) =>
@@ -232,15 +240,216 @@ export const generateNotifications = createServerFn({ method: 'POST' })
       }
     }
 
+    // ── Inactive member recovery emails ──
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+    const inactiveMembers = await db
+      .select()
+      .from(members)
+      .where(
+        and(
+          eq(members.status, 'ACTIVE'),
+          sql`${members.email} IS NOT NULL`,
+          sql`${members.email} != ''`,
+          sql`NOT EXISTS (
+            SELECT 1 FROM check_ins
+            WHERE check_ins.member_id = ${members.id}
+            AND check_ins.checked_in_at >= ${thirtyDaysAgo}
+          )`,
+        ),
+      )
+
+    for (const m of inactiveMembers) {
+      // ponytail: no dedup, sends every time generateNotifications runs; add when sending too often
+      await sendEmail({
+        to: m.email!,
+        subject: '💪 Te extrañamos, volvé al gimnasio',
+        html: inactiveEmailHtml({
+          memberName: m.fullName,
+          daysInactive: 30,
+        }),
+      })
+      if (m.phone) {
+        await sendWhatsAppTemplate({
+          to: m.phone,
+          contentSid: gymSettings?.waTemplateInactiveSid ?? '',
+          variables: templateVars_inactive(m.fullName, 30, gymSettings?.gymName ?? 'Mi Gimnasio'),
+          fallbackBody: `💪 ¡Te extrañamos, ${m.fullName}! Hace 30 días que no venís al gimnasio. Tu membresía sigue activa, pasate cuando quieras.`,
+        }).catch(() => {})
+        await sendSMS({
+          to: m.phone,
+          body: `Te extrañamos, ${m.fullName}! Hace 30 días que no venís al gym. Tu membresía sigue activa.`,
+        }).catch(() => {})
+      }
+    }
+
+    // ── Birthday emails (no notification, just email) ──
+    const todayBirthdayMembers = await db
+      .select()
+      .from(members)
+      .where(
+        and(
+          sql`EXTRACT(MONTH FROM ${members.birthDate}) = EXTRACT(MONTH FROM CURRENT_DATE)`,
+          sql`EXTRACT(DAY FROM ${members.birthDate}) = EXTRACT(DAY FROM CURRENT_DATE)`,
+          sql`${members.birthDate} IS NOT NULL`,
+          eq(members.isActive, true),
+        ),
+      )
+
+    for (const m of todayBirthdayMembers) {
+      if (m.email) {
+        // ponytail: inline send, no queue, no dedup check; add async queue when throughput matters
+        await sendEmail({
+          to: m.email,
+          subject: '🎂 ¡Feliz cumpleaños de parte del gimnasio!',
+          html: birthdayEmailHtml({ memberName: m.fullName }),
+        })
+      }
+      if (m.phone) {
+        await sendWhatsAppTemplate({
+          to: m.phone,
+          contentSid: gymSettings?.waTemplateBirthdaySid ?? '',
+          variables: templateVars_birthday(m.fullName, gymSettings?.gymName ?? 'Mi Gimnasio'),
+          fallbackBody: `🎂 ¡Feliz cumpleaños, ${m.fullName}! Todo el equipo del gimnasio te desea un día increíble. Vení a celebrar con nosotros 🎉`,
+        }).catch(() => {})
+        await sendSMS({
+          to: m.phone,
+          body: `Feliz cumpleaños, ${m.fullName}! Te esperamos en el gym para celebrar 🎉`,
+        }).catch(() => {})
+      }
+    }
+
+    // ── Class reminder emails ──
+    const todayDOW = new Date().getDay()
+    const tomorrowDOW = (todayDOW + 1) % 7
+    const upcomingSchedules = await db.query.classSchedules.findMany({
+      where: and(
+        inArray(classSchedules.dayOfWeek, [todayDOW, tomorrowDOW]),
+        eq(classSchedules.isActive, true),
+      ),
+      with: {
+        class: true,
+        bookings: {
+          where: eq(classBookings.status, 'CONFIRMED'),
+          with: { member: true },
+        },
+      },
+    })
+
+    for (const schedule of upcomingSchedules) {
+      const when = schedule.dayOfWeek === todayDOW ? 'hoy' : 'mañana'
+      for (const booking of schedule.bookings) {
+        if (booking.member.email) {
+          // ponytail: inline send; add async queue when throughput matters
+          await sendEmail({
+            to: booking.member.email,
+            subject: `📅 Clase de ${schedule.class.name} ${when}`,
+            html: classReminderEmailHtml({
+              memberName: booking.member.fullName,
+              className: schedule.class.name,
+              startTime: schedule.startTime,
+              room: schedule.room,
+            }),
+          })
+        }
+      }
+    }
+
     if (newNotifications.length > 0) {
       await db.insert(notifications).values(newNotifications)
+    }
+
+    // ── Send emails for urgent alerts ──
+    for (const sub of activeSubs) {
+      const msUntilExpiry = new Date(sub.endDate).getTime() - now.getTime()
+      const daysUntilExpiry = Math.ceil(msUntilExpiry / (1000 * 60 * 60 * 24))
+      if (daysUntilExpiry <= 1 && sub.member.email) {
+        await sendEmail({
+          to: sub.member.email,
+          subject: '⚠️ Tu membresía vence mañana',
+          html: expirationEmailHtml({
+            memberName: sub.member.fullName,
+            endDate: sub.endDate.toISOString(),
+            daysUntilExpiry,
+          }),
+        })
+      }
+      if (daysUntilExpiry <= 1 && sub.member.phone) {
+        await sendWhatsAppTemplate({
+          to: sub.member.phone,
+          contentSid: gymSettings?.waTemplateExpirationSid ?? '',
+          variables: templateVars_expiration(sub.member.fullName, daysUntilExpiry, new Date(sub.endDate).toLocaleDateString('es-AR'), gymSettings?.gymName ?? 'Mi Gimnasio'),
+          fallbackBody: `⚠️ ${sub.member.fullName}, tu membresía del gimnasio vence mañana. Acercate a recepción para renovarla.`,
+        }).catch(() => {})
+        await sendSMS({
+          to: sub.member.phone,
+          body: `⚠️ ${sub.member.fullName}, tu membresía del gym vence mañana. Renová en recepción.`,
+        }).catch(() => {})
+      }
+    }
+
+    for (const sub of expiredSubs) {
+      if (sub.member.email) {
+        const daysOverdue = Math.ceil(
+          (now.getTime() - new Date(sub.endDate).getTime()) /
+            (1000 * 60 * 60 * 24),
+        )
+        await sendEmail({
+          to: sub.member.email,
+          subject: '🚨 Tu membresía expiró',
+          html: expiredEmailHtml({
+            memberName: sub.member.fullName,
+            daysOverdue,
+          }),
+        })
+      }
+      if (sub.member.phone) {
+        const daysOverdue = Math.ceil(
+          (now.getTime() - new Date(sub.endDate).getTime()) /
+            (1000 * 60 * 60 * 24),
+        )
+        await sendWhatsAppTemplate({
+          to: sub.member.phone,
+          contentSid: gymSettings?.waTemplateExpiredSid ?? '',
+          variables: templateVars_expired(sub.member.fullName, daysOverdue, gymSettings?.gymName ?? 'Mi Gimnasio'),
+          fallbackBody: `🚨 ${sub.member.fullName}, tu membresía expiró hace ${daysOverdue} día${daysOverdue !== 1 ? 's' : ''}. ¡Renová hoy para no perder el acceso!`,
+        }).catch(() => {})
+        await sendSMS({
+          to: sub.member.phone,
+          body: `🚨 ${sub.member.fullName}, tu membresía expiró hace ${daysOverdue} día${daysOverdue !== 1 ? 's' : ''}. Renová en recepción.`,
+        }).catch(() => {})
+      }
+    }
+
+    // ── Send push notifications for alerts ──
+    try {
+      const allTokens = await getAllPushTokens()
+      if (allTokens.length > 0) {
+        // Send push for each new notification
+        for (const n of newNotifications) {
+          const result = await sendPushToMultipleTokens(allTokens, {
+            title: n.title,
+            body: n.message,
+            data: {
+              url: '/notifications',
+              type: n.type,
+              referenceId: n.referenceId ?? '',
+            },
+          })
+          // Clean up invalid tokens
+          if (result.invalidTokens.length > 0) {
+            await cleanupInvalidTokens({ data: { tokens: result.invalidTokens } }).catch(() => {})
+          }
+        }
+      }
+    } catch {
+      // non-blocking — push may fail but notifications still generated
     }
 
     createAuditLog({
       ...getAuditContext(session),
       action: 'UPDATE',
       entityType: 'NOTIFICATION',
-      description: `Generó ${newNotifications.length} notificaciones`,
+      description: `Generó ${newNotifications.length} notificaciones, envió emails, push y comunicaciones`,
     })
 
     return newNotifications

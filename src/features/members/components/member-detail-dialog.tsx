@@ -1,6 +1,10 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { EvaluationsSection } from '#/features/evaluations/components/evaluations-section.tsx'
+import { GuestPassSection } from '#/features/guest-passes/components/guest-pass-section.tsx'
+import { LoyaltySection } from '#/features/loyalty/components/loyalty-section.tsx'
+import { FamilySection } from '#/features/family-groups/components/family-section.tsx'
+import { BranchesSection } from '#/features/members/components/branches-section.tsx'
 import { useNavigate } from '@tanstack/react-router'
 import {
   RefreshCw,
@@ -302,6 +306,18 @@ export function MemberDetailDialog({
 
               {/* Riesgo de abandono */}
               <ChurnRiskSection memberId={memberDetail.id} />
+
+              {/* Grupo Familiar */}
+              <FamilySection memberId={memberDetail.id} />
+
+              {/* Pases de invitado */}
+              <GuestPassSection memberId={memberDetail.id} />
+
+              {/* Puntos de fidelización */}
+              <LoyaltySection memberId={memberDetail.id} />
+
+              {/* Acceso a sucursales */}
+              <BranchesSection memberId={memberDetail.id} />
 
               {/* Evaluaciones físicas */}
               <EvaluationsSection memberId={memberDetail.id} />

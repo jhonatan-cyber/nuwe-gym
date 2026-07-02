@@ -10,7 +10,7 @@ import { checkIns } from '#/shared/db/schema/check-ins.ts'
 import { sales, saleItems } from '#/shared/db/schema/sales.ts'
 import { membershipPayments } from '#/shared/db/schema/membership-payments.ts'
 import { subscriptions } from '#/shared/db/schema/subscriptions.ts'
-import { cashMovements } from '#/shared/db/schema/cash-register.ts'
+import { cashMovements, cashRegisterSessions } from '#/shared/db/schema/cash-register.ts'
 import { products } from '#/shared/db/schema/products.ts'
 const dateRangeSchema = z.object({
   startDate: dateString,
@@ -417,6 +417,173 @@ export const getCommissionsReport = createServerFn({ method: 'GET' })
     return {
       trainers: results.sort((a, b) => b.commissionAmount - a.commissionAmount),
       summary: { totalCommissions, totalRevenue },
+    }
+  })
+
+// ── Reporte Cross-Branch Consolidado ──────────────────────────────
+
+export const getCrossBranchReport = createServerFn({ method: 'GET' })
+  .inputValidator((data: unknown) => dateRangeSchema.parse(data))
+  .handler(async ({ data }) => {
+    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+
+    const startDate = new Date(data.startDate)
+    const endDate = new Date(data.endDate)
+    const { branches } = await import('#/shared/db/schema/branches.ts')
+
+    const allBranches = await db.select().from(branches).where(eq(branches.isActive, true))
+
+    const branchReports = await Promise.all(
+      allBranches.map(async (branch) => {
+        // ── Active members in this branch ──
+        const activeMembersRes = await db
+          .select({ count: count() })
+          .from(members)
+          .where(and(eq(members.branchId, branch.id), eq(members.status, 'ACTIVE')))
+        const activeMembers = activeMembersRes[0]?.count ?? 0
+
+        // ── New members this period ──
+        const newMembersRes = await db
+          .select({ count: count() })
+          .from(members)
+          .where(
+            and(
+              eq(members.branchId, branch.id),
+              gte(members.createdAt, startDate),
+              lte(members.createdAt, endDate),
+            ),
+          )
+        const newMembers = newMembersRes[0]?.count ?? 0
+
+        // Member IDs for this branch
+        const branchMemberIds = (
+          await db
+            .select({ id: members.id })
+            .from(members)
+            .where(eq(members.branchId, branch.id))
+        ).map((m) => m.id)
+
+        // ── Active subscriptions ──
+        let activeSubscriptions = 0
+        let membershipIncome = 0
+        if (branchMemberIds.length > 0) {
+          const activeSubsRes = await db
+            .select({ count: count() })
+            .from(subscriptions)
+            .where(
+              and(
+                inArray(subscriptions.memberId, branchMemberIds),
+                eq(subscriptions.status, 'ACTIVE'),
+              ),
+            )
+          activeSubscriptions = activeSubsRes[0]?.count ?? 0
+
+          // ── Membership income this period ──
+          const incomeRes = await db
+            .select({ total: sum(membershipPayments.amount) })
+            .from(membershipPayments)
+            .where(
+              and(
+                inArray(membershipPayments.memberId, branchMemberIds),
+                gte(membershipPayments.paymentDate, startDate),
+                lte(membershipPayments.paymentDate, endDate),
+              ),
+            )
+          membershipIncome = Number(incomeRes[0]?.total ?? 0)
+        }
+
+        // ── Check-ins this period (ALLOWED) ──
+        const checkInsRes = await db
+          .select({ count: count() })
+          .from(checkIns)
+          .where(
+            and(
+              eq(checkIns.branchId, branch.id),
+              eq(checkIns.resultStatus, 'ALLOWED'),
+              gte(checkIns.checkedInAt, startDate),
+              lte(checkIns.checkedInAt, endDate),
+            ),
+          )
+        const checkInCount = checkInsRes[0]?.count ?? 0
+
+        // ── POS income this period ──
+        const posIncomeRes = await db
+          .select({ total: sum(sales.total) })
+          .from(sales)
+          .where(
+            and(
+              eq(sales.branchId, branch.id),
+              eq(sales.status, 'COMPLETED'),
+              gte(sales.soldAt, startDate),
+              lte(sales.soldAt, endDate),
+            ),
+          )
+        const posIncome = Number(posIncomeRes[0]?.total ?? 0)
+
+        // ── Expenses this period (via cash sessions) ──
+        // cashMovements → cashRegisterSessions → branchId
+        const expensesRes = await db
+          .select({ total: sum(cashMovements.amount) })
+          .from(cashMovements)
+          .innerJoin(cashRegisterSessions, eq(cashMovements.cashSessionId, cashRegisterSessions.id))
+          .where(
+            and(
+              eq(cashRegisterSessions.branchId, branch.id),
+              eq(cashMovements.movementType, 'EXPENSE'),
+              gte(cashMovements.createdAt, startDate),
+              lte(cashMovements.createdAt, endDate),
+            ),
+          )
+        const expenses = Number(expensesRes[0]?.total ?? 0)
+
+        const totalIncome = membershipIncome + posIncome
+        const netBalance = totalIncome - expenses
+
+        return {
+          branchId: branch.id,
+          branchName: branch.name,
+          activeMembers,
+          newMembers,
+          activeSubscriptions,
+          checkIns: checkInCount,
+          membershipIncome,
+          posIncome,
+          totalIncome,
+          expenses,
+          netBalance,
+        }
+      }),
+    )
+
+    // ── Consolidated totals ──
+    const consolidated = branchReports.reduce(
+      (acc, b) => ({
+        activeMembers: acc.activeMembers + b.activeMembers,
+        newMembers: acc.newMembers + b.newMembers,
+        activeSubscriptions: acc.activeSubscriptions + b.activeSubscriptions,
+        checkIns: acc.checkIns + b.checkIns,
+        membershipIncome: acc.membershipIncome + b.membershipIncome,
+        posIncome: acc.posIncome + b.posIncome,
+        totalIncome: acc.totalIncome + b.totalIncome,
+        expenses: acc.expenses + b.expenses,
+        netBalance: acc.netBalance + b.netBalance,
+      }),
+      {
+        activeMembers: 0,
+        newMembers: 0,
+        activeSubscriptions: 0,
+        checkIns: 0,
+        membershipIncome: 0,
+        posIncome: 0,
+        totalIncome: 0,
+        expenses: 0,
+        netBalance: 0,
+      },
+    )
+
+    return {
+      branches: branchReports.sort((a, b) => b.totalIncome - a.totalIncome),
+      consolidated,
     }
   })
 

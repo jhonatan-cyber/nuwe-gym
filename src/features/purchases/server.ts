@@ -44,6 +44,7 @@ const createPurchaseSchema = z.object({
       productId: uuidField,
       quantity: positiveNumber,
       unitCost: moneyString,
+      batchNumber: z.string().optional(),
     }),
   ),
 })
@@ -159,6 +160,7 @@ export const createPurchase = createServerFn({ method: 'POST' })
             referenceType: 'PURCHASE',
             referenceId: newPurchase.id,
             createdByUserId: session.user.id,
+            batchNumber: item.batchNumber || null,
           })
         }
       }

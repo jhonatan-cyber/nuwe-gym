@@ -14,6 +14,12 @@ const config = defineConfig({
       sonner: path.resolve(__dirname, './src/shared/components/ui/sonner.tsx'),
     },
   },
+  optimizeDeps: {
+    include: ['use-sync-external-store/shim/with-selector'],
+  },
+  ssr: {
+    noExternal: ['use-sync-external-store'],
+  },
   plugins: [devtools(), tailwindcss(), tanstackStart(), viteReact()],
 })
 

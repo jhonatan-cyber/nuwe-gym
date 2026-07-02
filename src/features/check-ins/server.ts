@@ -9,6 +9,8 @@ import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { z } from 'zod'
 import { branchIdField, optionalString, uuidField } from '#/shared/lib/schemas.ts'
+import { onCheckIn } from '#/features/loyalty/server.ts'
+import { canMemberAccessBranch } from '#/features/members/branch-access-server.ts'
 
 export type CheckInResultStatus =
   | 'ALLOWED'
@@ -16,8 +18,9 @@ export type CheckInResultStatus =
   | 'DENIED_INACTIVE'
   | 'DENIED_SUSPENDED'
   | 'DENIED_SCHEDULE'
+  | 'DENIED_BRANCH'
 
-export async function validateCheckIn(memberId: string): Promise<{
+export async function validateCheckIn(memberId: string, checkInBranchId?: string): Promise<{
   status: CheckInResultStatus
   reason?: string
 }> {
@@ -41,6 +44,14 @@ export async function validateCheckIn(memberId: string): Promise<{
     ),
     with: { package: { with: { allowedDays: true } } },
   })
+
+  // Verify member has access to the branch where they're checking in
+  if (checkInBranchId) {
+    const hasAccess = await canMemberAccessBranch(memberId, checkInBranchId)
+    if (!hasAccess) {
+      return { status: 'DENIED_BRANCH', reason: 'El socio no tiene acceso a esta sucursal' }
+    }
+  }
 
   if (!activeSub) {
     // Check if there's an expired subscription
@@ -159,7 +170,7 @@ export const createCheckIn = createServerFn({ method: 'POST' })
       data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] },
     })
 
-    const { status } = await validateCheckIn(data.memberId)
+    const { status } = await validateCheckIn(data.memberId, data.branchId)
 
     const [checkIn] = await db
       .insert(checkIns)
@@ -180,6 +191,9 @@ export const createCheckIn = createServerFn({ method: 'POST' })
       entityId: checkIn.id,
       description: `Registró check-in de socio #${data.memberId} (${status})`,
     })
+
+    // Fidelización: puntos + retos + badges + bono referido
+    await onCheckIn(data.memberId, checkIn.id).catch(() => {})
 
     return checkIn
   })

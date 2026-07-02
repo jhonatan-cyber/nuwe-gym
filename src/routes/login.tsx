@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { createFileRoute, redirect, useRouter } from '@tanstack/react-router'
-import { Eye, EyeOff, Sun, Moon, Monitor, ArrowLeft } from 'lucide-react'
+import { Eye, EyeOff, Sun, Moon, Monitor, ArrowLeft, Shield, Smartphone } from 'lucide-react'
 import { Input } from '#/shared/components/ui/input'
 import { Label } from '#/shared/components/ui/label'
 import { Button } from '#/shared/components/ui/button'
@@ -60,6 +60,9 @@ function LoginPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const [twoFactorRequired, setTwoFactorRequired] = useState(false)
+  const [totpCode, setTotpCode] = useState('')
+  const [twoFactorLoading, setTwoFactorLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -68,6 +71,13 @@ function LoginPage() {
 
     try {
       const result = await authClient.signIn.email({ email, password })
+
+      // Check if 2FA is required first (can come in data or alongside an error)
+      if ((result.data as any)?.twoFactorRedirect) {
+        setTwoFactorRequired(true)
+        setLoading(false)
+        return
+      }
 
       if (result.error) {
         setError(result.error.message ?? 'Credenciales inválidas')
@@ -79,6 +89,27 @@ function LoginPage() {
       setError('Error al iniciar sesión. Intente nuevamente.')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleTwoFactorSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    setTwoFactorLoading(true)
+
+    try {
+      const result = await authClient.twoFactor.verifyTotp({ code: totpCode })
+
+      if (result.error) {
+        setError(result.error.message ?? 'Código inválido')
+        return
+      }
+
+      router.navigate({ to: '/dashboard' })
+    } catch {
+      setError('Error al verificar el código. Intente nuevamente.')
+    } finally {
+      setTwoFactorLoading(false)
     }
   }
 
@@ -195,7 +226,65 @@ function LoginPage() {
           </div>
         )}
 
-        {showSetupModal ? (
+        {twoFactorRequired ? (
+          <form onSubmit={handleTwoFactorSubmit} className="space-y-5">
+            <div className="flex items-center gap-3 p-4 rounded-xl bg-primary/5 border border-primary/20">
+              <Shield className="size-8 text-primary shrink-0" />
+              <div>
+                <p className="font-bold text-sm">Autenticación de dos factores</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Ingresá el código de 6 dígitos desde tu app de autenticación.
+                </p>
+              </div>
+            </div>
+
+            {error && (
+              <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">
+                {error}
+              </div>
+            )}
+
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-foreground">
+                Código de verificación
+              </label>
+              <div className="relative">
+                <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  placeholder="000000"
+                  value={totpCode}
+                  onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  className="flex h-12 w-full rounded-xl border border-border/50 bg-background px-4 pl-11 text-center text-lg font-mono tracking-[0.3em] font-bold placeholder:text-muted-foreground/30 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all"
+                  autoFocus
+                  required
+                />
+              </div>
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full h-11 font-semibold transition-all bg-black text-white border border-transparent hover:bg-white hover:text-black hover:border-black dark:bg-white dark:text-black dark:hover:bg-black dark:hover:text-white dark:hover:border-white"
+              disabled={totpCode.length !== 6 || twoFactorLoading}
+            >
+              {twoFactorLoading ? 'Verificando...' : 'Verificar código'}
+            </Button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setTwoFactorRequired(false)
+                setTotpCode('')
+                setError('')
+              }}
+              className="w-full text-center text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Volver al inicio de sesión
+            </button>
+          </form>
+        ) : showSetupModal ? (
           <form onSubmit={handleSetupSubmit} className="space-y-4">
             <div className="flex items-center gap-2 mb-2">
               <Button

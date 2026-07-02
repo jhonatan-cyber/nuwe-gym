@@ -54,11 +54,12 @@ import {
   getMembersReport,
   getCommissionsReport,
   getProfitabilityReport,
+  getCrossBranchReport,
 } from '#/features/reports/server.ts'
 import { formatCurrency } from '#/shared/lib/formatters.ts'
 import { CopilotSummary } from './components/copilot-summary.tsx'
 
-type Tab = 'financial' | 'attendance' | 'sales' | 'members' | 'commissions' | 'profitability'
+type Tab = 'financial' | 'attendance' | 'sales' | 'members' | 'commissions' | 'profitability' | 'crossbranch'
 type Preset = 'today' | 'week' | 'month' | 'year' | 'custom'
 
 const tabs: {
@@ -72,6 +73,7 @@ const tabs: {
   { id: 'members', label: 'Socios', icon: Users },
   { id: 'commissions', label: 'Comisiones', icon: Dumbbell },
   { id: 'profitability', label: 'Utilidades', icon: PiggyBank },
+  { id: 'crossbranch', label: 'Consolidado', icon: BarChart3 },
 ]
 
 const presets: { id: Preset; label: string }[] = [
@@ -249,6 +251,9 @@ export function ReportsPage() {
         )}
         {activeTab === 'profitability' && (
           <ProfitabilityReport startDate={range.startDate} endDate={range.endDate} />
+        )}
+        {activeTab === 'crossbranch' && (
+          <CrossBranchReport startDate={range.startDate} endDate={range.endDate} />
         )}
       </div>
     </div>
@@ -820,6 +825,173 @@ function CommissionsReport({ startDate, endDate }: { startDate: string; endDate:
           </Table>
         </CardContent>
       </Card>
+    </div>
+  )
+}
+
+function CrossBranchReport({ startDate, endDate }: { startDate: string; endDate: string }) {
+  const { data, error, loading } = useServerData(
+    () => getCrossBranchReport({ data: { startDate, endDate } }),
+    [startDate, endDate],
+  )
+
+  if (loading) return <SkeletonGrid />
+  if (error) return <ErrorState message={error} />
+  if (!data || data.branches.length === 0) {
+    return (
+      <EmptyState
+        title="Sin sucursales"
+        description="No hay sucursales activas para mostrar el reporte consolidado."
+      />
+    )
+  }
+
+  const { branches, consolidated } = data
+
+  return (
+    <div className="space-y-6">
+      {/* Consolidated summary cards */}
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <SummaryCard title="Socios Activos" value={String(consolidated.activeMembers)} icon={Users} />
+        <SummaryCard title="Check-ins" value={String(consolidated.checkIns)} icon={DoorOpen} trend="up" />
+        <SummaryCard title="Ingresos Totales" value={formatCurrency(consolidated.totalIncome)} icon={DollarSign} trend="up" />
+        <SummaryCard title="Balance Neto" value={formatCurrency(consolidated.netBalance)} icon={BarChart3} trend={consolidated.netBalance >= 0 ? 'up' : 'down'} />
+      </div>
+
+      {/* Branch-by-branch comparison table */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base">Comparativa por Sucursal</CardTitle>
+            <Badge variant="outline" className="text-xs font-mono">
+              {branches.length} sucursales
+            </Badge>
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            Datos del período {new Date(startDate).toLocaleDateString('es-AR')} — {new Date(endDate).toLocaleDateString('es-AR')}
+          </p>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-48">Sucursal</TableHead>
+                  <TableHead className="text-right">Socios Act.</TableHead>
+                  <TableHead className="text-right">Nuevos</TableHead>
+                  <TableHead className="text-right">Suscrip.</TableHead>
+                  <TableHead className="text-right">Check-ins</TableHead>
+                  <TableHead className="text-right">Membresías</TableHead>
+                  <TableHead className="text-right">POS</TableHead>
+                  <TableHead className="text-right">Egresos</TableHead>
+                  <TableHead className="text-right font-bold">Balance</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {branches.map((b) => (
+                  <TableRow key={b.branchId} className="hover:bg-muted/50 transition-colors">
+                    <TableCell className="font-medium">{b.branchName}</TableCell>
+                    <TableCell className="text-right">{b.activeMembers}</TableCell>
+                    <TableCell className="text-right">{b.newMembers}</TableCell>
+                    <TableCell className="text-right">{b.activeSubscriptions}</TableCell>
+                    <TableCell className="text-right">{b.checkIns}</TableCell>
+                    <TableCell className="text-right font-mono text-sm">{formatCurrency(b.membershipIncome)}</TableCell>
+                    <TableCell className="text-right font-mono text-sm">{formatCurrency(b.posIncome)}</TableCell>
+                    <TableCell className="text-right font-mono text-sm text-red-600">{formatCurrency(b.expenses)}</TableCell>
+                    <TableCell className={`text-right font-bold font-mono text-sm ${b.netBalance >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                      {formatCurrency(b.netBalance)}
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {/* Consolidated row */}
+                <TableRow className="border-t-2 border-primary/30 bg-primary/5 font-bold">
+                  <TableCell className="font-extrabold text-foreground">
+                    <div className="flex items-center gap-2">
+                      <BarChart3 className="size-3.5 text-primary" />
+                      TOTAL CONSOLIDADO
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right font-bold">{consolidated.activeMembers}</TableCell>
+                  <TableCell className="text-right font-bold">{consolidated.newMembers}</TableCell>
+                  <TableCell className="text-right font-bold">{consolidated.activeSubscriptions}</TableCell>
+                  <TableCell className="text-right font-bold">{consolidated.checkIns}</TableCell>
+                  <TableCell className="text-right font-bold font-mono">{formatCurrency(consolidated.membershipIncome)}</TableCell>
+                  <TableCell className="text-right font-bold font-mono">{formatCurrency(consolidated.posIncome)}</TableCell>
+                  <TableCell className="text-right font-bold font-mono text-red-600">{formatCurrency(consolidated.expenses)}</TableCell>
+                  <TableCell className={`text-right font-bold font-mono ${consolidated.netBalance >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                    {formatCurrency(consolidated.netBalance)}
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Branch chart comparison */}
+      {branches.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Ingresos vs Egresos por Sucursal</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[350px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={branches}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                  <XAxis dataKey="branchName" tick={{ fontSize: 11 }} />
+                  <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => formatCurrency(v)} />
+                  <Tooltip
+                    contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border))' }}
+                    formatter={(value: number) => formatCurrency(value)}
+                  />
+                  <Legend />
+                  <Bar dataKey="membershipIncome" name="Membresías" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="posIncome" name="POS" fill="#22c55e" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="expenses" name="Egresos" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="netBalance" name="Balance Neto" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Branch metrics cards */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {branches.map((b) => (
+          <Card key={b.branchId} className="transition-all duration-200 hover:shadow-md">
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-bold">{b.branchName}</CardTitle>
+                <Badge variant={b.netBalance >= 0 ? 'default' : 'destructive'} className="text-[10px]">
+                  {b.netBalance >= 0 ? 'Positivo' : 'Negativo'}
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-2 text-xs">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Socios activos</span>
+                <span className="font-semibold">{b.activeMembers}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Check-ins</span>
+                <span className="font-semibold">{b.checkIns}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Ingresos totales</span>
+                <span className="font-semibold text-emerald-600">{formatCurrency(b.totalIncome)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Balance neto</span>
+                <span className={`font-bold ${b.netBalance >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                  {formatCurrency(b.netBalance)}
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   )
 }

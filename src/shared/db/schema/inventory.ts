@@ -23,6 +23,7 @@ export const inventoryMovements = pgTable(
     newStock: integer('new_stock').notNull(),
     referenceType: text('reference_type'),
     referenceId: uuid('reference_id'),
+    batchNumber: text('batch_number'),
     notes: text('notes'),
     createdByUserId: text('created_by_user_id')
       .notNull()

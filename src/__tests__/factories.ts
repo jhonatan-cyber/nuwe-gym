@@ -145,34 +145,60 @@ export async function createCategory(
   return cat
 }
 
-let cachedCategoryId: string | null = null
-let cachedSupplierId: string | null = null
-let cachedBranchId: string | null = null
+// ── Helper: create-and-cache default IDs with DB validation ───────
+// These use a two-tier approach: first check a module cache (fast),
+// but before returning a cached ID, verify it still exists in the DB.
+// This avoids FK violations when the DB is cleaned between test files
+// while still being fast within the same test file.
+let _cachedCategoryId: string | null = null
+let _cachedSupplierId: string | null = null
+let _cachedBranchId: string | null = null
 
 async function defaultCategoryId(): Promise<string> {
-  if (cachedCategoryId) return cachedCategoryId
+  if (_cachedCategoryId) {
+    const exists = await db
+      .select({ id: productCategories.id })
+      .from(productCategories)
+      .where(eq(productCategories.id, _cachedCategoryId))
+      .limit(1)
+    if (exists.length > 0) return _cachedCategoryId
+  }
   const [cat] = await db
     .insert(productCategories)
     .values({ name: 'cat_' + faker.string.alphanumeric(8) })
     .returning()
-  cachedCategoryId = cat.id
+  _cachedCategoryId = cat.id
   return cat.id
 }
 
 async function defaultSupplierId(): Promise<string> {
-  if (cachedSupplierId) return cachedSupplierId
+  if (_cachedSupplierId) {
+    const exists = await db
+      .select({ id: suppliers.id })
+      .from(suppliers)
+      .where(eq(suppliers.id, _cachedSupplierId))
+      .limit(1)
+    if (exists.length > 0) return _cachedSupplierId
+  }
   const sup = await createSupplier()
-  cachedSupplierId = sup.id
+  _cachedSupplierId = sup.id
   return sup.id
 }
 
 async function defaultBranchId(): Promise<string> {
-  if (cachedBranchId) return cachedBranchId
+  if (_cachedBranchId) {
+    const exists = await db
+      .select({ id: branches.id })
+      .from(branches)
+      .where(eq(branches.id, _cachedBranchId))
+      .limit(1)
+    if (exists.length > 0) return _cachedBranchId
+  }
   const [branch] = await db
     .insert(branches)
     .values({ name: 'Default Branch' })
     .returning()
-  cachedBranchId = branch.id
+  _cachedBranchId = branch.id
   return branch.id
 }
 
@@ -428,7 +454,7 @@ export async function cleanDatabase() {
      BEGIN
        FOR tbl IN
          SELECT tablename FROM pg_catalog.pg_tables
-         WHERE schemaname = 'public' 
+         WHERE schemaname = 'public'
            AND tablename NOT IN ('drizzle_migrations', '__drizzle_migrations', 'roles')
        LOOP
          EXECUTE 'TRUNCATE TABLE ' || quote_ident(tbl) || ' CASCADE';
@@ -448,4 +474,8 @@ export async function cleanDatabase() {
        END LOOP;
      END $$;`,
   )
+  // Reset module-level caches so stale IDs aren't reused
+  _cachedCategoryId = null
+  _cachedSupplierId = null
+  _cachedBranchId = null
 }

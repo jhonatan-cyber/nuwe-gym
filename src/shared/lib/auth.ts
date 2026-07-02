@@ -1,6 +1,6 @@
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
-import { admin } from 'better-auth/plugins'
+import { admin, twoFactor } from 'better-auth/plugins'
 import { createAccessControl } from 'better-auth/plugins/access'
 import { db } from '#/shared/db/index.ts'
 import * as schema from '#/shared/db/schema/index.ts'
@@ -89,6 +89,14 @@ export const auth = betterAuth({
     updateAge: 60 * 60 * 24,
   },
   plugins: [
+    twoFactor({
+      otpOptions: {
+        async sendOTP({ email, otp }) {
+          // For TOTP we don't need email OTP; TOTP uses authenticator apps
+          console.log(`[2FA] OTP for ${email}: ${otp}`)
+        },
+      },
+    }),
     admin({
       adminRoles: ['ADMIN'],
       roles: {

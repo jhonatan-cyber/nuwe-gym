@@ -8,6 +8,8 @@ import {
   cashRegisterSessions,
   cashMovements,
 } from '#/shared/db/schema/cash-register.ts'
+import { onPurchase } from '#/features/loyalty/server.ts'
+import { autoIssueInvoice } from '#/features/invoices/server.ts'
 import { eq, desc, inArray, gte, lte, count, sum, sql, and } from 'drizzle-orm'
 import { requireRole } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
@@ -635,6 +637,14 @@ export const createSale = createServerFn({ method: 'POST' })
       entityId: sale.id,
       description: `Registró venta ${sale.saleNumber}`,
     })
+
+    // Fidelización: puntos + retos + badges por compra
+    if (sale.memberId) {
+      await onPurchase(sale.memberId, sale.id, Number(sale.total)).catch(() => {})
+    }
+
+    // Auto-generate invoice
+    await autoIssueInvoice('SALE', sale.id, data.branchId)
 
     return sale
   })

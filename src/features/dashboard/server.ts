@@ -12,6 +12,7 @@ import { products } from '#/shared/db/schema/products.ts'
 import { productStock } from '#/shared/db/schema/product-stock.ts'
 import { z } from 'zod'
 import { branchIdField } from '#/shared/lib/schemas.ts'
+import { computeAllChurnRisks } from '#/features/analytics/churn.ts'
 
 const getDashboardDataSchema = z.object({
   branchId: branchIdField,
@@ -389,3 +390,142 @@ export const getDashboardData = createServerFn({ method: 'GET' })
     }
   },
 )
+
+// ── Churn Rate Dashboard ──
+
+export const getDashboardChurnData = createServerFn({ method: 'GET' })
+  .handler(async () => {
+    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+
+    const risks = (await computeAllChurnRisks(50)).slice(0, 5)
+
+    const critical = risks.filter((r) => r.level === 'CRITICAL').length
+    const high = risks.filter((r) => r.level === 'HIGH').length
+    const medium = risks.filter((r) => r.level === 'MEDIUM').length
+    const low = risks.filter((r) => r.level === 'LOW').length
+    const total = critical + high + medium + low
+
+    // Overall churn rate: % of active members at HIGH or CRITICAL risk
+    const churnRate = total > 0 ? Math.round(((critical + high) / total) * 100) : 0
+
+    return { distribution: { critical, high, medium, low, total }, churnRate, topRisks: risks }
+  })
+
+// ── Revenue Trends (last 6 months) ──
+
+export const getRevenueTrends = createServerFn({ method: 'GET' })
+  .handler(async () => {
+    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+
+    const now = new Date()
+    const months: { label: string; start: Date; end: Date }[] = []
+    for (let i = 5; i >= 0; i--) {
+      const m = new Date(now.getFullYear(), now.getMonth() - i, 1)
+      months.push({
+        label: m.toLocaleDateString('es-ES', { month: 'short', year: '2-digit' }),
+        start: new Date(m.getFullYear(), m.getMonth(), 1),
+        end: new Date(m.getFullYear(), m.getMonth() + 1, 0, 23, 59, 59, 999),
+      })
+    }
+
+    const data = await Promise.all(
+      months.map(async (m) => {
+        const [membership] = await db
+          .select({ total: sum(membershipPayments.amount) })
+          .from(membershipPayments)
+          .where(
+            and(gte(membershipPayments.paymentDate, m.start), lte(membershipPayments.paymentDate, m.end)),
+          )
+
+        const [pos] = await db
+          .select({ total: sum(sales.total) })
+          .from(sales)
+          .where(
+            and(gte(sales.soldAt, m.start), lte(sales.soldAt, m.end), eq(sales.status, 'COMPLETED')),
+          )
+
+        const membershipIncome = Number(membership?.total ?? 0)
+        const posIncome = Number(pos?.total ?? 0)
+        const total = membershipIncome + posIncome
+
+        return {
+          month: m.label,
+          membershipIncome,
+          posIncome,
+          total,
+          // Goal: +10% over the running average (calculated lazily per month)
+          goal: 0, // fill after
+        }
+      }),
+    )
+
+    // Calculate goals: 110% of rolling 3-month average
+    for (let i = 0; i < data.length; i++) {
+      const slice = data.slice(Math.max(0, i - 2), i)
+      const avg = slice.length > 0 ? slice.reduce((a, b) => a + b.total, 0) / slice.length : data[i].total
+      data[i].goal = Math.round(avg * 1.1)
+    }
+
+    return data
+  })
+
+// ── Membership Trends (last 6 months) ──
+
+export const getMembershipTrends = createServerFn({ method: 'GET' })
+  .handler(async () => {
+    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+
+    const now = new Date()
+    const data: { month: string; active: number; newMembers: number; expired: number }[] = []
+
+    for (let i = 5; i >= 0; i--) {
+      const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1)
+      const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59, 59, 999)
+
+      const label = monthStart.toLocaleDateString('es-ES', { month: 'short', year: '2-digit' })
+
+      // Active subscriptions at end of month
+      const [activeRes] = await db
+        .select({ count: count() })
+        .from(subscriptions)
+        .where(
+          and(
+            eq(subscriptions.status, 'ACTIVE'),
+            lte(subscriptions.startDate, monthEnd),
+            gte(subscriptions.endDate, monthEnd),
+          ),
+        )
+
+      // New subscriptions created in month
+      const [newRes] = await db
+        .select({ count: count() })
+        .from(subscriptions)
+        .where(
+          and(
+            gte(subscriptions.createdAt, monthStart),
+            lte(subscriptions.createdAt, monthEnd),
+          ),
+        )
+
+      // Subscriptions that expired in month
+      const [expiredRes] = await db
+        .select({ count: count() })
+        .from(subscriptions)
+        .where(
+          and(
+            eq(subscriptions.status, 'EXPIRED'),
+            gte(subscriptions.endDate, monthStart),
+            lte(subscriptions.endDate, monthEnd),
+          ),
+        )
+
+      data.push({
+        month: label,
+        active: activeRes?.count ?? 0,
+        newMembers: newRes?.count ?? 0,
+        expired: expiredRes?.count ?? 0,
+      })
+    }
+
+    return data
+  })

@@ -27,10 +27,40 @@ import { nutritionPlans } from './nutrition-plans.ts'
 import { weightHistory } from './weight-history.ts'
 import { classWaitlist } from './class-waitlist.ts'
 import { memberEvaluations } from './member-evaluations.ts'
+import { guestPasses } from './guest-passes.ts'
+import {
+  loyaltyTiers,
+  loyaltyPoints,
+  coupons,
+  couponUsage,
+  challenges,
+  challengeProgress,
+  badges,
+  memberBadges,
+} from './loyalty.ts'
+import { promotions } from './promotions.ts'
+import { corporateAccounts } from './corporate-accounts.ts'
+import { familyGroups, familyMembers } from './family-groups.ts'
+import { invoices, invoiceSequences } from './invoices.ts'
+import { pushSubscriptions } from './push-subscriptions.ts'
+import { employees } from './employees.ts'
+import { employeeAttendance } from './employee-attendance.ts'
+import { memberBranches } from './member-branches.ts'
+import { userDevices } from './user-devices.ts'
+import { memberPaymentMethods } from './member-payment-methods.ts'
+import { employeeSchedules } from './employee-schedules.ts'
+import { employeeVacations } from './employee-vacations.ts'
+import { employeeBonuses } from './employee-bonuses.ts'
+import { payroll } from './payroll.ts'
+import { employeePerformance } from './employee-performance.ts'
+import { employeeContracts } from './employee-contracts.ts'
+import { employeeDocuments } from './employee-documents.ts'
+import { tvMedia, tvTickerMessages } from './tv-media.ts'
 
 export const usersRelations = relations(users, ({ many, one }) => ({
   sessions: many(sessions),
   accounts: many(accounts),
+  devices: many(userDevices),
   roleObj: one(roles, { fields: [users.role], references: [roles.name] }),
 }))
 
@@ -59,6 +89,20 @@ export const membersRelations = relations(members, ({ many, one }) => ({
   weightHistory: many(weightHistory),
   nutritionPlans: many(nutritionPlans),
   evaluations: many(memberEvaluations),
+  guestPasses: many(guestPasses),
+  loyaltyPoints: many(loyaltyPoints),
+  referred: one(members, {
+    fields: [members.referredBy],
+    references: [members.id],
+  }),
+  challengeProgress: many(challengeProgress),
+  memberBadges: many(memberBadges),
+  memberBranches: many(memberBranches),
+  paymentMethods: many(memberPaymentMethods),
+  corporateAccount: one(corporateAccounts, {
+    fields: [members.corporateAccountId],
+    references: [corporateAccounts.id],
+  }),
 }))
 
 export const subscriptionsRelations = relations(
@@ -390,5 +434,235 @@ export const classWaitlistRelations = relations(classWaitlist, ({ one }) => ({
   member: one(members, {
     fields: [classWaitlist.memberId],
     references: [members.id],
+  }),
+}))
+
+// ── Guest Passes ───────────────────────────────────────────────────
+
+export const guestPassesRelations = relations(guestPasses, ({ one }) => ({
+  member: one(members, {
+    fields: [guestPasses.memberId],
+    references: [members.id],
+  }),
+  usedBy: one(users, {
+    fields: [guestPasses.usedByUserId],
+    references: [users.id],
+  }),
+}))
+
+export const loyaltyTiersRelations = relations(loyaltyTiers, () => ({}))
+
+export const loyaltyPointsRelations = relations(loyaltyPoints, ({ one }) => ({
+  member: one(members, {
+    fields: [loyaltyPoints.memberId],
+    references: [members.id],
+  }),
+}))
+
+export const couponsRelations = relations(coupons, () => ({}))
+
+export const couponUsageRelations = relations(couponUsage, ({ one }) => ({
+  coupon: one(coupons, {
+    fields: [couponUsage.couponId],
+    references: [coupons.id],
+  }),
+}))
+
+export const challengesRelations = relations(challenges, () => ({}))
+
+export const challengeProgressRelations = relations(challengeProgress, ({ one }) => ({
+  challenge: one(challenges, {
+    fields: [challengeProgress.challengeId],
+    references: [challenges.id],
+  }),
+  member: one(members, {
+    fields: [challengeProgress.memberId],
+    references: [members.id],
+  }),
+}))
+
+export const badgesRelations = relations(badges, () => ({}))
+
+export const memberBadgesRelations = relations(memberBadges, ({ one }) => ({
+  member: one(members, {
+    fields: [memberBadges.memberId],
+    references: [members.id],
+  }),
+  badge: one(badges, {
+    fields: [memberBadges.badgeId],
+    references: [badges.id],
+  }),
+}))
+
+export const promotionsRelations = relations(promotions, () => ({}))
+
+export const corporateAccountsRelations = relations(
+  corporateAccounts,
+  ({ many, one }) => ({
+    members: many(members),
+    branch: one(branches, {
+      fields: [corporateAccounts.branchId],
+      references: [branches.id],
+    }),
+  }),
+)
+
+export const familyGroupsRelations = relations(
+  familyGroups,
+  ({ many, one }) => ({
+    primaryMember: one(members, {
+      fields: [familyGroups.primaryMemberId],
+      references: [members.id],
+    }),
+    familyMembers: many(familyMembers),
+    branch: one(branches, {
+      fields: [familyGroups.branchId],
+      references: [branches.id],
+    }),
+  }),
+)
+
+export const familyMembersRelations = relations(
+  familyMembers,
+  ({ one }) => ({
+    familyGroup: one(familyGroups, {
+      fields: [familyMembers.familyGroupId],
+      references: [familyGroups.id],
+    }),
+    member: one(members, {
+      fields: [familyMembers.memberId],
+      references: [members.id],
+    }),
+  }),
+)
+
+export const invoicesRelations = relations(invoices, ({ one }) => ({
+  member: one(members, {
+    fields: [invoices.memberId],
+    references: [members.id],
+  }),
+  createdBy: one(users, {
+    fields: [invoices.createdByUserId],
+    references: [users.id],
+  }),
+  branch: one(branches, {
+    fields: [invoices.branchId],
+    references: [branches.id],
+  }),
+}))
+
+export const invoiceSequencesRelations = relations(invoiceSequences, ({ one }) => ({
+  branch: one(branches, {
+    fields: [invoiceSequences.branchId],
+    references: [branches.id],
+  }),
+}))
+
+export const pushSubscriptionsRelations = relations(pushSubscriptions, ({ one }) => ({
+  user: one(users, {
+    fields: [pushSubscriptions.userId],
+    references: [users.id],
+  }),
+}))
+
+export const userDevicesRelations = relations(userDevices, ({ one }) => ({
+  user: one(users, {
+    fields: [userDevices.userId],
+    references: [users.id],
+  }),
+}))
+
+export const memberBranchesRelations = relations(memberBranches, ({ one }) => ({
+  member: one(members, {
+    fields: [memberBranches.memberId],
+    references: [members.id],
+  }),
+  branch: one(branches, {
+    fields: [memberBranches.branchId],
+    references: [branches.id],
+  }),
+}))
+
+export const memberPaymentMethodsRelations = relations(memberPaymentMethods, ({ one }) => ({
+  member: one(members, {
+    fields: [memberPaymentMethods.memberId],
+    references: [members.id],
+  }),
+}))
+
+// ── Employees ──────────────────────────────────────────────────────
+
+export const employeesRelations = relations(employees, ({ many }) => ({
+  schedules: many(employeeSchedules),
+  attendance: many(employeeAttendance),
+  vacations: many(employeeVacations),
+  bonuses: many(employeeBonuses),
+  payrollRecords: many(payroll),
+  performanceEvaluations: many(employeePerformance),
+  contracts: many(employeeContracts),
+  documents: many(employeeDocuments),
+}))
+
+export const employeeAttendanceRelations = relations(employeeAttendance, ({ one }) => ({
+  employee: one(employees, {
+    fields: [employeeAttendance.employeeId],
+    references: [employees.id],
+  }),
+}))
+
+export const employeeSchedulesRelations = relations(employeeSchedules, ({ one }) => ({
+  employee: one(employees, {
+    fields: [employeeSchedules.employeeId],
+    references: [employees.id],
+  }),
+}))
+
+export const employeeVacationsRelations = relations(employeeVacations, ({ one }) => ({
+  employee: one(employees, {
+    fields: [employeeVacations.employeeId],
+    references: [employees.id],
+  }),
+}))
+
+export const employeeBonusesRelations = relations(employeeBonuses, ({ one }) => ({
+  employee: one(employees, {
+    fields: [employeeBonuses.employeeId],
+    references: [employees.id],
+  }),
+}))
+
+export const payrollRelations = relations(payroll, ({ one }) => ({
+  employee: one(employees, {
+    fields: [payroll.employeeId],
+    references: [employees.id],
+  }),
+}))
+
+export const employeePerformanceRelations = relations(employeePerformance, ({ one }) => ({
+  employee: one(employees, {
+    fields: [employeePerformance.employeeId],
+    references: [employees.id],
+  }),
+  evaluatedBy: one(users, {
+    fields: [employeePerformance.evaluatedById],
+    references: [users.id],
+  }),
+}))
+
+export const employeeContractsRelations = relations(employeeContracts, ({ one }) => ({
+  employee: one(employees, {
+    fields: [employeeContracts.employeeId],
+    references: [employees.id],
+  }),
+}))
+
+export const employeeDocumentsRelations = relations(employeeDocuments, ({ one }) => ({
+  employee: one(employees, {
+    fields: [employeeDocuments.employeeId],
+    references: [employees.id],
+  }),
+  uploadedBy: one(users, {
+    fields: [employeeDocuments.uploadedById],
+    references: [users.id],
   }),
 }))

@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TvRouteImport } from './routes/tv'
 import { Route as QrCheckinRouteImport } from './routes/qr-checkin'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthedRouteImport } from './routes/_authed'
@@ -27,24 +28,38 @@ import { Route as AuthedProfileRouteImport } from './routes/_authed/profile'
 import { Route as AuthedProductsRouteImport } from './routes/_authed/products'
 import { Route as AuthedProductCategoriesRouteImport } from './routes/_authed/product-categories'
 import { Route as AuthedPosRouteImport } from './routes/_authed/pos'
+import { Route as AuthedPayrollRouteImport } from './routes/_authed/payroll'
 import { Route as AuthedPackagesRouteImport } from './routes/_authed/packages'
 import { Route as AuthedNutritionRouteImport } from './routes/_authed/nutrition'
 import { Route as AuthedNotificationsRouteImport } from './routes/_authed/notifications'
 import { Route as AuthedMembershipPaymentsRouteImport } from './routes/_authed/membership-payments'
 import { Route as AuthedMembershipFreezesRouteImport } from './routes/_authed/membership-freezes'
 import { Route as AuthedMembersRouteImport } from './routes/_authed/members'
+import { Route as AuthedInvoicesRouteImport } from './routes/_authed/invoices'
 import { Route as AuthedInventoryRouteImport } from './routes/_authed/inventory'
 import { Route as AuthedExportRouteImport } from './routes/_authed/export'
+import { Route as AuthedEmployeesRouteImport } from './routes/_authed/employees'
+import { Route as AuthedEmployeeVacationsRouteImport } from './routes/_authed/employee-vacations'
+import { Route as AuthedEmployeeSchedulesRouteImport } from './routes/_authed/employee-schedules'
+import { Route as AuthedEmployeeAttendanceRouteImport } from './routes/_authed/employee-attendance'
 import { Route as AuthedDashboardRouteImport } from './routes/_authed/dashboard'
+import { Route as AuthedCorporateAccountsRouteImport } from './routes/_authed/corporate-accounts'
 import { Route as AuthedClassesRouteImport } from './routes/_authed/classes'
 import { Route as AuthedCheckInsRouteImport } from './routes/_authed/check-ins'
 import { Route as AuthedCashRegisterRouteImport } from './routes/_authed/cash-register'
 import { Route as AuthedBranchesRouteImport } from './routes/_authed/branches'
 import { Route as AuthedBackupRouteImport } from './routes/_authed/backup'
 import { Route as AuthedAuditLogsRouteImport } from './routes/_authed/audit-logs'
+import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe/webhook'
+import { Route as ApiCronAutoRenewalsRouteImport } from './routes/api/cron/auto-renewals'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as AuthedAdminUsersRouteImport } from './routes/_authed/admin/users'
 
+const TvRoute = TvRouteImport.update({
+  id: '/tv',
+  path: '/tv',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const QrCheckinRoute = QrCheckinRouteImport.update({
   id: '/qr-checkin',
   path: '/qr-checkin',
@@ -134,6 +149,11 @@ const AuthedPosRoute = AuthedPosRouteImport.update({
   path: '/pos',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedPayrollRoute = AuthedPayrollRouteImport.update({
+  id: '/payroll',
+  path: '/payroll',
+  getParentRoute: () => AuthedRoute,
+} as any)
 const AuthedPackagesRoute = AuthedPackagesRouteImport.update({
   id: '/packages',
   path: '/packages',
@@ -165,6 +185,11 @@ const AuthedMembersRoute = AuthedMembersRouteImport.update({
   path: '/members',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedInvoicesRoute = AuthedInvoicesRouteImport.update({
+  id: '/invoices',
+  path: '/invoices',
+  getParentRoute: () => AuthedRoute,
+} as any)
 const AuthedInventoryRoute = AuthedInventoryRouteImport.update({
   id: '/inventory',
   path: '/inventory',
@@ -175,9 +200,35 @@ const AuthedExportRoute = AuthedExportRouteImport.update({
   path: '/export',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedEmployeesRoute = AuthedEmployeesRouteImport.update({
+  id: '/employees',
+  path: '/employees',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedEmployeeVacationsRoute = AuthedEmployeeVacationsRouteImport.update({
+  id: '/employee-vacations',
+  path: '/employee-vacations',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedEmployeeSchedulesRoute = AuthedEmployeeSchedulesRouteImport.update({
+  id: '/employee-schedules',
+  path: '/employee-schedules',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedEmployeeAttendanceRoute =
+  AuthedEmployeeAttendanceRouteImport.update({
+    id: '/employee-attendance',
+    path: '/employee-attendance',
+    getParentRoute: () => AuthedRoute,
+  } as any)
 const AuthedDashboardRoute = AuthedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedCorporateAccountsRoute = AuthedCorporateAccountsRouteImport.update({
+  id: '/corporate-accounts',
+  path: '/corporate-accounts',
   getParentRoute: () => AuthedRoute,
 } as any)
 const AuthedClassesRoute = AuthedClassesRouteImport.update({
@@ -210,6 +261,16 @@ const AuthedAuditLogsRoute = AuthedAuditLogsRouteImport.update({
   path: '/audit-logs',
   getParentRoute: () => AuthedRoute,
 } as any)
+const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
+  id: '/api/stripe/webhook',
+  path: '/api/stripe/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCronAutoRenewalsRoute = ApiCronAutoRenewalsRouteImport.update({
+  id: '/api/cron/auto-renewals',
+  path: '/api/cron/auto-renewals',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -225,21 +286,29 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/qr-checkin': typeof QrCheckinRoute
+  '/tv': typeof TvRoute
   '/audit-logs': typeof AuthedAuditLogsRoute
   '/backup': typeof AuthedBackupRoute
   '/branches': typeof AuthedBranchesRoute
   '/cash-register': typeof AuthedCashRegisterRoute
   '/check-ins': typeof AuthedCheckInsRoute
   '/classes': typeof AuthedClassesRoute
+  '/corporate-accounts': typeof AuthedCorporateAccountsRoute
   '/dashboard': typeof AuthedDashboardRoute
+  '/employee-attendance': typeof AuthedEmployeeAttendanceRoute
+  '/employee-schedules': typeof AuthedEmployeeSchedulesRoute
+  '/employee-vacations': typeof AuthedEmployeeVacationsRoute
+  '/employees': typeof AuthedEmployeesRoute
   '/export': typeof AuthedExportRoute
   '/inventory': typeof AuthedInventoryRoute
+  '/invoices': typeof AuthedInvoicesRoute
   '/members': typeof AuthedMembersRoute
   '/membership-freezes': typeof AuthedMembershipFreezesRoute
   '/membership-payments': typeof AuthedMembershipPaymentsRoute
   '/notifications': typeof AuthedNotificationsRoute
   '/nutrition': typeof AuthedNutritionRoute
   '/packages': typeof AuthedPackagesRoute
+  '/payroll': typeof AuthedPayrollRoute
   '/pos': typeof AuthedPosRoute
   '/product-categories': typeof AuthedProductCategoriesRoute
   '/products': typeof AuthedProductsRoute
@@ -256,26 +325,36 @@ export interface FileRoutesByFullPath {
   '/users': typeof AuthedUsersRoute
   '/admin/users': typeof AuthedAdminUsersRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/cron/auto-renewals': typeof ApiCronAutoRenewalsRoute
+  '/api/stripe/webhook': typeof ApiStripeWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/qr-checkin': typeof QrCheckinRoute
+  '/tv': typeof TvRoute
   '/audit-logs': typeof AuthedAuditLogsRoute
   '/backup': typeof AuthedBackupRoute
   '/branches': typeof AuthedBranchesRoute
   '/cash-register': typeof AuthedCashRegisterRoute
   '/check-ins': typeof AuthedCheckInsRoute
   '/classes': typeof AuthedClassesRoute
+  '/corporate-accounts': typeof AuthedCorporateAccountsRoute
   '/dashboard': typeof AuthedDashboardRoute
+  '/employee-attendance': typeof AuthedEmployeeAttendanceRoute
+  '/employee-schedules': typeof AuthedEmployeeSchedulesRoute
+  '/employee-vacations': typeof AuthedEmployeeVacationsRoute
+  '/employees': typeof AuthedEmployeesRoute
   '/export': typeof AuthedExportRoute
   '/inventory': typeof AuthedInventoryRoute
+  '/invoices': typeof AuthedInvoicesRoute
   '/members': typeof AuthedMembersRoute
   '/membership-freezes': typeof AuthedMembershipFreezesRoute
   '/membership-payments': typeof AuthedMembershipPaymentsRoute
   '/notifications': typeof AuthedNotificationsRoute
   '/nutrition': typeof AuthedNutritionRoute
   '/packages': typeof AuthedPackagesRoute
+  '/payroll': typeof AuthedPayrollRoute
   '/pos': typeof AuthedPosRoute
   '/product-categories': typeof AuthedProductCategoriesRoute
   '/products': typeof AuthedProductsRoute
@@ -292,6 +371,8 @@ export interface FileRoutesByTo {
   '/users': typeof AuthedUsersRoute
   '/admin/users': typeof AuthedAdminUsersRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/cron/auto-renewals': typeof ApiCronAutoRenewalsRoute
+  '/api/stripe/webhook': typeof ApiStripeWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -299,21 +380,29 @@ export interface FileRoutesById {
   '/_authed': typeof AuthedRouteWithChildren
   '/login': typeof LoginRoute
   '/qr-checkin': typeof QrCheckinRoute
+  '/tv': typeof TvRoute
   '/_authed/audit-logs': typeof AuthedAuditLogsRoute
   '/_authed/backup': typeof AuthedBackupRoute
   '/_authed/branches': typeof AuthedBranchesRoute
   '/_authed/cash-register': typeof AuthedCashRegisterRoute
   '/_authed/check-ins': typeof AuthedCheckInsRoute
   '/_authed/classes': typeof AuthedClassesRoute
+  '/_authed/corporate-accounts': typeof AuthedCorporateAccountsRoute
   '/_authed/dashboard': typeof AuthedDashboardRoute
+  '/_authed/employee-attendance': typeof AuthedEmployeeAttendanceRoute
+  '/_authed/employee-schedules': typeof AuthedEmployeeSchedulesRoute
+  '/_authed/employee-vacations': typeof AuthedEmployeeVacationsRoute
+  '/_authed/employees': typeof AuthedEmployeesRoute
   '/_authed/export': typeof AuthedExportRoute
   '/_authed/inventory': typeof AuthedInventoryRoute
+  '/_authed/invoices': typeof AuthedInvoicesRoute
   '/_authed/members': typeof AuthedMembersRoute
   '/_authed/membership-freezes': typeof AuthedMembershipFreezesRoute
   '/_authed/membership-payments': typeof AuthedMembershipPaymentsRoute
   '/_authed/notifications': typeof AuthedNotificationsRoute
   '/_authed/nutrition': typeof AuthedNutritionRoute
   '/_authed/packages': typeof AuthedPackagesRoute
+  '/_authed/payroll': typeof AuthedPayrollRoute
   '/_authed/pos': typeof AuthedPosRoute
   '/_authed/product-categories': typeof AuthedProductCategoriesRoute
   '/_authed/products': typeof AuthedProductsRoute
@@ -330,6 +419,8 @@ export interface FileRoutesById {
   '/_authed/users': typeof AuthedUsersRoute
   '/_authed/admin/users': typeof AuthedAdminUsersRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/cron/auto-renewals': typeof ApiCronAutoRenewalsRoute
+  '/api/stripe/webhook': typeof ApiStripeWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -337,21 +428,29 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/qr-checkin'
+    | '/tv'
     | '/audit-logs'
     | '/backup'
     | '/branches'
     | '/cash-register'
     | '/check-ins'
     | '/classes'
+    | '/corporate-accounts'
     | '/dashboard'
+    | '/employee-attendance'
+    | '/employee-schedules'
+    | '/employee-vacations'
+    | '/employees'
     | '/export'
     | '/inventory'
+    | '/invoices'
     | '/members'
     | '/membership-freezes'
     | '/membership-payments'
     | '/notifications'
     | '/nutrition'
     | '/packages'
+    | '/payroll'
     | '/pos'
     | '/product-categories'
     | '/products'
@@ -368,26 +467,36 @@ export interface FileRouteTypes {
     | '/users'
     | '/admin/users'
     | '/api/auth/$'
+    | '/api/cron/auto-renewals'
+    | '/api/stripe/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/login'
     | '/qr-checkin'
+    | '/tv'
     | '/audit-logs'
     | '/backup'
     | '/branches'
     | '/cash-register'
     | '/check-ins'
     | '/classes'
+    | '/corporate-accounts'
     | '/dashboard'
+    | '/employee-attendance'
+    | '/employee-schedules'
+    | '/employee-vacations'
+    | '/employees'
     | '/export'
     | '/inventory'
+    | '/invoices'
     | '/members'
     | '/membership-freezes'
     | '/membership-payments'
     | '/notifications'
     | '/nutrition'
     | '/packages'
+    | '/payroll'
     | '/pos'
     | '/product-categories'
     | '/products'
@@ -404,27 +513,37 @@ export interface FileRouteTypes {
     | '/users'
     | '/admin/users'
     | '/api/auth/$'
+    | '/api/cron/auto-renewals'
+    | '/api/stripe/webhook'
   id:
     | '__root__'
     | '/'
     | '/_authed'
     | '/login'
     | '/qr-checkin'
+    | '/tv'
     | '/_authed/audit-logs'
     | '/_authed/backup'
     | '/_authed/branches'
     | '/_authed/cash-register'
     | '/_authed/check-ins'
     | '/_authed/classes'
+    | '/_authed/corporate-accounts'
     | '/_authed/dashboard'
+    | '/_authed/employee-attendance'
+    | '/_authed/employee-schedules'
+    | '/_authed/employee-vacations'
+    | '/_authed/employees'
     | '/_authed/export'
     | '/_authed/inventory'
+    | '/_authed/invoices'
     | '/_authed/members'
     | '/_authed/membership-freezes'
     | '/_authed/membership-payments'
     | '/_authed/notifications'
     | '/_authed/nutrition'
     | '/_authed/packages'
+    | '/_authed/payroll'
     | '/_authed/pos'
     | '/_authed/product-categories'
     | '/_authed/products'
@@ -441,6 +560,8 @@ export interface FileRouteTypes {
     | '/_authed/users'
     | '/_authed/admin/users'
     | '/api/auth/$'
+    | '/api/cron/auto-renewals'
+    | '/api/stripe/webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -448,11 +569,21 @@ export interface RootRouteChildren {
   AuthedRoute: typeof AuthedRouteWithChildren
   LoginRoute: typeof LoginRoute
   QrCheckinRoute: typeof QrCheckinRoute
+  TvRoute: typeof TvRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiCronAutoRenewalsRoute: typeof ApiCronAutoRenewalsRoute
+  ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/tv': {
+      id: '/tv'
+      path: '/tv'
+      fullPath: '/tv'
+      preLoaderRoute: typeof TvRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/qr-checkin': {
       id: '/qr-checkin'
       path: '/qr-checkin'
@@ -579,6 +710,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedPosRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/payroll': {
+      id: '/_authed/payroll'
+      path: '/payroll'
+      fullPath: '/payroll'
+      preLoaderRoute: typeof AuthedPayrollRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/packages': {
       id: '/_authed/packages'
       path: '/packages'
@@ -621,6 +759,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedMembersRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/invoices': {
+      id: '/_authed/invoices'
+      path: '/invoices'
+      fullPath: '/invoices'
+      preLoaderRoute: typeof AuthedInvoicesRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/inventory': {
       id: '/_authed/inventory'
       path: '/inventory'
@@ -635,11 +780,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedExportRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/employees': {
+      id: '/_authed/employees'
+      path: '/employees'
+      fullPath: '/employees'
+      preLoaderRoute: typeof AuthedEmployeesRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/employee-vacations': {
+      id: '/_authed/employee-vacations'
+      path: '/employee-vacations'
+      fullPath: '/employee-vacations'
+      preLoaderRoute: typeof AuthedEmployeeVacationsRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/employee-schedules': {
+      id: '/_authed/employee-schedules'
+      path: '/employee-schedules'
+      fullPath: '/employee-schedules'
+      preLoaderRoute: typeof AuthedEmployeeSchedulesRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/employee-attendance': {
+      id: '/_authed/employee-attendance'
+      path: '/employee-attendance'
+      fullPath: '/employee-attendance'
+      preLoaderRoute: typeof AuthedEmployeeAttendanceRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/dashboard': {
       id: '/_authed/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthedDashboardRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/corporate-accounts': {
+      id: '/_authed/corporate-accounts'
+      path: '/corporate-accounts'
+      fullPath: '/corporate-accounts'
+      preLoaderRoute: typeof AuthedCorporateAccountsRouteImport
       parentRoute: typeof AuthedRoute
     }
     '/_authed/classes': {
@@ -684,6 +864,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedAuditLogsRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/api/stripe/webhook': {
+      id: '/api/stripe/webhook'
+      path: '/api/stripe/webhook'
+      fullPath: '/api/stripe/webhook'
+      preLoaderRoute: typeof ApiStripeWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/cron/auto-renewals': {
+      id: '/api/cron/auto-renewals'
+      path: '/api/cron/auto-renewals'
+      fullPath: '/api/cron/auto-renewals'
+      preLoaderRoute: typeof ApiCronAutoRenewalsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -708,15 +902,22 @@ interface AuthedRouteChildren {
   AuthedCashRegisterRoute: typeof AuthedCashRegisterRoute
   AuthedCheckInsRoute: typeof AuthedCheckInsRoute
   AuthedClassesRoute: typeof AuthedClassesRoute
+  AuthedCorporateAccountsRoute: typeof AuthedCorporateAccountsRoute
   AuthedDashboardRoute: typeof AuthedDashboardRoute
+  AuthedEmployeeAttendanceRoute: typeof AuthedEmployeeAttendanceRoute
+  AuthedEmployeeSchedulesRoute: typeof AuthedEmployeeSchedulesRoute
+  AuthedEmployeeVacationsRoute: typeof AuthedEmployeeVacationsRoute
+  AuthedEmployeesRoute: typeof AuthedEmployeesRoute
   AuthedExportRoute: typeof AuthedExportRoute
   AuthedInventoryRoute: typeof AuthedInventoryRoute
+  AuthedInvoicesRoute: typeof AuthedInvoicesRoute
   AuthedMembersRoute: typeof AuthedMembersRoute
   AuthedMembershipFreezesRoute: typeof AuthedMembershipFreezesRoute
   AuthedMembershipPaymentsRoute: typeof AuthedMembershipPaymentsRoute
   AuthedNotificationsRoute: typeof AuthedNotificationsRoute
   AuthedNutritionRoute: typeof AuthedNutritionRoute
   AuthedPackagesRoute: typeof AuthedPackagesRoute
+  AuthedPayrollRoute: typeof AuthedPayrollRoute
   AuthedPosRoute: typeof AuthedPosRoute
   AuthedProductCategoriesRoute: typeof AuthedProductCategoriesRoute
   AuthedProductsRoute: typeof AuthedProductsRoute
@@ -741,15 +942,22 @@ const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedCashRegisterRoute: AuthedCashRegisterRoute,
   AuthedCheckInsRoute: AuthedCheckInsRoute,
   AuthedClassesRoute: AuthedClassesRoute,
+  AuthedCorporateAccountsRoute: AuthedCorporateAccountsRoute,
   AuthedDashboardRoute: AuthedDashboardRoute,
+  AuthedEmployeeAttendanceRoute: AuthedEmployeeAttendanceRoute,
+  AuthedEmployeeSchedulesRoute: AuthedEmployeeSchedulesRoute,
+  AuthedEmployeeVacationsRoute: AuthedEmployeeVacationsRoute,
+  AuthedEmployeesRoute: AuthedEmployeesRoute,
   AuthedExportRoute: AuthedExportRoute,
   AuthedInventoryRoute: AuthedInventoryRoute,
+  AuthedInvoicesRoute: AuthedInvoicesRoute,
   AuthedMembersRoute: AuthedMembersRoute,
   AuthedMembershipFreezesRoute: AuthedMembershipFreezesRoute,
   AuthedMembershipPaymentsRoute: AuthedMembershipPaymentsRoute,
   AuthedNotificationsRoute: AuthedNotificationsRoute,
   AuthedNutritionRoute: AuthedNutritionRoute,
   AuthedPackagesRoute: AuthedPackagesRoute,
+  AuthedPayrollRoute: AuthedPayrollRoute,
   AuthedPosRoute: AuthedPosRoute,
   AuthedProductCategoriesRoute: AuthedProductCategoriesRoute,
   AuthedProductsRoute: AuthedProductsRoute,
@@ -775,7 +983,10 @@ const rootRouteChildren: RootRouteChildren = {
   AuthedRoute: AuthedRouteWithChildren,
   LoginRoute: LoginRoute,
   QrCheckinRoute: QrCheckinRoute,
+  TvRoute: TvRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiCronAutoRenewalsRoute: ApiCronAutoRenewalsRoute,
+  ApiStripeWebhookRoute: ApiStripeWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

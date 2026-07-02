@@ -44,7 +44,10 @@ export function StatCard({
 }: StatCardProps) {
   const styles = variantStyles[variant]
   return (
-    <div className="relative overflow-hidden bg-muted/60 p-4.5 rounded-[1.25rem] border border-border/10 shadow-sm hover:shadow-md transition-all duration-300 flex items-center justify-between group">
+    <div
+      className="relative overflow-hidden bg-muted/60 p-4.5 rounded-[1.25rem] border border-border/10 shadow-sm hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 flex items-center justify-between group"
+      style={{ animation: 'staggerIn 0.4s cubic-bezier(0.23, 1, 0.32, 1) both' }}
+    >
       <div className="space-y-1">
         <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground group-hover:text-foreground transition-colors">
           {label}
@@ -52,7 +55,7 @@ export function StatCard({
         <p className={styles.value}>{value}</p>
       </div>
       <div
-        className={`size-10 rounded-xl flex items-center justify-center group-hover:scale-105 transition-all duration-300 shrink-0 ${styles.iconBox}`}
+        className={`size-10 rounded-xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shrink-0 ${styles.iconBox}`}
       >
         <Icon
           className={`size-5 transition-transform duration-300 ${styles.icon}`}

@@ -13,9 +13,10 @@ export function LoadingSpinner({ size = 'md', label }: LoadingSpinnerProps) {
   return (
     <div className="flex flex-col items-center justify-center gap-3 py-12">
       <div
-        className={`${sizeMap[size]} rounded-full border-foreground/20 border-t-foreground animate-spin`}
+        className={`${sizeMap[size]} rounded-full border-foreground/10 border-t-foreground/80 border-l-foreground/40 animate-spin`}
+        style={{ animationDuration: '0.7s' }}
       />
-      {label && <p className="text-sm text-muted-foreground">{label}</p>}
+      {label && <p className="text-sm text-muted-foreground animate-pulse">{label}</p>}
     </div>
   )
 }

@@ -20,6 +20,8 @@ export const createMemberSchema = z.object({
   physicalRestrictions: optionalString,
   medicalNotes: optionalString,
   contractSignature: optionalString,
+  referredBy: optionalString, // referral code of the referring member
+  corporateAccountId: optionalString,
 })
 
 export type CreateMemberData = z.infer<typeof createMemberSchema>

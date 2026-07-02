@@ -13,6 +13,8 @@ import { requireRole } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { z } from 'zod'
+import { getFamilyDiscount } from '#/features/family-groups/server.ts'
+import { autoIssueInvoice } from '#/features/invoices/server.ts'
 import { branchIdField, dateString, moneyString, optionalString, paymentMethodEnum, uuidField } from '#/shared/lib/schemas.ts'
 
 const getSubscriptionsSchema = z.object({
@@ -80,15 +82,23 @@ export const createSubscription = createServerFn({ method: 'POST' })
         where: eq(packages.id, data.packageId),
       })
 
+      // Apply family discount if applicable
+      const familyDiscount = await getFamilyDiscount(data.memberId)
+      const basePrice = pkg?.price ?? data.amountPaid
+      const discountedPrice = familyDiscount > 0
+        ? (Number(basePrice) * (1 - familyDiscount / 100)).toFixed(2)
+        : String(basePrice)
+
       const [newSubscription] = await tx
         .insert(subscriptions)
         .values({
           memberId: data.memberId,
           packageId: data.packageId,
-          totalAmount: pkg?.price ?? data.amountPaid,
+          totalAmount: discountedPrice,
           startDate: new Date(data.startDate),
           endDate: new Date(data.endDate),
           status: 'ACTIVE',
+          notes: familyDiscount > 0 ? `Dto. familiar ${familyDiscount}% aplicado` : null,
         })
         .returning()
 
@@ -130,6 +140,15 @@ export const createSubscription = createServerFn({ method: 'POST' })
       entityId: subscription.id,
       description: `Creó suscripción #${subscription.id} para socio ${data.memberId}`,
     })
+
+    // Auto-generate invoice
+    const payment = await db.query.membershipPayments.findFirst({
+      orderBy: [desc(membershipPayments.createdAt)],
+      where: eq(membershipPayments.subscriptionId, subscription.id),
+    })
+    if (payment) {
+      await autoIssueInvoice('MEMBERSHIP_PAYMENT', payment.id, data.branchId)
+    }
 
     return subscription
   })

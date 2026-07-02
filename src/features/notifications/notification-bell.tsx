@@ -18,6 +18,7 @@ import {
   DropdownMenuTrigger,
 } from '#/shared/components/ui/dropdown-menu'
 import { Button } from '#/shared/components/ui/button'
+import { PushOptInMenuItem } from './push/push-opt-in.tsx'
 
 interface NotificationBellProps {
   userRole: string
@@ -148,11 +149,12 @@ export function NotificationBell({ userRole }: NotificationBellProps) {
                 >
                   Marcar leídas
                 </Button>
-              )}
-            </div>
-          </>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  )
-}
+              )}              </div>
+            </>
+          )}
+          <DropdownMenuSeparator />
+          <PushOptInMenuItem />
+        </DropdownMenuContent>
+      </DropdownMenu>
+    )
+  }

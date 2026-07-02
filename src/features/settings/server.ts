@@ -31,6 +31,8 @@ const updateSettingsSchema = z.object({
   membershipReminderDays: z.coerce.number().int().min(0).optional().default(7),
   checkInWindowMinutes: z.coerce.number().int().min(0).optional().default(60),
   enableAutoRenew: z.boolean().optional().default(false),
+  resendApiKey: optionalString.default(''),
+  emailFrom: optionalString.default(''),
   openingTime: timeString.optional().default('08:00'),
   closingTime: timeString.optional().default('22:00'),
   mondayOpen: z.boolean().optional().default(true),
@@ -40,6 +42,33 @@ const updateSettingsSchema = z.object({
   fridayOpen: z.boolean().optional().default(true),
   saturdayOpen: z.boolean().optional().default(false),
   sundayOpen: z.boolean().optional().default(false),
+  // Fiscal data for invoices
+  companyTaxId: optionalString.default(''),
+  companyLegalName: optionalString.default(''),
+  invoiceFooter: optionalString.default(''),
+  // Twilio (WhatsApp + SMS)
+  twilioAccountSid: optionalString.default(''),
+  twilioAuthToken: optionalString.default(''),
+  twilioWhatsAppNumber: optionalString.default(''),
+  twilioSmsNumber: optionalString.default(''),
+  waTemplateExpirationSid: optionalString.default(''),
+  waTemplateExpiredSid: optionalString.default(''),
+  waTemplateBirthdaySid: optionalString.default(''),
+  waTemplateInactiveSid: optionalString.default(''),
+  waTemplateClassReminderSid: optionalString.default(''),
+  autoRenewSecretKey: optionalString.default(''),
+  // Stripe (Cobro automático)
+  stripeSecretKey: optionalString.default(''),
+  stripePublishableKey: optionalString.default(''),
+  stripeWebhookSecret: optionalString.default(''),
+  // Firebase Cloud Messaging
+  firebaseApiKey: optionalString.default(''),
+  firebaseAuthDomain: optionalString.default(''),
+  firebaseProjectId: optionalString.default(''),
+  firebaseMessagingSenderId: optionalString.default(''),
+  firebaseAppId: optionalString.default(''),
+  firebaseVapidKey: optionalString.default(''),
+  firebaseServiceAccount: optionalString.default(''),
 })
 
 export const updateSettings = createServerFn({ method: 'POST' })

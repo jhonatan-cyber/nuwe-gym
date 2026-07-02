@@ -66,6 +66,7 @@ export const createMember = createServerFn({ method: 'POST' })
     const insertData = {
       ...data,
       branchId: data.branchId ?? null,
+      corporateAccountId: data.corporateAccountId ?? null,
       birthDate: data.birthDate ? new Date(data.birthDate) : null,
       physicalRestrictions: data.physicalRestrictions ?? null,
       medicalNotes: data.medicalNotes ?? null,
@@ -111,6 +112,7 @@ export const updateMember = createServerFn({ method: 'POST' })
       address: data.address,
       status: data.status,
       branchId: data.branchId ?? null,
+      corporateAccountId: data.corporateAccountId ?? null,
       physicalRestrictions: data.physicalRestrictions ?? null,
       medicalNotes: data.medicalNotes ?? null,
       contractSignature: data.contractSignature ?? null,

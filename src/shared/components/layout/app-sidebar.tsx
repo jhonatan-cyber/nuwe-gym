@@ -26,6 +26,12 @@ import {
   ClipboardList,
   Building2,
   Salad,
+  Briefcase,
+  FileText,
+  Timer,
+  Sun,
+  DollarSign,
+  Monitor,
 } from 'lucide-react'
 import { Link, useMatches } from '@tanstack/react-router'
 import type { UserRole } from '#/shared/lib/permissions.ts'
@@ -75,6 +81,12 @@ const navItems: NavItem[] = [
     url: '/membership-freezes',
     icon: Snowflake,
     permission: 'membership-freezes:read',
+  },
+  {
+    title: 'Facturación',
+    url: '/invoices',
+    icon: FileText,
+    permission: 'payments:read',
   },
   {
     title: 'Pagos',
@@ -144,6 +156,12 @@ const navItems: NavItem[] = [
     permission: 'reports:read',
   },
   {
+    title: 'Corporativas',
+    url: '/corporate-accounts',
+    icon: Briefcase,
+    permission: 'settings:read',
+  },
+  {
     title: 'Configuración',
     url: '/settings',
     icon: Settings,
@@ -155,6 +173,36 @@ const navItems: NavItem[] = [
     url: '/branches',
     icon: Store,
     permission: 'branches:read',
+  },
+  {
+    title: 'Empleados',
+    url: '/employees',
+    icon: Briefcase,
+    permission: 'employees:read',
+  },
+  {
+    title: 'Asistencia',
+    url: '/employee-attendance',
+    icon: Timer,
+    permission: 'employees:read',
+  },
+  {
+    title: 'Horarios',
+    url: '/employee-schedules',
+    icon: CalendarDays,
+    permission: 'employees:read',
+  },
+  {
+    title: 'Vacaciones',
+    url: '/employee-vacations',
+    icon: Sun,
+    permission: 'employees:read',
+  },
+  {
+    title: 'Sueldos',
+    url: '/payroll',
+    icon: DollarSign,
+    permission: 'employees:read',
   },
   {
     title: 'Notificaciones',
@@ -257,7 +305,7 @@ export function AppSidebar({
                     <Link
                       to={item.url}
                       onClick={onClose}
-                      className={`flex w-10 h-10 shrink-0 items-center justify-center rounded-lg transition-all duration-200 ${
+                      className={`flex w-10 h-10 shrink-0 items-center justify-center rounded-lg transition-all duration-200 active:scale-90 ${
                         isActive
                           ? 'dark:bg-white/20 bg-black/10 dark:text-white text-foreground'
                           : 'dark:text-white/40 text-muted-foreground hover:dark:bg-white/8 hover:bg-black/5 hover:dark:text-white hover:text-foreground'

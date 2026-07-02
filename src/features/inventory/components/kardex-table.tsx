@@ -15,6 +15,7 @@ interface Movement {
   notes?: string | null
   referenceType?: string | null
   referenceId?: string | null
+  batchNumber?: string | null
   product: { name: string }
   createdBy: { name: string }
 }
@@ -79,6 +80,9 @@ export function KardexTable({
                   Stock Post.
                 </th>
                 <th className="text-left py-3 px-3 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                  Lote
+                </th>
+                <th className="text-left py-3 px-3 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
                   Operador
                 </th>
                 <th className="text-left py-3 px-3 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
@@ -124,6 +128,9 @@ export function KardexTable({
                     </td>
                     <td className="py-3 px-3 text-center text-xs font-mono font-semibold">
                       {move.newStock}
+                    </td>
+                    <td className="py-3 px-3 text-xs text-muted-foreground font-mono">
+                      {move.batchNumber || '-'}
                     </td>
                     <td className="py-3 px-3 text-xs text-muted-foreground">
                       {move.createdBy.name}

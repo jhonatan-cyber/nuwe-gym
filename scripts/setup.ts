@@ -72,16 +72,32 @@ async function main() {
 
   const rootDir = path.resolve(__dirname, '..')
   const envExamplePath = path.join(rootDir, '.env.example')
+  const envPath = path.join(rootDir, '.env')
   const envLocalPath = path.join(rootDir, '.env.local')
 
-  // 1. Configurar archivo .env.local
+  // 1. Configurar archivo .env.local usando .env o .env.example como respaldo
   if (!fs.existsSync(envLocalPath)) {
-    log('Creando archivo .env.local desde .env.example...', 'info')
-    try {
-      fs.copyFileSync(envExamplePath, envLocalPath)
-      log('.env.local creado con éxito.', 'success')
-    } catch (err: any) {
-      log(`No se pudo copiar .env.local: ${err.message}`, 'error')
+    if (fs.existsSync(envPath)) {
+      log('Creando archivo .env.local desde .env...', 'info')
+      try {
+        fs.copyFileSync(envPath, envLocalPath)
+        log('.env.local creado con éxito.', 'success')
+      } catch (err: any) {
+        log(`No se pudo copiar .env.local desde .env: ${err.message}`, 'error')
+        process.exit(1)
+      }
+    } else if (fs.existsSync(envExamplePath)) {
+      log('Creando archivo .env.local desde .env.example...', 'info')
+      try {
+        fs.copyFileSync(envExamplePath, envLocalPath)
+        log('.env.local creado con éxito.', 'success')
+      } catch (err: any) {
+        log(`No se pudo copiar .env.local: ${err.message}`, 'error')
+        process.exit(1)
+      }
+    } else {
+      log('No se encontró .env ni .env.example para crear .env.local.', 'error')
+      log('Por favor crea un .env.local manualmente a partir de tu archivo .env.', 'warn')
       process.exit(1)
     }
   } else {

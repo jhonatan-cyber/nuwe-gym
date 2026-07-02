@@ -12,6 +12,9 @@ import { TopProducts } from './components/top-products.tsx'
 import { HourlyAttendanceChart } from './components/hourly-attendance-chart.tsx'
 import { InsightsPanel } from './components/insights-panel.tsx'
 import { AnalyticsQueryBar } from '#/features/analytics/components/analytics-query-bar.tsx'
+import { ChurnRateWidget } from './components/churn-rate-widget.tsx'
+import { RevenueVsGoalsChart } from './components/revenue-vs-goals-chart.tsx'
+import { MembershipTrendsChart } from './components/membership-trends-chart.tsx'
 
 export function DashboardPage() {
   const { branchId } = useCurrentBranch()
@@ -115,6 +118,13 @@ export function DashboardPage() {
         <QuickActionsGrid totalMembers={data.totalMembers} />
 
         <ExpiringMembershipsBanner expiringSoonCount={data.expiringSoonCount} />
+
+        {/* Analytics widgets grid */}
+        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+          <ChurnRateWidget />
+          <RevenueVsGoalsChart />
+          <MembershipTrendsChart />
+        </div>
 
         <div className="grid gap-5 md:grid-cols-2">
           <TopProducts topProducts={data.topProducts} />

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
-import { User, Lock, ChevronRight, Activity, Globe } from 'lucide-react'
+import { User, Lock, ChevronRight, Activity, Globe, Smartphone, Shield } from 'lucide-react'
 import { useProfilePage } from '#/features/profile/hooks/use-profile-page.ts'
 
 import {
@@ -16,6 +16,8 @@ import {
 import { ConfirmDialog } from '#/shared/components/ui/confirm-dialog'
 import { RoleBadge } from '#/features/users/components/role-badge.tsx'
 
+import { TwoFactorSection } from './components/two-factor-section.tsx'
+import { DevicesSection } from './components/devices-section.tsx'
 import { LoadingSkeleton } from './components/loading-skeleton'
 import { ErrorDisplay } from './components/error-display'
 import { InfoTab } from './components/info-tab'
@@ -136,6 +138,9 @@ export function ProfilePage() {
                 <ToggleGroupItem value="sessions">
                   <Activity className="size-3.5" /> Sesiones
                 </ToggleGroupItem>
+                <ToggleGroupItem value="devices">
+                  <Smartphone className="size-3.5" /> Dispositivos
+                </ToggleGroupItem>
                 <ToggleGroupItem value="activity">
                   <Globe className="size-3.5" /> Actividad
                 </ToggleGroupItem>
@@ -166,30 +171,40 @@ export function ProfilePage() {
             <InfoTab dbUser={dbUser} onEdit={() => setIsEditing(true)} />
           )
         ) : activeTab === 'security' ? (
-          <SecurityTab
-            {...{
-              currentPassword,
-              setCurrentPassword,
-              newPassword,
-              setNewPassword,
-              confirmPassword,
-              setConfirmPassword,
-              showCurrent,
-              setShowCurrent,
-              showNew,
-              setShowNew,
-              showConfirm,
-              setShowConfirm,
-            }}
-            isPending={isPasswordPending}
-            onSubmit={handlePasswordSubmit}
-          />
+          <div className="space-y-6">
+            <SecurityTab
+              {...{
+                currentPassword,
+                setCurrentPassword,
+                newPassword,
+                setNewPassword,
+                confirmPassword,
+                setConfirmPassword,
+                showCurrent,
+                setShowCurrent,
+                showNew,
+                setShowNew,
+                showConfirm,
+                setShowConfirm,
+              }}
+              isPending={isPasswordPending}
+              onSubmit={handlePasswordSubmit}
+            />
+            <TwoFactorSection
+              isTwoFactorEnabled={(sUser as any)?.twoFactorEnabled ?? false}
+              onRefresh={() => window.location.reload()}
+            />
+          </div>
         ) : activeTab === 'sessions' ? (
-          <SessionsTab
-            userSessions={userSessions}
-            activeSessions={activeSessions}
-            onRevoke={handleRevokeSession}
-          />
+          <div className="space-y-6">
+            <SessionsTab
+              userSessions={userSessions}
+              activeSessions={activeSessions}
+              onRevoke={handleRevokeSession}
+            />
+          </div>
+        ) : activeTab === 'devices' ? (
+          <DevicesSection />
         ) : (
           <ActivityTab auditLogs={auditLogs} />
         )}

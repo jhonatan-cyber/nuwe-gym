@@ -49,6 +49,7 @@ interface PurchaseFormItem {
   productId: string
   quantity: number
   unitCost: string
+  batchNumber: string
 }
 
 export function PurchasesPage() {
@@ -113,6 +114,7 @@ export function PurchasesPage() {
         productId: activeProducts[0]?.id?.toString() || '',
         quantity: 1,
         unitCost: '0.00',
+        batchNumber: '',
       },
     ])
     setIsCreateOpen(true)
@@ -129,6 +131,7 @@ export function PurchasesPage() {
         productId: activeProducts[0]?.id?.toString() || '',
         quantity: 1,
         unitCost: '0.00',
+        batchNumber: '',
       },
     ])
   }
@@ -175,6 +178,7 @@ export function PurchasesPage() {
           productId: Number(item.productId),
           quantity: Number(item.quantity),
           unitCost: item.unitCost,
+          batchNumber: item.batchNumber || undefined,
         })),
       },
     })
@@ -401,6 +405,21 @@ export function PurchasesPage() {
                           handleItemChange(idx, 'unitCost', e.target.value)
                         }
                         required
+                      />
+                    </div>
+                    <div className="w-24 space-y-1">
+                      {idx === 0 && (
+                        <label className="text-xs font-semibold">
+                          Lote
+                        </label>
+                      )}
+                      <Input
+                        value={item.batchNumber}
+                        onChange={(e) =>
+                          handleItemChange(idx, 'batchNumber', e.target.value)
+                        }
+                        placeholder="Lote #"
+                        className="text-xs"
                       />
                     </div>
                     <Button

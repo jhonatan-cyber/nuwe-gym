@@ -41,6 +41,7 @@ export const BENEFIT_CATALOG = [
   { key: 'drinks', label: 'Bebidas incluidas' },
   { key: 'class_booking', label: 'Reserva de clases' },
   { key: 'access_24_7', label: 'Acceso 24/7' },
+  { key: 'family_discount', label: 'Descuento familiar' },
 ] as const
 
 export type BenefitKey = (typeof BENEFIT_CATALOG)[number]['key']
