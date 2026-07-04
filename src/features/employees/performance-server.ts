@@ -23,7 +23,7 @@ const createSchema = z.object({
 export type CreatePerformanceData = z.infer<typeof createSchema>
 
 export const createPerformance = createServerFn({ method: 'POST' })
-  .inputValidator((data) => createSchema.parse(data))
+  .validator((data) => createSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
 
@@ -39,7 +39,7 @@ export const createPerformance = createServerFn({ method: 'POST' })
   })
 
 export const getEmployeePerformances = createServerFn({ method: 'GET' })
-  .inputValidator((data) => z.object({ employeeId: uuidField }).parse(data))
+  .validator((data) => z.object({ employeeId: uuidField }).parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN'] } })
 
@@ -51,7 +51,7 @@ export const getEmployeePerformances = createServerFn({ method: 'GET' })
   })
 
 export const deletePerformance = createServerFn({ method: 'POST' })
-  .inputValidator((data) => z.object({ id: uuidField }).parse(data))
+  .validator((data) => z.object({ id: uuidField }).parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN'] } })
     await db.delete(employeePerformance).where(eq(employeePerformance.id, data.id))

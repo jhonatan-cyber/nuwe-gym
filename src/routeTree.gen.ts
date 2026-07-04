@@ -10,8 +10,10 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TvRouteImport } from './routes/tv'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as QrCheckinRouteImport } from './routes/qr-checkin'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthedUsersRouteImport } from './routes/_authed/users'
@@ -60,6 +62,11 @@ const TvRoute = TvRouteImport.update({
   path: '/tv',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const QrCheckinRoute = QrCheckinRouteImport.update({
   id: '/qr-checkin',
   path: '/qr-checkin',
@@ -68,6 +75,11 @@ const QrCheckinRoute = QrCheckinRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthedRoute = AuthedRouteImport.update({
@@ -284,8 +296,10 @@ const AuthedAdminUsersRoute = AuthedAdminUsersRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/qr-checkin': typeof QrCheckinRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/tv': typeof TvRoute
   '/audit-logs': typeof AuthedAuditLogsRoute
   '/backup': typeof AuthedBackupRoute
@@ -330,8 +344,10 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/qr-checkin': typeof QrCheckinRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/tv': typeof TvRoute
   '/audit-logs': typeof AuthedAuditLogsRoute
   '/backup': typeof AuthedBackupRoute
@@ -378,8 +394,10 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authed': typeof AuthedRouteWithChildren
+  '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/qr-checkin': typeof QrCheckinRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/tv': typeof TvRoute
   '/_authed/audit-logs': typeof AuthedAuditLogsRoute
   '/_authed/backup': typeof AuthedBackupRoute
@@ -426,8 +444,10 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/forgot-password'
     | '/login'
     | '/qr-checkin'
+    | '/reset-password'
     | '/tv'
     | '/audit-logs'
     | '/backup'
@@ -472,8 +492,10 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/forgot-password'
     | '/login'
     | '/qr-checkin'
+    | '/reset-password'
     | '/tv'
     | '/audit-logs'
     | '/backup'
@@ -519,8 +541,10 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authed'
+    | '/forgot-password'
     | '/login'
     | '/qr-checkin'
+    | '/reset-password'
     | '/tv'
     | '/_authed/audit-logs'
     | '/_authed/backup'
@@ -567,8 +591,10 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthedRoute: typeof AuthedRouteWithChildren
+  ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
   QrCheckinRoute: typeof QrCheckinRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   TvRoute: typeof TvRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiCronAutoRenewalsRoute: typeof ApiCronAutoRenewalsRoute
@@ -584,6 +610,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TvRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/qr-checkin': {
       id: '/qr-checkin'
       path: '/qr-checkin'
@@ -596,6 +629,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authed': {
@@ -981,8 +1021,10 @@ const AuthedRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthedRoute: AuthedRouteWithChildren,
+  ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
   QrCheckinRoute: QrCheckinRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   TvRoute: TvRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiCronAutoRenewalsRoute: ApiCronAutoRenewalsRoute,

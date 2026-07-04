@@ -60,7 +60,7 @@ const dateRangeExcelSchema = z.object({
 // ── Members ────────────────────────────────────────────────────────
 
 export const exportMembers = createServerFn({ method: 'GET' })
-  .inputValidator((data) => exportMembersSchema.parse(data))
+  .validator((data) => exportMembersSchema.parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
 
@@ -101,7 +101,7 @@ export const exportMembers = createServerFn({ method: 'GET' })
   })
 
 export const exportMembersExcel = createServerFn({ method: 'GET' })
-  .inputValidator((data) => exportMembersExcelSchema.parse(data))
+  .validator((data) => exportMembersExcelSchema.parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
 
@@ -133,7 +133,7 @@ export const exportMembersExcel = createServerFn({ method: 'GET' })
 // ── Sales ──────────────────────────────────────────────────────────
 
 export const exportSales = createServerFn({ method: 'GET' })
-  .inputValidator((data) => dateRangeSchema.parse(data))
+  .validator((data) => dateRangeSchema.parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
 
@@ -182,7 +182,7 @@ export const exportSales = createServerFn({ method: 'GET' })
   })
 
 export const exportSalesExcel = createServerFn({ method: 'GET' })
-  .inputValidator((data) => dateRangeExcelSchema.parse(data))
+  .validator((data) => dateRangeExcelSchema.parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
 
@@ -231,7 +231,7 @@ export const exportSalesExcel = createServerFn({ method: 'GET' })
 // ── Payments ───────────────────────────────────────────────────────
 
 export const exportPayments = createServerFn({ method: 'GET' })
-  .inputValidator((data) => dateRangeSchema.parse(data))
+  .validator((data) => dateRangeSchema.parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
 
@@ -267,7 +267,7 @@ export const exportPayments = createServerFn({ method: 'GET' })
   })
 
 export const exportPaymentsExcel = createServerFn({ method: 'GET' })
-  .inputValidator((data) => dateRangeExcelSchema.parse(data))
+  .validator((data) => dateRangeExcelSchema.parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
 
@@ -303,7 +303,7 @@ export const exportPaymentsExcel = createServerFn({ method: 'GET' })
 // ── Check-ins ──────────────────────────────────────────────────────
 
 export const exportCheckIns = createServerFn({ method: 'GET' })
-  .inputValidator((data) => dateRangeSchema.parse(data))
+  .validator((data) => dateRangeSchema.parse(data))
   .handler(async ({ data }) => {
     await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] },
@@ -339,7 +339,7 @@ export const exportCheckIns = createServerFn({ method: 'GET' })
   })
 
 export const exportCheckInsExcel = createServerFn({ method: 'GET' })
-  .inputValidator((data) => dateRangeExcelSchema.parse(data))
+  .validator((data) => dateRangeExcelSchema.parse(data))
   .handler(async ({ data }) => {
     await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] },

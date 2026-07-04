@@ -12,7 +12,7 @@ import { uuidField, optionalString } from '#/shared/lib/schemas.ts'
 // ── List vacations ──
 
 export const getVacations = createServerFn({ method: 'GET' })
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z.object({ employeeId: optionalString.default('') }).parse(data),
   )
   .handler(async ({ data }) => {
@@ -33,7 +33,7 @@ export const getVacations = createServerFn({ method: 'GET' })
 // ── Get available vacation days for an employee ──
 
 export const getAvailableVacationDays = createServerFn({ method: 'GET' })
-  .inputValidator((data: unknown) => z.object({ employeeId: uuidField }).parse(data))
+  .validator((data: unknown) => z.object({ employeeId: uuidField }).parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
 
@@ -74,7 +74,7 @@ const requestVacationSchema = z.object({
 })
 
 export const requestVacation = createServerFn({ method: 'POST' })
-  .inputValidator((data: unknown) => requestVacationSchema.parse(data))
+  .validator((data: unknown) => requestVacationSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
 
@@ -131,7 +131,7 @@ const approveRejectSchema = z.object({
 })
 
 export const approveRejectVacation = createServerFn({ method: 'POST' })
-  .inputValidator((data: unknown) => approveRejectSchema.parse(data))
+  .validator((data: unknown) => approveRejectSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
 
@@ -165,7 +165,7 @@ export const approveRejectVacation = createServerFn({ method: 'POST' })
 // ── Cancel vacation ──
 
 export const cancelVacation = createServerFn({ method: 'POST' })
-  .inputValidator((data: unknown) => z.object({ id: uuidField }).parse(data))
+  .validator((data: unknown) => z.object({ id: uuidField }).parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
 

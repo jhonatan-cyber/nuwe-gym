@@ -14,7 +14,7 @@ import { branchIdField, optionalString, uuidField } from '#/shared/lib/schemas.t
 // ── List guest passes for a member ─────────────────────────────────
 
 export const getMemberGuestPasses = createServerFn({ method: 'GET' })
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z.object({ memberId: uuidField }).parse(data),
   )
   .handler(async ({ data }) => {
@@ -38,7 +38,7 @@ const createGuestPassSchema = z.object({
 })
 
 export const createGuestPass = createServerFn({ method: 'POST' })
-  .inputValidator((data) => createGuestPassSchema.parse(data))
+  .validator((data) => createGuestPassSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST'] },
@@ -89,7 +89,7 @@ export const createGuestPass = createServerFn({ method: 'POST' })
 // ── Use a guest pass (check-in) ────────────────────────────────────
 
 export const useGuestPass = createServerFn({ method: 'POST' })
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z.object({ passId: uuidField }).parse(data),
   )
   .handler(async ({ data }) => {
@@ -130,7 +130,7 @@ export const useGuestPass = createServerFn({ method: 'POST' })
 // ── Cancel a guest pass ────────────────────────────────────────────
 
 export const cancelGuestPass = createServerFn({ method: 'POST' })
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z.object({ passId: uuidField }).parse(data),
   )
   .handler(async ({ data }) => {
@@ -165,7 +165,7 @@ export const cancelGuestPass = createServerFn({ method: 'POST' })
 // ── Get available guest pass count for a member ────────────────────
 
 export const getAvailableGuestPassInfo = createServerFn({ method: 'GET' })
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z.object({ memberId: uuidField }).parse(data),
   )
   .handler(async ({ data }) => {

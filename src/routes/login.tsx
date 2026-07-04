@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { createFileRoute, redirect, useRouter } from '@tanstack/react-router'
+import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import { Eye, EyeOff, Sun, Moon, Monitor, ArrowLeft, Shield, Smartphone } from 'lucide-react'
 import { Input } from '#/shared/components/ui/input'
 import { Label } from '#/shared/components/ui/label'
@@ -29,7 +29,6 @@ export const Route = createFileRoute('/login')({
 })
 
 function LoginPage() {
-  const router = useRouter()
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
 
@@ -63,6 +62,7 @@ function LoginPage() {
   const [twoFactorRequired, setTwoFactorRequired] = useState(false)
   const [totpCode, setTotpCode] = useState('')
   const [twoFactorLoading, setTwoFactorLoading] = useState(false)
+  const navigate = useNavigate()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -73,7 +73,7 @@ function LoginPage() {
       const result = await authClient.signIn.email({ email, password })
 
       // Check if 2FA is required first (can come in data or alongside an error)
-      if ((result.data as any)?.twoFactorRedirect) {
+      if ((result.data as Record<string, unknown> | undefined)?.twoFactorRedirect) {
         setTwoFactorRequired(true)
         setLoading(false)
         return
@@ -84,7 +84,7 @@ function LoginPage() {
         return
       }
 
-      router.navigate({ to: '/dashboard' })
+      window.location.assign('/dashboard')
     } catch {
       setError('Error al iniciar sesión. Intente nuevamente.')
     } finally {
@@ -105,7 +105,7 @@ function LoginPage() {
         return
       }
 
-      router.navigate({ to: '/dashboard' })
+      window.location.assign('/dashboard')
     } catch {
       setError('Error al verificar el código. Intente nuevamente.')
     } finally {
@@ -457,6 +457,7 @@ function LoginPage() {
                 </Label>
                 <button
                   type="button"
+                  onClick={() => navigate({ to: '/forgot-password' })}
                   className="text-xs text-muted-foreground hover:text-foreground transition-colors"
                 >
                   ¿Olvidaste tu contraseña?

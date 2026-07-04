@@ -13,7 +13,7 @@ import { uuidField, optionalString } from '#/shared/lib/schemas.ts'
 // ── List payroll records ──
 
 export const getPayrollRecords = createServerFn({ method: 'GET' })
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z.object({ employeeId: optionalString.default(''), status: optionalString.default('') }).parse(data),
   )
   .handler(async ({ data }) => {
@@ -40,7 +40,7 @@ const generatePayrollSchema = z.object({
 })
 
 export const generatePayroll = createServerFn({ method: 'POST' })
-  .inputValidator((data: unknown) => generatePayrollSchema.parse(data))
+  .validator((data: unknown) => generatePayrollSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
 
@@ -184,7 +184,7 @@ const markPayrollPaidSchema = z.object({
 })
 
 export const markPayrollPaid = createServerFn({ method: 'POST' })
-  .inputValidator((data: unknown) => markPayrollPaidSchema.parse(data))
+  .validator((data: unknown) => markPayrollPaidSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
 

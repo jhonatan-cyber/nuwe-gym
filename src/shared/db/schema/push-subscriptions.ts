@@ -8,12 +8,12 @@ export const pushSubscriptions = pgTable(
     userId: text('user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
-    token: text('token').notNull(),
-    deviceInfo: text('device_info').default(''),
+    endpoint: text('endpoint').notNull(),
+    auth: text('auth').notNull(),
+    p256dh: text('p256dh').notNull(),
     createdAt: timestamp('created_at').notNull().defaultNow(),
   },
   (table) => [
     index('push_subscriptions_user_id_idx').on(table.userId),
-    index('push_subscriptions_token_idx').on(table.token),
   ],
 )

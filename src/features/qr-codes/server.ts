@@ -12,7 +12,7 @@ import { optionalString, uuidField } from '#/shared/lib/schemas.ts'
 import { validateCheckIn } from '#/features/check-ins/server.ts'
 
 export const generateMemberQR = createServerFn({ method: 'POST' })
-  .inputValidator((data) =>
+  .validator((data) =>
     z.object({ memberId: uuidField }).parse(data),
   )
   .handler(async ({ data }) => {
@@ -46,7 +46,7 @@ export const generateMemberQR = createServerFn({ method: 'POST' })
   })
 
 export const getMemberQRCode = createServerFn({ method: 'GET' })
-  .inputValidator((data) =>
+  .validator((data) =>
     z.object({ memberId: uuidField }).parse(data),
   )
   .handler(async ({ data }) => {
@@ -61,7 +61,7 @@ export const getMemberQRCode = createServerFn({ method: 'GET' })
   })
 
 export const getMembersWithQR = createServerFn({ method: 'GET' })
-  .inputValidator((data) =>
+  .validator((data) =>
     z.object({ search: optionalString }).parse(data),
   )
   .handler(async ({ data }) => {
@@ -90,7 +90,7 @@ export const getMembersWithQR = createServerFn({ method: 'GET' })
   })
 
 export const processQRCheckIn = createServerFn({ method: 'POST' })
-  .inputValidator((data) => z.object({ qrToken: z.string() }).parse(data))
+  .validator((data) => z.object({ qrToken: z.string() }).parse(data))
   .handler(async ({ data }) => {
     const member = await db.query.members.findFirst({
       where: eq(members.qrCode, data.qrToken),

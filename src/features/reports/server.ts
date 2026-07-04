@@ -18,7 +18,7 @@ const dateRangeSchema = z.object({
 })
 
 export const getFinancialReport = createServerFn({ method: 'GET' })
-  .inputValidator((data: unknown) => dateRangeSchema.parse(data))
+  .validator((data: unknown) => dateRangeSchema.parse(data))
   .handler(async ({ data }) => {
     await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST'] },
@@ -123,7 +123,7 @@ export const getFinancialReport = createServerFn({ method: 'GET' })
   })
 
 export const getAttendanceReport = createServerFn({ method: 'GET' })
-  .inputValidator((data: unknown) => dateRangeSchema.parse(data))
+  .validator((data: unknown) => dateRangeSchema.parse(data))
   .handler(async ({ data }) => {
     await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] },
@@ -162,7 +162,7 @@ export const getAttendanceReport = createServerFn({ method: 'GET' })
   })
 
 export const getSalesReport = createServerFn({ method: 'GET' })
-  .inputValidator((data: unknown) => dateRangeSchema.parse(data))
+  .validator((data: unknown) => dateRangeSchema.parse(data))
   .handler(async ({ data }) => {
     await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST'] },
@@ -222,7 +222,7 @@ export const getSalesReport = createServerFn({ method: 'GET' })
   })
 
 export const getMembersReport = createServerFn({ method: 'GET' })
-  .inputValidator((data: unknown) => dateRangeSchema.parse(data))
+  .validator((data: unknown) => dateRangeSchema.parse(data))
   .handler(async ({ data }) => {
     await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST'] },
@@ -271,7 +271,7 @@ export const getMembersReport = createServerFn({ method: 'GET' })
   })
 
 export const getAICopilotSummary = createServerFn({ method: 'GET' })
-  .inputValidator((data: unknown) => dateRangeSchema.parse(data))
+  .validator((data: unknown) => dateRangeSchema.parse(data))
   .handler(async ({ data }) => {
     await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST'] },
@@ -331,7 +331,7 @@ ${JSON.stringify(summaryData, null, 2)}`
 // ── Reporte de Comisiones por Trainer ────────────────────────────
 
 export const getCommissionsReport = createServerFn({ method: 'GET' })
-  .inputValidator((data: unknown) => dateRangeSchema.parse(data))
+  .validator((data: unknown) => dateRangeSchema.parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN'] } })
 
@@ -423,7 +423,7 @@ export const getCommissionsReport = createServerFn({ method: 'GET' })
 // ── Reporte Cross-Branch Consolidado ──────────────────────────────
 
 export const getCrossBranchReport = createServerFn({ method: 'GET' })
-  .inputValidator((data: unknown) => dateRangeSchema.parse(data))
+  .validator((data: unknown) => dateRangeSchema.parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
 
@@ -590,7 +590,7 @@ export const getCrossBranchReport = createServerFn({ method: 'GET' })
 // ── Reporte de Utilidades ─────────────────────────────────────────
 
 export const getProfitabilityReport = createServerFn({ method: 'GET' })
-  .inputValidator((data: unknown) => dateRangeSchema.parse(data))
+  .validator((data: unknown) => dateRangeSchema.parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN'] } })
 

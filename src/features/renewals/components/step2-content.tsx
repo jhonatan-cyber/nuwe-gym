@@ -56,7 +56,7 @@ export function Step2Content({
                   setFormData((prev: any) => ({
                     ...prev,
                     packageId: lastSub.packageId!,
-                    amount: lastSub.package?.price || lastSub.plan?.price || '',
+                    amount: lastSub.package?.price || '',
                   }))
                   setIsChangingPlan(false)
                 }
@@ -99,7 +99,7 @@ export function Step2Content({
                         ...prev,
                         packageId: lastSub.packageId!,
                         amount:
-                          lastSub.package?.price || lastSub.plan?.price || '',
+                          lastSub.package?.price || '',
                       }))
                     }
                     setIsChangingPlan(false)
@@ -152,17 +152,21 @@ export function Step2Content({
         ) : renewalHistory.length > 0 && renewalHistory[0] ? (
           (() => {
             const lastSub = renewalHistory[0]
+            const isActive = lastSub.status === 'ACTIVE' && new Date(lastSub.endDate) >= new Date()
+            const titleText = isActive
+              ? `Paquete Actual | ${lastSub.package?.name || 'Suscripción'}`
+              : `Último Paquete | ${lastSub.package?.name || 'Suscripción'}`
             return (
               <PlanSummaryCard
-                title={`Último Paquete | ${lastSub.package?.name || lastSub.plan?.name || 'Suscripción'}`}
-                price={lastSub.package?.price || lastSub.plan?.price || '0'}
+                title={titleText}
+                price={lastSub.package?.price || '0'}
                 durationDays={
                   lastSub.package?.durationDays ||
-                  lastSub.plan?.durationDays ||
                   30
                 }
                 startDate={new Date(lastSub.startDate)}
                 endDate={new Date(lastSub.endDate)}
+                status={isActive ? 'ACTIVE' : 'EXPIRED'}
               />
             )
           })()

@@ -17,7 +17,7 @@ export const getTvMedia = createServerFn({ method: 'GET' }).handler(async () => 
 })
 
 export const addTvMedia = createServerFn({ method: 'POST' })
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z.object({
       imageUrl: requiredString,
       caption: z.string().optional(),
@@ -34,7 +34,7 @@ export const addTvMedia = createServerFn({ method: 'POST' })
   })
 
 export const removeTvMedia = createServerFn({ method: 'POST' })
-  .inputValidator((data: unknown) => z.object({ id: requiredString }).parse(data))
+  .validator((data: unknown) => z.object({ id: requiredString }).parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN'] } })
     await db.delete(tvMedia).where(eq(tvMedia.id, data.id))
@@ -52,7 +52,7 @@ export const getTickerMessages = createServerFn({ method: 'GET' }).handler(async
 })
 
 export const addTickerMessage = createServerFn({ method: 'POST' })
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z.object({ message: requiredString, displayOrder: z.number().int().min(0).default(0) }).parse(data),
   )
   .handler(async ({ data }) => {
@@ -65,7 +65,7 @@ export const addTickerMessage = createServerFn({ method: 'POST' })
   })
 
 export const removeTickerMessage = createServerFn({ method: 'POST' })
-  .inputValidator((data: unknown) => z.object({ id: requiredString }).parse(data))
+  .validator((data: unknown) => z.object({ id: requiredString }).parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN'] } })
     await db.delete(tvTickerMessages).where(eq(tvTickerMessages.id, data.id))

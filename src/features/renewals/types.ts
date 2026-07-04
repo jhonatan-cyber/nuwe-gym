@@ -21,6 +21,5 @@ export type MemberWithSubscriptions = Awaited<
     endDate: Date
     packageId: number | null
     package?: { name: string; price: string } | null
-    plan?: { name: string; price: string } | null
   }>
 }

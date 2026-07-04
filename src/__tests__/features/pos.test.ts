@@ -6,6 +6,7 @@ import {
   createMember,
   createProduct,
   createSale,
+  createTestUser,
   cleanDatabase,
   TEST_USER_ID,
 } from '../factories.ts'
@@ -16,13 +17,27 @@ beforeAll(async () => {
 
 describe('POS — Sales', () => {
   it('should create a sale with items', async () => {
+    await createTestUser()
     const p1 = await createProduct({ name: 'Item A', salePrice: '1000.00' })
     const p2 = await createProduct({ name: 'Item B', salePrice: '2000.00' })
 
-    const sale = await createSale([
-      { productId: p1.id, quantity: 3, unitPrice: '1000.00' },
-      { productId: p2.id, quantity: 2, unitPrice: '2000.00' },
-    ])
+    const total = (3 * 1000 + 2 * 2000).toFixed(2)
+    const [sale] = await db
+      .insert(sales)
+      .values({
+        saleNumber: `POS-TEST-${Date.now()}`,
+        userId: TEST_USER_ID,
+        subtotal: '0',
+        total,
+        status: 'COMPLETED',
+      })
+      .returning()
+
+    const itemsData = [
+      { saleId: sale.id, productId: p1.id, quantity: 3, unitPrice: '1000.00', subtotal: '3000.00' },
+      { saleId: sale.id, productId: p2.id, quantity: 2, unitPrice: '2000.00', subtotal: '4000.00' },
+    ]
+    await db.insert(saleItems).values(itemsData)
 
     expect(sale).toBeDefined()
     expect(sale.userId).toBe(TEST_USER_ID)

@@ -30,6 +30,7 @@ import { useCurrentBranch } from '#/shared/hooks/use-current-branch.ts'
 import { Button } from '#/shared/components/ui/button'
 import { LoadingButton } from '#/shared/components/ui/loading-button'
 import { Input } from '#/shared/components/ui/input'
+import { NumericInput } from '#/shared/components/ui/numeric-input'
 import { Textarea } from '#/shared/components/ui/textarea'
 import { Badge } from '#/shared/components/ui/badge'
 import { PageHeader } from '#/shared/components/page-header'
@@ -471,9 +472,7 @@ export function ProductsPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
                 <label className="text-sm font-medium">Precio Compra *</label>
-                <Input
-                  type="number"
-                  step="0.01"
+                <NumericInput
                   value={purchasePrice}
                   onChange={(e) => setPurchasePrice(e.target.value)}
                   required
@@ -481,9 +480,7 @@ export function ProductsPage() {
               </div>
               <div className="space-y-1">
                 <label className="text-sm font-medium">Precio Venta *</label>
-                <Input
-                  type="number"
-                  step="0.01"
+                <NumericInput
                   value={salePrice}
                   onChange={(e) => setSalePrice(e.target.value)}
                   required

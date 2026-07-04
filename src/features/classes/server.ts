@@ -14,7 +14,7 @@ import { z } from 'zod'
 import { branchIdField, dayOfWeek, optionalString, positiveIntMin1, requiredString, timeString, uuidField } from '#/shared/lib/schemas.ts'
 
 export const getClasses = createServerFn({ method: 'GET' })
-  .inputValidator(
+  .validator(
     z.object({ branchId: z.string().uuid().optional() }).optional(),
   )
   .handler(async ({ data }) => {
@@ -27,7 +27,7 @@ export const getClasses = createServerFn({ method: 'GET' })
   })
 
 export const getClass = createServerFn({ method: 'GET' })
-  .inputValidator((data: { id: string }) => data)
+  .validator((data: { id: string }) => data)
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
     return await db.query.classes.findFirst({
@@ -45,7 +45,7 @@ const createClassSchema = z.object({
 })
 
 export const createClass = createServerFn({ method: 'POST' })
-  .inputValidator((data) => createClassSchema.parse(data))
+  .validator((data) => createClassSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST'] },
@@ -79,7 +79,7 @@ const updateClassSchema = z.object({
 })
 
 export const updateClass = createServerFn({ method: 'POST' })
-  .inputValidator((data) => updateClassSchema.parse(data))
+  .validator((data) => updateClassSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST'] },
@@ -108,7 +108,7 @@ export const updateClass = createServerFn({ method: 'POST' })
 const deleteClassSchema = z.object({ id: uuidField })
 
 export const deleteClass = createServerFn({ method: 'POST' })
-  .inputValidator((data) => deleteClassSchema.parse(data))
+  .validator((data) => deleteClassSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
     await db.delete(classes).where(eq(classes.id, data.id))
@@ -131,7 +131,7 @@ const addScheduleSchema = z.object({
 })
 
 export const addSchedule = createServerFn({ method: 'POST' })
-  .inputValidator((data) => addScheduleSchema.parse(data))
+  .validator((data) => addScheduleSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST'] },
@@ -159,7 +159,7 @@ export const addSchedule = createServerFn({ method: 'POST' })
 const removeScheduleSchema = z.object({ id: uuidField })
 
 export const removeSchedule = createServerFn({ method: 'POST' })
-  .inputValidator((data) => removeScheduleSchema.parse(data))
+  .validator((data) => removeScheduleSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST'] },
@@ -181,7 +181,7 @@ const getBookingsSchema = z.object({
 })
 
 export const getBookings = createServerFn({ method: 'GET' })
-  .inputValidator((data) => getBookingsSchema.parse(data))
+  .validator((data) => getBookingsSchema.parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
     const conditions: SQL[] = []
@@ -227,7 +227,7 @@ const createBookingSchema = z.object({
 })
 
 export const createBooking = createServerFn({ method: 'POST' })
-  .inputValidator((data) => createBookingSchema.parse(data))
+  .validator((data) => createBookingSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST'] },
@@ -275,7 +275,7 @@ export const createBooking = createServerFn({ method: 'POST' })
 const cancelBookingSchema = z.object({ id: uuidField })
 
 export const cancelBooking = createServerFn({ method: 'POST' })
-  .inputValidator((data) => cancelBookingSchema.parse(data))
+  .validator((data) => cancelBookingSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST'] },
@@ -304,7 +304,7 @@ export const cancelBooking = createServerFn({ method: 'POST' })
 const markAttendanceSchema = z.object({ id: uuidField })
 
 export const markAttendance = createServerFn({ method: 'POST' })
-  .inputValidator((data) => markAttendanceSchema.parse(data))
+  .validator((data) => markAttendanceSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] },
@@ -325,7 +325,7 @@ export const markAttendance = createServerFn({ method: 'POST' })
   })
 
 export const getWeeklySchedule = createServerFn({ method: 'GET' })
-  .inputValidator(
+  .validator(
     z.object({ branchId: z.string().uuid().optional() }).optional(),
   )
   .handler(async ({ data }) => {
@@ -345,7 +345,7 @@ export const getWeeklySchedule = createServerFn({ method: 'GET' })
 // ── Lista de espera ───────────────────────────────────────────────
 
 export const getWaitlist = createServerFn({ method: 'GET' })
-  .inputValidator(z.object({ classScheduleId: uuidField }))
+  .validator(z.object({ classScheduleId: uuidField }))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
     return await db.query.classWaitlist.findMany({
@@ -361,7 +361,7 @@ const addToWaitlistSchema = z.object({
 })
 
 export const addToWaitlist = createServerFn({ method: 'POST' })
-  .inputValidator((data) => addToWaitlistSchema.parse(data))
+  .validator((data) => addToWaitlistSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
 
@@ -410,7 +410,7 @@ export const addToWaitlist = createServerFn({ method: 'POST' })
 const removeFromWaitlistSchema = z.object({ id: uuidField })
 
 export const removeFromWaitlist = createServerFn({ method: 'POST' })
-  .inputValidator((data) => removeFromWaitlistSchema.parse(data))
+  .validator((data) => removeFromWaitlistSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
     const [entry] = await db
@@ -433,7 +433,7 @@ export const removeFromWaitlist = createServerFn({ method: 'POST' })
  * Retorna el nuevo booking o null si la lista estaba vacía.
  */
 export const promoteFromWaitlist = createServerFn({ method: 'POST' })
-  .inputValidator(z.object({ classScheduleId: uuidField }))
+  .validator(z.object({ classScheduleId: uuidField }))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
 

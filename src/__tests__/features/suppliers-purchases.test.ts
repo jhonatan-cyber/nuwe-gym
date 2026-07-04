@@ -7,7 +7,9 @@ import {
   createSupplier,
   createProduct,
   createPurchase,
+  createTestUser,
   cleanDatabase,
+  TEST_USER_ID,
 } from '../factories.ts'
 
 beforeAll(async () => {
@@ -317,11 +319,28 @@ describe('Suppliers', () => {
 
 describe('Purchases', () => {
   it('should create a purchase with items', async () => {
+    await createTestUser()
     const supplier = await createSupplier()
     const product = await createProduct()
-    const items = [{ productId: product.id, quantity: 5, unitCost: '1000.00' }]
 
-    const purchase = await createPurchase(items, { supplierId: supplier.id })
+    const [purchase] = await db
+      .insert(purchases)
+      .values({
+        supplierId: supplier.id,
+        purchaseNumber: `PUR-TEST-${Date.now()}`,
+        subtotal: '5000.00',
+        total: '5000.00',
+        createdByUserId: TEST_USER_ID,
+      })
+      .returning()
+
+    await db.insert(purchaseItems).values({
+      purchaseId: purchase.id,
+      productId: product.id,
+      quantity: 5,
+      unitCost: '1000.00',
+      subtotal: '5000.00',
+    })
 
     expect(purchase).toBeDefined()
     expect(purchase.supplierId).toBe(supplier.id)

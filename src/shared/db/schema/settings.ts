@@ -40,14 +40,6 @@ export const settings = pgTable(
     waTemplateBirthdaySid: text('wa_template_birthday_sid').default(''),
     waTemplateInactiveSid: text('wa_template_inactive_sid').default(''),
     waTemplateClassReminderSid: text('wa_template_class_reminder_sid').default(''),
-    // Firebase Cloud Messaging config
-    firebaseApiKey: text('firebase_api_key').default(''),
-    firebaseAuthDomain: text('firebase_auth_domain').default(''),
-    firebaseProjectId: text('firebase_project_id').default(''),
-    firebaseMessagingSenderId: text('firebase_messaging_sender_id').default(''),
-    firebaseAppId: text('firebase_app_id').default(''),
-    firebaseVapidKey: text('firebase_vapid_key').default(''),
-    firebaseServiceAccount: text('firebase_service_account').default(''),
     // Fiscal data for invoices
     companyTaxId: text('company_tax_id').default(''),
     companyLegalName: text('company_legal_name').default(''),

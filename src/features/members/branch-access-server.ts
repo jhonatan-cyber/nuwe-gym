@@ -16,7 +16,7 @@ const getMemberBranchesSchema = z.object({
 })
 
 export const getMemberBranches = createServerFn({ method: 'GET' })
-  .inputValidator((data) => getMemberBranchesSchema.parse(data))
+  .validator((data) => getMemberBranchesSchema.parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
     return await db.query.memberBranches.findMany({
@@ -33,7 +33,7 @@ const setMemberBranchesSchema = z.object({
 })
 
 export const setMemberBranches = createServerFn({ method: 'POST' })
-  .inputValidator((data) => setMemberBranchesSchema.parse(data))
+  .validator((data) => setMemberBranchesSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
 

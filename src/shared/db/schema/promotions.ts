@@ -8,6 +8,14 @@ import {
   boolean,
 } from 'drizzle-orm/pg-core'
 
+export type PromoConditions = {
+  minPurchases?: number
+  maxPurchases?: number
+  minCheckIns?: number
+  memberTierMin?: number
+  memberMonthsMin?: number
+}
+
 export const promotions = pgTable('promotions', {
   id: uuid('id').defaultRandom().primaryKey(),
   name: text('name').notNull(),
@@ -15,7 +23,7 @@ export const promotions = pgTable('promotions', {
   type: text('type').notNull().default('DISCOUNT'), // DISCOUNT, BONUS_POINTS
   discountPercent: integer('discount_percent').default(0),
   rewardPoints: integer('reward_points').default(0),
-  conditions: jsonb('conditions').default({}),
+  conditions: jsonb('conditions').$type<PromoConditions>().default({}),
   startDate: timestamp('start_date'),
   endDate: timestamp('end_date'),
   autoApply: boolean('auto_apply').notNull().default(false),

@@ -14,7 +14,7 @@ export const getActivePackages = createServerFn({ method: 'GET' }).handler(
 )
 
 export const createPackage = createServerFn({ method: 'POST' })
-  .inputValidator((data) => createPackageSchema.parse(data))
+  .validator((data) => createPackageSchema.parse(data))
   .handler(async ({ data }) => {
     console.log('[packages] createPackage input:', JSON.stringify(data, null, 2))
 
@@ -49,7 +49,7 @@ export const createPackage = createServerFn({ method: 'POST' })
   })
 
 export const updatePackage = createServerFn({ method: 'POST' })
-  .inputValidator((data) => updatePackageSchema.parse(data))
+  .validator((data) => updatePackageSchema.parse(data))
   .handler(async ({ data }) => {
     console.log('[packages] updatePackage input:', JSON.stringify({ id: data.id, name: data.name }, null, 2))
 
@@ -78,7 +78,7 @@ export const updatePackage = createServerFn({ method: 'POST' })
   })
 
 export const deletePackage = createServerFn({ method: 'POST' })
-  .inputValidator((data) => deletePackageSchema.parse(data))
+  .validator((data) => deletePackageSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST'] },

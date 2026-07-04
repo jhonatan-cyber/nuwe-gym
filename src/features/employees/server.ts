@@ -23,7 +23,7 @@ export const getEmployees = createServerFn({ method: 'GET' }).handler(
 // ── Get by ID ──
 
 export const getEmployee = createServerFn({ method: 'GET' })
-  .inputValidator((data: unknown) => z.object({ id: uuidField }).parse(data))
+  .validator((data: unknown) => z.object({ id: uuidField }).parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN'] } })
     return await db.query.employees.findFirst({
@@ -56,7 +56,7 @@ const createEmployeeSchema = z.object({
 })
 
 export const createEmployee = createServerFn({ method: 'POST' })
-  .inputValidator((data: unknown) => createEmployeeSchema.parse(data))
+  .validator((data: unknown) => createEmployeeSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
 
@@ -114,7 +114,7 @@ const updateEmployeeSchema = z.object({
 })
 
 export const updateEmployee = createServerFn({ method: 'POST' })
-  .inputValidator((data: unknown) => updateEmployeeSchema.parse(data))
+  .validator((data: unknown) => updateEmployeeSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
 
@@ -160,7 +160,7 @@ export const updateEmployee = createServerFn({ method: 'POST' })
 // ── Delete ──
 
 export const deleteEmployee = createServerFn({ method: 'POST' })
-  .inputValidator((data: unknown) => z.object({ id: uuidField }).parse(data))
+  .validator((data: unknown) => z.object({ id: uuidField }).parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
     const [employee] = await db

@@ -28,6 +28,7 @@ import {
   CardTitle,
 } from '#/shared/components/ui/card'
 import { Input } from '#/shared/components/ui/input'
+import { NumericInput } from '#/shared/components/ui/numeric-input'
 import { Badge } from '#/shared/components/ui/badge'
 import { LoadingSpinner } from '#/shared/components/ui/loading-spinner'
 import { EmptyState } from '#/shared/components/ui/empty-state'
@@ -626,8 +627,7 @@ export function POSPage() {
               <span className="text-xs font-semibold flex items-center gap-1">
                 <Tag className="size-3 text-muted-foreground" /> Descuento ($):
               </span>
-              <Input
-                type="number"
+              <NumericInput
                 className="w-24 h-8 text-right text-xs"
                 value={discount}
                 onChange={(e) => setDiscount(e.target.value)}

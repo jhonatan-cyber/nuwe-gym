@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { FileText, Plus, X, Trash2, Calendar, DollarSign, Clock } from 'lucide-react'
 import { Button } from '#/shared/components/ui/button'
 import { Input } from '#/shared/components/ui/input'
+import { NumericInput } from '#/shared/components/ui/numeric-input'
 import { Textarea } from '#/shared/components/ui/textarea'
 import { LoadingButton } from '#/shared/components/ui/loading-button'
 import { Badge } from '#/shared/components/ui/badge'
@@ -127,7 +128,7 @@ export function ContractsSection({ employeeId }: ContractsSectionProps) {
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-bold uppercase text-muted-foreground">Salario</label>
-              <Input type="number" value={form.salary} onChange={(e) => setForm((p) => ({ ...p, salary: e.target.value }))} className="rounded-xl h-8 text-xs" />
+              <NumericInput value={form.salary} onChange={(e) => setForm((p) => ({ ...p, salary: e.target.value }))} className="rounded-xl h-8 text-xs" />
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-bold uppercase text-muted-foreground">Horario laboral</label>

@@ -15,24 +15,24 @@ function TableSkeletonContent({ rows = 3, columns = 4 }: { rows: number; columns
     <div className="w-full">
       {/* Header skeleton */}
       <div className="flex items-center gap-4 px-4 py-3 border-b dark:border-white/5 border-black/5">
-        {Array.from({ length: columns }).map((_, i) => (
+        {Array.from({ length: columns }).map((_, columnIdx) => (
           <Skeleton
-            key={`hdr-${i}`}
+            key={`hdr-${columnIdx}`}
             className={cn(
               'h-4 rounded-full animate-pulse',
-              i === 0 ? 'w-[180px]' : i === 1 ? 'w-[120px]' : i === 2 ? 'w-[80px]' : 'w-[60px]',
+              columnIdx === 0 ? 'w-[180px]' : columnIdx === 1 ? 'w-[120px]' : columnIdx === 2 ? 'w-[80px]' : 'w-[60px]',
             )}
-            style={{ animationDelay: `${i * 60}ms` }}
+            style={{ animationDelay: `${columnIdx * 60}ms` }}
           />
         ))}
       </div>
       {/* Row skeletons */}
-      {Array.from({ length: rows }).map((_, rowIdx) => (
+      {Array.from({ length: rows }).map((_r, rowIdx) => (
         <div
           key={`row-${rowIdx}`}
           className="flex items-center gap-4 px-4 py-3.5 border-b dark:border-white/5 border-black/5 last:border-b-0"
         >
-          {Array.from({ length: columns }).map((_, colIdx) => {
+          {Array.from({ length: columns }).map((_c, colIdx) => {
             const widths = ['w-[140px]', 'w-[90px]', 'w-[70px]', 'w-[50px]']
             return (
               <div key={colIdx} className="flex items-center gap-2 flex-1">

@@ -121,7 +121,7 @@ const backupDataSchema = z.object({
 })
 
 export const exportDatabase = createServerFn({ method: 'GET' })
-  .inputValidator(() => ({}))
+  .validator(() => ({}))
   .handler(async () => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
 
@@ -160,7 +160,7 @@ export const exportDatabase = createServerFn({ method: 'GET' })
   })
 
 export const importDatabase = createServerFn({ method: 'POST' })
-  .inputValidator((input: unknown) => backupDataSchema.parse(input))
+  .validator((input: unknown) => backupDataSchema.parse(input))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
 
@@ -225,7 +225,7 @@ const backupSettingsSchema = z.object({
 })
 
 export const saveBackupSettings = createServerFn({ method: 'POST' })
-  .inputValidator((input: unknown) => backupSettingsSchema.parse(input))
+  .validator((input: unknown) => backupSettingsSchema.parse(input))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
 

@@ -20,7 +20,7 @@ export const getSuppliers = createServerFn({ method: 'GET' }).handler(
 )
 
 export const getSupplierById = createServerFn({ method: 'GET' })
-  .inputValidator((id) => uuidField.parse(id))
+  .validator((id) => uuidField.parse(id))
   .handler(async ({ data: id }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
     const result = await db
@@ -40,7 +40,7 @@ const createSupplierSchema = z.object({
 })
 
 export const createSupplier = createServerFn({ method: 'POST' })
-  .inputValidator((data) => createSupplierSchema.parse(data))
+  .validator((data) => createSupplierSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
     const [supplier] = await db.insert(suppliers).values(data).returning()
@@ -65,7 +65,7 @@ const updateSupplierSchema = z.object({
 })
 
 export const updateSupplier = createServerFn({ method: 'POST' })
-  .inputValidator((data) => updateSupplierSchema.parse(data))
+  .validator((data) => updateSupplierSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
     const [supplier] = await db
@@ -84,7 +84,7 @@ export const updateSupplier = createServerFn({ method: 'POST' })
   })
 
 export const deleteSupplier = createServerFn({ method: 'POST' })
-  .inputValidator((data) => z.object({ id: uuidField, name: requiredString }).parse(data))
+  .validator((data) => z.object({ id: uuidField, name: requiredString }).parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
 
@@ -105,7 +105,7 @@ export const deleteSupplier = createServerFn({ method: 'POST' })
   })
 
 export const getSupplierPurchases = createServerFn({ method: 'GET' })
-  .inputValidator((id) => uuidField.parse(id))
+  .validator((id) => uuidField.parse(id))
   .handler(async ({ data: supplierId }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
 

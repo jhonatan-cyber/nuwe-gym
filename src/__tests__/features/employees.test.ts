@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, vi } from 'vitest'
+import { describe, it, expect, beforeAll } from 'vitest'
 import { db } from '#/shared/db/index.ts'
 import { employees } from '#/shared/db/schema/employees.ts'
 import { employeeAttendance } from '#/shared/db/schema/employee-attendance.ts'
@@ -6,7 +6,6 @@ import { employeeSchedules } from '#/shared/db/schema/employee-schedules.ts'
 import { employeeVacations } from '#/shared/db/schema/employee-vacations.ts'
 import { payroll } from '#/shared/db/schema/payroll.ts'
 import { employeeBonuses } from '#/shared/db/schema/employee-bonuses.ts'
-import { users } from '#/shared/db/schema/auth.ts'
 import { branches } from '#/shared/db/schema/branches.ts'
 import { eq, and, isNull, gte, lte } from 'drizzle-orm'
 import {
@@ -90,16 +89,16 @@ describe('Employees CRUD', () => {
   })
 
   it('should query employees filtered by branch', async () => {
-    const { employees: emps } = await seedMultipleEmployees(3)
+    const { employees: empsList } = await seedMultipleEmployees(3)
     const found = await db.query.employees.findMany({
-      where: eq(employees.branchId, emps[0].branchId),
+      where: eq(employees.branchId, empsList[0].branchId),
     })
     expect(found.length).toBeGreaterThanOrEqual(3)
-    found.forEach((e) => expect(e.branchId).toBe(emps[0].branchId))
+    found.forEach((e) => expect(e.branchId).toBe(empsList[0].branchId))
   })
 
   it('should filter employees by position', async () => {
-    const { employees: emps } = await seedMultipleEmployees(3)
+    await seedMultipleEmployees(3)
     const admins = await db.query.employees.findMany({
       where: eq(employees.position, 'ADMIN'),
     })
@@ -150,7 +149,6 @@ describe('Employee Attendance', () => {
         date: now,
         clockIn: now,
         status: 'PRESENT',
-        createdByUserId: TEST_USER_ID,
       })
       .returning()
 
@@ -170,7 +168,6 @@ describe('Employee Attendance', () => {
         date: now,
         clockIn: new Date(now.getTime() - 8 * 60 * 60 * 1000), // 8h ago
         status: 'PRESENT',
-        createdByUserId: TEST_USER_ID,
       })
       .returning()
 
@@ -195,7 +192,6 @@ describe('Employee Attendance', () => {
         date: new Date(),
         clockIn: new Date(), // clock_in is NOT NULL
         status: 'ABSENT',
-        createdByUserId: TEST_USER_ID,
       })
       .returning()
 
@@ -212,7 +208,6 @@ describe('Employee Attendance', () => {
         date: now,
         clockIn: now,
         status: 'LATE',
-        createdByUserId: TEST_USER_ID,
       })
       .returning()
 
@@ -234,7 +229,6 @@ describe('Employee Attendance', () => {
         date: day,
         clockIn: day,
         status: 'PRESENT',
-        createdByUserId: TEST_USER_ID,
       })
     }
 
@@ -256,7 +250,6 @@ describe('Employee Attendance', () => {
       date: today,
       clockIn: today,
       status: 'PRESENT',
-      createdByUserId: TEST_USER_ID,
     })
     // Second insert same day should throw (unique constraint if it exists, or just creates a second record)
     // Since there's no unique constraint on (employeeId, date) in the schema,
@@ -266,7 +259,6 @@ describe('Employee Attendance', () => {
       date: today,
       clockIn: today,
       status: 'LATE',
-      createdByUserId: TEST_USER_ID,
     })
 
     const records = await db.query.employeeAttendance.findMany({
@@ -291,7 +283,6 @@ describe('Employee Attendance', () => {
         date: now,
         clockIn: new Date(now.getTime() - 9 * 60 * 60 * 1000), // 9h ago
         status: 'PRESENT',
-        createdByUserId: TEST_USER_ID,
       })
       .returning()
 
@@ -401,9 +392,9 @@ describe('Employee Schedules', () => {
   })
 
   it('should query schedules by day of week', async () => {
-    const { employees: emps } = await seedMultipleEmployees(3)
+    const { employees: empsList } = await seedMultipleEmployees(3)
     // Add Monday schedules for all
-    for (const emp of emps) {
+    for (const emp of empsList) {
       await db.insert(employeeSchedules).values({
         employeeId: emp.id,
         dayOfWeek: 1,
@@ -732,8 +723,8 @@ describe('Payroll', () => {
   })
 
   it('should aggregate payroll stats', async () => {
-    const { employees: emps } = await seedMultipleEmployees(3)
-    for (const emp of emps) {
+    const results = await seedMultipleEmployees(3)
+    for (const emp of results.employees) {
       await db.insert(payroll).values({
         employeeId: emp.id,
         periodStart: new Date('2025-06-01'),
@@ -907,7 +898,6 @@ describe('Data Integrity', () => {
       date: new Date(),
       clockIn: new Date(),
       status: 'PRESENT',
-      createdByUserId: TEST_USER_ID,
     })
     await db.insert(employeeSchedules).values({
       employeeId: employee.id,

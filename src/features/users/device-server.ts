@@ -24,7 +24,7 @@ const trustDeviceSchema = z.object({
 })
 
 export const toggleTrustDevice = createServerFn({ method: 'POST' })
-  .inputValidator((data) => trustDeviceSchema.parse(data))
+  .validator((data) => trustDeviceSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] },
@@ -47,7 +47,7 @@ const removeDeviceSchema = z.object({
 })
 
 export const removeDevice = createServerFn({ method: 'POST' })
-  .inputValidator((data) => removeDeviceSchema.parse(data))
+  .validator((data) => removeDeviceSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] },

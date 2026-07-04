@@ -357,7 +357,7 @@ const getDailySalesSummarySchema = z.object({
 })
 
 export const getDailySalesSummary = createServerFn({ method: 'GET' })
-  .inputValidator((data) => getDailySalesSummarySchema.parse(data))
+  .validator((data) => getDailySalesSummarySchema.parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
 
@@ -397,7 +397,7 @@ const getRecentSalesSchema = z.object({
 })
 
 export const getRecentSales = createServerFn({ method: 'GET' })
-  .inputValidator((data) => getRecentSalesSchema.parse(data))
+  .validator((data) => getRecentSalesSchema.parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
     return await db.query.sales.findMany({
@@ -423,7 +423,7 @@ const getSaleStatsSchema = z.object({
 })
 
 export const getSaleStats = createServerFn({ method: 'GET' })
-  .inputValidator((data) => getSaleStatsSchema.parse(data))
+  .validator((data) => getSaleStatsSchema.parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
 
@@ -472,7 +472,7 @@ const createSaleSchema = z.object({
 })
 
 export const createSale = createServerFn({ method: 'POST' })
-  .inputValidator((data) => createSaleSchema.parse(data))
+  .validator((data) => createSaleSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST'] },

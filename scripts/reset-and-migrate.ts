@@ -1,5 +1,3 @@
-import { readFileSync } from 'node:fs'
-import { resolve } from 'node:path'
 import pg from 'pg'
 
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL })

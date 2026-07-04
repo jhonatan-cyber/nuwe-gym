@@ -12,7 +12,7 @@ import { z } from 'zod'
 import { branchIdField, moneyString, optionalString, positiveNumber, uuidField } from '#/shared/lib/schemas.ts'
 
 export const getPurchases = createServerFn({ method: 'GET' })
-  .inputValidator(
+  .validator(
     z.object({ branchId: branchIdField }).optional(),
   )
   .handler(async ({ data }) => {
@@ -50,7 +50,7 @@ const createPurchaseSchema = z.object({
 })
 
 export const createPurchase = createServerFn({ method: 'POST' })
-  .inputValidator((data) => createPurchaseSchema.parse(data))
+  .validator((data) => createPurchaseSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
 

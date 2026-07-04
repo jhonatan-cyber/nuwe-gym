@@ -1,4 +1,5 @@
 import pg from 'pg'
+
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL })
 
 await pool.query(`INSERT INTO badges (name, description, icon, requirement, reward_points, sort_order) VALUES

@@ -18,7 +18,7 @@ const getMembershipPaymentsSchema = z.object({
 })
 
 export const getMembershipPayments = createServerFn({ method: 'GET' })
-  .inputValidator((data) => getMembershipPaymentsSchema.parse(data))
+  .validator((data) => getMembershipPaymentsSchema.parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
     const memberIds = data.branchId
@@ -31,7 +31,6 @@ export const getMembershipPayments = createServerFn({ method: 'GET' })
         member: true,
         subscription: {
           with: {
-            plan: true,
             package: true,
           },
         },
@@ -50,7 +49,7 @@ const createDirectPaymentSchema = z.object({
 })
 
 export const createDirectPayment = createServerFn({ method: 'POST' })
-  .inputValidator((data) => createDirectPaymentSchema.parse(data))
+  .validator((data) => createDirectPaymentSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST'] },

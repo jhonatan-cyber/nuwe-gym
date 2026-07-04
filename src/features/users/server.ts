@@ -17,7 +17,7 @@ export const getUsers = createServerFn({ method: 'GET' }).handler(async () => {
 })
 
 export const getUserById = createServerFn({ method: 'GET' })
-  .inputValidator((userId) => z.string().parse(userId))
+  .validator((userId) => z.string().parse(userId))
   .handler(async ({ data: userId }) => {
     await requireRole({ data: { roles: ['ADMIN'] } })
 
@@ -57,7 +57,7 @@ const updateUserRoleSchema = z.object({
 })
 
 export const updateUserRole = createServerFn({ method: 'POST' })
-  .inputValidator((data) => updateUserRoleSchema.parse(data))
+  .validator((data) => updateUserRoleSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
     const [user] = await db
@@ -89,7 +89,7 @@ const createStaffUserSchema = z.object({
 })
 
 export const createStaffUser = createServerFn({ method: 'POST' })
-  .inputValidator((data) => createStaffUserSchema.parse(data))
+  .validator((data) => createStaffUserSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
     const request = getRequest()
@@ -170,7 +170,7 @@ const updateUserSchema = z.object({
 })
 
 export const updateUser = createServerFn({ method: 'POST' })
-  .inputValidator((data) => updateUserSchema.parse(data))
+  .validator((data) => updateUserSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
 
@@ -227,7 +227,7 @@ const resetPasswordSchema = z.object({
 })
 
 export const resetUserPassword = createServerFn({ method: 'POST' })
-  .inputValidator((data) => resetPasswordSchema.parse(data))
+  .validator((data) => resetPasswordSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
     const request = getRequest()
@@ -259,7 +259,7 @@ export const resetUserPassword = createServerFn({ method: 'POST' })
   })
 
 export const revokeSession = createServerFn({ method: 'POST' })
-  .inputValidator((data) => revokeSessionSchema.parse(data))
+  .validator((data) => revokeSessionSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
 
@@ -281,7 +281,7 @@ export const revokeSession = createServerFn({ method: 'POST' })
   })
 
 export const deleteUser = createServerFn({ method: 'POST' })
-  .inputValidator((userId) => z.string().parse(userId))
+  .validator((userId) => z.string().parse(userId))
   .handler(async ({ data: userId }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
 

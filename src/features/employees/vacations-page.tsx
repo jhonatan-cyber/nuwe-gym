@@ -365,7 +365,7 @@ export function VacationsPage() {
             <SearchInput
               placeholder="Buscar..."
               value={search}
-              onChange={setSearch}
+              onChange={(e) => setSearch(e.target.value)}
             />
           </CardHeader>
           <CardContent className="relative z-10 p-0">

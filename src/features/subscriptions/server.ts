@@ -22,7 +22,7 @@ const getSubscriptionsSchema = z.object({
 })
 
 export const getSubscriptions = createServerFn({ method: 'GET' })
-  .inputValidator((data) => getSubscriptionsSchema.parse(data))
+  .validator((data) => getSubscriptionsSchema.parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
     const memberIds = data.branchId
@@ -55,7 +55,7 @@ const createSubscriptionSchema = z.object({
 export type CreateSubscriptionData = z.infer<typeof createSubscriptionSchema>
 
 export const createSubscription = createServerFn({ method: 'POST' })
-  .inputValidator((data) => createSubscriptionSchema.parse(data))
+  .validator((data) => createSubscriptionSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST'] },
@@ -154,7 +154,7 @@ export const createSubscription = createServerFn({ method: 'POST' })
   })
 
 export const cancelSubscription = createServerFn({ method: 'POST' })
-  .inputValidator((id) => uuidField.parse(id))
+  .validator((id) => uuidField.parse(id))
   .handler(async ({ data: id }) => {
     const session = await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST'] },
@@ -181,7 +181,7 @@ export const cancelSubscription = createServerFn({ method: 'POST' })
   })
 
 export const getSubscriptionBalance = createServerFn({ method: 'GET' })
-  .inputValidator((id) => uuidField.parse(id))
+  .validator((id) => uuidField.parse(id))
   .handler(async ({ data: id }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
 
@@ -216,7 +216,7 @@ const getSubscriptionsWithBalanceSchema = z.object({
 export const getSubscriptionsWithBalance = createServerFn({
   method: 'GET',
 })
-  .inputValidator((data) => getSubscriptionsWithBalanceSchema.parse(data))
+  .validator((data) => getSubscriptionsWithBalanceSchema.parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
 
@@ -260,7 +260,7 @@ export const getSubscriptionsWithBalance = createServerFn({
   })
 
 export const recordAdditionalPayment = createServerFn({ method: 'POST' })
-  .inputValidator((data) =>
+  .validator((data) =>
     z
       .object({
         subscriptionId: uuidField,

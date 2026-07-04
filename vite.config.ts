@@ -16,11 +16,17 @@ const config = defineConfig({
   },
   optimizeDeps: {
     include: ['use-sync-external-store/shim/with-selector'],
+    exclude: ['firebase-admin'],
   },
   ssr: {
     noExternal: ['use-sync-external-store'],
   },
-  plugins: [devtools(), tailwindcss(), tanstackStart(), viteReact()],
+  plugins: [
+    devtools(),
+    tailwindcss(),
+    tanstackStart(),
+    viteReact(),
+  ],
 })
 
 export default config

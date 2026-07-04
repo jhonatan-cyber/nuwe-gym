@@ -57,7 +57,7 @@ export const getCorporateAccounts = createServerFn({ method: 'GET' })
   })
 
 export const getCorporateAccountById = createServerFn({ method: 'GET' })
-  .inputValidator((id) => uuidField.parse(id))
+  .validator((id) => uuidField.parse(id))
   .handler(async ({ data: id }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
     const [account] = await db
@@ -96,7 +96,7 @@ const createCorporateAccountSchema = z.object({
 })
 
 export const createCorporateAccount = createServerFn({ method: 'POST' })
-  .inputValidator((data) => createCorporateAccountSchema.parse(data))
+  .validator((data) => createCorporateAccountSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
     const [account] = await db
@@ -137,7 +137,7 @@ const updateCorporateAccountSchema = z.object({
 })
 
 export const updateCorporateAccount = createServerFn({ method: 'POST' })
-  .inputValidator((data) => updateCorporateAccountSchema.parse(data))
+  .validator((data) => updateCorporateAccountSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
     const [account] = await db
@@ -168,7 +168,7 @@ export const updateCorporateAccount = createServerFn({ method: 'POST' })
   })
 
 export const deleteCorporateAccount = createServerFn({ method: 'POST' })
-  .inputValidator((data) => z.object({ id: uuidField }).parse(data))
+  .validator((data) => z.object({ id: uuidField }).parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
 
@@ -196,7 +196,7 @@ export const deleteCorporateAccount = createServerFn({ method: 'POST' })
 // ── Billing Report ──
 
 export const getCorporateBillingReport = createServerFn({ method: 'GET' })
-  .inputValidator((data) => z.object({ corporateAccountId: uuidField }).parse(data))
+  .validator((data) => z.object({ corporateAccountId: uuidField }).parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
 

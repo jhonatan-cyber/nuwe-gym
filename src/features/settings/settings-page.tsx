@@ -91,14 +91,6 @@ interface SettingsForm {
   companyTaxId: string
   companyLegalName: string
   invoiceFooter: string
-  // FCM config
-  firebaseApiKey: string
-  firebaseAuthDomain: string
-  firebaseProjectId: string
-  firebaseMessagingSenderId: string
-  firebaseAppId: string
-  firebaseVapidKey: string
-  firebaseServiceAccount: string
   // Twilio config
   twilioAccountSid: string
   twilioAuthToken: string
@@ -176,13 +168,6 @@ export function SettingsPage() {
     enableAutoRenew: false,
     resendApiKey: '',
     emailFrom: '',
-    firebaseApiKey: '',
-    firebaseAuthDomain: '',
-    firebaseProjectId: '',
-    firebaseMessagingSenderId: '',
-    firebaseAppId: '',
-    firebaseVapidKey: '',
-    firebaseServiceAccount: '',
     twilioAccountSid: '',
     twilioAuthToken: '',
     twilioWhatsAppNumber: '',
@@ -228,13 +213,6 @@ export function SettingsPage() {
         enableAutoRenew: initialData.enableAutoRenew ?? false,
         resendApiKey: initialData.resendApiKey ?? '',
         emailFrom: initialData.emailFrom ?? '',
-        firebaseApiKey: initialData.firebaseApiKey ?? '',
-        firebaseAuthDomain: initialData.firebaseAuthDomain ?? '',
-        firebaseProjectId: initialData.firebaseProjectId ?? '',
-        firebaseMessagingSenderId: initialData.firebaseMessagingSenderId ?? '',
-        firebaseAppId: initialData.firebaseAppId ?? '',
-        firebaseVapidKey: initialData.firebaseVapidKey ?? '',
-        firebaseServiceAccount: initialData.firebaseServiceAccount ?? '',
         twilioAccountSid: initialData.twilioAccountSid ?? '',
         twilioAuthToken: initialData.twilioAuthToken ?? '',
         twilioWhatsAppNumber: initialData.twilioWhatsAppNumber ?? '',
@@ -938,78 +916,6 @@ export function SettingsPage() {
                     />
                   </Field>
                 </div>
-              </div>
-              <Separator className="border-border/5" />
-              <div className="space-y-4">
-                <span className="text-sm font-black uppercase tracking-wider text-muted-foreground">
-                  Notificaciones Push (Firebase Cloud Messaging)
-                </span>
-                <p className="text-xs text-muted-foreground">
-                  Configurá Firebase Cloud Messaging para enviar notificaciones push al navegador de los usuarios.
-                  Creá un proyecto en{' '}
-                  <a href="https://console.firebase.google.com" target="_blank" rel="noopener noreferrer" className="text-primary underline underline-offset-2">
-                    Firebase Console
-                  </a>, activá Cloud Messaging, generá un par de llaves VAPID y descargá el Service Account JSON.
-                </p>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <Field label="API Key">
-                    <Input
-                      value={form.firebaseApiKey}
-                      onChange={(e) => handleChange('firebaseApiKey', e.target.value)}
-                      placeholder="AIzaSy..."
-                      className="rounded-2xl border-border/10 focus-visible:ring-primary bg-background/50"
-                    />
-                  </Field>
-                  <Field label="Auth Domain">
-                    <Input
-                      value={form.firebaseAuthDomain}
-                      onChange={(e) => handleChange('firebaseAuthDomain', e.target.value)}
-                      placeholder="proyecto.firebaseapp.com"
-                      className="rounded-2xl border-border/10 focus-visible:ring-primary bg-background/50"
-                    />
-                  </Field>
-                  <Field label="Project ID" required>
-                    <Input
-                      value={form.firebaseProjectId}
-                      onChange={(e) => handleChange('firebaseProjectId', e.target.value)}
-                      placeholder="mi-proyecto-123"
-                      className="rounded-2xl border-border/10 focus-visible:ring-primary bg-background/50"
-                    />
-                  </Field>
-                  <Field label="Messaging Sender ID">
-                    <Input
-                      value={form.firebaseMessagingSenderId}
-                      onChange={(e) => handleChange('firebaseMessagingSenderId', e.target.value)}
-                      placeholder="123456789"
-                      className="rounded-2xl border-border/10 focus-visible:ring-primary bg-background/50"
-                    />
-                  </Field>
-                  <Field label="App ID">
-                    <Input
-                      value={form.firebaseAppId}
-                      onChange={(e) => handleChange('firebaseAppId', e.target.value)}
-                      placeholder="1:123456789:web:abc..."
-                      className="rounded-2xl border-border/10 focus-visible:ring-primary bg-background/50"
-                    />
-                  </Field>
-                  <Field label="VAPID Public Key" required>
-                    <Input
-                      value={form.firebaseVapidKey}
-                      onChange={(e) => handleChange('firebaseVapidKey', e.target.value)}
-                      placeholder="BG..."
-                      className="rounded-2xl border-border/10 focus-visible:ring-primary bg-background/50 font-mono text-xs"
-                    />
-                  </Field>
-                </div>
-                <Field label="Service Account JSON">
-                  <textarea
-                    value={form.firebaseServiceAccount}
-                    onChange={(e) => handleChange('firebaseServiceAccount', e.target.value)}
-                    placeholder='{ "type": "service_account", "project_id": "...", ... }'
-                    rows={4}
-                    className="w-full rounded-2xl border border-border/10 focus-visible:ring-primary bg-background/50 px-3 py-2 text-xs font-mono resize-y"
-                  />
-                </Field>
               </div>
               <Separator className="border-border/5" />
               <div className="space-y-4">

@@ -10,6 +10,7 @@ import {
 import { Button } from '#/shared/components/ui/button'
 import { LoadingButton } from '#/shared/components/ui/loading-button'
 import { Input } from '#/shared/components/ui/input'
+import { NumericInput } from '#/shared/components/ui/numeric-input'
 import { Label } from '#/shared/components/ui/label'
 import { Textarea } from '#/shared/components/ui/textarea'
 import { ModuleLayout } from '#/shared/components/layout/module-layout.tsx'
@@ -227,10 +228,8 @@ export function PackageForm({ editingPackageId, onBack }: PackageFormProps) {
             <Label htmlFor="pkg-price" className="text-xs font-bold">
               Precio (Bs.) <span className="text-destructive">*</span>
             </Label>
-            <Input
+            <NumericInput
               id="pkg-price"
-              type="number"
-              step="0.01"
               min="0"
               required
               value={formData.price}

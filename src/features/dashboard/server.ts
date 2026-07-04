@@ -19,7 +19,7 @@ const getDashboardDataSchema = z.object({
 })
 
 export const getDashboardData = createServerFn({ method: 'GET' })
-  .inputValidator((data) => getDashboardDataSchema.parse(data))
+  .validator((data) => getDashboardDataSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] },

@@ -24,11 +24,11 @@ import { classSchedules, classBookings } from '#/shared/db/schema/classes.ts'
 import { checkIns } from '#/shared/db/schema/check-ins.ts'
 import { sendEmail, expirationEmailHtml, expiredEmailHtml, birthdayEmailHtml, classReminderEmailHtml, inactiveEmailHtml } from '#/shared/lib/email.ts'
 import { sendWhatsAppTemplate, sendSMS, templateVars_expiration, templateVars_expired, templateVars_birthday, templateVars_inactive } from '#/shared/lib/twilio.ts'
-import { sendPushToMultipleTokens } from '#/shared/lib/fcm.ts'
-import { getAllPushTokens, cleanupInvalidTokens } from '#/features/notifications/push/server.ts'
+import { pushSubscriptions } from '#/shared/db/schema/push-subscriptions.ts'
+import { sendPushToMultipleTokens } from '#/shared/lib/push.ts'
 
 export const getNotifications = createServerFn({ method: 'GET' })
-  .inputValidator((data: { page?: number; pageSize?: number }) =>
+  .validator((data: { page?: number; pageSize?: number }) =>
     z
       .object({
         page: z.number().optional().default(1),
@@ -72,7 +72,7 @@ export const getUnreadCount = createServerFn({ method: 'GET' }).handler(
 const markAsReadSchema = z.object({ id: uuidField })
 
 export const markAsRead = createServerFn({ method: 'POST' })
-  .inputValidator((data) => markAsReadSchema.parse(data))
+  .validator((data) => markAsReadSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] },
@@ -92,7 +92,7 @@ export const markAsRead = createServerFn({ method: 'POST' })
   })
 
 export const markAllAsRead = createServerFn({ method: 'POST' })
-  .inputValidator(() => ({}))
+  .validator(() => ({}))
   .handler(async () => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
     await db
@@ -108,6 +108,46 @@ export const markAllAsRead = createServerFn({ method: 'POST' })
     return { success: true }
   })
 
+const subscribePushSchema = z.object({
+  endpoint: z.string(),
+  auth: z.string(),
+  p256dh: z.string(),
+})
+
+export const subscribePush = createServerFn({ method: 'POST' })
+  .validator((data: unknown) => subscribePushSchema.parse(data))
+  .handler(async ({ data }) => {
+    const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
+    // ponytail: upsert by endpoint — one sub per device per user
+    const existing = await db
+      .select({ id: pushSubscriptions.id })
+      .from(pushSubscriptions)
+      .where(and(eq(pushSubscriptions.userId, session.user.id), eq(pushSubscriptions.endpoint, data.endpoint)))
+      .limit(1)
+
+    if (existing.length === 0) {
+      await db.insert(pushSubscriptions).values({
+        userId: session.user.id,
+        endpoint: data.endpoint,
+        auth: data.auth,
+        p256dh: data.p256dh,
+      })
+    }
+    return { success: true }
+  })
+
+const unsubscribePushSchema = z.object({ endpoint: z.string() })
+
+export const unsubscribePush = createServerFn({ method: 'POST' })
+  .validator((data: unknown) => unsubscribePushSchema.parse(data))
+  .handler(async ({ data }) => {
+    const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
+    await db
+      .delete(pushSubscriptions)
+      .where(and(eq(pushSubscriptions.userId, session.user.id), eq(pushSubscriptions.endpoint, data.endpoint)))
+    return { success: true }
+  })
+
 const EXPIRATION_TIERS = [
   { days: 1, label: 'mañana', urgency: 'urgent' },
   { days: 3, label: 'en 3 días', urgency: 'warning' },
@@ -115,7 +155,7 @@ const EXPIRATION_TIERS = [
 ] as const
 
 export const generateNotifications = createServerFn({ method: 'POST' })
-  .inputValidator(() => ({}))
+  .validator(() => ({}))
   .handler(async () => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
 
@@ -420,37 +460,29 @@ export const generateNotifications = createServerFn({ method: 'POST' })
       }
     }
 
-    // ── Send push notifications for alerts ──
-    try {
-      const allTokens = await getAllPushTokens()
-      if (allTokens.length > 0) {
-        // Send push for each new notification
-        for (const n of newNotifications) {
-          const result = await sendPushToMultipleTokens(allTokens, {
-            title: n.title,
-            body: n.message,
-            data: {
-              url: '/notifications',
-              type: n.type,
-              referenceId: n.referenceId ?? '',
-            },
-          })
-          // Clean up invalid tokens
-          if (result.invalidTokens.length > 0) {
-            await cleanupInvalidTokens({ data: { tokens: result.invalidTokens } }).catch(() => {})
-          }
-        }
-      }
-    } catch {
-      // non-blocking — push may fail but notifications still generated
-    }
-
     createAuditLog({
       ...getAuditContext(session),
       action: 'UPDATE',
       entityType: 'NOTIFICATION',
-      description: `Generó ${newNotifications.length} notificaciones, envió emails, push y comunicaciones`,
+      description: `Generó ${newNotifications.length} notificaciones, envió emails y comunicaciones`,
     })
+
+    // ponytail: one push per batch, not per notification; split by type when too noisy
+    if (newNotifications.length > 0) {
+      const allSubs = await db.select().from(pushSubscriptions)
+      if (allSubs.length > 0) {
+        const result = await sendPushToMultipleTokens(
+          allSubs.map((s) => JSON.stringify({ endpoint: s.endpoint, keys: { auth: s.auth, p256dh: s.p256dh } })),
+          { title: 'Trainix', body: `${newNotifications.length} nueva${newNotifications.length !== 1 ? 's' : ''} notificación${newNotifications.length !== 1 ? 'es' : ''}`, data: { url: '/notifications' } },
+        )
+        if (result.invalidTokens.length > 0) {
+          const endpoints = result.invalidTokens.map((t) => { try { return JSON.parse(t).endpoint } catch { return '' } }).filter(Boolean)
+          if (endpoints.length > 0) {
+            await db.delete(pushSubscriptions).where(inArray(pushSubscriptions.endpoint, endpoints))
+          }
+        }
+      }
+    }
 
     return newNotifications
   })

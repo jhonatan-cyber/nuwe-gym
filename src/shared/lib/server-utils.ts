@@ -14,7 +14,7 @@ export const getSession = createServerFn({ method: 'GET' }).handler(
 )
 
 export const requireRole = createServerFn({ method: 'GET' })
-  .inputValidator((data: { roles: UserRole[] }) => data)
+  .validator((data: { roles: UserRole[] }) => data)
   .handler(async ({ data }) => {
     const { getRequest } = await import('@tanstack/react-start/server')
     const request = getRequest()
@@ -37,7 +37,7 @@ export const requireRole = createServerFn({ method: 'GET' })
  * Uses the granular permissions defined in permissions.ts.
  */
 export const requirePermission = createServerFn({ method: 'GET' })
-  .inputValidator((data: { permission: Permission }) => data)
+  .validator((data: { permission: Permission }) => data)
   .handler(async ({ data }) => {
     const { getRequest } = await import('@tanstack/react-start/server')
     const request = getRequest()

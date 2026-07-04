@@ -1,5 +1,4 @@
 import { config } from 'dotenv'
-config({ path: ['.env.local', '.env'] })
 
 import { drizzle } from 'drizzle-orm/node-postgres'
 import pg from 'pg'
@@ -15,6 +14,10 @@ import { trainerProfiles, trainerAssignments, trainerAvailability } from './sche
 import { productCategories } from './schema/product-categories.ts'
 import { products } from './schema/products.ts'
 import { productStock } from './schema/product-stock.ts'
+import { checkIns } from './schema/check-ins.ts'
+import { loyaltyTiers } from './schema/loyalty.ts'
+
+config({ path: ['.env.local', '.env'] })
 
 const { Pool } = pg
 const pool = new Pool({ connectionString: process.env.DATABASE_URL! })
@@ -204,54 +207,80 @@ async function seed() {
   }
   console.log(`✅ 4 categorías, ${prodsData.length} productos, stock por sucursal`)
 
-  // 6. Members
-  console.log('\n👥 Creando socios...')
-  const membersData = [
-    { name: 'Pedro Gómez', doc: '42111222', phone: '11-7777-1111', email: 'pedro@email.com', gender: 'MALE', branch: 0 },
-    { name: 'Sofía Díaz', doc: '43222333', phone: '11-7777-2222', email: 'sofia@email.com', gender: 'FEMALE', branch: 0 },
-    { name: 'Martín Ruiz', doc: '44333444', phone: '11-7777-3333', email: 'martin@email.com', gender: 'MALE', branch: 1 },
-    { name: 'Camila Herrera', doc: '45444555', phone: '11-7777-4444', email: 'camila@email.com', gender: 'FEMALE', branch: 0 },
-    { name: 'Lucas Morales', doc: '46555666', phone: '11-7777-5555', email: 'lucas@email.com', gender: 'MALE', branch: 1 },
-    { name: 'Valentina Torres', doc: '47666777', phone: '11-7777-6666', email: 'valentina@email.com', gender: 'FEMALE', branch: 0 },
-    { name: 'Mateo Silva', doc: '48777888', phone: '11-7777-7777', email: 'mateo@email.com', gender: 'MALE', branch: 1 },
-    { name: 'Isabella Castro', doc: '49888999', phone: '11-7777-8888', email: 'isabella@email.com', gender: 'FEMALE', branch: 0 },
-    { name: 'Santiago Romero', doc: '50999000', phone: '11-7777-9999', email: 'santiago@email.com', gender: 'MALE', branch: 1 },
-    { name: 'Mía Vargas', doc: '51000111', phone: '11-7777-0000', email: 'mia@email.com', gender: 'FEMALE', branch: 0 },
-  ]
+  // 6. Members + loyalty tiers
+  await db.insert(loyaltyTiers).values([
+    { name: 'Bronce', minPoints: 0, color: '#cd7f32', discountPercent: 0, sortOrder: 0 },
+    { name: 'Plata', minPoints: 100, color: '#94a3b8', discountPercent: 3, sortOrder: 1 },
+    { name: 'Oro', minPoints: 300, color: '#f59e0b', discountPercent: 5, sortOrder: 2 },
+    { name: 'Platino', minPoints: 1000, color: '#6366f1', discountPercent: 10, sortOrder: 3 },
+  ])
 
+  console.log('\n👥 Creando socios...')
+  const firstNames = ['Pedro','Sofía','Martín','Camila','Lucas','Valentina','Mateo','Isabella','Santiago','Mía','Benjamín','Emilia','Thiago','Catalina','Joaquín','Abril','Felipe','Julieta','Nicolás','Renata','Sebastián','Victoria','Tomás','Martina','Samuel']
+  const lastNames = ['Gómez','Díaz','Ruiz','Herrera','Morales','Torres','Silva','Castro','Romero','Vargas','López','Fernández','García','Martínez','Rodríguez','Pérez','Giménez','Álvarez','Moreno','Muñoz','Rojas','Ortiz','Ramos','Medina','Acosta']
   const memberIds: string[] = []
+  const memberBranches: number[] = []
   const now = new Date()
-  for (let i = 0; i < membersData.length; i++) {
-    const m = membersData[i]
+
+  for (let i = 0; i < firstNames.length; i++) {
+    const name = `${firstNames[i]} ${lastNames[i]}`
+    const doc = String(42000000 + i)
+    const branch = i % 2
+    memberBranches.push(branch)
     const [mem] = await db.insert(members).values({
-      fullName: m.name, documentNumber: m.doc, phone: m.phone, email: m.email,
-      gender: m.gender, branchId: branchIds[m.branch], status: 'ACTIVE',
+      fullName: name, documentNumber: doc,
+      phone: `11-${String(7000000 + i).padStart(7, '0')}`,
+      email: `${firstNames[i].toLowerCase()}.${lastNames[i].toLowerCase()}@email.com`,
+      gender: i % 2 === 0 ? 'MALE' : 'FEMALE',
+      branchId: branchIds[branch], status: 'ACTIVE',
     }).returning()
     memberIds.push(mem.id)
 
-    // Subscription
-    const pkgId = pkgIds[i % pkgIds.length]
+    // Subscription with package-appropriate duration
+    const pkgIdx = i % pkgIds.length
+    const pkg = pkgsData[pkgIdx]
     const start = new Date(now)
-    start.setDate(start.getDate() - Math.floor(Math.random() * 20))
+    start.setDate(start.getDate() - Math.floor(Math.random() * 15) - 5)
     const end = new Date(start)
-    end.setDate(end.getDate() + 30)
+    end.setDate(end.getDate() + pkg.days)
 
+    // First 20 members active, last 5 expired/canceled
+    const subStatus = i < 20 ? 'ACTIVE' : i < 23 ? 'EXPIRED' : 'CANCELED'
     const [sub] = await db.insert(subscriptions).values({
-      memberId: mem.id, packageId: pkgId, startDate: start, endDate: end,
-      status: i < 8 ? 'ACTIVE' : 'EXPIRED',
+      memberId: mem.id, packageId: pkgIds[pkgIdx],
+      startDate: start, endDate: end, status: subStatus,
     }).returning()
 
-    // Payment
     await db.insert(membershipPayments).values({
       memberId: mem.id, subscriptionId: sub.id,
-      amount: pkgsData[i % pkgsData.length].price,
+      amount: pkg.price,
       paymentMethod: (['CASH', 'CARD', 'TRANSFER', 'QR'] as const)[i % 4],
       paymentDate: start, createdByUserId: userIds['jhonatanancasi@gmail.com'],
     })
   }
-  console.log(`✅ ${membersData.length} socios + suscripciones + pagos`)
+  console.log(`✅ ${firstNames.length} socios + suscripciones + pagos`)
 
-  // 7. Trainers
+  // 7. Check-ins
+  console.log('\n📋 Creando check-ins...')
+  const adminId = userIds['jhonatanancasi@gmail.com']
+  let checkInCount = 0
+  for (let i = 0; i < memberIds.length; i++) {
+    if (i >= 20) continue // skip expired/canceled
+    const daysBack = Math.floor(Math.random() * 14) + 1 // 1–14 days ago
+    const visits = Math.floor(Math.random() * 6) + 2    // 2–7 check-ins each
+    for (let v = 0; v < visits; v++) {
+      const d = new Date(now)
+      d.setDate(d.getDate() - daysBack + v * 2)
+      if (d > now) continue
+      await db.insert(checkIns).values({
+        memberId: memberIds[i], registeredByUserId: adminId,
+        checkedInAt: d, resultStatus: 'ALLOWED',
+        branchId: branchIds[memberBranches[i]],
+      })
+      checkInCount++
+    }
+  }
+  console.log(`✅ ${checkInCount} check-ins creados (${memberIds.filter((_, i) => i < 20).length} socios activos)`)
   console.log('\n🏋️ Creando trainers...')
   const trainerUserIds = ['trainer1@nuwegym.com', 'trainer2@nuwegym.com', 'trainer3@nuwegym.com']
   const specialties = ['Fuerza y Condicionamiento', 'CrossFit', 'Yoga y Pilates']

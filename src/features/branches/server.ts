@@ -16,7 +16,7 @@ export const getBranches = createServerFn({ method: 'GET' }).handler(
 )
 
 export const getBranch = createServerFn({ method: 'GET' })
-  .inputValidator((id: unknown) => uuidField.parse(id))
+  .validator((id: unknown) => uuidField.parse(id))
   .handler(async ({ data: id }) => {
     const result = await db
       .select()
@@ -36,7 +36,7 @@ const createBranchSchema = z.object({
 })
 
 export const createBranch = createServerFn({ method: 'POST' })
-  .inputValidator((data) => createBranchSchema.parse(data))
+  .validator((data) => createBranchSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
     const [branch] = await db.insert(branches).values(data).returning()
@@ -62,7 +62,7 @@ const updateBranchSchema = z.object({
 })
 
 export const updateBranch = createServerFn({ method: 'POST' })
-  .inputValidator((data) => updateBranchSchema.parse(data))
+  .validator((data) => updateBranchSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
     const [branch] = await db
@@ -126,7 +126,7 @@ export const getUserBranches = createServerFn({ method: 'GET' }).handler(
 )
 
 export const deleteBranch = createServerFn({ method: 'POST' })
-  .inputValidator((data) => z.object({ id: uuidField }).parse(data))
+  .validator((data) => z.object({ id: uuidField }).parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
 
@@ -158,7 +158,7 @@ export const deleteBranch = createServerFn({ method: 'POST' })
   })
 
 export const setDefaultBranch = createServerFn({ method: 'POST' })
-  .inputValidator((data) =>
+  .validator((data) =>
     z.object({ branchId: uuidField }).parse(data),
   )
   .handler(async ({ data }) => {

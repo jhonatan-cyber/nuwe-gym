@@ -104,7 +104,7 @@ const dateRangeSchema = z.object({
 })
 
 export const getTrainerCommissionsForPeriod = createServerFn({ method: 'GET' })
-  .inputValidator((data: unknown) => dateRangeSchema.parse(data))
+  .validator((data: unknown) => dateRangeSchema.parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN'] } })
 
@@ -192,7 +192,7 @@ export const getTrainerCommissionsForPeriod = createServerFn({ method: 'GET' })
 // ── Create commission bonuses from trainer commissions ──
 
 export const createCommissionBonuses = createServerFn({ method: 'POST' })
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z.object({
       periodStart: dateString,
       periodEnd: dateString,
@@ -298,7 +298,7 @@ const periodSchema = z.object({
 })
 
 export const getCommissionSummary = createServerFn({ method: 'GET' })
-  .inputValidator((data: unknown) => periodSchema.parse(data))
+  .validator((data: unknown) => periodSchema.parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN'] } })
 

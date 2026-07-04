@@ -15,7 +15,7 @@ import { z } from 'zod'
 import { branchIdField, dayOfWeek, optionalString, requiredString, uuidField } from '#/shared/lib/schemas.ts'
 
 export const getTrainers = createServerFn({ method: 'GET' })
-  .inputValidator(
+  .validator(
     z.object({ branchId: branchIdField }).optional(),
   )
   .handler(async ({ data }) => {
@@ -40,7 +40,7 @@ export const getTrainers = createServerFn({ method: 'GET' })
   })
 
 export const getTrainer = createServerFn({ method: 'GET' })
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z.object({ id: uuidField }).parse(data),
   )
   .handler(async ({ data }) => {
@@ -67,7 +67,7 @@ const createTrainerSchema = z.object({
 })
 
 export const createTrainer = createServerFn({ method: 'POST' })
-  .inputValidator((data: unknown) => createTrainerSchema.parse(data))
+  .validator((data: unknown) => createTrainerSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
 
@@ -107,7 +107,7 @@ const updateTrainerSchema = z.object({
 })
 
 export const updateTrainer = createServerFn({ method: 'POST' })
-  .inputValidator((data: unknown) => updateTrainerSchema.parse(data))
+  .validator((data: unknown) => updateTrainerSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
     const [profile] = await db
@@ -136,7 +136,7 @@ const assignMemberSchema = z.object({
 })
 
 export const assignMember = createServerFn({ method: 'POST' })
-  .inputValidator((data: unknown) => assignMemberSchema.parse(data))
+  .validator((data: unknown) => assignMemberSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
 
@@ -171,7 +171,7 @@ export const assignMember = createServerFn({ method: 'POST' })
 const unassignMemberSchema = z.object({ id: uuidField })
 
 export const unassignMember = createServerFn({ method: 'POST' })
-  .inputValidator((data: unknown) => unassignMemberSchema.parse(data))
+  .validator((data: unknown) => unassignMemberSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
     const [assignment] = await db
@@ -201,7 +201,7 @@ const setAvailabilitySchema = z.object({
 })
 
 export const setAvailability = createServerFn({ method: 'POST' })
-  .inputValidator((data: unknown) => setAvailabilitySchema.parse(data))
+  .validator((data: unknown) => setAvailabilitySchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
 
@@ -294,7 +294,7 @@ const generateAIRoutineSchema = z.object({
 })
 
 export const generateAIRoutine = createServerFn({ method: 'POST' })
-  .inputValidator((data: unknown) => generateAIRoutineSchema.parse(data))
+  .validator((data: unknown) => generateAIRoutineSchema.parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'TRAINER'] } })
     const { generateRoutineProposal } = await import('./routine-generator.ts')
@@ -328,7 +328,7 @@ export const getTrainerSchedule = createServerFn({ method: 'GET' })
   })
 
 export const getTrainerObservations = createServerFn({ method: 'GET' })
-  .inputValidator(z.object({ memberId: uuidField }))
+  .validator(z.object({ memberId: uuidField }))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN', 'TRAINER'] } })
 
@@ -355,7 +355,7 @@ const createObservationSchema = z.object({
 })
 
 export const createTrainerObservation = createServerFn({ method: 'POST' })
-  .inputValidator((data: unknown) => createObservationSchema.parse(data))
+  .validator((data: unknown) => createObservationSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['TRAINER'] } })
 

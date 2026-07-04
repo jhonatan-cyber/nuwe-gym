@@ -9,7 +9,7 @@ import { getActivePackages } from '#/features/packages/server.ts'
 import { getMembers, getMemberById } from '#/features/members/server.ts'
 import { getCurrentCashSession } from '#/features/cash-register/server.ts'
 import { useCurrentBranch } from '#/shared/hooks/use-current-branch.ts'
-import { Route as RenewalsRoute } from '#/routes/_authed/renewals.tsx'
+import { useSearch } from '@tanstack/react-router'
 import type {
   Step,
   PaymentMethod,
@@ -19,7 +19,8 @@ import type {
 export function useRenewalsPage() {
   const queryClient = useQueryClient()
   const { branchId } = useCurrentBranch()
-  const { memberId: preselectedMemberId } = RenewalsRoute.useSearch()
+  const search = useSearch({ strict: false })
+  const preselectedMemberId = (search as any).memberId
 
   const [step, setStep] = useState<Step>(1)
   const [searchQuery, setSearchQuery] = useState('')

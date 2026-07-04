@@ -22,7 +22,7 @@ const createSchema = z.object({
 export type CreateContractData = z.infer<typeof createSchema>
 
 export const createContract = createServerFn({ method: 'POST' })
-  .inputValidator((data) => createSchema.parse(data))
+  .validator((data) => createSchema.parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN'] } })
 
@@ -46,7 +46,7 @@ export const createContract = createServerFn({ method: 'POST' })
   })
 
 export const getEmployeeContracts = createServerFn({ method: 'GET' })
-  .inputValidator((data) => z.object({ employeeId: uuidField }).parse(data))
+  .validator((data) => z.object({ employeeId: uuidField }).parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN'] } })
 
@@ -57,7 +57,7 @@ export const getEmployeeContracts = createServerFn({ method: 'GET' })
   })
 
 export const deleteContract = createServerFn({ method: 'POST' })
-  .inputValidator((data) => z.object({ id: uuidField }).parse(data))
+  .validator((data) => z.object({ id: uuidField }).parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN'] } })
     await db.delete(employeeContracts).where(eq(employeeContracts.id, data.id))

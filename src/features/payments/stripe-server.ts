@@ -13,7 +13,7 @@ import { uuidField } from '#/shared/lib/schemas.ts'
 // ── Create Setup Intent (to securely collect card details on frontend) ──
 
 export const createSetupIntent = createServerFn({ method: 'POST' })
-  .inputValidator((data) => z.object({ memberId: uuidField }).parse(data))
+  .validator((data) => z.object({ memberId: uuidField }).parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
 
@@ -63,7 +63,7 @@ const attachPaymentMethodSchema = z.object({
 })
 
 export const attachPaymentMethod = createServerFn({ method: 'POST' })
-  .inputValidator((data) => attachPaymentMethodSchema.parse(data))
+  .validator((data) => attachPaymentMethodSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
 
@@ -115,7 +115,7 @@ export const attachPaymentMethod = createServerFn({ method: 'POST' })
 // ── List Payment Methods for a member ──
 
 export const getMemberPaymentMethods = createServerFn({ method: 'GET' })
-  .inputValidator((data) => z.object({ memberId: uuidField }).parse(data))
+  .validator((data) => z.object({ memberId: uuidField }).parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
 
@@ -135,7 +135,7 @@ const toggleAutoPaySchema = z.object({
 })
 
 export const toggleAutoPay = createServerFn({ method: 'POST' })
-  .inputValidator((data) => toggleAutoPaySchema.parse(data))
+  .validator((data) => toggleAutoPaySchema.parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
 
@@ -151,7 +151,7 @@ export const toggleAutoPay = createServerFn({ method: 'POST' })
 // ── Detach Payment Method ──
 
 export const removePaymentMethod = createServerFn({ method: 'POST' })
-  .inputValidator((data) => z.object({ id: uuidField }).parse(data))
+  .validator((data) => z.object({ id: uuidField }).parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
 

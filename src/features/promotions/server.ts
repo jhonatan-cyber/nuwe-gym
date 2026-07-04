@@ -68,7 +68,7 @@ const createPromoSchema = z.object({
 })
 
 export const createPromotion = createServerFn({ method: 'POST' })
-  .inputValidator((data) => createPromoSchema.parse(data))
+  .validator((data) => createPromoSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
     const [p] = await db.insert(promotions).values({
@@ -92,7 +92,7 @@ export const createPromotion = createServerFn({ method: 'POST' })
 const togglePromoSchema = z.object({ id: z.string().uuid(), isActive: z.boolean() })
 
 export const togglePromotion = createServerFn({ method: 'POST' })
-  .inputValidator((data) => togglePromoSchema.parse(data))
+  .validator((data) => togglePromoSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
     const [p] = await db.update(promotions).set({ isActive: data.isActive })
@@ -107,7 +107,7 @@ export const togglePromotion = createServerFn({ method: 'POST' })
 
 // Get applicable promotions for a member (called before sale)
 export const getApplicablePromotions = createServerFn({ method: 'GET' })
-  .inputValidator((data) => z.object({ memberId: z.string().uuid() }).parse(data))
+  .validator((data) => z.object({ memberId: z.string().uuid() }).parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
     const now = new Date()

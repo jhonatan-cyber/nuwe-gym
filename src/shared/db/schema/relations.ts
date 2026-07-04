@@ -42,7 +42,6 @@ import { promotions } from './promotions.ts'
 import { corporateAccounts } from './corporate-accounts.ts'
 import { familyGroups, familyMembers } from './family-groups.ts'
 import { invoices, invoiceSequences } from './invoices.ts'
-import { pushSubscriptions } from './push-subscriptions.ts'
 import { employees } from './employees.ts'
 import { employeeAttendance } from './employee-attendance.ts'
 import { memberBranches } from './member-branches.ts'
@@ -55,7 +54,6 @@ import { payroll } from './payroll.ts'
 import { employeePerformance } from './employee-performance.ts'
 import { employeeContracts } from './employee-contracts.ts'
 import { employeeDocuments } from './employee-documents.ts'
-import { tvMedia, tvTickerMessages } from './tv-media.ts'
 
 export const usersRelations = relations(users, ({ many, one }) => ({
   sessions: many(sessions),
@@ -558,12 +556,6 @@ export const invoiceSequencesRelations = relations(invoiceSequences, ({ one }) =
   }),
 }))
 
-export const pushSubscriptionsRelations = relations(pushSubscriptions, ({ one }) => ({
-  user: one(users, {
-    fields: [pushSubscriptions.userId],
-    references: [users.id],
-  }),
-}))
 
 export const userDevicesRelations = relations(userDevices, ({ one }) => ({
   user: one(users, {
@@ -592,7 +584,9 @@ export const memberPaymentMethodsRelations = relations(memberPaymentMethods, ({ 
 
 // ── Employees ──────────────────────────────────────────────────────
 
-export const employeesRelations = relations(employees, ({ many }) => ({
+export const employeesRelations = relations(employees, ({ many, one }) => ({
+  user: one(users, { fields: [employees.userId], references: [users.id] }),
+  branch: one(branches, { fields: [employees.branchId], references: [branches.id] }),
   schedules: many(employeeSchedules),
   attendance: many(employeeAttendance),
   vacations: many(employeeVacations),

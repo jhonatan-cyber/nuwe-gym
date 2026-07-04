@@ -8,6 +8,34 @@
       "when": 1782977130545,
       "tag": "0000_brave_jean_grey",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1782980200000,
+      "tag": "0001_two_factor_auth",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1784980200000,
+      "tag": "0002_check_in_denied_branch",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1746291522000,
+      "tag": "0003_push_subscriptions",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1746291600000,
+      "tag": "0004_drop_firebase_columns",
+      "breakpoints": true
     }
   ]
 }

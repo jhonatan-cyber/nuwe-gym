@@ -262,7 +262,7 @@ async function checkBadges(memberId: string, eventType: string) {
 const getInfoSchema = z.object({ memberId: z.string().uuid() })
 
 export const getLoyaltyInfo = createServerFn({ method: 'GET' })
-  .inputValidator((data) => getInfoSchema.parse(data))
+  .validator((data) => getInfoSchema.parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
     const last = await db
@@ -337,7 +337,7 @@ const redeemSchema = z.object({
 })
 
 export const redeemPoints = createServerFn({ method: 'POST' })
-  .inputValidator((data) => redeemSchema.parse(data))
+  .validator((data) => redeemSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
     const last = await db
@@ -364,7 +364,7 @@ export const redeemPoints = createServerFn({ method: 'POST' })
 // ── Referrals ──
 
 export const generateReferralCodeFn = createServerFn({ method: 'POST' })
-  .inputValidator((data) => z.object({ memberId: z.string().uuid() }).parse(data))
+  .validator((data) => z.object({ memberId: z.string().uuid() }).parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
     const member = await db
@@ -399,7 +399,7 @@ const createCouponSchema = z.object({
 })
 
 export const createCoupon = createServerFn({ method: 'POST' })
-  .inputValidator((data) => createCouponSchema.parse(data))
+  .validator((data) => createCouponSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
     const [cp] = await db.insert(coupons).values({
@@ -421,7 +421,7 @@ export const createCoupon = createServerFn({ method: 'POST' })
 const toggleCouponSchema = z.object({ id: z.string().uuid(), isActive: z.boolean() })
 
 export const toggleCoupon = createServerFn({ method: 'POST' })
-  .inputValidator((data) => toggleCouponSchema.parse(data))
+  .validator((data) => toggleCouponSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
     const [cp] = await db.update(coupons).set({ isActive: data.isActive })
@@ -438,7 +438,7 @@ export const toggleCoupon = createServerFn({ method: 'POST' })
 const validateCouponSchema = z.object({ code: z.string(), total: z.number().int().min(0) })
 
 export const validateCoupon = createServerFn({ method: 'GET' })
-  .inputValidator((data) => validateCouponSchema.parse(data))
+  .validator((data) => validateCouponSchema.parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
     const cp = await db

@@ -6,6 +6,9 @@ export const Route = createFileRoute('/_authed/employees')({
     if (context.userRole !== 'ADMIN') {
       throw redirect({ to: '/' })
     }
+    return {
+      session: context.session,
+    }
   },
   component: EmployeesPage,
 })

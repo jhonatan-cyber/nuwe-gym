@@ -1,37 +1,34 @@
 import { useMemo } from 'react'
 import {
-  LayoutDashboard,
-  Users,
-  CreditCard,
-  CalendarCheck,
-  RefreshCw,
-  Snowflake,
-  DoorOpen,
-  CalendarDays,
-  Dumbbell,
-  ShoppingCart,
-  ShoppingBag,
-  Warehouse,
-  Landmark,
-  UserCog,
-  BarChart3,
-  Settings,
-  Download,
-  ScrollText,
-  Store,
-  Database as DatabaseIcon,
-  Package,
+  BadgeDollarSign,
   Bell,
-  QrCode,
-  ClipboardList,
-  Building2,
-  Salad,
+  Boxes,
   Briefcase,
-  FileText,
+  CalendarCheck2,
+  CalendarDays,
+  CalendarRange,
+  ChartNoAxesCombined,
+  ClipboardList,
+  CreditCard,
+  Database as DatabaseIcon,
+  DoorOpen,
+  Download,
+  Dumbbell,
+  LayoutDashboard,
+  MapPin,
+  Package,
+  PlaneTakeoff,
+  QrCode,
+  ReceiptText,
+  RefreshCw,
+  Salad,
+  ScrollText,
+  Settings,
+  ShoppingCart,
+  Snowflake,
   Timer,
-  Sun,
-  DollarSign,
-  Monitor,
+  UsersRound,
+  WalletCards,
 } from 'lucide-react'
 import { Link, useMatches } from '@tanstack/react-router'
 import type { UserRole } from '#/shared/lib/permissions.ts'
@@ -48,6 +45,7 @@ interface NavItem {
   url: string
   icon: React.ComponentType<{ className?: string }>
   permission?: Parameters<typeof hasPermission>[1]
+  dividerAfter?: boolean
 }
 
 const navItems: NavItem[] = [
@@ -56,18 +54,18 @@ const navItems: NavItem[] = [
     url: '/dashboard',
     icon: LayoutDashboard,
     permission: 'dashboard:read',
+    dividerAfter: true,
   },
-  { title: 'Socios', url: '/members', icon: Users, permission: 'members:read' },
   {
-    title: 'Paquetes',
-    url: '/packages',
-    icon: Package,
-    permission: 'plans:read',
+    title: 'Socios',
+    url: '/members',
+    icon: UsersRound,
+    permission: 'members:read',
   },
   {
     title: 'Suscripciones',
     url: '/subscriptions',
-    icon: CalendarCheck,
+    icon: CalendarCheck2,
     permission: 'subscriptions:read',
   },
   {
@@ -83,18 +81,6 @@ const navItems: NavItem[] = [
     permission: 'membership-freezes:read',
   },
   {
-    title: 'Facturación',
-    url: '/invoices',
-    icon: FileText,
-    permission: 'payments:read',
-  },
-  {
-    title: 'Pagos',
-    url: '/membership-payments',
-    icon: CreditCard,
-    permission: 'payments:read',
-  },
-  {
     title: 'Check-in',
     url: '/check-ins',
     icon: DoorOpen,
@@ -103,7 +89,7 @@ const navItems: NavItem[] = [
   {
     title: 'Clases',
     url: '/classes',
-    icon: CalendarDays,
+    icon: CalendarRange,
     permission: 'classes:read',
   },
   {
@@ -119,6 +105,43 @@ const navItems: NavItem[] = [
     permission: 'nutrition:read',
   },
   {
+    title: 'Paquetes',
+    url: '/packages',
+    icon: Package,
+    permission: 'plans:read',
+    dividerAfter: true,
+  },
+  {
+    title: 'POS',
+    url: '/pos',
+    icon: WalletCards,
+    permission: 'pos:use',
+  },
+  {
+    title: 'Ventas',
+    url: '/sales',
+    icon: ShoppingCart,
+    permission: 'sales:read',
+  },
+  {
+    title: 'Pagos',
+    url: '/membership-payments',
+    icon: CreditCard,
+    permission: 'payments:read',
+  },
+  {
+    title: 'Facturación',
+    url: '/invoices',
+    icon: ReceiptText,
+    permission: 'payments:read',
+  },
+  {
+    title: 'Caja',
+    url: '/cash-register',
+    icon: BadgeDollarSign,
+    permission: 'cash:read',
+  },
+  {
     title: 'Compras',
     url: '/purchases',
     icon: ClipboardList,
@@ -127,57 +150,20 @@ const navItems: NavItem[] = [
   {
     title: 'Proveedores',
     url: '/suppliers',
-    icon: Building2,
+    icon: Briefcase,
     permission: 'suppliers:read',
-  },
-  { title: 'POS', url: '/pos', icon: ShoppingBag, permission: 'pos:use' },
-  {
-    title: 'Ventas',
-    url: '/sales',
-    icon: ShoppingCart,
-    permission: 'sales:read',
   },
   {
     title: 'Inventario',
     url: '/inventory',
-    icon: Warehouse,
+    icon: Boxes,
     permission: 'inventory:read',
+    dividerAfter: true,
   },
   {
-    title: 'Caja',
-    url: '/cash-register',
-    icon: Landmark,
-    permission: 'cash:read',
-  },
-  {
-    title: 'Reportes',
-    url: '/reports',
-    icon: BarChart3,
-    permission: 'reports:read',
-  },
-  {
-    title: 'Corporativas',
-    url: '/corporate-accounts',
-    icon: Briefcase,
-    permission: 'settings:read',
-  },
-  {
-    title: 'Configuración',
-    url: '/settings',
-    icon: Settings,
-    permission: 'settings:read',
-  },
-  { title: 'Usuarios', url: '/users', icon: UserCog, permission: 'users:read' },
-  {
-    title: 'Sucursales',
-    url: '/branches',
-    icon: Store,
-    permission: 'branches:read',
-  },
-  {
-    title: 'Empleados',
+    title: 'Personal',
     url: '/employees',
-    icon: Briefcase,
+    icon: UsersRound,
     permission: 'employees:read',
   },
   {
@@ -195,14 +181,32 @@ const navItems: NavItem[] = [
   {
     title: 'Vacaciones',
     url: '/employee-vacations',
-    icon: Sun,
+    icon: PlaneTakeoff,
     permission: 'employees:read',
   },
   {
     title: 'Sueldos',
     url: '/payroll',
-    icon: DollarSign,
+    icon: BadgeDollarSign,
     permission: 'employees:read',
+  },
+  {
+    title: 'Sucursales',
+    url: '/branches',
+    icon: MapPin,
+    permission: 'branches:read',
+  },
+  {
+    title: 'Corporativas',
+    url: '/corporate-accounts',
+    icon: Briefcase,
+    permission: 'settings:read',
+  },
+  {
+    title: 'Configuración',
+    url: '/settings',
+    icon: Settings,
+    permission: 'settings:read',
   },
   {
     title: 'Notificaciones',
@@ -215,6 +219,12 @@ const navItems: NavItem[] = [
     url: '/qr-codes',
     icon: QrCode,
     permission: 'settings:read',
+  },
+  {
+    title: 'Reportes',
+    url: '/reports',
+    icon: ChartNoAxesCombined,
+    permission: 'reports:read',
   },
   {
     title: 'Auditoría',
@@ -260,7 +270,6 @@ export function AppSidebar({
 
   return (
     <>
-      {/* Overlay para mobile */}
       {isOpen && (
         <div
           className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 md:hidden"
@@ -269,11 +278,10 @@ export function AppSidebar({
       )}
 
       <div
-        className={`fixed top-4 bottom-4 w-[70px] bg-card/80 backdrop-blur-md dark:text-white text-foreground flex flex-col items-center py-6 rounded-[2rem] shrink-0 shadow-xl border border-border/10 justify-between z-50 transition-all duration-300 ${
+        className={`fixed top-4 bottom-4 w-[72px] bg-card/80 backdrop-blur-md dark:text-white text-foreground flex flex-col items-center py-6 rounded-[2rem] shrink-0 shadow-xl border border-border/10 justify-between z-50 transition-all duration-300 ${
           isOpen ? 'left-4' : '-left-20 md:left-4'
         } ${isOpen ? 'flex' : 'hidden md:flex'}`}
       >
-        {/* Top Logo */}
         <div className="flex flex-col items-center gap-6 w-full">
           <Link
             to="/dashboard"
@@ -294,33 +302,41 @@ export function AppSidebar({
           <div className="w-8 h-px dark:bg-white/10 bg-black/10" />
         </div>
 
-        {/* Navigation Icons list */}
         <div className="flex-1 w-full overflow-y-auto scrollbar-none flex flex-col items-center gap-3 my-4 py-2 px-2">
           <TooltipProvider delayDuration={100}>
             {visibleItems.map((item) => {
               const isActive = currentPath.startsWith(item.url)
               return (
-                <Tooltip key={item.url}>
-                  <TooltipTrigger asChild>
-                    <Link
-                      to={item.url}
-                      onClick={onClose}
-                      className={`flex w-10 h-10 shrink-0 items-center justify-center rounded-lg transition-all duration-200 active:scale-90 ${
-                        isActive
-                          ? 'dark:bg-white/20 bg-black/10 dark:text-white text-foreground'
-                          : 'dark:text-white/40 text-muted-foreground hover:dark:bg-white/8 hover:bg-black/5 hover:dark:text-white hover:text-foreground'
-                      }`}
+                <div
+                  key={item.url}
+                  className="w-full flex flex-col items-center"
+                >
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Link
+                        to={item.url}
+                        onClick={onClose}
+                        className={`flex w-10 h-10 shrink-0 items-center justify-center rounded-lg transition-all duration-200 active:scale-90 ${
+                          isActive
+                            ? 'dark:bg-white/20 bg-black/10 dark:text-white text-foreground'
+                            : 'dark:text-white/40 text-muted-foreground hover:dark:bg-white/8 hover:bg-black/5 hover:dark:text-white hover:text-foreground'
+                        }`}
+                      >
+                        <item.icon className="size-[18px]" />
+                      </Link>
+                    </TooltipTrigger>
+                    <TooltipContent
+                      side="right"
+                      className="bg-popover dark:text-white text-foreground border-border/20 ml-2 shadow-md"
                     >
-                      <item.icon className="size-[18px]" />
-                    </Link>
-                  </TooltipTrigger>
-                  <TooltipContent
-                    side="right"
-                    className="bg-popover dark:text-white text-foreground border-border/20 ml-2 shadow-md"
-                  >
-                    <p>{item.title}</p>
-                  </TooltipContent>
-                </Tooltip>
+                      <p>{item.title}</p>
+                    </TooltipContent>
+                  </Tooltip>
+
+                  {item.dividerAfter && (
+                    <div className="my-2 h-px w-6 bg-border/20" />
+                  )}
+                </div>
               )
             })}
           </TooltipProvider>

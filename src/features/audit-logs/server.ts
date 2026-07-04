@@ -38,7 +38,7 @@ function serializeRow(row: typeof auditLogs.$inferSelect): AuditLogRow {
 }
 
 export const getAuditLogs = createServerFn({ method: 'GET' })
-  .inputValidator((data: unknown) => getAuditLogsSchema.parse(data))
+  .validator((data: unknown) => getAuditLogsSchema.parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN'] } })
 
@@ -86,7 +86,7 @@ export const getAuditLogs = createServerFn({ method: 'GET' })
   })
 
 export const getAuditLog = createServerFn({ method: 'GET' })
-  .inputValidator((id: unknown) => uuidField.parse(id))
+  .validator((id: unknown) => uuidField.parse(id))
   .handler(async ({ data: id }) => {
     await requireRole({ data: { roles: ['ADMIN'] } })
 

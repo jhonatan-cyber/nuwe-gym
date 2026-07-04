@@ -19,7 +19,7 @@ export const loyaltyTiers = pgTable('loyalty_tiers', {
   minPoints: integer('min_points').notNull().default(0),
   color: text('color').notNull().default('#94a3b8'),
   discountPercent: integer('discount_percent').notNull().default(0),
-  benefits: jsonb('benefits').default('[]'),
+  benefits: jsonb('benefits').$type<string[]>().default([]),
   sortOrder: integer('sort_order').notNull().default(0),
   createdAt: timestamp('created_at').notNull().defaultNow(),
 })
@@ -114,7 +114,7 @@ export const badges = pgTable('badges', {
   name: text('name').notNull(),
   description: text('description'),
   icon: text('icon').notNull().default('🏆'),
-  requirement: jsonb('requirement').notNull().default({ type: 'CHECK_IN_COUNT', target: 1 }),
+  requirement: jsonb('requirement').$type<{ type: string; target: number }>().notNull().default({ type: 'CHECK_IN_COUNT', target: 1 }),
   rewardPoints: integer('reward_points').notNull().default(0),
   sortOrder: integer('sort_order').notNull().default(0),
   createdAt: timestamp('created_at').notNull().defaultNow(),

@@ -12,7 +12,7 @@ import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 
 export const getCategories = createServerFn({ method: 'GET' })
-  .inputValidator((data: { branchId?: string }) => data)
+  .validator((data: { branchId?: string }) => data)
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
     const categories = await db.query.productCategories.findMany({
@@ -85,7 +85,7 @@ const createCategorySchema = z.object({
 })
 
 export const createCategory = createServerFn({ method: 'POST' })
-  .inputValidator((data) => createCategorySchema.parse(data))
+  .validator((data) => createCategorySchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST'] },
@@ -115,7 +115,7 @@ const updateCategorySchema = z.object({
 })
 
 export const updateCategory = createServerFn({ method: 'POST' })
-  .inputValidator((data) => updateCategorySchema.parse(data))
+  .validator((data) => updateCategorySchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST'] },
@@ -147,7 +147,7 @@ const getProductsSchema = z.object({
 })
 
 export const getProducts = createServerFn({ method: 'GET' })
-  .inputValidator((data) => getProductsSchema.parse(data))
+  .validator((data) => getProductsSchema.parse(data))
   .handler(async ({ data }) => {
     const filters: (ReturnType<typeof eq> | ReturnType<typeof or>)[] = []
 
@@ -220,7 +220,7 @@ const createProductSchema = z.object({
 })
 
 export const createProduct = createServerFn({ method: 'POST' })
-  .inputValidator((data) => createProductSchema.parse(data))
+  .validator((data) => createProductSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
     const [product] = await db
@@ -260,7 +260,7 @@ const updateProductSchema = z.object({
 })
 
 export const updateProduct = createServerFn({ method: 'POST' })
-  .inputValidator((data) => updateProductSchema.parse(data))
+  .validator((data) => updateProductSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
     const [product] = await db
@@ -299,7 +299,7 @@ const adjustStockSchema = z.object({
 })
 
 export const adjustStock = createServerFn({ method: 'POST' })
-  .inputValidator((data) => adjustStockSchema.parse(data))
+  .validator((data) => adjustStockSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST'] },

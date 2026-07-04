@@ -31,7 +31,7 @@ const getMemberByDocumentSchema = z.object({
 })
 
 export const getMemberByDocumentNumber = createServerFn({ method: 'GET' })
-  .inputValidator((data) => getMemberByDocumentSchema.parse(data))
+  .validator((data) => getMemberByDocumentSchema.parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
     const [member] = await db
@@ -43,21 +43,21 @@ export const getMemberByDocumentNumber = createServerFn({ method: 'GET' })
   })
 
 export const getMembers = createServerFn({ method: 'GET' })
-  .inputValidator((data) => getMembersSchema.parse(data))
+  .validator((data) => getMembersSchema.parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
     return findMembers(data)
   })
 
 export const getMemberById = createServerFn({ method: 'GET' })
-  .inputValidator((id) => uuidField.parse(id))
+  .validator((id) => uuidField.parse(id))
   .handler(async ({ data: id }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
     return findMemberById(id)
   })
 
 export const createMember = createServerFn({ method: 'POST' })
-  .inputValidator((data) => createMemberSchema.parse(data))
+  .validator((data) => createMemberSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST'] },
@@ -93,7 +93,7 @@ export const createMember = createServerFn({ method: 'POST' })
   })
 
 export const updateMember = createServerFn({ method: 'POST' })
-  .inputValidator((data) => updateMemberSchema.parse(data))
+  .validator((data) => updateMemberSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST'] },
@@ -130,7 +130,7 @@ export const updateMember = createServerFn({ method: 'POST' })
   })
 
 export const toggleMemberStatus = createServerFn({ method: 'POST' })
-  .inputValidator((data) => toggleMemberStatusSchema.parse(data))
+  .validator((data) => toggleMemberStatusSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST'] },
@@ -156,7 +156,7 @@ export const toggleMemberStatus = createServerFn({ method: 'POST' })
   })
 
 export const deleteMember = createServerFn({ method: 'POST' })
-  .inputValidator((data) => deleteMemberSchema.parse(data))
+  .validator((data) => deleteMemberSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST'] },
@@ -176,7 +176,7 @@ export const deleteMember = createServerFn({ method: 'POST' })
   })
 
 export const uploadMemberPhoto = createServerFn({ method: 'POST' })
-  .inputValidator((data) => uploadPhotoSchema.parse(data))
+  .validator((data) => uploadPhotoSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST'] },

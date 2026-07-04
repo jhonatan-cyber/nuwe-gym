@@ -12,7 +12,7 @@ import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 
 export const getInventoryMovements = createServerFn({ method: 'GET' })
-  .inputValidator(
+  .validator(
     z.object({ branchId: branchIdField }).optional(),
   )
   .handler(async ({ data }) => {
@@ -53,7 +53,7 @@ interface StockSnapshot {
 }
 
 export const getStockSnapshots = createServerFn({ method: 'GET' })
-  .inputValidator(z.object({
+  .validator(z.object({
     daysBack: z.number().default(30),
     branchId: branchIdField,
   }))
@@ -122,7 +122,7 @@ export const getStockSnapshots = createServerFn({ method: 'GET' })
   })
 
 export const generateCategoryDescription = createServerFn({ method: 'POST' })
-  .inputValidator(z.object({ name: z.string() }))
+  .validator(z.object({ name: z.string() }))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
     const { generateDescriptionForCategory } = await import('#/shared/lib/ai.ts')
@@ -138,7 +138,7 @@ const transferStockSchema = z.object({
 })
 
 export const transferStock = createServerFn({ method: 'POST' })
-  .inputValidator((data) => transferStockSchema.parse(data))
+  .validator((data) => transferStockSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST'] },

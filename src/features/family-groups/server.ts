@@ -29,7 +29,7 @@ export const getFamilyGroups = createServerFn({ method: 'GET' })
   })
 
 export const getFamilyGroupById = createServerFn({ method: 'GET' })
-  .inputValidator((id) => uuidField.parse(id))
+  .validator((id) => uuidField.parse(id))
   .handler(async ({ data: id }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
     const [group] = await db.query.familyGroups.findMany({
@@ -48,7 +48,7 @@ export const getFamilyGroupById = createServerFn({ method: 'GET' })
   })
 
 export const getFamilyGroupByMember = createServerFn({ method: 'GET' })
-  .inputValidator((data) => z.object({ memberId: uuidField }).parse(data))
+  .validator((data) => z.object({ memberId: uuidField }).parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
     // Check if member is a primary member
@@ -94,7 +94,7 @@ const createFamilyGroupSchema = z.object({
 })
 
 export const createFamilyGroup = createServerFn({ method: 'POST' })
-  .inputValidator((data) => createFamilyGroupSchema.parse(data))
+  .validator((data) => createFamilyGroupSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
     const [group] = await db.insert(familyGroups).values({
@@ -122,7 +122,7 @@ const updateFamilyGroupSchema = z.object({
 })
 
 export const updateFamilyGroup = createServerFn({ method: 'POST' })
-  .inputValidator((data) => updateFamilyGroupSchema.parse(data))
+  .validator((data) => updateFamilyGroupSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
     const [group] = await db.update(familyGroups).set({
@@ -143,7 +143,7 @@ export const updateFamilyGroup = createServerFn({ method: 'POST' })
   })
 
 export const deleteFamilyGroup = createServerFn({ method: 'POST' })
-  .inputValidator((data) => z.object({ id: uuidField }).parse(data))
+  .validator((data) => z.object({ id: uuidField }).parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
     const [deleted] = await db.delete(familyGroups).where(eq(familyGroups.id, data.id)).returning()
@@ -166,7 +166,7 @@ const addFamilyMemberSchema = z.object({
 })
 
 export const addFamilyMember = createServerFn({ method: 'POST' })
-  .inputValidator((data) => addFamilyMemberSchema.parse(data))
+  .validator((data) => addFamilyMemberSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
 
@@ -193,7 +193,7 @@ export const addFamilyMember = createServerFn({ method: 'POST' })
   })
 
 export const removeFamilyMember = createServerFn({ method: 'POST' })
-  .inputValidator((data) => z.object({ id: uuidField }).parse(data))
+  .validator((data) => z.object({ id: uuidField }).parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
     const [deleted] = await db.delete(familyMembers).where(eq(familyMembers.id, data.id)).returning()

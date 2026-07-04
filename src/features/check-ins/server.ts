@@ -136,7 +136,7 @@ const getRecentCheckInsSchema = z.object({
 })
 
 export const getRecentCheckIns = createServerFn({ method: 'GET' })
-  .inputValidator((data) => getRecentCheckInsSchema.parse(data))
+  .validator((data) => getRecentCheckInsSchema.parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
     const whereClause = data.branchId
@@ -164,7 +164,7 @@ const createCheckInSchema = z.object({
 export type CreateCheckInData = z.infer<typeof createCheckInSchema>
 
 export const createCheckIn = createServerFn({ method: 'POST' })
-  .inputValidator((data) => createCheckInSchema.parse(data))
+  .validator((data) => createCheckInSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] },

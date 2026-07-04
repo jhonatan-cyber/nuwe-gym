@@ -61,18 +61,10 @@ const updateSettingsSchema = z.object({
   stripeSecretKey: optionalString.default(''),
   stripePublishableKey: optionalString.default(''),
   stripeWebhookSecret: optionalString.default(''),
-  // Firebase Cloud Messaging
-  firebaseApiKey: optionalString.default(''),
-  firebaseAuthDomain: optionalString.default(''),
-  firebaseProjectId: optionalString.default(''),
-  firebaseMessagingSenderId: optionalString.default(''),
-  firebaseAppId: optionalString.default(''),
-  firebaseVapidKey: optionalString.default(''),
-  firebaseServiceAccount: optionalString.default(''),
 })
 
 export const updateSettings = createServerFn({ method: 'POST' })
-  .inputValidator((data: unknown) => updateSettingsSchema.parse(data))
+  .validator((data: unknown) => updateSettingsSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
 

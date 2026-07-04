@@ -23,7 +23,7 @@ const getExpiringSubscriptionsSchema = z.object({
 })
 
 export const getExpiringSubscriptions = createServerFn({ method: 'GET' })
-  .inputValidator((data) => getExpiringSubscriptionsSchema.parse(data))
+  .validator((data) => getExpiringSubscriptionsSchema.parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
 
@@ -45,7 +45,6 @@ export const getExpiringSubscriptions = createServerFn({ method: 'GET' })
       orderBy: [desc(subscriptions.endDate)],
       with: {
         member: true,
-        plan: true,
         package: true,
       },
     })
@@ -58,7 +57,7 @@ const getExpiredSubscriptionsSchema = z.object({
 export const getExpiredSubscriptions = createServerFn({
   method: 'GET',
 })
-  .inputValidator((data) => getExpiredSubscriptionsSchema.parse(data))
+  .validator((data) => getExpiredSubscriptionsSchema.parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
 
@@ -73,7 +72,6 @@ export const getExpiredSubscriptions = createServerFn({
       orderBy: [desc(subscriptions.endDate)],
       with: {
         member: true,
-        plan: true,
         package: true,
       },
     })
@@ -91,7 +89,7 @@ const renewSubscriptionSchema = z.object({
 export type RenewSubscriptionData = z.infer<typeof renewSubscriptionSchema>
 
 export const renewSubscription = createServerFn({ method: 'POST' })
-  .inputValidator((data) => renewSubscriptionSchema.parse(data))
+  .validator((data) => renewSubscriptionSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST'] },
@@ -203,7 +201,7 @@ export async function runAutoRenewalsCore(
       eq(subscriptions.status, 'ACTIVE'),
       lte(subscriptions.endDate, oneDayFromNow),
     ),
-    with: { member: true, plan: true, package: true },
+    with: { member: true, package: true },
   })
 
   if (toRenew.length === 0) {
@@ -315,7 +313,7 @@ export const processAutoRenewals = createServerFn({ method: 'POST' }).handler(
 )
 
 export const getMemberRenewalHistory = createServerFn({ method: 'GET' })
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z.object({ memberId: uuidField }).parse(data),
   )
   .handler(async ({ data }) => {
@@ -325,7 +323,6 @@ export const getMemberRenewalHistory = createServerFn({ method: 'GET' })
       where: eq(subscriptions.memberId, data.memberId),
       orderBy: [desc(subscriptions.startDate)],
       with: {
-        plan: true,
         package: true,
         payments: {
           orderBy: [desc(membershipPayments.paymentDate)],

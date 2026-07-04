@@ -11,10 +11,18 @@ export default [
       'sort-imports': 'off',
       '@typescript-eslint/array-type': 'off',
       '@typescript-eslint/require-await': 'off',
+      '@typescript-eslint/no-unnecessary-condition': 'off',
       'pnpm/json-enforce-catalog': 'off',
     },
   },
   {
-    ignores: ['eslint.config.js', 'prettier.config.js', '.agents/**/*'],
+    ignores: [
+      'eslint.config.js',
+      'prettier.config.js',
+      '.agents/**/*',
+      'coverage/**/*',
+      'public/sw.js',
+      'scripts/check-vite.js',
+    ],
   },
 ]

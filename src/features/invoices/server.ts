@@ -73,7 +73,7 @@ const issueInvoiceSchema = z.object({
 })
 
 export const issueInvoice = createServerFn({ method: 'POST' })
-  .inputValidator((data) => issueInvoiceSchema.parse(data))
+  .validator((data) => issueInvoiceSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
 
@@ -164,7 +164,7 @@ const getInvoicesSchema = z.object({
 })
 
 export const getInvoices = createServerFn({ method: 'GET' })
-  .inputValidator((data) => getInvoicesSchema.parse(data))
+  .validator((data) => getInvoicesSchema.parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
     return await db.query.invoices.findMany({
@@ -181,7 +181,7 @@ export const getInvoices = createServerFn({ method: 'GET' })
 // ── Get Single Invoice ──
 
 export const getInvoiceById = createServerFn({ method: 'GET' })
-  .inputValidator((id) => uuidField.parse(id))
+  .validator((id) => uuidField.parse(id))
   .handler(async ({ data: id }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
     const [inv] = await db.query.invoices.findMany({
@@ -223,7 +223,7 @@ export const getInvoiceById = createServerFn({ method: 'GET' })
 // ── Cancel Invoice ──
 
 export const cancelInvoice = createServerFn({ method: 'POST' })
-  .inputValidator((data) => z.object({ id: uuidField }).parse(data))
+  .validator((data) => z.object({ id: uuidField }).parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
     const [inv] = await db.update(invoices).set({

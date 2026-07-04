@@ -20,7 +20,7 @@ import { z } from 'zod'
 import { branchIdField, dateString, optionalString, uuidField } from '#/shared/lib/schemas.ts'
 
 export const getFreezes = createServerFn({ method: 'GET' })
-  .inputValidator(
+  .validator(
     z.object({ branchId: branchIdField }).optional(),
   )
   .handler(async ({ data }) => {
@@ -43,7 +43,7 @@ export const getFreezes = createServerFn({ method: 'GET' })
   })
 
 export const getMemberFreezes = createServerFn({ method: 'GET' })
-  .inputValidator((data: { memberId: number }) =>
+  .validator((data: { memberId: number }) =>
     z.object({ memberId: uuidField }).parse(data),
   )
   .handler(async ({ data }) => {
@@ -72,7 +72,7 @@ const createFreezeSchema = z.object({
 export type CreateFreezeData = z.infer<typeof createFreezeSchema>
 
 export const createFreeze = createServerFn({ method: 'POST' })
-  .inputValidator((data) => createFreezeSchema.parse(data))
+  .validator((data) => createFreezeSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST'] },
@@ -150,7 +150,7 @@ export const createFreeze = createServerFn({ method: 'POST' })
   })
 
 export const resumeSubscription = createServerFn({ method: 'POST' })
-  .inputValidator((data: { freezeId: string }) =>
+  .validator((data: { freezeId: string }) =>
     z.object({ freezeId: uuidField }).parse(data),
   )
   .handler(async ({ data }) => {
@@ -219,7 +219,7 @@ export const getFreezeRules = createServerFn({ method: 'GET' }).handler(
 )
 
 export const getFrozenSubscriptions = createServerFn({ method: 'GET' })
-  .inputValidator(
+  .validator(
     z.object({ branchId: branchIdField }).optional(),
   )
   .handler(async ({ data }) => {

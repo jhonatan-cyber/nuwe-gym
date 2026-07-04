@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean } from 'drizzle-orm/pg-core'
+import { boolean, integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
 import { roles } from './roles.ts'
 
 export const users = pgTable('user', {
@@ -8,6 +8,7 @@ export const users = pgTable('user', {
   email: text('email').notNull().unique(),
   emailVerified: boolean('email_verified').notNull(),
   image: text('image'),
+  twoFactorEnabled: boolean('two_factor_enabled').notNull().default(false),
   role: text('role')
     .notNull()
     .default('TRAINER')
@@ -17,6 +18,20 @@ export const users = pgTable('user', {
   address: text('address'),
   createdAt: timestamp('created_at').notNull(),
   updatedAt: timestamp('updated_at').notNull(),
+})
+
+export const twoFactor = pgTable('twoFactor', {
+  id: text('id').primaryKey(),
+  userId: text('user_id')
+    .notNull()
+    .references(() => users.id),
+  secret: text('secret').notNull(),
+  backupCodes: text('backup_codes').notNull(),
+  verified: boolean('verified').notNull().default(false),
+  failedVerificationCount: integer('failed_verification_count')
+    .notNull()
+    .default(0),
+  lockedUntil: timestamp('locked_until'),
 })
 
 export const sessions = pgTable('session', {

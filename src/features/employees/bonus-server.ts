@@ -11,13 +11,13 @@ import { uuidField, optionalString } from '#/shared/lib/schemas.ts'
 // ── List all bonuses ──
 
 export const getBonuses = createServerFn({ method: 'GET' })
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z.object({ employeeId: optionalString.default('') }).parse(data),
   )
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN'] } })
     const conditions = data.employeeId
-      ? [eq(employeeBonuses.employeeId, data.employeeId)]
+      ? eq(employeeBonuses.employeeId, data.employeeId)
       : undefined
 
     return await db.query.employeeBonuses.findMany({
@@ -38,7 +38,7 @@ const createBonusSchema = z.object({
 })
 
 export const createBonus = createServerFn({ method: 'POST' })
-  .inputValidator((data: unknown) => createBonusSchema.parse(data))
+  .validator((data: unknown) => createBonusSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
 
@@ -68,7 +68,7 @@ export const createBonus = createServerFn({ method: 'POST' })
 // ── Delete bonus ──
 
 export const deleteBonus = createServerFn({ method: 'POST' })
-  .inputValidator((data: unknown) => z.object({ id: uuidField }).parse(data))
+  .validator((data: unknown) => z.object({ id: uuidField }).parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
     const [bonus] = await db

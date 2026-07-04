@@ -51,7 +51,7 @@ const generateNutritionPlanSchema = z.object({
 // ── Weight History ────────────────────────────────────────────────
 
 export const getWeightHistory = createServerFn({ method: 'GET' })
-  .inputValidator(z.object({ memberId: uuidField }))
+  .validator(z.object({ memberId: uuidField }))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'TRAINER', 'RECEPTIONIST'] } })
     return await db.query.weightHistory.findMany({
@@ -62,7 +62,7 @@ export const getWeightHistory = createServerFn({ method: 'GET' })
   })
 
 export const addWeightEntry = createServerFn({ method: 'POST' })
-  .inputValidator((data) => weightEntrySchema.parse(data))
+  .validator((data) => weightEntrySchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN', 'TRAINER', 'RECEPTIONIST'] } })
 
@@ -92,7 +92,7 @@ export const addWeightEntry = createServerFn({ method: 'POST' })
   })
 
 export const deleteWeightEntry = createServerFn({ method: 'POST' })
-  .inputValidator(z.object({ id: uuidField }))
+  .validator(z.object({ id: uuidField }))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN', 'TRAINER'] } })
     const [entry] = await db
@@ -112,7 +112,7 @@ export const deleteWeightEntry = createServerFn({ method: 'POST' })
 // ── Nutrition Plans ───────────────────────────────────────────────
 
 export const getNutritionPlans = createServerFn({ method: 'GET' })
-  .inputValidator(z.object({ memberId: uuidField }))
+  .validator(z.object({ memberId: uuidField }))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'TRAINER', 'RECEPTIONIST'] } })
     return await db.query.nutritionPlans.findMany({
@@ -123,7 +123,7 @@ export const getNutritionPlans = createServerFn({ method: 'GET' })
   })
 
 export const createNutritionPlan = createServerFn({ method: 'POST' })
-  .inputValidator((data) => nutritionPlanSchema.parse(data))
+  .validator((data) => nutritionPlanSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN', 'TRAINER'] } })
 
@@ -168,7 +168,7 @@ export const createNutritionPlan = createServerFn({ method: 'POST' })
   })
 
 export const deleteNutritionPlan = createServerFn({ method: 'POST' })
-  .inputValidator(z.object({ id: uuidField }))
+  .validator(z.object({ id: uuidField }))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN', 'TRAINER'] } })
     const [plan] = await db
@@ -188,7 +188,7 @@ export const deleteNutritionPlan = createServerFn({ method: 'POST' })
 // ── IA: Generar plan alimenticio ──────────────────────────────────
 
 export const generateAINutritionPlan = createServerFn({ method: 'POST' })
-  .inputValidator((data) => generateNutritionPlanSchema.parse(data))
+  .validator((data) => generateNutritionPlanSchema.parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'TRAINER'] } })
 

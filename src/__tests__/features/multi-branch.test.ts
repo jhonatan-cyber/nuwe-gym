@@ -1,13 +1,11 @@
-import { describe, it, expect, beforeAll } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { db } from '#/shared/db/index.ts'
 import { memberBranches } from '#/shared/db/schema/member-branches.ts'
 import { members } from '#/shared/db/schema/members.ts'
-import { branches } from '#/shared/db/schema/branches.ts'
 import { eq, sql } from 'drizzle-orm'
 import {
   createBranch,
   createMember,
-  cleanDatabase,
 } from '../factories.ts'
 import { canMemberAccessBranch, getMemberIdsForBranch } from '#/features/members/branch-access-server.ts'
 import { findMembers } from '#/features/members/members.repository.ts'
@@ -295,11 +293,10 @@ describe('findMembers multi-branch filter', () => {
 
 describe('getMemberIdsForBranch', () => {
   beforeEach(async () => {
-    // Delete in FK order: check_ins → members, then memberBranches/branches
-    await db.execute(sql`DELETE FROM "check_ins"`)
-    await db.execute(sql`DELETE FROM "member_branches"`)
-    await db.execute(sql`DELETE FROM "branches"`)
-    await db.execute(sql`DELETE FROM "members"`)
+    // Clean up all data these tests create, using cascade to handle FK chains
+    await db.execute(sql`TRUNCATE TABLE "member_branches" CASCADE`)
+    await db.execute(sql`TRUNCATE TABLE "branches" CASCADE`)
+    await db.execute(sql`TRUNCATE TABLE "members" CASCADE`)
   })
   it('should return member IDs from primary branch', async () => {
     const branch = await makeBranch('Ids Primary')

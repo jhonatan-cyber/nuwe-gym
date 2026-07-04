@@ -8,7 +8,6 @@ import {
   index,
 } from 'drizzle-orm/pg-core'
 import { members } from './members.ts'
-import { users } from './auth.ts'
 import { branches } from './branches.ts'
 
 export const invoices = pgTable(

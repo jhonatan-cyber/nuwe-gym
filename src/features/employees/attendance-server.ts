@@ -13,7 +13,7 @@ import type { TodayAttendanceRow, AttendanceSummary } from './attendance-types.t
 // ── Clock In ──
 
 export const clockIn = createServerFn({ method: 'POST' })
-  .inputValidator((data: unknown) => z.object({ employeeId: uuidField }).parse(data))
+  .validator((data: unknown) => z.object({ employeeId: uuidField }).parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
 
@@ -68,7 +68,7 @@ export const clockIn = createServerFn({ method: 'POST' })
 // ── Clock Out ──
 
 export const clockOut = createServerFn({ method: 'POST' })
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z.object({
       employeeId: uuidField,
       notes: optionalString.default(''),
@@ -128,7 +128,7 @@ export const clockOut = createServerFn({ method: 'POST' })
 // ── Force Clock Out (for admin) ──
 
 export const forceClockOut = createServerFn({ method: 'POST' })
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z.object({
       attendanceId: uuidField,
       notes: optionalString.default(''),
@@ -162,7 +162,7 @@ export const forceClockOut = createServerFn({ method: 'POST' })
 // ── Mark Absent ──
 
 export const markAbsent = createServerFn({ method: 'POST' })
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z.object({ employeeId: uuidField }).parse(data),
   )
   .handler(async ({ data }) => {
@@ -259,7 +259,7 @@ export const getTodayAttendance = createServerFn({ method: 'GET' }).handler(
 // ── Get Employee Attendance History ──
 
 export const getEmployeeAttendance = createServerFn({ method: 'GET' })
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z.object({
       employeeId: uuidField,
       days: z.number().optional().default(30),
@@ -283,7 +283,7 @@ export const getEmployeeAttendance = createServerFn({ method: 'GET' })
 // ── Get Attendance Report ──
 
 export const getAttendanceReport = createServerFn({ method: 'GET' })
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z.object({
       days: z.number().optional().default(30),
     }).parse(data),

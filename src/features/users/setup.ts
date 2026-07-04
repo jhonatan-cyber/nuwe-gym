@@ -22,7 +22,7 @@ const createInitialAdminSchema = z.object({
 })
 
 export const createInitialAdmin = createServerFn({ method: 'POST' })
-  .inputValidator((data) => createInitialAdminSchema.parse(data))
+  .validator((data) => createInitialAdminSchema.parse(data))
   .handler(async ({ data }) => {
     const existingUsers = await db.select().from(users).limit(1)
     if (existingUsers.length > 0) {

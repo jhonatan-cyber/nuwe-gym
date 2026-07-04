@@ -15,14 +15,14 @@ import { executeNaturalQuery } from './query.ts'
 // ── Churn Risk ──
 
 export const getMemberChurnRisk = createServerFn({ method: 'GET' })
-  .inputValidator((data: unknown) => z.object({ memberId: uuidField }).parse(data))
+  .validator((data: unknown) => z.object({ memberId: uuidField }).parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
     return computeChurnRisk(data.memberId)
   })
 
 export const getChurnRisks = createServerFn({ method: 'GET' })
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z.object({ limit: z.number().min(1).max(100).default(20) }).parse(data),
   )
   .handler(async ({ data }) => {
@@ -42,7 +42,7 @@ export const getInsights = createServerFn({ method: 'GET' }).handler(
 // ── Product Recommendations ──
 
 export const getRecommendations = createServerFn({ method: 'GET' })
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z
       .object({
         productId: uuidField,
@@ -56,7 +56,7 @@ export const getRecommendations = createServerFn({ method: 'GET' })
   })
 
 export const getMemberRecommendations = createServerFn({ method: 'GET' })
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z
       .object({
         memberId: uuidField,
@@ -72,7 +72,7 @@ export const getMemberRecommendations = createServerFn({ method: 'GET' })
 // ── Attendance Forecast ──
 
 export const getAttendanceForecast = createServerFn({ method: 'GET' })
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z.object({ days: z.number().min(1).max(30).default(7) }).parse(data),
   )
   .handler(async ({ data }) => {
@@ -92,7 +92,7 @@ export const getReorderSuggestionsFn = createServerFn({ method: 'GET' }).handler
 // ── Natural Language Query ──
 
 export const askAnalytics = createServerFn({ method: 'GET' })
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z.object({ query: requiredString }).parse(data),
   )
   .handler(async ({ data }) => {
@@ -101,7 +101,7 @@ export const askAnalytics = createServerFn({ method: 'GET' })
   })
 
 export const getAIRecommendations = createServerFn({ method: 'GET' })
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z
       .object({
         memberId: uuidField,
@@ -115,7 +115,7 @@ export const getAIRecommendations = createServerFn({ method: 'GET' })
   })
 
 export const getAIChurnMessage = createServerFn({ method: 'GET' })
-  .inputValidator((data: unknown) => z.object({ memberId: uuidField }).parse(data))
+  .validator((data: unknown) => z.object({ memberId: uuidField }).parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
     return generateChurnReengagementMessage(data.memberId)

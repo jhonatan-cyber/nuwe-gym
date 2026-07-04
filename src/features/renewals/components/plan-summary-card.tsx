@@ -8,6 +8,7 @@ interface PlanSummaryCardProps {
   durationDays: number
   startDate?: Date
   endDate?: Date
+  status?: 'ACTIVE' | 'EXPIRED'
 }
 
 export function PlanSummaryCard({
@@ -16,6 +17,7 @@ export function PlanSummaryCard({
   durationDays,
   startDate,
   endDate,
+  status,
 }: PlanSummaryCardProps) {
   return (
     <div className="bg-muted/30 dark:bg-muted/10 text-foreground rounded-2xl border border-border/10 p-5 flex items-stretch gap-4.5 shadow-sm select-none animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -27,9 +29,19 @@ export function PlanSummaryCard({
       <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
         <div className="flex items-start justify-between gap-2">
           <p className="font-bold text-sm text-foreground truncate">{title}</p>
-          <Badge className="bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-foreground border-primary/20 font-bold text-[9px] uppercase tracking-wide hover:bg-primary/10">
-            Normal
-          </Badge>
+          {status ? (
+            <Badge className={
+              status === 'ACTIVE'
+                ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 font-bold text-[9px] uppercase tracking-wide hover:bg-emerald-500/10'
+                : 'bg-red-500/10 text-red-500 border-red-500/20 font-bold text-[9px] uppercase tracking-wide hover:bg-red-500/10'
+            }>
+              {status === 'ACTIVE' ? 'Activo' : 'Vencido'}
+            </Badge>
+          ) : (
+            <Badge className="bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-foreground border-primary/20 font-bold text-[9px] uppercase tracking-wide hover:bg-primary/10">
+              Normal
+            </Badge>
+          )}
         </div>
         <p className="text-2xl font-black tracking-tight text-foreground mt-2">
           {formatCurrency(price)}

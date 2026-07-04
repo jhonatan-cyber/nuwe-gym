@@ -29,7 +29,7 @@ const updateProfileSchema = z.object({
 })
 
 export const updateProfile = createServerFn({ method: 'POST' })
-  .inputValidator((data) => updateProfileSchema.parse(data))
+  .validator((data) => updateProfileSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] },
@@ -63,7 +63,7 @@ const changePasswordSchema = z
   })
 
 export const changePassword = createServerFn({ method: 'POST' })
-  .inputValidator((data) => changePasswordSchema.parse(data))
+  .validator((data) => changePasswordSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] },
@@ -135,7 +135,7 @@ const updateProfileInfoSchema = z.object({
 })
 
 export const updateProfileInfo = createServerFn({ method: 'POST' })
-  .inputValidator((data) => updateProfileInfoSchema.parse(data))
+  .validator((data) => updateProfileInfoSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] },
@@ -166,7 +166,7 @@ const revokeMySessionSchema = z.object({
 })
 
 export const revokeMySession = createServerFn({ method: 'POST' })
-  .inputValidator((data) => revokeMySessionSchema.parse(data))
+  .validator((data) => revokeMySessionSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] },

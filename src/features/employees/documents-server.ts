@@ -22,7 +22,7 @@ const createSchema = z.object({
 })
 
 export const createDocument = createServerFn({ method: 'POST' })
-  .inputValidator((data) => createSchema.parse(data))
+  .validator((data) => createSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
 
@@ -38,7 +38,7 @@ export const createDocument = createServerFn({ method: 'POST' })
   })
 
 export const getEmployeeDocuments = createServerFn({ method: 'GET' })
-  .inputValidator((data) => z.object({ employeeId: uuidField }).parse(data))
+  .validator((data) => z.object({ employeeId: uuidField }).parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN'] } })
 
@@ -50,7 +50,7 @@ export const getEmployeeDocuments = createServerFn({ method: 'GET' })
   })
 
 export const deleteDocument = createServerFn({ method: 'POST' })
-  .inputValidator((data) => z.object({ id: uuidField }).parse(data))
+  .validator((data) => z.object({ id: uuidField }).parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN'] } })
     await db.delete(employeeDocuments).where(eq(employeeDocuments.id, data.id))

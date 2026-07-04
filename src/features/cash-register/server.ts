@@ -17,7 +17,7 @@ import {
 import * as repo from './cash-register.repository.ts'
 
 export const getCurrentCashSession = createServerFn({ method: 'GET' })
-  .inputValidator((data) => getCurrentCashSessionSchema.parse(data))
+  .validator((data) => getCurrentCashSessionSchema.parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
     return (await repo.findOpenSession(data.branchId)) || null
@@ -30,7 +30,7 @@ export const getAllOpenCashSessions = createServerFn({ method: 'GET' })
   })
 
 export const openCashSession = createServerFn({ method: 'POST' })
-  .inputValidator((data) => openCashSessionSchema.parse(data))
+  .validator((data) => openCashSessionSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST'] },
@@ -59,7 +59,7 @@ export const openCashSession = createServerFn({ method: 'POST' })
   })
 
 export const closeCashSession = createServerFn({ method: 'POST' })
-  .inputValidator((data) => closeCashSessionSchema.parse(data))
+  .validator((data) => closeCashSessionSchema.parse(data))
   .handler(async ({ data }) => {
     const userSession = await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST'] },
@@ -123,7 +123,7 @@ export const closeCashSession = createServerFn({ method: 'POST' })
   })
 
 export const createManualMovement = createServerFn({ method: 'POST' })
-  .inputValidator((data) => createManualMovementSchema.parse(data))
+  .validator((data) => createManualMovementSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({
       data: { roles: ['ADMIN', 'RECEPTIONIST'] },
@@ -166,7 +166,7 @@ export const createManualMovement = createServerFn({ method: 'POST' })
   })
 
 export const getCashSessionDetails = createServerFn({ method: 'GET' })
-  .inputValidator((data) => getCashSessionDetailsSchema.parse(data))
+  .validator((data) => getCashSessionDetailsSchema.parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
     const [session, movements] = await Promise.all([
@@ -177,14 +177,14 @@ export const getCashSessionDetails = createServerFn({ method: 'GET' })
   })
 
 export const getCashSessionsList = createServerFn({ method: 'GET' })
-  .inputValidator((data) => getCashSessionsListSchema.parse(data))
+  .validator((data) => getCashSessionsListSchema.parse(data))
   .handler(async ({ data }) => {
     await requireRole({ data: { roles: ['ADMIN'] } })
     return repo.findAllSessions(data.branchId)
   })
 
 export const deleteCashSession = createServerFn({ method: 'POST' })
-  .inputValidator((data) => deleteCashSessionSchema.parse(data))
+  .validator((data) => deleteCashSessionSchema.parse(data))
   .handler(async ({ data }) => {
     const user = await requireRole({ data: { roles: ['ADMIN'] } })
 

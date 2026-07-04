@@ -9,16 +9,33 @@ import {
   UserX,
   TimerOff,
   Briefcase,
-  Building2,
   DollarSign,
   Phone,
-  Mail,
-  CalendarDays,
-  Banknote,
   FileText,
   AlertCircle,
+  Eye,
+  Pencil,
+  Trash2,
+  Shield,
+  ShieldAlert,
+  ShieldCheck,
+  UsersRound,
 } from 'lucide-react'
 import { ModuleLayout } from '#/shared/components/layout/module-layout.tsx'
+import { Route as authedRoute } from '#/routes/_authed.tsx'
+import { ToggleGroup, ToggleGroupItem } from '#/shared/components/ui/toggle-group'
+import { TooltipProvider } from '#/shared/components/ui/tooltip'
+import { FilterBar } from '#/shared/components/ui/filter-bar'
+import { ConfirmDialog } from '#/shared/components/ui/confirm-dialog'
+
+import { UserDetailDialog } from '#/features/users/components/user-detail-dialog.tsx'
+import { UserCreationWizard } from '#/features/users/components/user-creation-wizard.tsx'
+import { RolesView } from '#/features/users/components/roles-view.tsx'
+import { UserEditDialog } from '#/features/users/components/user-edit-dialog.tsx'
+import { useUsersPage } from '#/features/users/hooks/use-users-page.ts'
+import { useUserColumns } from '#/features/users/hooks/use-user-columns.tsx'
+import { UserCard, UserCardSkeleton } from '#/features/users/components/user-card.tsx'
+import type { StaffUser } from '#/features/users/types.ts'
 import {
   Card,
   CardContent,
@@ -38,13 +55,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '#/shared/components/ui/select'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '#/shared/components/ui/dialog'
 import { Badge } from '#/shared/components/ui/badge'
 import { Skeleton } from '#/shared/components/ui/skeleton'
 import { cn } from '#/shared/lib/utils.ts'
@@ -62,7 +72,6 @@ import {
 import {
   EMPLOYEE_STATUS_LABELS,
   EMPLOYEE_STATUS_COLORS,
-  PAYMENT_FREQUENCY_LABELS,
   POSITIONS,
   DEPARTMENTS,
 } from './types.ts'
@@ -159,12 +168,10 @@ const defaultForm: EmployeeFormData = {
   notes: '',
 }
 
-function EmployeeFormDialog({
-  open,
+function EmployeeForm({
   onClose,
   employeeId,
 }: {
-  open: boolean
   onClose: () => void
   employeeId: string | null
 }) {
@@ -173,9 +180,8 @@ function EmployeeFormDialog({
   const [form, setForm] = useState<EmployeeFormData>(defaultForm)
   const [loadingEmployee, setLoadingEmployee] = useState(false)
 
-  // Load employee data when editing
   useEffect(() => {
-    if (employeeId && open) {
+    if (employeeId) {
       setLoadingEmployee(true)
       getEmployee({ data: { id: employeeId } })
         .then((emp) => {
@@ -204,7 +210,7 @@ function EmployeeFormDialog({
     } else {
       setForm(defaultForm)
     }
-  }, [employeeId, open])
+  }, [employeeId])
 
   const createMutation = useMutation({
     mutationFn: createEmployee,
@@ -241,7 +247,7 @@ function EmployeeFormDialog({
       return
     }
     if (isEditing) {
-      updateMutation.mutate({ data: { ...form, id: employeeId! } })
+      updateMutation.mutate({ data: { ...form, id: employeeId } })
     } else {
       createMutation.mutate({ data: form })
     }
@@ -250,21 +256,23 @@ function EmployeeFormDialog({
   const isPending = createMutation.isPending || updateMutation.isPending
 
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl">
-        <DialogHeader>
-          <DialogTitle className="text-xl font-black">
+    <Card className="rounded-[2rem] border-border/10 shadow-xl bg-card overflow-hidden relative transition-all duration-200 animate-in fade-in duration-300">
+      <div className="absolute -top-12 -left-12 size-36 bg-primary/5 rounded-full blur-2xl pointer-events-none" />
+      <CardHeader className="relative z-10 flex flex-row items-center justify-between">
+        <div>
+          <CardTitle className="text-xl font-black">
             {isEditing ? 'Editar Empleado' : 'Nuevo Empleado'}
-          </DialogTitle>
-          <DialogDescription>
+          </CardTitle>
+          <CardDescription>
             {isEditing
               ? 'Actualizá los datos del empleado'
               : 'Completá los datos para registrar un nuevo empleado'}
-          </DialogDescription>
-        </DialogHeader>
-
+          </CardDescription>
+        </div>
+      </CardHeader>
+      <CardContent className="relative z-10 p-6">
         {loadingEmployee ? (
-          <div className="space-y-4 p-4">
+          <div className="space-y-4">
             <Skeleton className="h-9 w-full rounded-2xl" />
             <Skeleton className="h-9 w-full rounded-2xl" />
             <Skeleton className="h-9 w-full rounded-2xl" />
@@ -500,8 +508,8 @@ function EmployeeFormDialog({
             </div>
           </form>
         )}
-      </DialogContent>
-    </Dialog>
+      </CardContent>
+    </Card>
   )
 }
 
@@ -528,8 +536,12 @@ function Field({
 // ── Main page ──
 
 export function EmployeesPage() {
+  const { session } = authedRoute.useRouteContext()
+  const currentUserId = session.user.id
   const queryClient = useQueryClient()
-  const [dialogOpen, setDialogOpen] = useState(false)
+
+  const [activeTab, setActiveTab] = useState<'employees' | 'users' | 'roles'>('employees')
+  const [activeSubView, setActiveSubView] = useState<'list' | 'create' | 'edit'>('list')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [detailId, setDetailId] = useState<string | null>(null)
   const [search, setSearch] = useState('')
@@ -553,6 +565,43 @@ export function EmployeesPage() {
     onError: (err: Error) => toast.error(err.message),
   })
 
+  const {
+    activeView: userActiveView,
+    search: userSearch,
+    setSearch: setUserSearch,
+    roleFilter,
+    setRoleFilter,
+    editingUser,
+    setEditingUser,
+    viewUserId,
+    setViewUserId,
+    deletingUserId,
+    setDeletingUserId,
+    isLoading: isUsersLoading,
+    paginatedUsers,
+    totalFiltered: userTotalFiltered,
+    totalUsers,
+    adminCount,
+    receptionistCount,
+    trainerCount,
+    currentPage: userCurrentPage,
+    setCurrentPage: setUserCurrentPage,
+    pageSize: userPageSize,
+    setPageSize: setUserPageSize,
+    totalPages: userTotalPages,
+    handleOpenCreate: handleOpenCreateUser,
+    handleCloseCreate: handleCloseCreateUser,
+    handleDeleteUser,
+    handleConfirmDeleteUser,
+  } = useUsersPage(currentUserId)
+
+  const columns = useUserColumns({
+    currentUserId,
+    handleDeleteUser,
+    setViewUserId,
+    setEditingUser,
+  })
+
   const filtered = employeesList?.filter(
     (e) =>
       !search ||
@@ -563,12 +612,12 @@ export function EmployeesPage() {
 
   function handleAdd() {
     setEditingId(null)
-    setDialogOpen(true)
+    setActiveSubView('create')
   }
 
   function handleEdit(id: string) {
     setEditingId(id)
-    setDialogOpen(true)
+    setActiveSubView('edit')
   }
 
   function handleDelete(id: string, name: string) {
@@ -577,56 +626,90 @@ export function EmployeesPage() {
     }
   }
 
-  const columns = [
+  const employeeColumns = [
     {
-      header: 'Código',
-      accessorKey: 'employeeCode' as const,
-      cell: (val: string) => (
-        <span className="font-mono text-xs text-muted-foreground">{val}</span>
+      key: 'employeeCode',
+      label: 'Código',
+      render: (emp: Employee) => (
+        <span className="font-mono text-xs text-muted-foreground">{emp.employeeCode}</span>
       ),
     },
     {
-      header: 'Nombre',
-      accessorKey: 'fullName' as const,
-      cell: (val: string) => <span className="font-semibold">{val}</span>,
+      key: 'fullName',
+      label: 'Nombre',
+      render: (emp: Employee) => <span className="font-semibold">{emp.fullName}</span>,
     },
     {
-      header: 'Cargo',
-      accessorKey: 'position' as const,
+      key: 'position',
+      label: 'Cargo',
+      render: (emp: Employee) => emp.position,
     },
     {
-      header: 'Departamento',
-      accessorKey: 'department' as const,
-      cell: (val: string | null) => val || '—',
+      key: 'department',
+      label: 'Departamento',
+      render: (emp: Employee) => emp.department || '—',
     },
     {
-      header: 'Estado',
-      accessorKey: 'status' as const,
-      cell: (val: string) => (
+      key: 'status',
+      label: 'Estado',
+      render: (emp: Employee) => (
         <Badge
           variant="outline"
           className={cn(
             'text-[10px] font-bold uppercase tracking-wider px-2 py-0.5',
-            EMPLOYEE_STATUS_COLORS[val as keyof typeof EMPLOYEE_STATUS_COLORS],
+            EMPLOYEE_STATUS_COLORS[emp.status as keyof typeof EMPLOYEE_STATUS_COLORS],
           )}
         >
-          {EMPLOYEE_STATUS_LABELS[val as keyof typeof EMPLOYEE_STATUS_LABELS]}
+          {EMPLOYEE_STATUS_LABELS[emp.status as keyof typeof EMPLOYEE_STATUS_LABELS]}
         </Badge>
       ),
     },
     {
-      header: 'Salario',
-      accessorKey: 'baseSalary' as const,
-      cell: (val: string | null) => (
+      key: 'baseSalary',
+      label: 'Salario',
+      render: (emp: Employee) => (
         <span className="font-mono text-xs">
-          {val && Number(val) > 0 ? `$${Number(val).toLocaleString()}` : '—'}
+          {emp.baseSalary && Number(emp.baseSalary) > 0 ? `$${Number(emp.baseSalary).toLocaleString()}` : '—'}
         </span>
       ),
     },
     {
-      header: 'Teléfono',
-      accessorKey: 'phone' as const,
-      cell: (val: string | null) => val || '—',
+      key: 'phone',
+      label: 'Teléfono',
+      render: (emp: Employee) => emp.phone || '—',
+    },
+    {
+      key: 'actions',
+      label: 'Acciones',
+      className: 'text-right',
+      render: (emp: Employee) => (
+        <div className="flex justify-end gap-1">
+          <Button
+            size="icon"
+            variant="ghost"
+            className="size-8 rounded-full"
+            onClick={() => setDetailId(emp.id)}
+          >
+            <Eye className="size-4" />
+          </Button>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="size-8 rounded-full"
+            onClick={() => handleEdit(emp.id)}
+          >
+            <Pencil className="size-4" />
+          </Button>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="size-8 rounded-full text-destructive hover:text-destructive hover:bg-destructive/10"
+            onClick={() => handleDelete(emp.id, emp.fullName)}
+          >
+            <Trash2 className="size-4" />
+          </Button>
+        </div>
+      ),
     },
   ]
 
@@ -637,10 +720,10 @@ export function EmployeesPage() {
           <div className="flex items-center gap-1">
             <span className="text-muted-foreground">RRHH</span>
             <ChevronRight className="size-3 text-muted-foreground/50" />
-            <span className="text-foreground">Empleados</span>
+            <span className="text-foreground font-semibold">Personal</span>
           </div>
         }
-        title="Empleados"
+        title="Personal"
       >
         <Card className="rounded-[2rem] border-border/10 bg-card">
           <CardContent className="flex flex-col items-center justify-center py-12">
@@ -661,136 +744,342 @@ export function EmployeesPage() {
         <div className="flex items-center gap-1">
           <span className="text-muted-foreground">RRHH</span>
           <ChevronRight className="size-3 text-muted-foreground/50" />
-          <span className="text-foreground font-semibold">Empleados</span>
+          <span className="text-muted-foreground">Personal</span>
+          <ChevronRight className="size-3 text-muted-foreground/50" />
+          {activeTab === 'employees' ? (
+            <>
+              <span className={cn('text-foreground', activeSubView === 'list' && 'font-semibold')}>Empleados</span>
+              {activeSubView === 'create' && (
+                <>
+                  <ChevronRight className="size-3 text-muted-foreground/50" />
+                  <span className="text-foreground font-semibold">Nuevo</span>
+                </>
+              )}
+              {activeSubView === 'edit' && (
+                <>
+                  <ChevronRight className="size-3 text-muted-foreground/50" />
+                  <span className="text-foreground font-semibold">Editar</span>
+                </>
+              )}
+            </>
+          ) : activeTab === 'users' ? (
+            <>
+              <span className={cn('text-foreground', userActiveView === 'list' && 'font-semibold')}>Usuarios</span>
+              {userActiveView === 'create' && (
+                <>
+                  <ChevronRight className="size-3 text-muted-foreground/50" />
+                  <span className="text-foreground font-semibold">Nuevo</span>
+                </>
+              )}
+            </>
+          ) : (
+            <span className="text-foreground font-semibold">Roles</span>
+          )}
         </div>
       }
-      title="Empleados"
+      title={
+        activeTab === 'roles'
+          ? 'Roles y Permisos'
+          : activeTab === 'users' && userActiveView === 'create'
+            ? 'Nuevo Personal'
+            : activeTab === 'employees' && activeSubView === 'create'
+              ? 'Nuevo Empleado'
+              : activeTab === 'employees' && activeSubView === 'edit'
+                ? 'Editar Empleado'
+                : 'Personal (Staff)'
+      }
       leftPanel={
         <div className="flex flex-col gap-6 z-10 w-full">
+          {/* Toggle de secciones */}
           <div className="space-y-3">
             <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">
-              Personal
+              Sección
             </p>
-            <div className="space-y-2 w-full">
-              <Button
-                onClick={handleAdd}
-                className="w-full justify-start gap-2.5 px-4 py-2.5 rounded-2xl font-semibold text-sm bg-primary/10 text-primary hover:bg-primary/15"
-              >
-                <Plus className="size-4 shrink-0" />
-                Agregar Empleado
-              </Button>
-            </div>
+            <ToggleGroup
+              type="single"
+              value={activeTab}
+              onValueChange={(v) => {
+                if (v) {
+                  setActiveTab(v as 'employees' | 'users' | 'roles')
+                  setActiveSubView('list')
+                }
+              }}
+              className="w-full justify-start border border-border/10 rounded-2xl p-1 bg-muted/20"
+            >
+              <ToggleGroupItem value="employees" className="flex-1 rounded-xl text-xs font-bold gap-1.5 data-[state=on]:bg-background">
+                <Briefcase className="size-3.5" /> Empleados
+              </ToggleGroupItem>
+              <ToggleGroupItem value="users" className="flex-1 rounded-xl text-xs font-bold gap-1.5 data-[state=on]:bg-background">
+                <UsersRound className="size-3.5" /> Usuarios
+              </ToggleGroupItem>
+              <ToggleGroupItem value="roles" className="flex-1 rounded-xl text-xs font-bold gap-1.5 data-[state=on]:bg-background">
+                <Shield className="size-3.5" /> Roles
+              </ToggleGroupItem>
+            </ToggleGroup>
           </div>
 
-          <div className="space-y-3 pt-4 border-t border-border/5">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">
-              Resumen
-            </p>
-            <div className="space-y-2">
-              <StatCard
-                icon={Users}
-                label="Total"
-                value={stats?.total ?? 0}
-                color=""
-              />
-              <StatCard
-                icon={UserCheck}
-                label="Activos"
-                value={stats?.active ?? 0}
-                color=""
-              />
-              <StatCard
-                icon={TimerOff}
-                label="De licencia"
-                value={stats?.onLeave ?? 0}
-                color=""
-              />
-              <StatCard
-                icon={UserX}
-                label="Inactivos"
-                value={(stats?.inactive ?? 0) + (stats?.terminated ?? 0)}
-                color=""
-              />
+          {/* Panel de Empleados */}
+          {activeTab === 'employees' && activeSubView === 'list' && (
+            <>
+              <div className="space-y-3">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">
+                  Acciones
+                </p>
+                <Button
+                  onClick={handleAdd}
+                  className="w-full justify-start gap-2.5 px-4 py-2.5 rounded-2xl font-semibold text-sm bg-primary text-primary-foreground hover:bg-primary/95"
+                >
+                  <Plus className="size-4 shrink-0" />
+                  Agregar Empleado
+                </Button>
+              </div>
+
+              <div className="space-y-3 pt-4 border-t border-border/5">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">
+                  Resumen
+                </p>
+                <div className="space-y-2">
+                  <StatCard icon={Users} label="Total" value={stats?.total ?? 0} color="" />
+                  <StatCard icon={UserCheck} label="Activos" value={stats?.active ?? 0} color="" />
+                  <StatCard icon={TimerOff} label="De licencia" value={stats?.onLeave ?? 0} color="" />
+                  <StatCard icon={UserX} label="Inactivos" value={(stats?.inactive ?? 0) + (stats?.terminated ?? 0)} color="" />
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Panel de Usuarios */}
+          {activeTab === 'users' && userActiveView !== 'create' && (
+            <>
+              <div className="space-y-3">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">
+                  Acciones
+                </p>
+                <Button
+                  onClick={handleOpenCreateUser}
+                  className="w-full justify-start gap-2.5 px-4 py-2.5 rounded-2xl font-semibold text-sm bg-primary text-primary-foreground hover:bg-primary/95"
+                >
+                  <Plus className="size-4 shrink-0" />
+                  Nuevo Usuario
+                </Button>
+              </div>
+              <div className="space-y-3 pt-4 border-t border-border/5">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">
+                  Filtros
+                </p>
+                <FilterBar
+                  search={userSearch}
+                  onSearchChange={setUserSearch}
+                  searchPlaceholder="Buscar usuario..."
+                  filterValue={roleFilter}
+                  onFilterChange={setRoleFilter}
+                  filterOptions={[
+                    { value: 'ALL', label: 'Todos los Roles' },
+                    { value: 'ADMIN', label: 'Administradores' },
+                    { value: 'RECEPTIONIST', label: 'Recepcionistas' },
+                    { value: 'TRAINER', label: 'Entrenadores' },
+                  ]}
+                  filterPlaceholder="Rol"
+                />
+              </div>
+              <div className="space-y-3 pt-4 border-t border-border/5">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">
+                  Métricas
+                </p>
+                <div className="space-y-2">
+                  <StatCard icon={Users} label="Total" value={totalUsers} color="" />
+                  <StatCard icon={ShieldAlert} label="Admins" value={adminCount} color="" />
+                  <StatCard icon={ShieldCheck} label="Recepcionistas" value={receptionistCount} color="" />
+                  <StatCard icon={Shield} label="Entrenadores" value={trainerCount} color="" />
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Panel de Roles */}
+          {activeTab === 'roles' && (
+            <div className="space-y-3">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">
+                Roles del Sistema
+              </p>
+              <p className="text-xs text-muted-foreground px-1 leading-relaxed">
+                El sistema cuenta con 3 roles predefinidos. Hacé clic en cada
+                uno para ver sus permisos.
+              </p>
             </div>
-          </div>
+          )}
 
           <div className="space-y-3 pt-4 border-t border-border/5">
             <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">
               Ayuda
             </p>
             <p className="text-xs text-muted-foreground px-1 leading-relaxed">
-              Gestioná el personal del gimnasio: altas, bajas, datos laborales y
-              bancarios. Las funcionalidades de asistencia, turnos, vacaciones y
-              sueldos se agregarán próximamente.
+              {activeTab === 'employees'
+                ? 'Gestioná el personal del gimnasio: altas, bajas, datos laborales y bancarios.'
+                : activeTab === 'users'
+                  ? 'Gestioná las credenciales de acceso de recepción, entrenadores y administradores.'
+                  : 'Consultá la distribución de permisos y funcionalidades según el rol asignado.'}
             </p>
           </div>
         </div>
       }
     >
-      {isLoading ? (
-        <Card className="rounded-[2rem] border-border/10 shadow-xl bg-card p-6">
-          <div className="space-y-4 animate-pulse">
-            <Skeleton className="h-5 w-48 rounded-lg" />
-            <Skeleton className="h-9 w-full rounded-2xl" />
-            <Skeleton className="h-9 w-full rounded-2xl" />
-            <Skeleton className="h-9 w-full rounded-2xl" />
-          </div>
-        </Card>
-      ) : !employeesList || employeesList.length === 0 ? (
-        <EmptyState onAdd={handleAdd} />
-      ) : (
-        <Card className="rounded-[2rem] border-border/10 shadow-xl bg-card overflow-hidden relative transition-all duration-200">
-          <div className="absolute -top-12 -left-12 size-36 bg-primary/5 rounded-full blur-2xl pointer-events-none" />
-          <CardHeader className="relative z-10 flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-xl font-black">
-                Listado de Empleados
-              </CardTitle>
-              <CardDescription>
-                {filtered?.length ?? 0} empleado{(filtered?.length ?? 0) !== 1 ? 's' : ''}
-                {search ? ` coinciden con "${search}"` : ''}
-              </CardDescription>
+      {activeTab === 'employees' ? (
+        activeSubView === 'create' || activeSubView === 'edit' ? (
+          <EmployeeForm
+            employeeId={editingId}
+            onClose={() => {
+              setActiveSubView('list')
+              setEditingId(null)
+            }}
+          />
+        ) : isLoading ? (
+          <Card className="rounded-[2rem] border-border/10 shadow-xl bg-card p-6">
+            <div className="space-y-4 animate-pulse">
+              <Skeleton className="h-5 w-48 rounded-lg" />
+              <Skeleton className="h-9 w-full rounded-2xl" />
+              <Skeleton className="h-9 w-full rounded-2xl" />
             </div>
-            <div className="flex items-center gap-2">
-              <SearchInput
-                placeholder="Buscar empleado..."
-                value={search}
-                onChange={setSearch}
+          </Card>
+        ) : !employeesList || employeesList.length === 0 ? (
+          <EmptyState onAdd={handleAdd} />
+        ) : (
+          <Card className="rounded-[2rem] border-border/10 shadow-xl bg-card overflow-hidden relative transition-all duration-200">
+            <div className="absolute -top-12 -left-12 size-36 bg-primary/5 rounded-full blur-2xl pointer-events-none" />
+            <CardHeader className="relative z-10 flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="text-xl font-black">
+                  Listado de Empleados
+                </CardTitle>
+                <CardDescription>
+                  {filtered?.length ?? 0} empleado{(filtered?.length ?? 0) !== 1 ? 's' : ''}
+                  {search ? ` coinciden con "${search}"` : ''}
+                </CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <SearchInput
+                  placeholder="Buscar empleado..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+                <Button
+                  onClick={handleAdd}
+                  className="rounded-full font-bold h-9"
+                >
+                  <Plus className="size-4 mr-1" />
+                  Nuevo
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="relative z-10 p-0">
+              <DataTable
+                data={filtered ?? []}
+                columns={employeeColumns}
+                keyExtractor={(emp: Employee) => emp.id}
               />
-              <Button
-                onClick={handleAdd}
-                className="rounded-full font-bold h-9"
-              >
-                <Plus className="size-4 mr-1" />
-                Nuevo
-              </Button>
+            </CardContent>
+          </Card>
+        )
+      ) : activeTab === 'users' ? (
+        userActiveView === 'create' ? (
+          <UserCreationWizard onClose={handleCloseCreateUser} />
+        ) : (
+          <TooltipProvider delayDuration={200}>
+            {/* Vista Desktop (Tabla) */}
+            <div className="hidden 2xl:block">
+              <Card className="rounded-[2rem] border-border/10 shadow-xl bg-card overflow-hidden relative p-0">
+                <DataTable
+                  columns={columns}
+                  data={paginatedUsers}
+                  isLoading={isUsersLoading}
+                  loadingMessage="Cargando usuarios..."
+                  emptyMessage="No se encontraron usuarios."
+                  keyExtractor={(user: StaffUser) => user.id}
+                  currentPage={userCurrentPage}
+                  pageSize={userPageSize}
+                  totalPages={userTotalPages}
+                  totalFiltered={userTotalFiltered}
+                  onPageChange={setUserCurrentPage}
+                  onPageSizeChange={setUserPageSize}
+                />
+              </Card>
             </div>
-          </CardHeader>
-          <CardContent className="relative z-10 p-0">
-            <DataTable
-              data={filtered ?? []}
-              columns={columns}
-              onEdit={(row: Employee) => handleEdit(row.id)}
-              onDelete={(row: Employee) => handleDelete(row.id, row.fullName)}
-              onRowClick={(row: Employee) => setDetailId(row.id)}
-            />
-          </CardContent>
-        </Card>
-      )}
 
-      <EmployeeFormDialog
-        open={dialogOpen}
-        onClose={() => {
-          setDialogOpen(false)
-          setEditingId(null)
-        }}
-        employeeId={editingId}
-      />
+            {/* Vista Mobile (Cards) */}
+            <div className="block 2xl:hidden space-y-4">
+              {isUsersLoading ? (
+                <div className="space-y-4">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <UserCardSkeleton key={i} index={i} />
+                  ))}
+                </div>
+              ) : paginatedUsers.length === 0 ? (
+                <div className="rounded-[2rem] border border-border/10 bg-card p-8 text-center text-muted-foreground shadow-md">
+                  No se encontraron usuarios.
+                </div>
+              ) : (
+                <>
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-6 py-4 rounded-[2rem] border bg-card border-border/10 shadow-md relative overflow-hidden">
+                    <div className="absolute -top-12 -left-12 size-24 bg-primary/5 rounded-full blur-xl pointer-events-none" />
+                    <span className="text-xs text-muted-foreground font-semibold relative z-10 text-center sm:text-left">
+                      Mostrando {userTotalFiltered === 0 ? 0 : (userCurrentPage - 1) * userPageSize + 1} a {Math.min(userCurrentPage * userPageSize, userTotalFiltered)} de {userTotalFiltered} usuarios
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {paginatedUsers.map((user) => (
+                      <UserCard
+                        key={user.id}
+                        user={user}
+                        currentUserId={currentUserId}
+                        setEditingUser={setEditingUser}
+                        setViewUserId={setViewUserId}
+                        handleDeleteUser={handleDeleteUser}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          </TooltipProvider>
+        )
+      ) : (
+        <RolesView
+          adminCount={adminCount}
+          receptionistCount={receptionistCount}
+          trainerCount={trainerCount}
+        />
+      )}
 
       <EmployeeDetailDialog
         employeeId={detailId}
         open={detailId !== null}
         onOpenChange={(v) => { if (!v) setDetailId(null) }}
+      />
+
+      <UserDetailDialog
+        userId={viewUserId}
+        onOpenChange={(open) => {
+          if (!open) setViewUserId(null)
+        }}
+      />
+
+      {editingUser && (
+        <UserEditDialog
+          user={editingUser}
+          currentUserId={currentUserId}
+          open={editingUser !== null}
+          onOpenChange={(open) => {
+            if (!open) setEditingUser(null)
+          }}
+        />
+      )}
+
+      <ConfirmDialog
+        open={deletingUserId !== null}
+        onOpenChange={(open) => { if (!open) setDeletingUserId(null) }}
+        title="¿Eliminar Usuario?"
+        description="Esta acción deshabilitará el acceso de este usuario al sistema. Las sesiones activas se cerrarán."
+        onConfirm={handleConfirmDeleteUser}
       />
     </ModuleLayout>
   )

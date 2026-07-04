@@ -31,7 +31,7 @@ const createEvaluationSchema = z.object({
 export type CreateEvaluationData = z.infer<typeof createEvaluationSchema>
 
 export const createEvaluation = createServerFn({ method: 'POST' })
-  .inputValidator((data) => createEvaluationSchema.parse(data))
+  .validator((data) => createEvaluationSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({
       data: { roles: ['ADMIN', 'TRAINER'] },
@@ -73,7 +73,7 @@ export const createEvaluation = createServerFn({ method: 'POST' })
   })
 
 export const getMemberEvaluations = createServerFn({ method: 'GET' })
-  .inputValidator((memberId) => uuidField.parse(memberId))
+  .validator((memberId) => uuidField.parse(memberId))
   .handler(async ({ data: memberId }) => {
     await requireRole({ data: { roles: ['ADMIN', 'TRAINER', 'RECEPTIONIST'] } })
 
@@ -85,7 +85,7 @@ export const getMemberEvaluations = createServerFn({ method: 'GET' })
   })
 
 export const deleteEvaluation = createServerFn({ method: 'POST' })
-  .inputValidator((id) => uuidField.parse(id))
+  .validator((id) => uuidField.parse(id))
   .handler(async ({ data: id }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
 

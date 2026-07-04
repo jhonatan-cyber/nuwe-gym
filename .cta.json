@@ -1,9 +1,9 @@
 {
-  "projectName": "gym-manager",
+  "projectName": "trainix",
   "mode": "file-router",
   "typescript": true,
   "tailwind": true,
-  "packageManager": "npm",
+  "packageManager": "bun",
   "git": false,
   "install": true,
   "intent": false,

@@ -23,6 +23,7 @@ export const checkInResultEnum = pgEnum('check_in_result', [
   'DENIED_INACTIVE',
   'DENIED_SUSPENDED',
   'DENIED_SCHEDULE',
+  'DENIED_BRANCH',
 ])
 export const saleStatusEnum = pgEnum('sale_status', ['COMPLETED', 'CANCELED'])
 export const inventoryMovementTypeEnum = pgEnum('inventory_movement_type', [

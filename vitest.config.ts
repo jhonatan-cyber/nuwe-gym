@@ -16,5 +16,21 @@ export default defineConfig({
     fileParallelism: false,
     testTimeout: 15000,
     hookTimeout: 20000,
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'text-summary', 'html', 'lcov'],
+      reportsDirectory: './coverage',
+      include: ['src/**'],
+      exclude: [
+        'src/__tests__/**',
+        'src/routeTree.gen.ts',
+        'src/**/*.test.ts',
+        'src/**/*.test.tsx',
+        'src/env.ts',
+        'src/main.tsx',
+        'src/router.tsx',
+        'src/routes/**',
+      ],
+    },
   },
 })

@@ -52,7 +52,7 @@ export const getWeeklySchedule = createServerFn({ method: 'GET' }).handler(
 // ── Get schedules for a single employee ──
 
 export const getEmployeeSchedules = createServerFn({ method: 'GET' })
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z.object({ employeeId: uuidField }).parse(data),
   )
   .handler(async ({ data }) => {
@@ -81,7 +81,7 @@ const setEmployeeSchedulesSchema = z.object({
 })
 
 export const setEmployeeSchedules = createServerFn({ method: 'POST' })
-  .inputValidator((data: unknown) => setEmployeeSchedulesSchema.parse(data))
+  .validator((data: unknown) => setEmployeeSchedulesSchema.parse(data))
   .handler(async ({ data }) => {
     const session = await requireRole({ data: { roles: ['ADMIN'] } })
 
