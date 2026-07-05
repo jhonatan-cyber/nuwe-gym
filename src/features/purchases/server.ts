@@ -5,7 +5,7 @@ import { products } from '#/shared/db/schema/products.ts'
 import { productStock } from '#/shared/db/schema/product-stock.ts'
 import { inventoryMovements } from '#/shared/db/schema/inventory.ts'
 import { eq, desc, inArray, and } from 'drizzle-orm'
-import { requireRole } from '#/shared/lib/server-utils.ts'
+import { requirePermission } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { z } from 'zod'
@@ -16,7 +16,7 @@ export const getPurchases = createServerFn({ method: 'GET' })
     z.object({ branchId: branchIdField }).optional(),
   )
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'purchases:read' } })
     return await db.query.purchases.findMany({
       where: data?.branchId
         ? eq(purchases.branchId, data.branchId)
@@ -52,7 +52,7 @@ const createPurchaseSchema = z.object({
 export const createPurchase = createServerFn({ method: 'POST' })
   .validator((data) => createPurchaseSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'purchases:write' } })
 
     const purchase = await db.transaction(async (tx) => {
       let subtotalSum = 0

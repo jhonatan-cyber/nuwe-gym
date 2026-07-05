@@ -4,7 +4,7 @@ import { eq, and, ne } from 'drizzle-orm'
 import { db } from '#/shared/db/index.ts'
 import { memberPaymentMethods } from '#/shared/db/schema/member-payment-methods.ts'
 import { settings } from '#/shared/db/schema/settings.ts'
-import { requireRole } from '#/shared/lib/server-utils.ts'
+import { requirePermission } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { getStripeClient } from '#/shared/lib/stripe.ts'
@@ -15,7 +15,7 @@ import { uuidField } from '#/shared/lib/schemas.ts'
 export const createSetupIntent = createServerFn({ method: 'POST' })
   .validator((data) => z.object({ memberId: uuidField }).parse(data))
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'payments:write' } })
 
     const stripe = getStripeClient()
     const settingsRows = await db.select().from(settings).limit(1)
@@ -65,7 +65,7 @@ const attachPaymentMethodSchema = z.object({
 export const attachPaymentMethod = createServerFn({ method: 'POST' })
   .validator((data) => attachPaymentMethodSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    const session = await requirePermission({ data: { permission: 'payments:write' } })
 
     const stripe = getStripeClient()
 
@@ -117,7 +117,7 @@ export const attachPaymentMethod = createServerFn({ method: 'POST' })
 export const getMemberPaymentMethods = createServerFn({ method: 'GET' })
   .validator((data) => z.object({ memberId: uuidField }).parse(data))
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'payments:read' } })
 
     const methods = await db.query.memberPaymentMethods.findMany({
       where: eq(memberPaymentMethods.memberId, data.memberId),
@@ -137,7 +137,7 @@ const toggleAutoPaySchema = z.object({
 export const toggleAutoPay = createServerFn({ method: 'POST' })
   .validator((data) => toggleAutoPaySchema.parse(data))
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'payments:write' } })
 
     const [pm] = await db
       .update(memberPaymentMethods)
@@ -153,7 +153,7 @@ export const toggleAutoPay = createServerFn({ method: 'POST' })
 export const removePaymentMethod = createServerFn({ method: 'POST' })
   .validator((data) => z.object({ id: uuidField }).parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    const session = await requirePermission({ data: { permission: 'payments:write' } })
 
     const pm = await db.query.memberPaymentMethods.findFirst({
       where: eq(memberPaymentMethods.id, data.id),

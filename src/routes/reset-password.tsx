@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { createFileRoute, redirect, Link, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, redirect, Link } from '@tanstack/react-router'
 import { z } from 'zod'
 import { Eye, EyeOff, CheckCircle2, AlertCircle, ArrowLeft, Lock } from 'lucide-react'
 import { Input } from '#/shared/components/ui/input'
@@ -25,7 +25,6 @@ export const Route = createFileRoute('/reset-password')({
 })
 
 function ResetPasswordPage() {
-  const navigate = useNavigate()
   const { token, error: tokenError } = Route.useSearch()
 
   const [password, setPassword] = useState('')

@@ -2,7 +2,7 @@ import { createServerFn } from '@tanstack/react-start'
 import { db } from '#/shared/db/index.ts'
 import { tvMedia, tvTickerMessages } from '#/shared/db/schema/tv-media.ts'
 import { eq, asc } from 'drizzle-orm'
-import { requireRole } from '#/shared/lib/server-utils.ts'
+import { requirePermission } from '#/shared/lib/server-utils.ts'
 import { z } from 'zod'
 import { requiredString } from '#/shared/lib/schemas.ts'
 
@@ -25,7 +25,7 @@ export const addTvMedia = createServerFn({ method: 'POST' })
     }).parse(data),
   )
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN'] } })
+    await requirePermission({ data: { permission: 'settings:write' } })
     const [media] = await db
       .insert(tvMedia)
       .values({ imageUrl: data.imageUrl, caption: data.caption, displayOrder: data.displayOrder })
@@ -36,7 +36,7 @@ export const addTvMedia = createServerFn({ method: 'POST' })
 export const removeTvMedia = createServerFn({ method: 'POST' })
   .validator((data: unknown) => z.object({ id: requiredString }).parse(data))
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN'] } })
+    await requirePermission({ data: { permission: 'settings:write' } })
     await db.delete(tvMedia).where(eq(tvMedia.id, data.id))
     return { success: true }
   })
@@ -56,7 +56,7 @@ export const addTickerMessage = createServerFn({ method: 'POST' })
     z.object({ message: requiredString, displayOrder: z.number().int().min(0).default(0) }).parse(data),
   )
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN'] } })
+    await requirePermission({ data: { permission: 'settings:write' } })
     const [msg] = await db
       .insert(tvTickerMessages)
       .values({ message: data.message, displayOrder: data.displayOrder })
@@ -67,7 +67,7 @@ export const addTickerMessage = createServerFn({ method: 'POST' })
 export const removeTickerMessage = createServerFn({ method: 'POST' })
   .validator((data: unknown) => z.object({ id: requiredString }).parse(data))
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN'] } })
+    await requirePermission({ data: { permission: 'settings:write' } })
     await db.delete(tvTickerMessages).where(eq(tvTickerMessages.id, data.id))
     return { success: true }
   })

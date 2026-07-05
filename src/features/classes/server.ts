@@ -7,7 +7,7 @@ import {
 } from '#/shared/db/schema/classes.ts'
 import { classWaitlist } from '#/shared/db/schema/class-waitlist.ts'
 import { eq, desc, and, inArray, sql, SQL, asc } from 'drizzle-orm'
-import { requireRole } from '#/shared/lib/server-utils.ts'
+import { requirePermission } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { z } from 'zod'
@@ -18,7 +18,7 @@ export const getClasses = createServerFn({ method: 'GET' })
     z.object({ branchId: z.string().uuid().optional() }).optional(),
   )
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
+    await requirePermission({ data: { permission: 'classes:read' } })
     return await db.query.classes.findMany({
       where: data?.branchId ? eq(classes.branchId, data.branchId) : undefined,
       with: { schedules: true },
@@ -29,7 +29,7 @@ export const getClasses = createServerFn({ method: 'GET' })
 export const getClass = createServerFn({ method: 'GET' })
   .validator((data: { id: string }) => data)
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
+    await requirePermission({ data: { permission: 'classes:read' } })
     return await db.query.classes.findFirst({
       where: eq(classes.id, data.id),
       with: { schedules: true },
@@ -47,8 +47,8 @@ const createClassSchema = z.object({
 export const createClass = createServerFn({ method: 'POST' })
   .validator((data) => createClassSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({
-      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
+    const session = await requirePermission({
+      data: { permission: 'classes:write' },
     })
     const [classItem] = await db
       .insert(classes)
@@ -81,8 +81,8 @@ const updateClassSchema = z.object({
 export const updateClass = createServerFn({ method: 'POST' })
   .validator((data) => updateClassSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({
-      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
+    const session = await requirePermission({
+      data: { permission: 'classes:write' },
     })
     const [classItem] = await db
       .update(classes)
@@ -110,7 +110,7 @@ const deleteClassSchema = z.object({ id: uuidField })
 export const deleteClass = createServerFn({ method: 'POST' })
   .validator((data) => deleteClassSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'classes:write' } })
     await db.delete(classes).where(eq(classes.id, data.id))
     createAuditLog({
       ...getAuditContext(session),
@@ -133,8 +133,8 @@ const addScheduleSchema = z.object({
 export const addSchedule = createServerFn({ method: 'POST' })
   .validator((data) => addScheduleSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({
-      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
+    const session = await requirePermission({
+      data: { permission: 'classes:write' },
     })
     const [schedule] = await db
       .insert(classSchedules)
@@ -161,8 +161,8 @@ const removeScheduleSchema = z.object({ id: uuidField })
 export const removeSchedule = createServerFn({ method: 'POST' })
   .validator((data) => removeScheduleSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({
-      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
+    const session = await requirePermission({
+      data: { permission: 'classes:write' },
     })
     await db.delete(classSchedules).where(eq(classSchedules.id, data.id))
     createAuditLog({
@@ -183,7 +183,7 @@ const getBookingsSchema = z.object({
 export const getBookings = createServerFn({ method: 'GET' })
   .validator((data) => getBookingsSchema.parse(data))
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
+    await requirePermission({ data: { permission: 'classes:read' } })
     const conditions: SQL[] = []
 
     if (data.classId) {
@@ -229,8 +229,8 @@ const createBookingSchema = z.object({
 export const createBooking = createServerFn({ method: 'POST' })
   .validator((data) => createBookingSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({
-      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
+    const session = await requirePermission({
+      data: { permission: 'classes:write' },
     })
 
     const schedule = await db.query.classSchedules.findFirst({
@@ -277,8 +277,8 @@ const cancelBookingSchema = z.object({ id: uuidField })
 export const cancelBooking = createServerFn({ method: 'POST' })
   .validator((data) => cancelBookingSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({
-      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
+    const session = await requirePermission({
+      data: { permission: 'classes:write' },
     })
     const [booking] = await db
       .update(classBookings)
@@ -306,8 +306,8 @@ const markAttendanceSchema = z.object({ id: uuidField })
 export const markAttendance = createServerFn({ method: 'POST' })
   .validator((data) => markAttendanceSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({
-      data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] },
+    const session = await requirePermission({
+      data: { permission: 'classes:write' },
     })
     const [booking] = await db
       .update(classBookings)
@@ -329,7 +329,7 @@ export const getWeeklySchedule = createServerFn({ method: 'GET' })
     z.object({ branchId: z.string().uuid().optional() }).optional(),
   )
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
+    await requirePermission({ data: { permission: 'classes:read' } })
 
     const schedules = await db.query.classSchedules.findMany({
       where: eq(classSchedules.isActive, true),
@@ -347,7 +347,7 @@ export const getWeeklySchedule = createServerFn({ method: 'GET' })
 export const getWaitlist = createServerFn({ method: 'GET' })
   .validator(z.object({ classScheduleId: uuidField }))
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
+    await requirePermission({ data: { permission: 'classes:read' } })
     return await db.query.classWaitlist.findMany({
       where: eq(classWaitlist.classScheduleId, data.classScheduleId),
       orderBy: [asc(classWaitlist.addedAt)],
@@ -363,7 +363,7 @@ const addToWaitlistSchema = z.object({
 export const addToWaitlist = createServerFn({ method: 'POST' })
   .validator((data) => addToWaitlistSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    const session = await requirePermission({ data: { permission: 'classes:write' } })
 
     // Verificar que la clase esté llena (sólo se puede agregar a lista de espera si está llena)
     const schedule = await db.query.classSchedules.findFirst({
@@ -412,7 +412,7 @@ const removeFromWaitlistSchema = z.object({ id: uuidField })
 export const removeFromWaitlist = createServerFn({ method: 'POST' })
   .validator((data) => removeFromWaitlistSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    const session = await requirePermission({ data: { permission: 'classes:write' } })
     const [entry] = await db
       .delete(classWaitlist)
       .where(eq(classWaitlist.id, data.id))
@@ -435,7 +435,7 @@ export const removeFromWaitlist = createServerFn({ method: 'POST' })
 export const promoteFromWaitlist = createServerFn({ method: 'POST' })
   .validator(z.object({ classScheduleId: uuidField }))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    const session = await requirePermission({ data: { permission: 'classes:write' } })
 
     const next = await db.query.classWaitlist.findFirst({
       where: eq(classWaitlist.classScheduleId, data.classScheduleId),

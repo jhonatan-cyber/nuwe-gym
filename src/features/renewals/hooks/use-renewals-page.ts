@@ -67,7 +67,6 @@ export function useRenewalsPage() {
     useQuery({
       queryKey: ['member-search', searchQuery],
       queryFn: () => getMembers({ data: { search: searchQuery, branchId: branchId ?? undefined } }),
-      enabled: searchQuery.length >= 2,
     })
 
   const searchTotal = allSearchResults.length
@@ -102,7 +101,6 @@ export function useRenewalsPage() {
     },
   })
 
-  // Reset search page when query changes
   useEffect(() => {
     setSearchPage(1)
   }, [searchQuery])
@@ -117,6 +115,7 @@ export function useRenewalsPage() {
 
   function handleSelectMember(member: any) {
     setSelectedMember(member)
+    setSearchQuery(member.fullName)
     setStep(2)
   }
 
@@ -173,6 +172,7 @@ export function useRenewalsPage() {
     isCashRegisterOpen,
     packages,
     memberSearchResults,
+    allSearchResults,
     searchingMembers,
     renewalHistory,
     loadingHistory,

@@ -16,7 +16,7 @@ export const PAYMENT_METHODS: PaymentMethodOption[] = [
     value: 'CASH',
     label: 'Efectivo',
     icon: Coins,
-    description: 'Pago físico en efectivo',
+    description: 'Pago en efectivo',
   },
   {
     value: 'CARD',
@@ -28,9 +28,9 @@ export const PAYMENT_METHODS: PaymentMethodOption[] = [
     value: 'TRANSFER',
     label: 'Transferencia',
     icon: Building2,
-    description: 'Banco o transferencia directa',
+    description: 'Transferencia',
   },
-  { value: 'QR', label: 'QR', icon: QrCode, description: 'QR / Mercado Pago' },
+  { value: 'QR', label: 'QR', icon: QrCode, description: 'QR' },
 ]
 
 export const STEPS = [

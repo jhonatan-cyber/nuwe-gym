@@ -46,7 +46,8 @@ import {
 
 export function ProductsPage() {
   const queryClient = useQueryClient()
-  const { userRole } = authedRoute.useRouteContext()
+  const { session } = authedRoute.useRouteContext()
+  const userRole = session.user.role
   const isAdmin = userRole === 'ADMIN'
 
   const [searchTerm, setSearchTerm] = useState('')

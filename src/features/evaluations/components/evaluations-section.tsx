@@ -19,7 +19,8 @@ interface EvaluationsSectionProps {
 }
 
 export function EvaluationsSection({ memberId }: EvaluationsSectionProps) {
-  const { userRole } = authedRoute.useRouteContext()
+  const { session } = authedRoute.useRouteContext()
+  const userRole = session.user.role
   const isAdmin = userRole === 'ADMIN'
   const canEvaluate = userRole === 'ADMIN' || userRole === 'TRAINER'
   const [showForm, setShowForm] = useState(false)

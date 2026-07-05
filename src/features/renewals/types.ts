@@ -6,7 +6,7 @@ export type Step = 1 | 2 | 3
 export type { PaymentMethod }
 
 export interface RenewalFormData {
-  packageId: number
+  packageId: string
   paymentMethod: PaymentMethod
   amount: string
   notes: string
@@ -14,12 +14,4 @@ export interface RenewalFormData {
 
 export type MemberWithSubscriptions = Awaited<
   ReturnType<typeof getMembers>
->[number] & {
-  subscriptions?: Array<{
-    id: number
-    status: string
-    endDate: Date
-    packageId: number | null
-    package?: { name: string; price: string } | null
-  }>
-}
+>[number]

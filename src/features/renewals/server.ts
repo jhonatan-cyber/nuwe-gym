@@ -10,7 +10,7 @@ import {
 import { members } from '#/shared/db/schema/members.ts'
 import { settings } from '#/shared/db/schema/settings.ts'
 import { eq, and, gte, lte, desc, inArray } from 'drizzle-orm'
-import { requireRole } from '#/shared/lib/server-utils.ts'
+import { requirePermission } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { z } from 'zod'
@@ -25,7 +25,7 @@ const getExpiringSubscriptionsSchema = z.object({
 export const getExpiringSubscriptions = createServerFn({ method: 'GET' })
   .validator((data) => getExpiringSubscriptionsSchema.parse(data))
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'renewals:read' } })
 
     const now = new Date()
     const future = new Date()
@@ -59,7 +59,7 @@ export const getExpiredSubscriptions = createServerFn({
 })
   .validator((data) => getExpiredSubscriptionsSchema.parse(data))
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'renewals:read' } })
 
     const memberIds = data.branchId
       ? (await db.select({ id: members.id }).from(members).where(eq(members.branchId, data.branchId))).map((m) => m.id)
@@ -91,9 +91,7 @@ export type RenewSubscriptionData = z.infer<typeof renewSubscriptionSchema>
 export const renewSubscription = createServerFn({ method: 'POST' })
   .validator((data) => renewSubscriptionSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({
-      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
-    })
+    const session = await requirePermission({ data: { permission: 'renewals:write' } })
     const userId = session.user.id
 
     const subscription = await db.transaction(async (tx) => {
@@ -180,7 +178,6 @@ export const renewSubscription = createServerFn({ method: 'POST' })
     return subscription
   })
 
-// ── Core logic (no auth, no audit) for reuse by server fn and cron endpoint ──
 export async function runAutoRenewalsCore(
   userId: string,
 ): Promise<{ renewed: number; message: string }> {
@@ -216,7 +213,6 @@ export async function runAutoRenewalsCore(
       const amount = sub.package?.price || '0'
       const memberId = sub.memberId
 
-      // Try to charge via Stripe if auto-pay is enabled
       let paymentMethod: 'CARD' | 'CASH' = 'CASH'
       let stripePaymentId: string | undefined
 
@@ -298,7 +294,7 @@ export async function runAutoRenewalsCore(
 // Server function with auth (for manual trigger from UI / notifications)
 export const processAutoRenewals = createServerFn({ method: 'POST' }).handler(
   async () => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'renewals:write' } })
     const result = await runAutoRenewalsCore(session.user.id)
 
     createAuditLog({
@@ -317,7 +313,7 @@ export const getMemberRenewalHistory = createServerFn({ method: 'GET' })
     z.object({ memberId: uuidField }).parse(data),
   )
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'renewals:read' } })
 
     return await db.query.subscriptions.findMany({
       where: eq(subscriptions.memberId, data.memberId),

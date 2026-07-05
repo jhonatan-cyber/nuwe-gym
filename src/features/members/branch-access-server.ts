@@ -3,8 +3,8 @@ import { z } from 'zod'
 import { db } from '#/shared/db/index.ts'
 import { memberBranches } from '#/shared/db/schema/member-branches.ts'
 import { members } from '#/shared/db/schema/members.ts'
-import { eq, inArray, isNull } from 'drizzle-orm'
-import { requireRole } from '#/shared/lib/server-utils.ts'
+import { eq, isNull } from 'drizzle-orm'
+import { requirePermission } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { uuidField } from '#/shared/lib/schemas.ts'
@@ -18,7 +18,7 @@ const getMemberBranchesSchema = z.object({
 export const getMemberBranches = createServerFn({ method: 'GET' })
   .validator((data) => getMemberBranchesSchema.parse(data))
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
+    await requirePermission({ data: { permission: 'branches:read' } })
     return await db.query.memberBranches.findMany({
       where: eq(memberBranches.memberId, data.memberId),
       with: { branch: { columns: { id: true, name: true } } },
@@ -35,7 +35,7 @@ const setMemberBranchesSchema = z.object({
 export const setMemberBranches = createServerFn({ method: 'POST' })
   .validator((data) => setMemberBranchesSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    const session = await requirePermission({ data: { permission: 'branches:write' } })
 
     await db.transaction(async (tx) => {
       // Remove all existing assignments

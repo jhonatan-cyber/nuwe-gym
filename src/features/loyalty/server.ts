@@ -13,8 +13,8 @@ import {
 import { members } from '#/shared/db/schema/members.ts'
 import { checkIns } from '#/shared/db/schema/check-ins.ts'
 import { sales } from '#/shared/db/schema/sales.ts'
-import { eq, desc, and, count, sql, lte, lt, gte } from 'drizzle-orm'
-import { requireRole } from '#/shared/lib/server-utils.ts'
+import { eq, desc, and, count, sql, lte, gte } from 'drizzle-orm'
+import { requirePermission } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { z } from 'zod'
@@ -63,6 +63,8 @@ export async function earnPoints(
 export function generateReferralCode(fullName: string, id: string): string {
   const namePart = fullName
     .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9]/g, '')
     .slice(0, 8)
   return `${namePart}-${id.slice(0, 6)}`
@@ -264,7 +266,7 @@ const getInfoSchema = z.object({ memberId: z.string().uuid() })
 export const getLoyaltyInfo = createServerFn({ method: 'GET' })
   .validator((data) => getInfoSchema.parse(data))
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
+    await requirePermission({ data: { permission: 'members:read' } })
     const last = await db
       .select({ balance: loyaltyPoints.balance })
       .from(loyaltyPoints)
@@ -339,7 +341,7 @@ const redeemSchema = z.object({
 export const redeemPoints = createServerFn({ method: 'POST' })
   .validator((data) => redeemSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    const session = await requirePermission({ data: { permission: 'members:write' } })
     const last = await db
       .select({ balance: loyaltyPoints.balance })
       .from(loyaltyPoints)
@@ -366,7 +368,7 @@ export const redeemPoints = createServerFn({ method: 'POST' })
 export const generateReferralCodeFn = createServerFn({ method: 'POST' })
   .validator((data) => z.object({ memberId: z.string().uuid() }).parse(data))
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
+    await requirePermission({ data: { permission: 'members:write' } })
     const member = await db
       .select()
       .from(members)
@@ -384,7 +386,7 @@ export const generateReferralCodeFn = createServerFn({ method: 'POST' })
 
 export const getCoupons = createServerFn({ method: 'GET' })
   .handler(async () => {
-    await requireRole({ data: { roles: ['ADMIN'] } })
+    await requirePermission({ data: { permission: 'members:read' } })
     return await db.select().from(coupons).orderBy(desc(coupons.createdAt))
   })
 
@@ -401,7 +403,7 @@ const createCouponSchema = z.object({
 export const createCoupon = createServerFn({ method: 'POST' })
   .validator((data) => createCouponSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'members:write' } })
     const [cp] = await db.insert(coupons).values({
       code: data.code,
       description: data.description ?? null,
@@ -423,7 +425,7 @@ const toggleCouponSchema = z.object({ id: z.string().uuid(), isActive: z.boolean
 export const toggleCoupon = createServerFn({ method: 'POST' })
   .validator((data) => toggleCouponSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'members:write' } })
     const [cp] = await db.update(coupons).set({ isActive: data.isActive })
       .where(eq(coupons.id, data.id)).returning()
     createAuditLog({
@@ -440,7 +442,7 @@ const validateCouponSchema = z.object({ code: z.string(), total: z.number().int(
 export const validateCoupon = createServerFn({ method: 'GET' })
   .validator((data) => validateCouponSchema.parse(data))
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'members:read' } })
     const cp = await db
       .select()
       .from(coupons)

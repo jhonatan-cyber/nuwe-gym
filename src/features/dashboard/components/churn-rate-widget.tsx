@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { Users, AlertTriangle, TrendingDown, ShieldAlert } from 'lucide-react'
+import { AlertTriangle, ShieldAlert } from 'lucide-react'
 import { getDashboardChurnData } from '#/features/dashboard/server.ts'
 import { cn } from '#/shared/lib/utils.ts'
 
@@ -83,7 +83,7 @@ export function ChurnRateWidget() {
         </div>
         <div className="flex-1 space-y-1.5 pb-1">
           {(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'] as const).map((level) => {
-            const count = distribution[level.toLowerCase() as keyof typeof distribution] as number
+            const count = distribution[level.toLowerCase() as keyof typeof distribution]
             if (count === 0) return null
             const pct = distribution.total > 0 ? (count / distribution.total) * 100 : 0
             const colors = levelColors[level]

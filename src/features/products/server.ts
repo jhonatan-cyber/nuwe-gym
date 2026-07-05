@@ -7,14 +7,14 @@ import { inventoryMovements } from '#/shared/db/schema/inventory.ts'
 import { eq, desc, ilike, or, and, inArray, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { branchIdField, moneyString, optionalString, uuidField } from '#/shared/lib/schemas.ts'
-import { requireRole } from '#/shared/lib/server-utils.ts'
+import { requirePermission } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 
 export const getCategories = createServerFn({ method: 'GET' })
   .validator((data: { branchId?: string }) => data)
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'products:read' } })
     const categories = await db.query.productCategories.findMany({
       orderBy: [desc(productCategories.createdAt)],
     })
@@ -87,8 +87,8 @@ const createCategorySchema = z.object({
 export const createCategory = createServerFn({ method: 'POST' })
   .validator((data) => createCategorySchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({
-      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
+    const session = await requirePermission({
+      data: { permission: 'products:write' },
     })
     const [category] = await db
       .insert(productCategories)
@@ -117,8 +117,8 @@ const updateCategorySchema = z.object({
 export const updateCategory = createServerFn({ method: 'POST' })
   .validator((data) => updateCategorySchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({
-      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
+    const session = await requirePermission({
+      data: { permission: 'products:write' },
     })
     const [category] = await db
       .update(productCategories)
@@ -222,7 +222,7 @@ const createProductSchema = z.object({
 export const createProduct = createServerFn({ method: 'POST' })
   .validator((data) => createProductSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'products:write' } })
     const [product] = await db
       .insert(products)
       .values({
@@ -262,7 +262,7 @@ const updateProductSchema = z.object({
 export const updateProduct = createServerFn({ method: 'POST' })
   .validator((data) => updateProductSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'products:write' } })
     const [product] = await db
       .update(products)
       .set({
@@ -301,8 +301,8 @@ const adjustStockSchema = z.object({
 export const adjustStock = createServerFn({ method: 'POST' })
   .validator((data) => adjustStockSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({
-      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
+    const session = await requirePermission({
+      data: { permission: 'products:write' },
     })
 
     const branchId = data.branchId

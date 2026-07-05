@@ -42,7 +42,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '#/sha
 import { formatCurrency } from '#/shared/lib/formatters.ts'
 
 export function CashRegisterPage() {
-  const { userRole } = authedRoute.useRouteContext()
+  const { session } = authedRoute.useRouteContext()
+  const userRole = session.user.role
   const isAdmin = userRole === 'ADMIN'
   const { branchId } = useCurrentBranch()
   const c = useCashRegister(branchId, isAdmin)

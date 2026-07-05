@@ -4,7 +4,7 @@ import { members } from '#/shared/db/schema/members.ts'
 import { checkIns } from '#/shared/db/schema/check-ins.ts'
 import { users } from '#/shared/db/schema/auth.ts'
 import { eq, SQL } from 'drizzle-orm'
-import { requireRole, getSession } from '#/shared/lib/server-utils.ts'
+import { requirePermission, getSession } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { z } from 'zod'
@@ -16,9 +16,7 @@ export const generateMemberQR = createServerFn({ method: 'POST' })
     z.object({ memberId: uuidField }).parse(data),
   )
   .handler(async ({ data }) => {
-    const session = await requireRole({
-      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
-    })
+    const session = await requirePermission({ data: { permission: 'members:write' } })
 
     const member = await db.query.members.findFirst({
       where: eq(members.id, data.memberId),
@@ -50,7 +48,7 @@ export const getMemberQRCode = createServerFn({ method: 'GET' })
     z.object({ memberId: uuidField }).parse(data),
   )
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
+    await requirePermission({ data: { permission: 'members:read' } })
 
     const member = await db.query.members.findFirst({
       where: eq(members.id, data.memberId),
@@ -65,7 +63,7 @@ export const getMembersWithQR = createServerFn({ method: 'GET' })
     z.object({ search: optionalString }).parse(data),
   )
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'members:read' } })
 
     let whereClause: SQL | undefined = undefined
     if (data.search) {

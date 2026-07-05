@@ -1,7 +1,7 @@
 import { createServerFn } from '@tanstack/react-start'
 import { db } from '#/shared/db/index.ts'
 import { count, eq, gte, lte, and, sum, sql, desc, inArray } from 'drizzle-orm'
-import { requireRole } from '#/shared/lib/server-utils.ts'
+import { requirePermission } from '#/shared/lib/server-utils.ts'
 import { members } from '#/shared/db/schema/members.ts'
 import { subscriptions } from '#/shared/db/schema/subscriptions.ts'
 import { checkIns } from '#/shared/db/schema/check-ins.ts'
@@ -21,9 +21,7 @@ const getDashboardDataSchema = z.object({
 export const getDashboardData = createServerFn({ method: 'GET' })
   .validator((data) => getDashboardDataSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({
-      data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] },
-    })
+    const session = await requirePermission({ data: { permission: 'dashboard:read' } })
     const userRole = session.user.role
     const now = new Date()
     const startOfToday = new Date(
@@ -395,7 +393,7 @@ export const getDashboardData = createServerFn({ method: 'GET' })
 
 export const getDashboardChurnData = createServerFn({ method: 'GET' })
   .handler(async () => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'dashboard:read' } })
 
     const risks = (await computeAllChurnRisks(50)).slice(0, 5)
 
@@ -415,7 +413,7 @@ export const getDashboardChurnData = createServerFn({ method: 'GET' })
 
 export const getRevenueTrends = createServerFn({ method: 'GET' })
   .handler(async () => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'dashboard:read' } })
 
     const now = new Date()
     const months: { label: string; start: Date; end: Date }[] = []
@@ -473,7 +471,7 @@ export const getRevenueTrends = createServerFn({ method: 'GET' })
 
 export const getMembershipTrends = createServerFn({ method: 'GET' })
   .handler(async () => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'dashboard:read' } })
 
     const now = new Date()
     const data: { month: string; active: number; newMembers: number; expired: number }[] = []

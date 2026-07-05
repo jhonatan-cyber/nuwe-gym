@@ -1,30 +1,96 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
-  getFreezes,
   createFreeze,
   resumeSubscription,
+  getFreezes,
   getFrozenSubscriptions,
 } from '#/features/membership-freezes/server.ts'
-import { getSubscriptions } from '#/features/subscriptions/server.ts'
+import { getMembers, getMemberById } from '#/features/members/server.ts'
+import { getCurrentCashSession } from '#/features/cash-register/server.ts'
 import { useCurrentBranch } from '#/shared/hooks/use-current-branch.ts'
+import { Route as authedRoute } from '#/routes/_authed.tsx'
+import { useSearch } from '@tanstack/react-router'
+import type {
+  Step,
+  FreezeFormData,
+  MemberWithSubscriptions,
+} from '#/features/membership-freezes/types.ts'
 
-
-export function useMembershipFreezesPage(userRole: string) {
+export function useMembershipFreezesPage() {
   const queryClient = useQueryClient()
   const { branchId } = useCurrentBranch()
+  const { session } = authedRoute.useRouteContext()
+  const userRole = session.user.role
   const isAdmin = userRole === 'ADMIN'
   const canWrite = userRole === 'ADMIN' || userRole === 'RECEPTIONIST'
+  const search = useSearch({ strict: false })
+  const preselectedMemberId = (search as any).memberId
 
-  const [isFreezeModalOpen, setIsFreezeModalOpen] = useState(false)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [formData, setFormData] = useState({
+  const [step, setStep] = useState<Step>(1)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedMember, setSelectedMember] =
+    useState<MemberWithSubscriptions | null>(null)
+  const [searchPage, setSearchPage] = useState(1)
+  const searchPageSize = 5
+  const preselectedDone = useRef(false)
+
+  const [formData, setFormData] = useState<FreezeFormData>({
     subscriptionId: '',
     startDate: '',
     endDate: '',
     reason: '',
   })
+
+  const { data: preselectedMember } = useQuery({
+    queryKey: ['member-by-id', preselectedMemberId],
+    queryFn: () => getMemberById({ data: preselectedMemberId! }),
+    enabled: !!preselectedMemberId && !preselectedDone.current,
+  })
+
+  useEffect(() => {
+    if (preselectedMember && !preselectedDone.current) {
+      preselectedDone.current = true
+      handleSelectMember(preselectedMember as any)
+    }
+  }, [preselectedMember])
+
+  const { data: cashSession, isLoading: isLoadingSession } = useQuery({
+    queryKey: ['current-cash-session', branchId],
+    queryFn: () =>
+      getCurrentCashSession({ data: { branchId: branchId ?? undefined } }),
+    enabled: !!branchId,
+  })
+  const isCashRegisterOpen = !!cashSession
+
+  const { data: allSearchResults = [], isLoading: searchingMembers } = useQuery({
+    queryKey: ['member-search', searchQuery],
+    queryFn: () =>
+      getMembers({
+        data: { search: searchQuery, branchId: branchId ?? undefined },
+      }),
+  })
+
+  const filteredSearchResults = allSearchResults.filter((m) =>
+    (m.subscriptions || []).some(
+      (s) => s.status === 'ACTIVE' && new Date(s.endDate) >= new Date(),
+    ),
+  )
+
+  const searchTotal = filteredSearchResults.length
+  const searchTotalPages = Math.max(1, Math.ceil(searchTotal / searchPageSize))
+  const safeSearchPage = Math.min(searchPage, searchTotalPages)
+  const memberSearchResults = filteredSearchResults.slice(
+    (safeSearchPage - 1) * searchPageSize,
+    safeSearchPage * searchPageSize,
+  )
+
+  const activeSubs = selectedMember
+    ? (selectedMember.subscriptions || []).filter(
+        (s) => s.status === 'ACTIVE' && new Date(s.endDate) >= new Date(),
+      )
+    : []
 
   const { data: freezes = [], isLoading } = useQuery({
     queryKey: ['membership-freezes', branchId],
@@ -38,24 +104,14 @@ export function useMembershipFreezesPage(userRole: string) {
     enabled: !!branchId,
   })
 
-  const { data: allSubs = [] } = useQuery({
-    queryKey: ['subscriptions', branchId],
-    queryFn: () => getSubscriptions({ data: { branchId: branchId ?? undefined } }),
-    enabled: !!branchId,
-  })
-
-  const activeSubs = allSubs.filter(
-    (s) => s.status === 'ACTIVE' && new Date(s.endDate) >= new Date(),
-  )
-
   const createMutation = useMutation({
     mutationFn: createFreeze,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['membership-freezes'] })
       queryClient.invalidateQueries({ queryKey: ['frozen-subscriptions'] })
       queryClient.invalidateQueries({ queryKey: ['subscriptions'] })
-      setIsFreezeModalOpen(false)
       toast.success('Membresía congelada exitosamente')
+      handleReset()
     },
     onError: (error: Error) =>
       toast.error(error.message || 'Error al congelar'),
@@ -73,34 +129,52 @@ export function useMembershipFreezesPage(userRole: string) {
       toast.error(error.message || 'Error al reanudar'),
   })
 
-  const handleOpenFreezeModal = () => {
+  useEffect(() => {
+    setSearchPage(1)
+  }, [searchQuery])
+
+  useEffect(() => {
+    if (selectedMember && activeSubs.length === 1) {
+      const singleSubId = String(activeSubs[0].id)
+      if (formData.subscriptionId !== singleSubId) {
+        setFormData((prev) => ({
+          ...prev,
+          subscriptionId: singleSubId,
+        }))
+      }
+    }
+  }, [selectedMember, activeSubs, formData.subscriptionId])
+
+  function handleReset() {
+    setStep(1)
+    setSelectedMember(null)
+    setSearchQuery('')
     setFormData({ subscriptionId: '', startDate: '', endDate: '', reason: '' })
-    setSearchTerm('')
-    setIsFreezeModalOpen(true)
   }
 
-  const handleCreateFreeze = (e: React.FormEvent) => {
-    e.preventDefault()
-    createMutation.mutate({
-      data: {
-        subscriptionId: formData.subscriptionId,
-        startDate: formData.startDate,
-        endDate: formData.endDate,
-        reason: formData.reason || undefined,
-      },
-    })
+  function handleSelectMember(member: any) {
+    setSelectedMember(member)
+    setSearchQuery(member.fullName)
+    setStep(2)
   }
 
   const selectedSub = activeSubs.find((s) => s.id === formData.subscriptionId)
 
-  const calculatedEndDate =
-    selectedSub && formData.startDate && formData.endDate
-      ? (() => {
-          const freezeDays = Math.ceil(
+  const freezeDays =
+    formData.startDate && formData.endDate
+      ? Math.max(
+          0,
+          Math.ceil(
             (new Date(formData.endDate).getTime() -
               new Date(formData.startDate).getTime()) /
               (1000 * 60 * 60 * 24),
-          )
+          ),
+        )
+      : 0
+
+  const calculatedEndDate =
+    selectedSub && freezeDays > 0
+      ? (() => {
           const end = new Date(selectedSub.endDate)
           end.setDate(end.getDate() + freezeDays)
           return end
@@ -112,33 +186,56 @@ export function useMembershipFreezesPage(userRole: string) {
     return Math.ceil(diff / (1000 * 60 * 60 * 24))
   }
 
-  const handleFormChange = (
-    field: keyof typeof formData,
-    value: string,
-  ) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (
+      !formData.subscriptionId ||
+      !formData.startDate ||
+      !formData.endDate ||
+      !isCashRegisterOpen
+    )
+      return
+    createMutation.mutate({
+      data: {
+        subscriptionId: formData.subscriptionId,
+        startDate: formData.startDate,
+        endDate: formData.endDate,
+        reason: formData.reason || undefined,
+      },
+    })
   }
 
   return {
-    isFreezeModalOpen,
-    setIsFreezeModalOpen,
-    searchTerm,
-    setSearchTerm,
+    step,
+    setStep,
+    searchQuery,
+    setSearchQuery,
+    selectedMember,
     formData,
+    setFormData,
     freezes,
     frozenSubs,
-    allSubs,
     activeSubs,
     isLoading,
     createMutation,
     resumeMutation,
     selectedSub,
     calculatedEndDate,
+    freezeDays,
     daysRemaining,
     isAdmin,
     canWrite,
-    handleOpenFreezeModal,
-    handleCreateFreeze,
-    handleFormChange,
+    isLoadingSession,
+    isCashRegisterOpen,
+    memberSearchResults,
+    allSearchResults: filteredSearchResults,
+    searchingMembers,
+    searchPage,
+    setSearchPage,
+    searchTotalPages,
+    searchTotal,
+    handleReset,
+    handleSelectMember,
+    handleSubmit,
   }
 }

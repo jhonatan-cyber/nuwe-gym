@@ -5,7 +5,7 @@ import { sales } from '#/shared/db/schema/sales.ts'
 import { membershipPayments } from '#/shared/db/schema/membership-payments.ts'
 import { checkIns } from '#/shared/db/schema/check-ins.ts'
 import { eq, desc, and, gte, lte } from 'drizzle-orm'
-import { requireRole } from '#/shared/lib/server-utils.ts'
+import { requirePermission } from '#/shared/lib/server-utils.ts'
 import { formatDate } from '#/shared/lib/formatters.ts'
 import { z } from 'zod'
 import { optionalDateString } from '#/shared/lib/schemas.ts'
@@ -62,7 +62,7 @@ const dateRangeExcelSchema = z.object({
 export const exportMembers = createServerFn({ method: 'GET' })
   .validator((data) => exportMembersSchema.parse(data))
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'export:read' } })
 
     const whereClause =
       data.status && data.status !== 'ALL'
@@ -103,7 +103,7 @@ export const exportMembers = createServerFn({ method: 'GET' })
 export const exportMembersExcel = createServerFn({ method: 'GET' })
   .validator((data) => exportMembersExcelSchema.parse(data))
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'export:read' } })
 
     const whereClause =
       data.status && data.status !== 'ALL'
@@ -135,7 +135,7 @@ export const exportMembersExcel = createServerFn({ method: 'GET' })
 export const exportSales = createServerFn({ method: 'GET' })
   .validator((data) => dateRangeSchema.parse(data))
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'export:read' } })
 
     const start = data.startDate ? new Date(data.startDate) : undefined
     const end = data.endDate ? new Date(data.endDate + 'T23:59:59') : undefined
@@ -184,7 +184,7 @@ export const exportSales = createServerFn({ method: 'GET' })
 export const exportSalesExcel = createServerFn({ method: 'GET' })
   .validator((data) => dateRangeExcelSchema.parse(data))
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'export:read' } })
 
     const start = data.startDate ? new Date(data.startDate) : undefined
     const end = data.endDate ? new Date(data.endDate + 'T23:59:59') : undefined
@@ -233,7 +233,7 @@ export const exportSalesExcel = createServerFn({ method: 'GET' })
 export const exportPayments = createServerFn({ method: 'GET' })
   .validator((data) => dateRangeSchema.parse(data))
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'export:read' } })
 
     const start = data.startDate ? new Date(data.startDate) : undefined
     const end = data.endDate ? new Date(data.endDate + 'T23:59:59') : undefined
@@ -269,7 +269,7 @@ export const exportPayments = createServerFn({ method: 'GET' })
 export const exportPaymentsExcel = createServerFn({ method: 'GET' })
   .validator((data) => dateRangeExcelSchema.parse(data))
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'export:read' } })
 
     const start = data.startDate ? new Date(data.startDate) : undefined
     const end = data.endDate ? new Date(data.endDate + 'T23:59:59') : undefined
@@ -305,9 +305,7 @@ export const exportPaymentsExcel = createServerFn({ method: 'GET' })
 export const exportCheckIns = createServerFn({ method: 'GET' })
   .validator((data) => dateRangeSchema.parse(data))
   .handler(async ({ data }) => {
-    await requireRole({
-      data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] },
-    })
+    await requirePermission({ data: { permission: 'export:read' } })
 
     const start = data.startDate ? new Date(data.startDate) : undefined
     const end = data.endDate ? new Date(data.endDate + 'T23:59:59') : undefined
@@ -341,9 +339,7 @@ export const exportCheckIns = createServerFn({ method: 'GET' })
 export const exportCheckInsExcel = createServerFn({ method: 'GET' })
   .validator((data) => dateRangeExcelSchema.parse(data))
   .handler(async ({ data }) => {
-    await requireRole({
-      data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] },
-    })
+    await requirePermission({ data: { permission: 'export:read' } })
 
     const start = data.startDate ? new Date(data.startDate) : undefined
     const end = data.endDate ? new Date(data.endDate + 'T23:59:59') : undefined

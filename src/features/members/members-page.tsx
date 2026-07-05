@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import {
   ChevronRight,
@@ -14,7 +14,11 @@ import {
   ToggleLeft,
   ToggleRight,
 } from 'lucide-react'
-import { getMembers, deleteMember, toggleMemberStatus } from '#/features/members/server.ts'
+import {
+  getMembers,
+  deleteMember,
+  toggleMemberStatus,
+} from '#/features/members/server.ts'
 import { useDebounce } from '#/shared/hooks/use-debounce.ts'
 import { usePersistedState } from '#/shared/hooks/use-persisted-state.ts'
 import { useCurrentBranch } from '#/shared/hooks/use-current-branch.ts'
@@ -42,8 +46,6 @@ import { toast } from 'sonner'
 import { cn } from '#/shared/lib/utils.ts'
 import { MemberEnrollmentWizard } from '#/features/members/components/member-enrollment-wizard.tsx'
 import { ModuleLayout } from '#/shared/components/layout/module-layout.tsx'
-import { MemberEditDialog } from '#/features/members/components/member-edit-dialog.tsx'
-import { MemberDetailDialog } from '#/features/members/components/member-detail-dialog.tsx'
 import { ConfirmDialog } from '#/shared/components/ui/confirm-dialog'
 import { StatCard } from '#/shared/components/ui/stat-card'
 import { FilterBar } from '#/shared/components/ui/filter-bar'
@@ -52,6 +54,18 @@ import type {
   MemberWithSubscriptions,
   StatusFilter,
 } from '#/features/members/types.ts'
+
+// ── Lazy-loaded dialogs (code-split on user click) ──
+const MemberEditDialogLazy = lazy(() =>
+  import('./components/member-edit-dialog').then((m) => ({
+    default: m.MemberEditDialog,
+  })),
+)
+const MemberDetailDialogLazy = lazy(() =>
+  import('./components/member-detail-dialog').then((m) => ({
+    default: m.MemberDetailDialog,
+  })),
+)
 
 interface MembersPageProps {
   userRole: string
@@ -67,7 +81,8 @@ export function MembersPage({ userRole }: MembersPageProps) {
   const [editingMember, setEditingMember] =
     useState<MemberWithSubscriptions | null>(null)
   const [viewMemberId, setViewMemberId] = useState<string | null>(null)
-  const [deleteTarget, setDeleteTarget] = useState<MemberWithSubscriptions | null>(null)
+  const [deleteTarget, setDeleteTarget] =
+    useState<MemberWithSubscriptions | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = usePersistedState<number>(
     'dataTablePageSize',
@@ -84,8 +99,13 @@ export function MembersPage({ userRole }: MembersPageProps) {
   })
 
   const toggleStatusMutation = useMutation({
-    mutationFn: ({ memberId, status }: { memberId: string; status: 'ACTIVE' | 'INACTIVE' }) =>
-      toggleMemberStatus({ data: { memberId, status } }),
+    mutationFn: ({
+      memberId,
+      status,
+    }: {
+      memberId: string
+      status: 'ACTIVE' | 'INACTIVE'
+    }) => toggleMemberStatus({ data: { memberId, status } }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['members'] })
       toast.success('Estado del socio actualizado')
@@ -98,7 +118,10 @@ export function MembersPage({ userRole }: MembersPageProps) {
 
   const { data: membersList = [], isLoading } = useQuery({
     queryKey: ['members', debouncedSearch, branchId],
-    queryFn: () => getMembers({ data: { search: debouncedSearch, branchId: branchId ?? undefined } }),
+    queryFn: () =>
+      getMembers({
+        data: { search: debouncedSearch, branchId: branchId ?? undefined },
+      }),
   })
 
   const totalMembers = membersList.length
@@ -183,31 +206,6 @@ export function MembersPage({ userRole }: MembersPageProps) {
                 </ToggleGroupItem>
               </ToggleGroup>
             )}
-            <div className="space-y-3">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">
-                Métricas
-              </p>
-              <div className="grid grid-cols-1 gap-3">
-                <StatCard
-                  label="Total Socios"
-                  value={totalMembers}
-                  icon={Users}
-                  variant="default"
-                />
-                <StatCard
-                  label="Activos"
-                  value={activeNow}
-                  icon={CheckCircle2}
-                  variant="emerald"
-                />
-                <StatCard
-                  label="Vencen pronto"
-                  value={expiringThisWeek}
-                  icon={Clock}
-                  variant="foreground"
-                />
-              </div>
-            </div>
             <FilterBar
               search={search}
               onSearchChange={setSearch}
@@ -222,6 +220,33 @@ export function MembersPage({ userRole }: MembersPageProps) {
               ]}
               filterPlaceholder="Estado"
             />
+            <div className="space-y-3">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">
+                Métricas
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="col-span-2">
+                  <StatCard
+                    label="Total Socios"
+                    value={totalMembers}
+                    icon={Users}
+                    variant="default"
+                  />
+                </div>
+                <StatCard
+                  label="Activos"
+                  value={activeNow}
+                  icon={CheckCircle2}
+                  variant="emerald"
+                />
+                <StatCard
+                  label="Vencen pronto"
+                  value={expiringThisWeek}
+                  icon={Clock}
+                  variant="foreground"
+                />
+              </div>
+            </div>
           </div>
         }
       >
@@ -308,13 +333,21 @@ export function MembersPage({ userRole }: MembersPageProps) {
                 render: (member: MemberWithSubscriptions) => {
                   if (member.status === 'INACTIVE')
                     return (
-                      <Badge variant="secondary" className="text-[10px] font-bold">
+                      <Badge
+                        variant="secondary"
+                        className="text-[10px] font-bold"
+                      >
                         Inactivo
                       </Badge>
                     )
                   const sub = getActiveSubscription(member)
                   const expired = sub && isExpired(sub.endDate)
-                  if (!sub) return null
+                  if (!sub)
+                    return (
+                      <Badge variant="outline" className="text-[10px] font-bold text-muted-foreground border-muted-foreground/20">
+                        Sin plan
+                      </Badge>
+                    )
                   if (expired)
                     return (
                       <Badge
@@ -400,7 +433,9 @@ export function MembersPage({ userRole }: MembersPageProps) {
                               </TooltipTrigger>
                               <TooltipContent side="bottom">
                                 <p>
-                                  {isActive ? 'Desactivar socio' : 'Activar socio'}
+                                  {isActive
+                                    ? 'Desactivar socio'
+                                    : 'Activar socio'}
                                 </p>
                               </TooltipContent>
                             </Tooltip>
@@ -445,22 +480,26 @@ export function MembersPage({ userRole }: MembersPageProps) {
         </TooltipProvider>
       </ModuleLayout>
 
-      {editingMember && (
-        <MemberEditDialog
-          member={editingMember}
-          open={!!editingMember}
+      <Suspense fallback={null}>
+        {editingMember && (
+          <MemberEditDialogLazy
+            member={editingMember}
+            open={!!editingMember}
+            onOpenChange={(open) => {
+              if (!open) setEditingMember(null)
+            }}
+          />
+        )}
+      </Suspense>
+
+      <Suspense fallback={null}>
+        <MemberDetailDialogLazy
+          memberId={viewMemberId}
           onOpenChange={(open) => {
-            if (!open) setEditingMember(null)
+            if (!open) setViewMemberId(null)
           }}
         />
-      )}
-
-      <MemberDetailDialog
-        memberId={viewMemberId}
-        onOpenChange={(open) => {
-          if (!open) setViewMemberId(null)
-        }}
-      />
+      </Suspense>
 
       <ConfirmDialog
         open={!!deleteTarget}

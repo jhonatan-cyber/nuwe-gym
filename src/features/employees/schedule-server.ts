@@ -4,7 +4,7 @@ import { eq, asc, and } from 'drizzle-orm'
 import { db } from '#/shared/db/index.ts'
 import { employees } from '#/shared/db/schema/employees.ts'
 import { employeeSchedules } from '#/shared/db/schema/employee-schedules.ts'
-import { requireRole } from '#/shared/lib/server-utils.ts'
+import { requirePermission } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { uuidField } from '#/shared/lib/schemas.ts'
@@ -14,13 +14,13 @@ import type { EmployeeWithSchedule, ScheduleSlot } from './schedule-types.ts'
 
 export const getWeeklySchedule = createServerFn({ method: 'GET' }).handler(
   async () => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'employees:read' } })
 
-    const activeEmployees = await db
-      .select()
-      .from(employees)
-      .where(eq(employees.status, 'ACTIVE'))
-      .orderBy(asc(employees.fullName))
+    const activeEmployees = await db.query.employees.findMany({
+      where: eq(employees.status, 'ACTIVE'),
+      orderBy: [asc(employees.fullName)],
+      with: { department: true },
+    })
 
     const allSchedules = await db.query.employeeSchedules.findMany({
       where: eq(employeeSchedules.isActive, true),
@@ -42,7 +42,7 @@ export const getWeeklySchedule = createServerFn({ method: 'GET' }).handler(
         employeeCode: emp.employeeCode,
         fullName: emp.fullName,
         position: emp.position,
-        department: emp.department,
+        department: emp.department?.name ?? null,
         schedules,
       } satisfies EmployeeWithSchedule
     })
@@ -56,7 +56,7 @@ export const getEmployeeSchedules = createServerFn({ method: 'GET' })
     z.object({ employeeId: uuidField }).parse(data),
   )
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'employees:read' } })
     return await db.query.employeeSchedules.findMany({
       where: and(
         eq(employeeSchedules.employeeId, data.employeeId),
@@ -83,7 +83,7 @@ const setEmployeeSchedulesSchema = z.object({
 export const setEmployeeSchedules = createServerFn({ method: 'POST' })
   .validator((data: unknown) => setEmployeeSchedulesSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'employees:write' } })
 
     // Detect conflicts
     const conflicts: string[] = []
@@ -142,7 +142,7 @@ export const setEmployeeSchedules = createServerFn({ method: 'POST' })
 
 export const getScheduleConflicts = createServerFn({ method: 'GET' }).handler(
   async () => {
-    await requireRole({ data: { roles: ['ADMIN'] } })
+    await requirePermission({ data: { permission: 'employees:read' } })
 
     const all = await db.query.employeeSchedules.findMany({
       where: eq(employeeSchedules.isActive, true),

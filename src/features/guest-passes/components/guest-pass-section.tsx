@@ -6,8 +6,6 @@ import {
   Loader2,
   UserCheck,
   XCircle,
-  CheckCircle2,
-  Clock,
 } from 'lucide-react'
 import {
   getMemberGuestPasses,
@@ -105,8 +103,6 @@ export function GuestPassSection({ memberId }: GuestPassSectionProps) {
     },
     onError: (err: Error) => toast.error(err.message),
   })
-
-  const activePasses = passes.filter((p) => p.status === 'ACTIVE')
 
   return (
     <section>

@@ -165,7 +165,7 @@ describe('hardDeleteMember', () => {
   it('should delete member and cascade related data', async () => {
     const pkg = await createPackage()
     const member = await createMember()
-    const sub = await createSubscription(member.id, pkg.id)
+    await createSubscription(member.id, pkg.id)
 
     await hardDeleteMember(member.id)
 

@@ -2,7 +2,7 @@ import { createServerFn } from '@tanstack/react-start'
 import { z } from 'zod'
 import { count, sql } from 'drizzle-orm'
 import { db } from '#/shared/db/index.ts'
-import { requireRole } from '#/shared/lib/server-utils.ts'
+import { requirePermission } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { settings } from '#/shared/db/schema/settings.ts'
@@ -123,7 +123,7 @@ const backupDataSchema = z.object({
 export const exportDatabase = createServerFn({ method: 'GET' })
   .validator(() => ({}))
   .handler(async () => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'backup:read' } })
 
     const data: Record<string, any[]> = {}
 
@@ -162,7 +162,7 @@ export const exportDatabase = createServerFn({ method: 'GET' })
 export const importDatabase = createServerFn({ method: 'POST' })
   .validator((input: unknown) => backupDataSchema.parse(input))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'backup:write' } })
 
     const counts: Record<string, number> = {}
 
@@ -201,7 +201,7 @@ export const importDatabase = createServerFn({ method: 'POST' })
 
 export const getBackupInfo = createServerFn({ method: 'GET' }).handler(
   async () => {
-    await requireRole({ data: { roles: ['ADMIN'] } })
+    await requirePermission({ data: { permission: 'backup:read' } })
 
     const counts: Record<string, number> = {}
 
@@ -227,7 +227,7 @@ const backupSettingsSchema = z.object({
 export const saveBackupSettings = createServerFn({ method: 'POST' })
   .validator((input: unknown) => backupSettingsSchema.parse(input))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'backup:write' } })
 
     const existing = await db
       .select({ id: settings.id })
@@ -257,7 +257,7 @@ export const saveBackupSettings = createServerFn({ method: 'POST' })
 
 export const getBackupSettings = createServerFn({ method: 'GET' }).handler(
   async () => {
-    await requireRole({ data: { roles: ['ADMIN'] } })
+    await requirePermission({ data: { permission: 'backup:read' } })
 
     const row = await db
       .select({

@@ -8,6 +8,8 @@ import {
 } from 'drizzle-orm/pg-core'
 import { users } from './auth.ts'
 import { branches } from './branches.ts'
+import { roles } from './roles.ts'
+import { departments } from './departments.ts'
 
 export const employees = pgTable(
   'employees',
@@ -21,7 +23,9 @@ export const employees = pgTable(
     phone: text('phone'),
     documentNumber: text('document_number'),
     position: text('position').notNull(),
-    department: text('department').default(''),
+    roleId: text('role_id').references(() => roles.name, { onDelete: 'set null' }),
+    departmentId: uuid('department_id').references(() => departments.id, { onDelete: 'set null' }),
+    department: text('department').default(''), // keep for backwards compat
     status: text('status').notNull().default('ACTIVE'),
     hireDate: timestamp('hire_date').notNull(),
     terminationDate: timestamp('termination_date'),

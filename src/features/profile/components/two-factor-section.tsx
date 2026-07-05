@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import {
   Shield,
@@ -51,16 +51,17 @@ export function TwoFactorSection({
       if (res.error)
         throw new Error(res.error.message || 'Error al activar 2FA')
       return res.data as {
-        totpSecret: { secret: string; uri: string }
+        totpURI: string
+        backupCodes: string[]
       } | null
     },
     onSuccess: async (data) => {
-      if (data?.totpSecret) {
+      if (data?.totpURI) {
         const secretData = {
-          secret: data.totpSecret.secret,
+          secret: data.totpURI.split('?secret=')[1]?.split('&')[0] ?? '',
           uri:
-            data.totpSecret.uri ??
-            `otpauth://totp/Trainix:${data.totpSecret.secret}?secret=${data.totpSecret.secret}&issuer=Trainix`,
+            data.totpURI ??
+            `otpauth://totp/Trainix:${data.totpURI}?secret=${data.totpURI}&issuer=Trainix`,
         }
         setQrData(secretData)
 

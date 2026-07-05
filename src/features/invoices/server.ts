@@ -1,14 +1,11 @@
 import { createServerFn } from '@tanstack/react-start'
 import { db } from '#/shared/db/index.ts'
 import { invoices, invoiceSequences } from '#/shared/db/schema/invoices.ts'
-import { members } from '#/shared/db/schema/members.ts'
-import { sales, saleItems } from '#/shared/db/schema/sales.ts'
+import { sales } from '#/shared/db/schema/sales.ts'
 import { membershipPayments } from '#/shared/db/schema/membership-payments.ts'
-import { subscriptions } from '#/shared/db/schema/subscriptions.ts'
-import { packages } from '#/shared/db/schema/packages.ts'
 import { settings } from '#/shared/db/schema/settings.ts'
-import { eq, desc, and, inArray, isNull } from 'drizzle-orm'
-import { requireRole } from '#/shared/lib/server-utils.ts'
+import { eq, desc, and, isNull } from 'drizzle-orm'
+import { requirePermission } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { z } from 'zod'
@@ -75,7 +72,7 @@ const issueInvoiceSchema = z.object({
 export const issueInvoice = createServerFn({ method: 'POST' })
   .validator((data) => issueInvoiceSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    const session = await requirePermission({ data: { permission: 'payments:write' } })
 
     // Check not already invoiced
     const existing = await db.query.invoices.findFirst({
@@ -166,7 +163,7 @@ const getInvoicesSchema = z.object({
 export const getInvoices = createServerFn({ method: 'GET' })
   .validator((data) => getInvoicesSchema.parse(data))
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'payments:read' } })
     return await db.query.invoices.findMany({
       where: data.branchId ? eq(invoices.branchId, data.branchId) : undefined,
       orderBy: [desc(invoices.issuedAt)],
@@ -183,7 +180,7 @@ export const getInvoices = createServerFn({ method: 'GET' })
 export const getInvoiceById = createServerFn({ method: 'GET' })
   .validator((id) => uuidField.parse(id))
   .handler(async ({ data: id }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'payments:read' } })
     const [inv] = await db.query.invoices.findMany({
       where: eq(invoices.id, id),
       with: {
@@ -225,7 +222,7 @@ export const getInvoiceById = createServerFn({ method: 'GET' })
 export const cancelInvoice = createServerFn({ method: 'POST' })
   .validator((data) => z.object({ id: uuidField }).parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'payments:write' } })
     const [inv] = await db.update(invoices).set({
       status: 'CANCELED',
       updatedAt: new Date(),
@@ -320,7 +317,7 @@ export async function autoIssueInvoice(
 
 export const getInvoiceStats = createServerFn({ method: 'GET' })
   .handler(async () => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'payments:read' } })
     const all = await db.select().from(invoices)
     const issued = all.filter((i) => i.status === 'ISSUED').length
     const canceled = all.filter((i) => i.status === 'CANCELED').length

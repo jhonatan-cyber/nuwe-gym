@@ -1,20 +1,5 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-  PieChart,
-  Pie,
-  Cell,
-  LineChart,
-  Line,
-} from 'recharts'
 import { useTheme } from 'next-themes'
 import {
   ShoppingBag,
@@ -31,6 +16,7 @@ import { StatCard } from '#/shared/components/ui/stat-card'
 import { LoadingSpinner } from '#/shared/components/ui/loading-spinner'
 import { EmptyState } from '#/shared/components/ui/empty-state'
 import { formatCurrency } from '#/shared/lib/formatters.ts'
+import { LazyRecharts } from '#/shared/components/lazy-recharts'
 import type { DailySalesSummary } from '#/features/sales/types.ts'
 
 // ── Constants ─────────────────────────────────────────────────────
@@ -182,58 +168,60 @@ function DailySalesChart({
       title="Ventas Diarias (30 días)"
       subtitle="Evolución de ingresos diarios"
     >
-      <div className="h-[260px] w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart
-            data={data}
-            margin={{ top: 8, right: 8, left: -22, bottom: 0 }}
-          >
-            <CartesianGrid
-              strokeDasharray="3 3"
-              stroke={gridColor}
-              vertical={false}
-            />
-            <XAxis
-              dataKey="date"
-              tickFormatter={formatDateLabel}
-              stroke={textColor}
-              fontSize={9}
-              tickLine={false}
-              axisLine={false}
-            />
-            <YAxis
-              stroke={textColor}
-              fontSize={9}
-              tickLine={false}
-              axisLine={false}
-              tickFormatter={(v) => `$${v}`}
-            />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: tooltipBg,
-                border: tooltipBorder,
-                borderRadius: '14px',
-                fontSize: 11,
-              }}
-              labelStyle={{ color: tooltipLabelColor, fontWeight: 'bold' }}
-              labelFormatter={(l) => formatDateLabel(l)}
-              formatter={(value) => formatCurrency(Number(value))}
-              cursor={{
-                fill: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)',
-              }}
-            />
-            <Line
-              type="monotone"
-              dataKey="revenue"
-              name="Ingresos"
-              stroke="#6366f1"
-              strokeWidth={2}
-              dot={{ fill: '#6366f1', r: 3 }}
-              activeDot={{ r: 5 }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
+      <LazyRecharts height={260}>
+        {(R) => (
+          <R.ResponsiveContainer width="100%" height="100%">
+            <R.LineChart
+              data={data}
+              margin={{ top: 8, right: 8, left: -22, bottom: 0 }}
+            >
+              <R.CartesianGrid
+                strokeDasharray="3 3"
+                stroke={gridColor}
+                vertical={false}
+              />
+              <R.XAxis
+                dataKey="date"
+                tickFormatter={formatDateLabel}
+                stroke={textColor}
+                fontSize={9}
+                tickLine={false}
+                axisLine={false}
+              />
+              <R.YAxis
+                stroke={textColor}
+                fontSize={9}
+                tickLine={false}
+                axisLine={false}
+                tickFormatter={(v: number) => `$${v}`}
+              />
+              <R.Tooltip
+                contentStyle={{
+                  backgroundColor: tooltipBg,
+                  border: tooltipBorder,
+                  borderRadius: '14px',
+                  fontSize: 11,
+                }}
+                labelStyle={{ color: tooltipLabelColor, fontWeight: 'bold' }}
+                labelFormatter={(l: any) => formatDateLabel(l)}
+                formatter={(value: any) => formatCurrency(value)}
+                cursor={{
+                  fill: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)',
+                }}
+              />
+              <R.Line
+                type="monotone"
+                dataKey="revenue"
+                name="Ingresos"
+                stroke="#6366f1"
+                strokeWidth={2}
+                dot={{ fill: '#6366f1', r: 3 }}
+                activeDot={{ r: 5 }}
+              />
+            </R.LineChart>
+          </R.ResponsiveContainer>
+        )}
+      </LazyRecharts>
     </ChartCard>
   )
 }
@@ -259,43 +247,44 @@ function PaymentMethodChart({
 
   return (
     <ChartCard title="Ventas por Método de Pago" subtitle="Hoy">
-      <div className="h-[260px] w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={data.map((p) => ({
-                name: PAYMENT_LABELS[p.method] || p.method,
-                value: p.revenue,
-              }))}
-              dataKey="value"
-              nameKey="name"
-              cx="50%"
-              cy="50%"
-              outerRadius={90}
-              innerRadius={45}
-              label={({ name, percent }) =>
-                `${name} ${((percent ?? 0) * 100).toFixed(0)}%`
-              }
-            >
-              {data.map((entry) => (
-                <Cell
-                  key={entry.method}
-                  fill={PAYMENT_COLORS[entry.method] || '#6366f1'}
-                />
-              ))}
-            </Pie>
-            <Tooltip
-              formatter={(value) => formatCurrency(Number(value))}
-              contentStyle={{
-                backgroundColor: tooltipBg,
-                border: tooltipBorder,
-                borderRadius: '14px',
-                fontSize: 11,
-              }}
-            />
-          </PieChart>
-        </ResponsiveContainer>
-      </div>
+      <LazyRecharts height={260}>
+        {(R) => (
+          <R.ResponsiveContainer width="100%" height="100%">
+            <R.PieChart>
+              <R.Pie
+                data={data.map((p) => ({
+                  name: PAYMENT_LABELS[p.method] || p.method,
+                  value: p.revenue,
+                }))}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                outerRadius={90}
+                innerRadius={45}label={({ name, percent }: any) =>
+  `${name} ${((percent ?? 0) * 100).toFixed(0)}%`
+}
+              >
+                {data.map((entry) => (
+                  <R.Cell
+                    key={entry.method}
+                    fill={PAYMENT_COLORS[entry.method] || '#6366f1'}
+                  />
+                ))}
+              </R.Pie>
+              <R.Tooltip
+                formatter={(value: any) => formatCurrency(value)}
+                contentStyle={{
+                  backgroundColor: tooltipBg,
+                  border: tooltipBorder,
+                  borderRadius: '14px',
+                  fontSize: 11,
+                }}
+              />
+            </R.PieChart>
+          </R.ResponsiveContainer>
+        )}
+      </LazyRecharts>
     </ChartCard>
   )
 }
@@ -319,66 +308,68 @@ function HourlySalesChart({
 
   return (
     <ChartCard title="Ventas por Hora" subtitle="Hoy">
-      <div className="h-[260px] w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            data={filtered}
-            margin={{ top: 8, right: 8, left: -22, bottom: 0 }}
-          >
-            <CartesianGrid
-              strokeDasharray="3 3"
-              stroke={gridColor}
-              vertical={false}
-            />
-            <XAxis
-              dataKey="hour"
-              stroke={textColor}
-              fontSize={9}
-              tickLine={false}
-              axisLine={false}
-            />
-            <YAxis
-              stroke={textColor}
-              fontSize={9}
-              tickLine={false}
-              axisLine={false}
-              allowDecimals={false}
-            />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: tooltipBg,
-                border: tooltipBorder,
-                borderRadius: '14px',
-                fontSize: 11,
-              }}
-              labelStyle={{ color: tooltipLabelColor, fontWeight: 'bold' }}
-              formatter={(value, name) =>
-                name === 'revenue' ? formatCurrency(Number(value)) : value
-              }
-              cursor={{
-                fill: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)',
-              }}
-            />
-            <Legend
-              iconType="circle"
-              iconSize={7}
-              wrapperStyle={{ fontSize: 9, paddingTop: 8 }}
-            />
-            <Bar
-              dataKey="total"
-              name="Transacciones"
-              fill="#6366f1"
-              radius={[4, 4, 0, 0]}
-            />
-            <Bar
-              dataKey="revenue"
-              name="Ingresos"
-              fill="#22c55e"
-              radius={[4, 4, 0, 0]}
-            />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
+      <LazyRecharts height={260}>
+        {(R) => (
+          <R.ResponsiveContainer width="100%" height="100%">
+            <R.BarChart
+              data={filtered}
+              margin={{ top: 8, right: 8, left: -22, bottom: 0 }}
+            >
+              <R.CartesianGrid
+                strokeDasharray="3 3"
+                stroke={gridColor}
+                vertical={false}
+              />
+              <R.XAxis
+                dataKey="hour"
+                stroke={textColor}
+                fontSize={9}
+                tickLine={false}
+                axisLine={false}
+              />
+              <R.YAxis
+                stroke={textColor}
+                fontSize={9}
+                tickLine={false}
+                axisLine={false}
+                allowDecimals={false}
+              />
+              <R.Tooltip
+                contentStyle={{
+                  backgroundColor: tooltipBg,
+                  border: tooltipBorder,
+                  borderRadius: '14px',
+                  fontSize: 11,
+                }}
+                labelStyle={{ color: tooltipLabelColor, fontWeight: 'bold' }}
+                formatter={(value: any, name: any) =>
+                  name === 'revenue' ? formatCurrency(value) : value
+                }
+                cursor={{
+                  fill: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)',
+                }}
+              />
+              <R.Legend
+                iconType="circle"
+                iconSize={7}
+                wrapperStyle={{ fontSize: 9, paddingTop: 8 }}
+              />
+              <R.Bar
+                dataKey="total"
+                name="Transacciones"
+                fill="#6366f1"
+                radius={[4, 4, 0, 0]}
+              />
+              <R.Bar
+                dataKey="revenue"
+                name="Ingresos"
+                fill="#22c55e"
+                radius={[4, 4, 0, 0]}
+              />
+            </R.BarChart>
+          </R.ResponsiveContainer>
+        )}
+      </LazyRecharts>
     </ChartCard>
   )
 }

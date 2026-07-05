@@ -4,7 +4,7 @@ import { eq, desc, and, sql } from 'drizzle-orm'
 import { db } from '#/shared/db/index.ts'
 import { employees } from '#/shared/db/schema/employees.ts'
 import { employeeAttendance } from '#/shared/db/schema/employee-attendance.ts'
-import { requireRole } from '#/shared/lib/server-utils.ts'
+import { requirePermission } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { uuidField, optionalString } from '#/shared/lib/schemas.ts'
@@ -15,7 +15,7 @@ import type { TodayAttendanceRow, AttendanceSummary } from './attendance-types.t
 export const clockIn = createServerFn({ method: 'POST' })
   .validator((data: unknown) => z.object({ employeeId: uuidField }).parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    const session = await requirePermission({ data: { permission: 'employees:write' } })
 
     const now = new Date()
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
@@ -75,7 +75,7 @@ export const clockOut = createServerFn({ method: 'POST' })
     }).parse(data),
   )
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    const session = await requirePermission({ data: { permission: 'employees:write' } })
 
     const now = new Date()
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
@@ -135,7 +135,7 @@ export const forceClockOut = createServerFn({ method: 'POST' })
     }).parse(data),
   )
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'employees:write' } })
 
     const [record] = await db
       .update(employeeAttendance)
@@ -166,7 +166,7 @@ export const markAbsent = createServerFn({ method: 'POST' })
     z.object({ employeeId: uuidField }).parse(data),
   )
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    const session = await requirePermission({ data: { permission: 'employees:write' } })
 
     const now = new Date()
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
@@ -208,16 +208,16 @@ export const markAbsent = createServerFn({ method: 'POST' })
 
 export const getTodayAttendance = createServerFn({ method: 'GET' }).handler(
   async () => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'employees:read' } })
 
     const now = new Date()
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
 
-    const activeEmployees = await db
-      .select()
-      .from(employees)
-      .where(eq(employees.status, 'ACTIVE'))
-      .orderBy(employees.fullName)
+    const activeEmployees = await db.query.employees.findMany({
+      where: eq(employees.status, 'ACTIVE'),
+      orderBy: [employees.fullName],
+      with: { department: true },
+    })
 
     const todayRecords = await db.query.employeeAttendance.findMany({
       where: and(
@@ -232,7 +232,7 @@ export const getTodayAttendance = createServerFn({ method: 'GET' }).handler(
         employeeCode: emp.employeeCode,
         fullName: emp.fullName,
         position: emp.position,
-        department: emp.department,
+        department: emp.department?.name ?? null,
         status: emp.status,
         clockIn: record?.clockIn?.toISOString() ?? null,
         clockOut: record?.clockOut?.toISOString() ?? null,
@@ -266,7 +266,7 @@ export const getEmployeeAttendance = createServerFn({ method: 'GET' })
     }).parse(data),
   )
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'employees:read' } })
 
     const since = new Date()
     since.setDate(since.getDate() - data.days)
@@ -289,7 +289,7 @@ export const getAttendanceReport = createServerFn({ method: 'GET' })
     }).parse(data),
   )
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN'] } })
+    await requirePermission({ data: { permission: 'employees:read' } })
 
     const since = new Date()
     since.setDate(since.getDate() - data.days)

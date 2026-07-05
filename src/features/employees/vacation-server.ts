@@ -1,10 +1,10 @@
 import { createServerFn } from '@tanstack/react-start'
 import { z } from 'zod'
-import { eq, desc, and, sql, count as drizzleCount } from 'drizzle-orm'
+import { eq, desc, and, sql } from 'drizzle-orm'
 import { db } from '#/shared/db/index.ts'
 import { employees } from '#/shared/db/schema/employees.ts'
 import { employeeVacations } from '#/shared/db/schema/employee-vacations.ts'
-import { requireRole } from '#/shared/lib/server-utils.ts'
+import { requirePermission } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { uuidField, optionalString } from '#/shared/lib/schemas.ts'
@@ -16,7 +16,7 @@ export const getVacations = createServerFn({ method: 'GET' })
     z.object({ employeeId: optionalString.default('') }).parse(data),
   )
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'employees:read' } })
 
     const conditions = []
     if (data.employeeId) {
@@ -35,7 +35,7 @@ export const getVacations = createServerFn({ method: 'GET' })
 export const getAvailableVacationDays = createServerFn({ method: 'GET' })
   .validator((data: unknown) => z.object({ employeeId: uuidField }).parse(data))
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'employees:read' } })
 
     const emp = await db.query.employees.findFirst({
       where: eq(employees.id, data.employeeId),
@@ -76,7 +76,7 @@ const requestVacationSchema = z.object({
 export const requestVacation = createServerFn({ method: 'POST' })
   .validator((data: unknown) => requestVacationSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    const session = await requirePermission({ data: { permission: 'employees:write' } })
 
     const start = new Date(data.startDate)
     const end = new Date(data.endDate)
@@ -133,7 +133,7 @@ const approveRejectSchema = z.object({
 export const approveRejectVacation = createServerFn({ method: 'POST' })
   .validator((data: unknown) => approveRejectSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'employees:write' } })
 
     const [vacation] = await db
       .update(employeeVacations)
@@ -167,7 +167,7 @@ export const approveRejectVacation = createServerFn({ method: 'POST' })
 export const cancelVacation = createServerFn({ method: 'POST' })
   .validator((data: unknown) => z.object({ id: uuidField }).parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'employees:write' } })
 
     const [vacation] = await db
       .update(employeeVacations)

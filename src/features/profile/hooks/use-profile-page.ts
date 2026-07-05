@@ -16,7 +16,7 @@ export function useProfilePage(
 ) {
   const queryClient = useQueryClient()
 
-  const [activeTab, setActiveTab] = useState<'info' | 'security' | 'sessions' | 'activity'>('info')
+  const [activeTab, setActiveTab] = useState<'info' | 'security' | 'sessions' | 'devices' | 'activity'>('info')
 
   const [name, setName] = useState(userName)
   const [phone, setPhone] = useState(userPhone ?? '')

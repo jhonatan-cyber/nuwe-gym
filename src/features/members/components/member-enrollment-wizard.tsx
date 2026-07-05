@@ -9,7 +9,7 @@ import { getActivePackages } from '#/features/packages/server.ts'
 import { getSettings } from '#/features/settings/server.ts'
 import { formatDate, formatCurrency } from '#/shared/lib/formatters.ts'
 import { useCameraCapture } from '#/features/members/hooks/use-camera-capture.ts'
-import { Dialog, DialogContent } from '#/shared/components/ui/dialog'
+import { Dialog, DialogContent, DialogTitle } from '#/shared/components/ui/dialog'
 import { ModuleLayout } from '#/shared/components/layout/module-layout.tsx'
 import { WizardSidebar } from '#/features/members/components/wizard/wizard-sidebar.tsx'
 import { WizardFooter } from '#/features/members/components/wizard/wizard-footer.tsx'
@@ -530,6 +530,7 @@ export function MemberEnrollmentWizard({
         showCloseButton={false}
         onInteractOutside={(e) => e.preventDefault()}
       >
+        <DialogTitle className="sr-only">Inscripción de socio</DialogTitle>
         {renderWizardContent()}
       </DialogContent>
     </Dialog>

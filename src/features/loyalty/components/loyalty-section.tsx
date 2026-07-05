@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   Gift, Plus, Loader2, ShoppingCart, TrendingUp, Award,
-  Users, Copy, CheckCircle2, Target, BadgeCheck, Sparkles,
+  Users, Copy, CheckCircle2, Target, BadgeCheck,
 } from 'lucide-react'
 import {
   getLoyaltyInfo,

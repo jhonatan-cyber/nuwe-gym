@@ -11,12 +11,10 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '#/shared/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '#/shared/components/ui/card'
 import { Badge } from '#/shared/components/ui/badge'
 import { ConfirmDialog } from '#/shared/components/ui/confirm-dialog'
 import {
   createSetupIntent,
-  attachPaymentMethod,
   getMemberPaymentMethods,
   toggleAutoPay,
   removePaymentMethod,
@@ -45,7 +43,7 @@ export function PaymentMethodsSection({ memberId }: PaymentMethodsSectionProps) 
 
   const setupMutation = useMutation({
     mutationFn: () => createSetupIntent({ data: { memberId } }),
-    onSuccess: (data) => {
+    onSuccess: () => {
       // We need to use Stripe Elements to collect card details
       // For now, show the client secret so the user can use Stripe's approach
       toast.success('Conectando con Stripe...')

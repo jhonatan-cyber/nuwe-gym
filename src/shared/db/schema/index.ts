@@ -1,5 +1,7 @@
 export * from './enums.ts'
 export * from './roles.ts'
+export * from './permissions.ts'
+export * from './departments.ts'
 export * from './auth.ts'
 export * from './members.ts'
 export * from './subscriptions.ts'

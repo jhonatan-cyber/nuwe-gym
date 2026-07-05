@@ -1,21 +1,22 @@
 import { createServerFn } from '@tanstack/react-start'
 import { z } from 'zod'
-import { eq, desc, count as drizzleCount } from 'drizzle-orm'
+import { eq, desc } from 'drizzle-orm'
 import { db } from '#/shared/db/index.ts'
 import { employees } from '#/shared/db/schema/employees.ts'
-import { requireRole } from '#/shared/lib/server-utils.ts'
+import { requirePermission } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
-import { branchIdField, optionalString, requiredString, uuidField } from '#/shared/lib/schemas.ts'
+import { optionalString, requiredString, uuidField } from '#/shared/lib/schemas.ts'
+import { generateCode8 } from '#/shared/lib/utils.ts'
 
 // ── List ──
 
 export const getEmployees = createServerFn({ method: 'GET' }).handler(
   async () => {
-    await requireRole({ data: { roles: ['ADMIN'] } })
+    await requirePermission({ data: { permission: 'employees:read' } })
     return await db.query.employees.findMany({
       orderBy: [desc(employees.createdAt)],
-      with: { user: true, branch: true },
+      with: { user: true, branch: true, role: true, department: true },
     })
   },
 )
@@ -25,10 +26,10 @@ export const getEmployees = createServerFn({ method: 'GET' }).handler(
 export const getEmployee = createServerFn({ method: 'GET' })
   .validator((data: unknown) => z.object({ id: uuidField }).parse(data))
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN'] } })
+    await requirePermission({ data: { permission: 'employees:read' } })
     return await db.query.employees.findFirst({
       where: eq(employees.id, data.id),
-      with: { user: true, branch: true },
+      with: { user: true, branch: true, role: true, department: true },
     })
   })
 
@@ -40,7 +41,8 @@ const createEmployeeSchema = z.object({
   phone: optionalString.default(''),
   documentNumber: optionalString.default(''),
   position: requiredString,
-  department: optionalString.default(''),
+  roleId: optionalString.default(''),
+  departmentId: optionalString.default(''),
   status: z.enum(['ACTIVE', 'INACTIVE', 'ON_LEAVE', 'TERMINATED']).default('ACTIVE'),
   hireDate: z.string(),
   branchId: optionalString.default(''),
@@ -53,17 +55,17 @@ const createEmployeeSchema = z.object({
   emergencyContactPhone: optionalString.default(''),
   emergencyContactRelation: optionalString.default(''),
   notes: optionalString.default(''),
+  createAccess: z.boolean().default(false),
+  accessPassword: optionalString.default(''),
 })
 
 export const createEmployee = createServerFn({ method: 'POST' })
   .validator((data: unknown) => createEmployeeSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'employees:write' } })
 
-    // Auto-generate employee code
-    const [{ count }] = await db.select({ count: drizzleCount() }).from(employees)
-    const nextNum = (count ?? 0) + 1
-    const employeeCode = `EMP-${String(nextNum).padStart(3, '0')}`
+    // Auto-generate 8-char employee code
+    const employeeCode = generateCode8()
 
     const [employee] = await db
       .insert(employees)
@@ -72,6 +74,8 @@ export const createEmployee = createServerFn({ method: 'POST' })
         employeeCode,
         branchId: data.branchId || null,
         userId: data.userId || null,
+        roleId: data.roleId || null,
+        departmentId: data.departmentId || null,
         hireDate: new Date(data.hireDate),
       })
       .returning()
@@ -96,7 +100,8 @@ const updateEmployeeSchema = z.object({
   phone: optionalString.default(''),
   documentNumber: optionalString.default(''),
   position: requiredString,
-  department: optionalString.default(''),
+  roleId: optionalString.default(''),
+  departmentId: optionalString.default(''),
   status: z.enum(['ACTIVE', 'INACTIVE', 'ON_LEAVE', 'TERMINATED']),
   isActive: z.boolean().optional(),
   hireDate: z.string(),
@@ -116,7 +121,7 @@ const updateEmployeeSchema = z.object({
 export const updateEmployee = createServerFn({ method: 'POST' })
   .validator((data: unknown) => updateEmployeeSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'employees:write' } })
 
     const [employee] = await db
       .update(employees)
@@ -126,7 +131,8 @@ export const updateEmployee = createServerFn({ method: 'POST' })
         phone: data.phone || null,
         documentNumber: data.documentNumber || null,
         position: data.position,
-        department: data.department || null,
+        roleId: data.roleId || null,
+        departmentId: data.departmentId || null,
         status: data.status,
         isActive: data.isActive ?? data.status === 'ACTIVE',
         hireDate: new Date(data.hireDate),
@@ -162,7 +168,7 @@ export const updateEmployee = createServerFn({ method: 'POST' })
 export const deleteEmployee = createServerFn({ method: 'POST' })
   .validator((data: unknown) => z.object({ id: uuidField }).parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'employees:write' } })
     const [employee] = await db
       .delete(employees)
       .where(eq(employees.id, data.id))
@@ -183,7 +189,7 @@ export const deleteEmployee = createServerFn({ method: 'POST' })
 
 export const getEmployeeStats = createServerFn({ method: 'GET' }).handler(
   async () => {
-    await requireRole({ data: { roles: ['ADMIN'] } })
+    await requirePermission({ data: { permission: 'employees:read' } })
     const all = await db.select().from(employees)
     return {
       total: all.length,

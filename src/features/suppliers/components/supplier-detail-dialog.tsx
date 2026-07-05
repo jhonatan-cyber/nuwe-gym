@@ -17,6 +17,7 @@ import { Button } from '#/shared/components/ui/button'
 import {
   Dialog,
   DialogContent,
+  DialogTitle,
 } from '#/shared/components/ui/dialog'
 import { Badge } from '#/shared/components/ui/badge'
 import { cn } from '#/shared/lib/utils.ts'
@@ -55,6 +56,7 @@ export function SupplierDetailDialog({
       }}
     >
       <DialogContent className="max-w-2xl max-h-[88vh] flex flex-col p-0 gap-0 overflow-hidden">
+        <DialogTitle className="sr-only">Detalle de proveedor</DialogTitle>
         {isLoading ? (
           <div className="py-16 flex items-center justify-center gap-2 text-muted-foreground">
             <RefreshCw className="size-4 animate-spin text-primary" />

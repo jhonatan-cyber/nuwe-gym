@@ -1,6 +1,8 @@
-export type UserRole = 'ADMIN' | 'RECEPTIONIST' | 'TRAINER'
+import { db } from '#/shared/db'
+import { rolePermissions } from '#/shared/db/schema/permissions.ts'
+import { eq, and } from 'drizzle-orm'
 
-type Permission =
+export type Permission =
   | 'members:read'
   | 'members:write'
   | 'plans:read'
@@ -56,114 +58,32 @@ type Permission =
   | 'employees:read'
   | 'employees:write'
 
-const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
-  ADMIN: [
-    'members:read',
-    'members:write',
-    'plans:read',
-    'plans:write',
-    'subscriptions:read',
-    'subscriptions:write',
-    'payments:read',
-    'payments:write',
-    'checkins:read',
-    'checkins:write',
-    'classes:read',
-    'classes:write',
-    'products:read',
-    'products:write',
-    'categories:read',
-    'categories:write',
-    'suppliers:read',
-    'suppliers:write',
-    'purchases:read',
-    'purchases:write',
-    'sales:read',
-    'sales:write',
-    'pos:use',
-    'inventory:read',
-    'inventory:write',
-    'cash:read',
-    'cash:write',
-    'dashboard:read',
-    'users:read',
-    'users:write',
-    'reports:read',
-    'settings:read',
-    'settings:write',
-    'renewals:read',
-    'renewals:write',
-    'export:read',
-    'trainers:read',
-    'trainers:write',
-    'notifications:read',
-    'notifications:write',
-    'membership-freezes:read',
-    'membership-freezes:write',
-    'audit:read',
-    'audit:export',
-    'branches:read',
-    'branches:write',
-    'backup:read',
-    'backup:write',
-    'nutrition:read',
-    'nutrition:write',
-    'guest-passes:read',
-    'guest-passes:write',
-    'employees:read',
-    'employees:write',
-  ],
-  RECEPTIONIST: [
-    'members:read',
-    'members:write',
-    'plans:read',
-    'subscriptions:read',
-    'subscriptions:write',
-    'payments:read',
-    'payments:write',
-    'checkins:read',
-    'checkins:write',
-    'classes:read',
-    'classes:write',
-    'products:read',
-    'sales:read',
-    'sales:write',
-    'pos:use',
-    'cash:read',
-    'cash:write',
-    'dashboard:read',
-    'reports:read',
-    'settings:read',
-    'renewals:read',
-    'renewals:write',
-    'notifications:read',
-    'trainers:read',
-    'membership-freezes:read',
-    'membership-freezes:write',
-    'guest-passes:read',
-    'guest-passes:write',
-  ],
-  TRAINER: [
-    'members:read',
-    'plans:read',
-    'subscriptions:read',
-    'classes:read',
-    'checkins:read',
-    'dashboard:read',
-    'notifications:read',
-    'trainers:read',
-    'nutrition:read',
-    'nutrition:write',
-  ],
+/**
+ * Check if a role has a permission via DB.
+ */
+export async function hasPermissionFromDB(role: string, permission: Permission): Promise<boolean> {
+  const result = await db
+    .select()
+    .from(rolePermissions)
+    .where(
+      and(
+        eq(rolePermissions.roleName, role),
+        eq(rolePermissions.permissionName, permission),
+      ),
+    )
+    .limit(1)
+
+  return result.length > 0
 }
 
-export function hasPermission(role: UserRole, permission: Permission): boolean {
-  return ROLE_PERMISSIONS[role].includes(permission)
-}
+/**
+ * Get all permissions for a role from DB.
+ */
+export async function getRolePermissionsFromDB(role: string): Promise<string[]> {
+  const result = await db
+    .select()
+    .from(rolePermissions)
+    .where(eq(rolePermissions.roleName, role))
 
-export function hasAnyPermission(
-  role: UserRole,
-  permissions: Permission[],
-): boolean {
-  return permissions.some((p) => hasPermission(role, p))
+  return result.map((p) => p.permissionName)
 }

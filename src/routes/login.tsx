@@ -49,9 +49,13 @@ function LoginPage() {
 
   useEffect(() => {
     setMounted(true)
-    checkDbEmpty().then((res) => {
-      setDbEmpty(res.isEmpty)
-    })
+    checkDbEmpty()
+      .then((res) => {
+        setDbEmpty(res.isEmpty)
+      })
+      .catch((err) => {
+        console.error('[checkDbEmpty] error:', err)
+      })
   }, [])
 
   const [email, setEmail] = useState('')

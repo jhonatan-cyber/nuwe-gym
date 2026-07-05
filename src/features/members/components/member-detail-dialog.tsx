@@ -32,6 +32,7 @@ import {
   Dialog,
   DialogContent,
   DialogFooter,
+  DialogTitle,
 } from '#/shared/components/ui/dialog'
 import { Badge } from '#/shared/components/ui/badge'
 import { cn } from '#/shared/lib/utils.ts'
@@ -67,6 +68,7 @@ export function MemberDetailDialog({
       }}
     >
       <DialogContent className="max-w-2xl max-h-[88vh] overflow-x-hidden overflow-y-auto scrollbar-none p-0 gap-0">
+        <DialogTitle className="sr-only">Detalle de socio</DialogTitle>
         {loadingDetail ? (
           <div className="py-16 flex items-center justify-center gap-2 text-muted-foreground">
             <RefreshCw className="size-4 animate-spin text-primary" />

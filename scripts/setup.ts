@@ -73,39 +73,29 @@ async function main() {
   const rootDir = path.resolve(__dirname, '..')
   const envExamplePath = path.join(rootDir, '.env.example')
   const envPath = path.join(rootDir, '.env')
-  const envLocalPath = path.join(rootDir, '.env.local')
 
-  // 1. Configurar archivo .env.local usando .env o .env.example como respaldo
-  if (!fs.existsSync(envLocalPath)) {
-    if (fs.existsSync(envPath)) {
-      log('Creando archivo .env.local desde .env...', 'info')
+  // 1. Configurar archivo .env usando .env.example como respaldo
+  if (!fs.existsSync(envPath)) {
+    if (fs.existsSync(envExamplePath)) {
+      log('Creando archivo .env desde .env.example...', 'info')
       try {
-        fs.copyFileSync(envPath, envLocalPath)
-        log('.env.local creado con éxito.', 'success')
+        fs.copyFileSync(envExamplePath, envPath)
+        log('.env creado con éxito.', 'success')
       } catch (err: any) {
-        log(`No se pudo copiar .env.local desde .env: ${err.message}`, 'error')
-        process.exit(1)
-      }
-    } else if (fs.existsSync(envExamplePath)) {
-      log('Creando archivo .env.local desde .env.example...', 'info')
-      try {
-        fs.copyFileSync(envExamplePath, envLocalPath)
-        log('.env.local creado con éxito.', 'success')
-      } catch (err: any) {
-        log(`No se pudo copiar .env.local: ${err.message}`, 'error')
+        log(`No se pudo copiar .env: ${err.message}`, 'error')
         process.exit(1)
       }
     } else {
-      log('No se encontró .env ni .env.example para crear .env.local.', 'error')
-      log('Por favor crea un .env.local manualmente a partir de tu archivo .env.', 'warn')
+      log('No se encontró .env ni .env.example.', 'error')
+      log('Por favor crea un archivo .env manualmente.', 'warn')
       process.exit(1)
     }
   } else {
-    log('El archivo .env.local ya existe.', 'success')
+    log('El archivo .env ya existe.', 'success')
   }
 
-  // Leer variables de entorno de .env.local
-  const envContent = fs.readFileSync(envLocalPath, 'utf8')
+  // Leer variables de entorno de .env
+  const envContent = fs.readFileSync(envPath, 'utf8')
   const dbUrlMatch = envContent.match(/^DATABASE_URL\s*=\s*(.+)$/m)
 
   let dbUrl = 'postgresql://postgres:Ancasi96nuwe%2B@localhost:5432/gymmanager'
@@ -122,7 +112,7 @@ async function main() {
     dbPort = parsedUrl.port ? parseInt(parsedUrl.port, 10) : 5432
   } catch (err) {
     log(
-      'No se pudo parsear DATABASE_URL del .env.local. Usando valores por defecto.',
+      'No se pudo parsear DATABASE_URL del .env. Usando valores por defecto.',
       'warn',
     )
   }
@@ -140,36 +130,36 @@ async function main() {
   } else {
     log('No se detectó base de datos en el puerto indicado.', 'error')
     log(
-      'Asegurate de tener PostgreSQL corriendo localmente y configurado en .env.local',
+      'Asegurate de tener PostgreSQL corriendo localmente y configurado en .env',
       'warn',
     )
     process.exit(1)
   }
 
-  // 3. Ejecutar Drizzle Kit Push
+  // 3. Ejecutar Drizzle Kit Migrate (usa SQL explícito, sin pérdida de datos)
   log(
-    'Sincronizando el esquema con la base de datos (drizzle-kit push)...',
+    'Aplicando migraciones pendientes (drizzle-kit migrate)...',
     'info',
   )
 
-  let pushSuccess = false
-  let pushAttempts = 0
-  while (pushAttempts < 3 && !pushSuccess) {
-    pushSuccess = runCommand('bun run db:push')
-    if (!pushSuccess) {
-      pushAttempts++
-      if (pushAttempts < 3) {
-        log('Reintentando drizzle-kit push en 3 segundos...', 'warn')
+  let migrateSuccess = false
+  let migrateAttempts = 0
+  while (migrateAttempts < 3 && !migrateSuccess) {
+    migrateSuccess = runCommand('bun run db:migrate')
+    if (!migrateSuccess) {
+      migrateAttempts++
+      if (migrateAttempts < 3) {
+        log('Reintentando drizzle-kit migrate en 3 segundos...', 'warn')
         await new Promise((r) => setTimeout(r, 3000))
       }
     }
   }
 
-  if (pushSuccess) {
-    log('Esquema de base de datos sincronizado con éxito.', 'success')
+  if (migrateSuccess) {
+    log('Migraciones aplicadas con éxito.', 'success')
   } else {
     log(
-      'No se pudo sincronizar el esquema de la base de datos. Verifica la conexión.',
+      'No se pudieron aplicar las migraciones. Verifica la conexión.',
       'error',
     )
     process.exit(1)

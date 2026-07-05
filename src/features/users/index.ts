@@ -5,5 +5,5 @@ export {
   createStaffUser,
   deleteUser,
 } from './server.ts'
-export type { StaffUser, UserRole, RoleInfo } from './types.ts'
-export { ROLE_LABELS, ROLE_COLORS, ROLES_INFO } from './types.ts'
+export type { StaffUser, UserRole } from './types.ts'
+export { getRoleColor, ROLE_COLOR_MAP } from './types.ts'

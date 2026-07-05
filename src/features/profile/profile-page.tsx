@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
-import { User, Lock, ChevronRight, Activity, Globe, Smartphone, Shield } from 'lucide-react'
+import { User, Lock, ChevronRight, Activity, Globe, Smartphone } from 'lucide-react'
 import { useProfilePage } from '#/features/profile/hooks/use-profile-page.ts'
 
 import {

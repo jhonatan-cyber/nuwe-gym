@@ -8,7 +8,7 @@ import {
   trainerObservations,
 } from '#/shared/db/schema/trainers.ts'
 import { eq, desc, and } from 'drizzle-orm'
-import { requireRole } from '#/shared/lib/server-utils.ts'
+import { requirePermission } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { z } from 'zod'
@@ -19,7 +19,7 @@ export const getTrainers = createServerFn({ method: 'GET' })
     z.object({ branchId: branchIdField }).optional(),
   )
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
+    await requirePermission({ data: { permission: 'trainers:read' } })
     const trainers = await db.query.trainerProfiles.findMany({
       where: data?.branchId
         ? eq(trainerProfiles.branchId, data.branchId)
@@ -44,7 +44,7 @@ export const getTrainer = createServerFn({ method: 'GET' })
     z.object({ id: uuidField }).parse(data),
   )
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
+    await requirePermission({ data: { permission: 'trainers:read' } })
     return await db.query.trainerProfiles.findFirst({
       where: eq(trainerProfiles.id, data.id),
       with: {
@@ -69,7 +69,7 @@ const createTrainerSchema = z.object({
 export const createTrainer = createServerFn({ method: 'POST' })
   .validator((data: unknown) => createTrainerSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'trainers:write' } })
 
     const user = await db.query.users.findFirst({
       where: eq(users.id, data.userId),
@@ -109,7 +109,7 @@ const updateTrainerSchema = z.object({
 export const updateTrainer = createServerFn({ method: 'POST' })
   .validator((data: unknown) => updateTrainerSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'trainers:write' } })
     const [profile] = await db
       .update(trainerProfiles)
       .set({
@@ -138,7 +138,7 @@ const assignMemberSchema = z.object({
 export const assignMember = createServerFn({ method: 'POST' })
   .validator((data: unknown) => assignMemberSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'trainers:write' } })
 
     const existing = await db.query.trainerAssignments.findFirst({
       where: and(
@@ -173,7 +173,7 @@ const unassignMemberSchema = z.object({ id: uuidField })
 export const unassignMember = createServerFn({ method: 'POST' })
   .validator((data: unknown) => unassignMemberSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'trainers:write' } })
     const [assignment] = await db
       .update(trainerAssignments)
       .set({ isActive: false })
@@ -203,7 +203,7 @@ const setAvailabilitySchema = z.object({
 export const setAvailability = createServerFn({ method: 'POST' })
   .validator((data: unknown) => setAvailabilitySchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'trainers:write' } })
 
     await db
       .delete(trainerAvailability)
@@ -235,7 +235,7 @@ export const setAvailability = createServerFn({ method: 'POST' })
 
 export const getMyMembers = createServerFn({ method: 'GET' }).handler(
   async () => {
-    const session = await requireRole({ data: { roles: ['TRAINER'] } })
+    const session = await requirePermission({ data: { permission: 'trainers:read' } })
 
     const profile = await db.query.trainerProfiles.findFirst({
       where: eq(trainerProfiles.userId, session.user.id),
@@ -256,7 +256,7 @@ export const getMyMembers = createServerFn({ method: 'GET' }).handler(
 
 export const getTrainerDashboard = createServerFn({ method: 'GET' }).handler(
   async () => {
-    const session = await requireRole({ data: { roles: ['TRAINER'] } })
+    const session = await requirePermission({ data: { permission: 'trainers:read' } })
 
     const profile = await db.query.trainerProfiles.findFirst({
       where: eq(trainerProfiles.userId, session.user.id),
@@ -277,7 +277,7 @@ export const getTrainerDashboard = createServerFn({ method: 'GET' }).handler(
 
 export const getTrainerUsers = createServerFn({ method: 'GET' }).handler(
   async () => {
-    await requireRole({ data: { roles: ['ADMIN'] } })
+    await requirePermission({ data: { permission: 'trainers:read' } })
     return await db.query.users.findMany({
       where: eq(users.role, 'TRAINER'),
     })
@@ -296,7 +296,7 @@ const generateAIRoutineSchema = z.object({
 export const generateAIRoutine = createServerFn({ method: 'POST' })
   .validator((data: unknown) => generateAIRoutineSchema.parse(data))
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'TRAINER'] } })
+    await requirePermission({ data: { permission: 'trainers:write' } })
     const { generateRoutineProposal } = await import('./routine-generator.ts')
     return await generateRoutineProposal(data)
   })
@@ -305,7 +305,7 @@ export const generateAIRoutine = createServerFn({ method: 'POST' })
 
 export const getTrainerSchedule = createServerFn({ method: 'GET' })
   .handler(async () => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
+    await requirePermission({ data: { permission: 'trainers:read' } })
     const trainers = await db.query.trainerProfiles.findMany({
       where: eq(trainerProfiles.isActive, true),
       with: {
@@ -330,7 +330,7 @@ export const getTrainerSchedule = createServerFn({ method: 'GET' })
 export const getTrainerObservations = createServerFn({ method: 'GET' })
   .validator(z.object({ memberId: uuidField }))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN', 'TRAINER'] } })
+    const session = await requirePermission({ data: { permission: 'trainers:read' } })
 
     const profile = session.user.role === 'TRAINER'
       ? await db.query.trainerProfiles.findFirst({
@@ -357,7 +357,7 @@ const createObservationSchema = z.object({
 export const createTrainerObservation = createServerFn({ method: 'POST' })
   .validator((data: unknown) => createObservationSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['TRAINER'] } })
+    const session = await requirePermission({ data: { permission: 'trainers:write' } })
 
     const profile = await db.query.trainerProfiles.findFirst({
       where: eq(trainerProfiles.userId, session.user.id),

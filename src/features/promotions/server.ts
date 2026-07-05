@@ -1,9 +1,8 @@
 import { createServerFn } from '@tanstack/react-start'
 import { db } from '#/shared/db/index.ts'
 import { promotions } from '#/shared/db/schema/promotions.ts'
-import { members } from '#/shared/db/schema/members.ts'
-import { eq, desc, and, sql, count, gte, lte } from 'drizzle-orm'
-import { requireRole } from '#/shared/lib/server-utils.ts'
+import { eq, desc, and, sql, count } from 'drizzle-orm'
+import { requirePermission } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { z } from 'zod'
@@ -51,7 +50,7 @@ async function evaluateConditions(
 
 export const getPromotions = createServerFn({ method: 'GET' })
   .handler(async () => {
-    await requireRole({ data: { roles: ['ADMIN'] } })
+    await requirePermission({ data: { permission: 'plans:read' } })
     return await db.select().from(promotions).orderBy(desc(promotions.createdAt))
   })
 
@@ -61,7 +60,7 @@ const createPromoSchema = z.object({
   type: z.enum(['DISCOUNT', 'BONUS_POINTS']).default('DISCOUNT'),
   discountPercent: z.number().int().min(0).max(100).default(0),
   rewardPoints: z.number().int().min(0).default(0),
-  conditions: z.record(z.any()).default({}),
+  conditions: z.record(z.string(), z.any()).default({}),
   autoApply: z.boolean().default(false),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
@@ -70,7 +69,7 @@ const createPromoSchema = z.object({
 export const createPromotion = createServerFn({ method: 'POST' })
   .validator((data) => createPromoSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'plans:write' } })
     const [p] = await db.insert(promotions).values({
       name: data.name,
       description: data.description ?? null,
@@ -94,7 +93,7 @@ const togglePromoSchema = z.object({ id: z.string().uuid(), isActive: z.boolean(
 export const togglePromotion = createServerFn({ method: 'POST' })
   .validator((data) => togglePromoSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'plans:write' } })
     const [p] = await db.update(promotions).set({ isActive: data.isActive })
       .where(eq(promotions.id, data.id)).returning()
     createAuditLog({
@@ -109,7 +108,7 @@ export const togglePromotion = createServerFn({ method: 'POST' })
 export const getApplicablePromotions = createServerFn({ method: 'GET' })
   .validator((data) => z.object({ memberId: z.string().uuid() }).parse(data))
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'plans:read' } })
     const now = new Date()
     const activePromos = await db
       .select()

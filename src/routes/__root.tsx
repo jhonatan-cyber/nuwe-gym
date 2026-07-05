@@ -2,11 +2,14 @@ import type { ReactNode } from 'react'
 import { useEffect } from 'react'
 import {
   HeadContent,
+  Link,
   Outlet,
   Scripts,
   createRootRouteWithContext,
 } from '@tanstack/react-router'
 import { ThemeProvider } from 'next-themes'
+import { Button } from '#/shared/components/ui/button.tsx'
+import { Dumbbell } from 'lucide-react'
 
 import appCss from '../styles.css?url'
 
@@ -64,6 +67,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
   }),
   component: RootComponent,
   shellComponent: RootDocument,
+  notFoundComponent: NotFoundComponent,
 })
 
 function RootComponent() {
@@ -100,5 +104,26 @@ function RootDocument({ children }: { children: ReactNode }) {
         <Scripts />
       </body>
     </html>
+  )
+}
+
+function NotFoundComponent() {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[85vh] px-4 text-center">
+      <div className="size-20 rounded-full bg-primary/10 flex items-center justify-center mb-6 animate-bounce">
+        <Dumbbell className="size-10 text-primary" />
+      </div>
+      <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl mb-2 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+        404 - Página no encontrada
+      </h1>
+      <p className="text-muted-foreground max-w-md mb-8">
+        ¡Epa! Parece que te perdiste en el gimnasio. La página que estás buscando no existe o fue movida.
+      </p>
+      <Button asChild size="lg">
+        <Link to="/">
+          Volver al Inicio
+        </Link>
+      </Button>
+    </div>
   )
 }

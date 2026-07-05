@@ -6,6 +6,8 @@ import { sql, eq } from 'drizzle-orm'
 import { users } from './schema/auth.ts'
 import { branches, userBranches } from './schema/branches.ts'
 import { roles } from './schema/roles.ts'
+import { permissions, rolePermissions } from './schema/permissions.ts'
+import { departments } from './schema/departments.ts'
 import { packages, packageItems, packageAllowedDays, packageBenefits } from './schema/packages.ts'
 import { members } from './schema/members.ts'
 import { subscriptions } from './schema/subscriptions.ts'
@@ -16,8 +18,16 @@ import { products } from './schema/products.ts'
 import { productStock } from './schema/product-stock.ts'
 import { checkIns } from './schema/check-ins.ts'
 import { loyaltyTiers } from './schema/loyalty.ts'
+import { employees } from './schema/employees.ts'
+import { employeeContracts } from './schema/employee-contracts.ts'
+import { employeeSchedules } from './schema/employee-schedules.ts'
+import { employeeAttendance } from './schema/employee-attendance.ts'
+import { employeeBonuses } from './schema/employee-bonuses.ts'
+import { employeeVacations } from './schema/employee-vacations.ts'
+import { employeeDocuments } from './schema/employee-documents.ts'
+import { employeePerformance } from './schema/employee-performance.ts'
 
-config({ path: ['.env.local', '.env'] })
+config({ path: ['.env'] })
 
 const { Pool } = pg
 const pool = new Pool({ connectionString: process.env.DATABASE_URL! })
@@ -78,7 +88,100 @@ async function seed() {
   ])
   console.log('✅ Roles creados')
 
-  // 2. Branches
+  // 2. Permissions
+  const allPermissions = [
+    { name: 'members:read', label: 'Ver miembros', module: 'members' },
+    { name: 'members:write', label: 'Crear/editar miembros', module: 'members' },
+    { name: 'plans:read', label: 'Ver planes', module: 'plans' },
+    { name: 'plans:write', label: 'Crear/editar planes', module: 'plans' },
+    { name: 'subscriptions:read', label: 'Ver suscripciones', module: 'subscriptions' },
+    { name: 'subscriptions:write', label: 'Crear/editar suscripciones', module: 'subscriptions' },
+    { name: 'payments:read', label: 'Ver pagos', module: 'payments' },
+    { name: 'payments:write', label: 'Registrar pagos', module: 'payments' },
+    { name: 'checkins:read', label: 'Ver check-ins', module: 'checkins' },
+    { name: 'checkins:write', label: 'Registrar check-ins', module: 'checkins' },
+    { name: 'classes:read', label: 'Ver clases', module: 'classes' },
+    { name: 'classes:write', label: 'Crear/editar clases', module: 'classes' },
+    { name: 'products:read', label: 'Ver productos', module: 'products' },
+    { name: 'products:write', label: 'Crear/editar productos', module: 'products' },
+    { name: 'categories:read', label: 'Ver categorías', module: 'categories' },
+    { name: 'categories:write', label: 'Crear/editar categorías', module: 'categories' },
+    { name: 'suppliers:read', label: 'Ver proveedores', module: 'suppliers' },
+    { name: 'suppliers:write', label: 'Crear/editar proveedores', module: 'suppliers' },
+    { name: 'purchases:read', label: 'Ver compras', module: 'purchases' },
+    { name: 'purchases:write', label: 'Registrar compras', module: 'purchases' },
+    { name: 'sales:read', label: 'Ver ventas', module: 'sales' },
+    { name: 'sales:write', label: 'Registrar ventas', module: 'sales' },
+    { name: 'pos:use', label: 'Usar POS', module: 'pos' },
+    { name: 'inventory:read', label: 'Ver inventario', module: 'inventory' },
+    { name: 'inventory:write', label: 'Editar inventario', module: 'inventory' },
+    { name: 'cash:read', label: 'Ver caja', module: 'cash' },
+    { name: 'cash:write', label: 'Operar caja', module: 'cash' },
+    { name: 'dashboard:read', label: 'Ver dashboard', module: 'dashboard' },
+    { name: 'users:read', label: 'Ver usuarios', module: 'users' },
+    { name: 'users:write', label: 'Crear/editar usuarios', module: 'users' },
+    { name: 'reports:read', label: 'Ver reportes', module: 'reports' },
+    { name: 'settings:read', label: 'Ver configuración', module: 'settings' },
+    { name: 'settings:write', label: 'Editar configuración', module: 'settings' },
+    { name: 'renewals:read', label: 'Ver renovaciones', module: 'renewals' },
+    { name: 'renewals:write', label: 'Gestionar renovaciones', module: 'renewals' },
+    { name: 'export:read', label: 'Exportar datos', module: 'export' },
+    { name: 'trainers:read', label: 'Ver entrenadores', module: 'trainers' },
+    { name: 'trainers:write', label: 'Crear/editar entrenadores', module: 'trainers' },
+    { name: 'notifications:read', label: 'Ver notificaciones', module: 'notifications' },
+    { name: 'notifications:write', label: 'Enviar notificaciones', module: 'notifications' },
+    { name: 'membership-freezes:read', label: 'Ver congelamientos', module: 'membership-freezes' },
+    { name: 'membership-freezes:write', label: 'Gestionar congelamientos', module: 'membership-freezes' },
+    { name: 'audit:read', label: 'Ver auditoría', module: 'audit' },
+    { name: 'audit:export', label: 'Exportar auditoría', module: 'audit' },
+    { name: 'branches:read', label: 'Ver sucursales', module: 'branches' },
+    { name: 'branches:write', label: 'Crear/editar sucursales', module: 'branches' },
+    { name: 'backup:read', label: 'Ver backups', module: 'backup' },
+    { name: 'backup:write', label: 'Crear backups', module: 'backup' },
+    { name: 'nutrition:read', label: 'Ver nutrición', module: 'nutrition' },
+    { name: 'nutrition:write', label: 'Crear/editar planes nutricionales', module: 'nutrition' },
+    { name: 'guest-passes:read', label: 'Ver pases de cortesía', module: 'guest-passes' },
+    { name: 'guest-passes:write', label: 'Crear pases de cortesía', module: 'guest-passes' },
+    { name: 'employees:read', label: 'Ver empleados', module: 'employees' },
+    { name: 'employees:write', label: 'Crear/editar empleados', module: 'employees' },
+  ]
+  await db.insert(permissions).values(allPermissions)
+  console.log(`✅ ${allPermissions.length} permisos creados`)
+
+  // 3. Role ↔ Permissions
+  const rolePerms = [
+    // ADMIN gets everything
+    ...allPermissions.map((p) => ({ roleName: 'ADMIN' as const, permissionName: p.name })),
+    // RECEPTIONIST
+    ...([
+      'members:read', 'members:write', 'plans:read', 'subscriptions:read', 'subscriptions:write',
+      'payments:read', 'payments:write', 'checkins:read', 'checkins:write',
+      'classes:read', 'classes:write', 'products:read', 'sales:read', 'sales:write',
+      'pos:use', 'cash:read', 'cash:write', 'dashboard:read', 'reports:read',
+      'settings:read', 'renewals:read', 'renewals:write', 'notifications:read',
+      'trainers:read', 'membership-freezes:read', 'membership-freezes:write',
+      'guest-passes:read', 'guest-passes:write',
+    ] as const).map((name) => ({ roleName: 'RECEPTIONIST' as const, permissionName: name })),
+    // TRAINER
+    ...([
+      'members:read', 'plans:read', 'subscriptions:read', 'classes:read',
+      'checkins:read', 'dashboard:read', 'notifications:read', 'trainers:read',
+      'nutrition:read', 'nutrition:write',
+    ] as const).map((name) => ({ roleName: 'TRAINER' as const, permissionName: name })),
+  ]
+  await db.insert(rolePermissions).values(rolePerms)
+  console.log('✅ Role ↔ Permissions asignados')
+
+  // 4. Departments
+  const [deptEntrenamiento, deptRecepcion, deptAdmin, deptNutricion] = await db.insert(departments).values([
+    { name: 'Entrenamiento', description: 'Personal de entrenamiento y coaching' },
+    { name: 'Recepción', description: 'Atención al cliente y administración general' },
+    { name: 'Administración', description: 'Dirección y gestión del gym' },
+    { name: 'Nutrición', description: 'Planes alimentarios y asesoría nutricional' },
+  ]).returning()
+  console.log('✅ 4 departamentos creados')
+
+  // 5. Branches
   const [b1] = await db.insert(branches).values({
     name: 'Sede Central',
     address: 'Av. Corrientes 1234, CABA',
@@ -307,6 +410,243 @@ async function seed() {
     })
   }
   console.log(`✅ ${trainerIds.length} trainers + disponibilidad + asignaciones`)
+
+  // ─── Employees ────────────────────────────────────────────────
+  console.log('\n👔 Creando empleados...')
+
+  const employeeData = [
+    { userId: 'jhonatanancasi@gmail.com', name: 'Jhonatan Ancasi', doc: '10571705', position: 'Gerente General', roleId: 'ADMIN' as const, deptId: deptAdmin.id, phone: '11-1234-5678', email: 'jhonatanancasi@gmail.com', salary: '250000' },
+    { userId: 'recepcion1@nuwegym.com', name: 'María López', doc: '38123456', position: 'Recepcionista', roleId: 'RECEPTIONIST' as const, deptId: deptRecepcion.id, phone: '11-2345-6789', email: 'recepcion1@nuwegym.com', salary: '85000' },
+    { userId: 'recepcion2@nuwegym.com', name: 'Lucía Fernández', doc: '40987654', position: 'Recepcionista', roleId: 'RECEPTIONIST' as const, deptId: deptRecepcion.id, phone: '11-3456-7890', email: 'recepcion2@nuwegym.com', salary: '85000' },
+    { userId: 'trainer1@nuwegym.com', name: 'Carlos García', doc: '35678901', position: 'Entrenador Principal', roleId: 'TRAINER' as const, deptId: deptEntrenamiento.id, phone: '11-4567-8901', email: 'trainer1@nuwegym.com', salary: '120000' },
+    { userId: 'trainer2@nuwegym.com', name: 'Ana Martínez', doc: '37890123', position: 'Entrenadora', roleId: 'TRAINER' as const, deptId: deptEntrenamiento.id, phone: '11-5678-9012', email: 'trainer2@nuwegym.com', salary: '100000' },
+    { userId: 'trainer3@nuwegym.com', name: 'Diego Rodríguez', doc: '39012345', position: 'Entrenador', roleId: 'TRAINER' as const, deptId: deptEntrenamiento.id, phone: '11-6789-0123', email: 'trainer3@nuwegym.com', salary: '100000' },
+    { userId: null, name: 'Roberto Sánchez', doc: '27123456', position: 'Seguridad', roleId: null, deptId: deptAdmin.id, phone: '11-7890-1234', email: 'seguridad@nuwegym.com', salary: '70000' },
+    { userId: null, name: 'Laura Torres', doc: '28234567', position: 'Personal de Limpieza', roleId: null, deptId: deptAdmin.id, phone: '11-8901-2345', email: 'limpieza@nuwegym.com', salary: '65000' },
+    { userId: null, name: 'Pablo Ramírez', doc: '29345678', position: 'Contador', roleId: 'ADMIN' as const, deptId: deptAdmin.id, phone: '11-9012-3456', email: 'contador@nuwegym.com', salary: '130000' },
+    { userId: null, name: 'Carmen Vargas', doc: '30456789', position: 'Asistente de Gerencia', roleId: null, deptId: deptAdmin.id, phone: '11-0123-4567', email: 'asistencia@nuwegym.com', salary: '90000' },
+    { userId: null, name: 'Facundo Herrera', doc: '31234567', position: 'Entrenador de Boxeo', roleId: 'TRAINER' as const, deptId: deptEntrenamiento.id, phone: '11-1234-9988', email: 'boxeo@nuwegym.com', salary: '95000' },
+    { userId: null, name: 'Estela Domínguez', doc: '32345678', position: 'Nutricionista', roleId: 'TRAINER' as const, deptId: deptNutricion.id, phone: '11-1234-9977', email: 'nutricion@nuwegym.com', salary: '110000' },
+    { userId: null, name: 'Javier Peralta', doc: '33456789', position: 'Encargado de Mantenimiento', roleId: null, deptId: deptAdmin.id, phone: '11-1234-9966', email: 'mantenimiento@nuwegym.com', salary: '60000' },
+  ]
+
+  const employeeIds: string[] = []
+
+  for (let i = 0; i < employeeData.length; i++) {
+    const e = employeeData[i]
+    const hireDate = new Date(now)
+    hireDate.setFullYear(hireDate.getFullYear() - Math.floor(Math.random() * 3) - 1)
+    const branch = i % 2
+
+    const [emp] = await db.insert(employees).values({
+      userId: e.userId ? userIds[e.userId] : null,
+      branchId: branchIds[branch],
+      employeeCode: `EMP-${String(i + 1).padStart(3, '0')}`,
+      fullName: e.name,
+      email: e.email,
+      phone: e.phone,
+      documentNumber: e.doc,
+      position: e.position,
+      roleId: e.roleId,
+      departmentId: e.deptId,
+      status: 'ACTIVE',
+      hireDate,
+      baseSalary: e.salary,
+      paymentFrequency: 'MONTHLY',
+      bankName: ['Banco Nación', 'Galicia', 'Santander', 'BBVA'][branch],
+      bankAccountNumber: `000-${String(Math.floor(Math.random() * 99999999)).padStart(8, '0')}`,
+      emergencyContactName: ['Sra. García', 'Sr. Pérez', 'Sra. Martínez'][Math.floor(Math.random() * 3)],
+      emergencyContactPhone: `11-${String(Math.floor(Math.random() * 9000000) + 1000000)}`,
+      emergencyContactRelation: 'Familiar',
+    }).returning()
+    employeeIds.push(emp.id)
+  }
+  console.log(`✅ ${employeeData.length} empleados creados`)
+
+  // ─── Employee Contracts ──────────────────────────────────────
+  console.log('\n📄 Creando contratos...')
+  for (let i = 0; i < employeeIds.length; i++) {
+    const today = new Date()
+    const start = new Date(today)
+    start.setFullYear(start.getFullYear() - Math.floor(Math.random() * 3) - 1)
+    const end = new Date(start)
+    end.setFullYear(end.getFullYear() + 2)
+
+    await db.insert(employeeContracts).values({
+      employeeId: employeeIds[i],
+      contractType: i < 7 ? 'INDEFINITE' : 'TEMPORARY',
+      startDate: start,
+      endDate: i < 7 ? null : end,
+      position: employeeData[i].position,
+      salary: employeeData[i].salary,
+      workingHours: 'Lun-Vie 09:00-18:00',
+      benefits: i < 3 ? 'OSDE 310, Obra Social' : 'Obra Social',
+      terms: 'Contrato estándar según convenio colectivo',
+      isActive: true,
+      signedByEmployee: true,
+      signedByEmployer: true,
+    })
+  }
+  console.log(`✅ ${employeeIds.length} contratos creados`)
+
+  // ─── Employee Schedules ──────────────────────────────────────
+  console.log('\n📅 Creando horarios...')
+  for (let i = 0; i < employeeIds.length; i++) {
+    const isReception = employeeData[i].position.includes('Recepcion')
+    for (let day = 1; day <= 6; day++) {
+      await db.insert(employeeSchedules).values({
+        employeeId: employeeIds[i],
+        dayOfWeek: day,
+        startTime: isReception ? '07:00' : '09:00',
+        endTime: isReception ? '15:00' : '18:00',
+        scheduleType: day <= 5 ? 'REGULAR' : 'WEEKEND',
+      })
+    }
+  }
+  console.log(`✅ Horarios creados para ${employeeIds.length} empleados`)
+
+  // ─── Employee Attendance ──────────────────────────────────────
+  console.log('\n⏰ Creando asistencias...')
+  let attendanceCount = 0
+  for (const eid of employeeIds) {
+    for (let dayOffset = 14; dayOffset >= 0 && attendanceCount < 80; dayOffset--) {
+      const d = new Date(now)
+      d.setDate(d.getDate() - dayOffset)
+      if (d.getDay() === 0) continue // skip sundays
+
+      const rand = Math.random()
+      if (rand < 0.7) {
+        await db.insert(employeeAttendance).values({
+          employeeId: eid, date: d,
+          clockIn: new Date(d.getFullYear(), d.getMonth(), d.getDate(), 9, 0),
+          clockOut: new Date(d.getFullYear(), d.getMonth(), d.getDate(), 18, 0),
+          status: 'PRESENT',
+        })
+      } else if (rand < 0.85) {
+        await db.insert(employeeAttendance).values({
+          employeeId: eid, date: d,
+          clockIn: new Date(d.getFullYear(), d.getMonth(), d.getDate(), 9, Math.floor(Math.random() * 30) + 5),
+          clockOut: new Date(d.getFullYear(), d.getMonth(), d.getDate(), 18, 0),
+          status: 'LATE',
+        })
+      } else {
+        await db.insert(employeeAttendance).values({
+          employeeId: eid, date: d,
+          clockIn: new Date(d.getFullYear(), d.getMonth(), d.getDate(), 9, 0),
+          status: 'ABSENT',
+          notes: 'Ausente sin justificar',
+        })
+      }
+      attendanceCount++
+    }
+  }
+  console.log(`✅ ${attendanceCount} registros de asistencia`)
+
+  // ─── Employee Bonuses ──────────────────────────────────────────
+  console.log('\n💰 Creando bonificaciones...')
+  const bonusReasons = [
+    { type: 'PERFORMANCE', reason: 'Superación de metas mensuales' },
+    { type: 'PUNCTUALITY', reason: 'Puntualidad perfecta del mes' },
+    { type: 'EXTRA_HOUR', reason: 'Horas extra durante semana de inventario' },
+    { type: 'HOLIDAY', reason: 'Trabajo en feriado nacional' },
+    { type: 'OTHER', reason: 'Desempeño destacado en atención al cliente' },
+  ]
+  let bonusCount = 0
+  for (let i = 0; i < employeeIds.length; i += 2) {
+    const b = bonusReasons[bonusCount % bonusReasons.length]
+    const bonusDate = new Date(now)
+    bonusDate.setMonth(bonusDate.getMonth() - Math.floor(Math.random() * 3))
+    await db.insert(employeeBonuses).values({
+      employeeId: employeeIds[i],
+      amount: String((Math.floor(Math.random() * 5) + 1) * 1000),
+      reason: b.reason,
+      type: b.type,
+      date: bonusDate,
+      status: bonusCount < 3 ? 'APPROVED' : 'PENDING',
+    })
+    bonusCount++
+  }
+  console.log(`✅ ${bonusCount} bonificaciones creadas`)
+
+  // ─── Employee Vacations ──────────────────────────────────────
+  console.log('\n🏖️ Creando solicitudes de vacaciones...')
+  const vacStatuses = ['APPROVED', 'PENDING', 'APPROVED', 'REJECTED']
+  let vacationCount = 0
+  for (let i = 0; i < employeeIds.length; i += 3) {
+    const startDate = new Date(2026, (vacationCount * 2) % 12, 1)
+    const endDate = new Date(startDate)
+    endDate.setDate(endDate.getDate() + 7 + (vacationCount % 3) * 7)
+    const st = vacStatuses[vacationCount % vacStatuses.length]
+
+    await db.insert(employeeVacations).values({
+      employeeId: employeeIds[i],
+      startDate, endDate,
+      daysCount: Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)),
+      year: 2026,
+      reason: 'Vacaciones anuales solicitadas',
+      status: st,
+      approvedBy: st !== 'PENDING' ? adminId : null,
+      approvedAt: st !== 'PENDING' ? new Date() : null,
+    })
+    vacationCount++
+  }
+  console.log(`✅ ${vacationCount} solicitudes de vacaciones`)
+
+  // ─── Employee Performance ──────────────────────────────────────
+  console.log('\n⭐ Creando evaluaciones de desempeño...')
+  const perfComments = [
+    { strengths: 'Excelente atención al cliente y resolución de conflictos', improvements: '' },
+    { strengths: 'Trabajo en equipo y proactividad', improvements: 'Mejorar puntualidad en llegadas' },
+    { strengths: 'Alta productividad y compromiso', improvements: '' },
+    { strengths: 'Responsabilidad y cumplimiento de horarios', improvements: 'Profundizar conocimientos técnicos' },
+  ]
+  let perfCount = 0
+  for (let i = 1; i < employeeIds.length; i += 2) {
+    const pc = perfComments[perfCount % perfComments.length]
+    const evalDate = new Date(now)
+    evalDate.setMonth(evalDate.getMonth() - Math.floor(Math.random() * 3))
+    await db.insert(employeePerformance).values({
+      employeeId: employeeIds[i],
+      evaluatedById: adminId,
+      evaluationDate: evalDate,
+      rating: Math.floor(Math.random() * 2) + 3,
+      punctuality: Math.floor(Math.random() * 2) + 3,
+      teamwork: Math.floor(Math.random() * 2) + 4,
+      productivity: Math.floor(Math.random() * 2) + 3,
+      attitude: Math.floor(Math.random() * 2) + 4,
+      communication: Math.floor(Math.random() * 2) + 3,
+      strengths: pc.strengths,
+      improvements: pc.improvements,
+      comments: 'Evaluación trimestral de desempeño',
+      recommendation: 'Continuar con el desarrollo profesional',
+    })
+    perfCount++
+  }
+  console.log(`✅ ${perfCount} evaluaciones de desempeño`)
+
+  // ─── Employee Documents ──────────────────────────────────────
+  console.log('\n📁 Creando documentos...')
+  const docEntries = [
+    { type: 'DNI', name: 'Copia de DNI' },
+    { type: 'CONTRACT', name: 'Contrato firmado' },
+    { type: 'CERTIFICATE', name: 'Certificado de estudios' },
+    { type: 'STUDIES', name: 'Título universitario' },
+  ]
+  let docCount = 0
+  for (let i = 0; i < Math.min(employeeIds.length, 6); i++) {
+    const de = docEntries[i % docEntries.length]
+    await db.insert(employeeDocuments).values({
+      employeeId: employeeIds[i],
+      name: de.name,
+      type: de.type,
+      description: `Documento de ${employeeData[i].name}`,
+      fileName: `${de.type.toLowerCase()}_${employeeData[i].doc}.pdf`,
+      fileSize: `${Math.floor(Math.random() * 500) + 100}KB`,
+      uploadedById: adminId,
+    })
+    docCount++
+  }
+  console.log(`✅ ${docCount} documentos cargados`)
 
   console.log('\n🎉 Seed completado!')
   console.log('\n📋 Credenciales:')

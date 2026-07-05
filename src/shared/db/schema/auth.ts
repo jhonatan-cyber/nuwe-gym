@@ -1,5 +1,4 @@
 import { boolean, integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
-import { roles } from './roles.ts'
 
 export const users = pgTable('user', {
   banned: boolean('banned'),
@@ -11,8 +10,7 @@ export const users = pgTable('user', {
   twoFactorEnabled: boolean('two_factor_enabled').notNull().default(false),
   role: text('role')
     .notNull()
-    .default('TRAINER')
-    .references(() => roles.name),
+    .default(''),
   documentNumber: text('document_number'),
   phone: text('phone'),
   address: text('address'),

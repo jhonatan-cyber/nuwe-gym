@@ -6,7 +6,7 @@ import { employees } from '#/shared/db/schema/employees.ts'
 import { trainerProfiles, trainerAssignments } from '#/shared/db/schema/trainers.ts'
 import { membershipPayments } from '#/shared/db/schema/membership-payments.ts'
 import { employeeBonuses } from '#/shared/db/schema/employee-bonuses.ts'
-import { requireRole } from '#/shared/lib/server-utils.ts'
+import { requirePermission } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { dateString } from '#/shared/lib/schemas.ts'
@@ -44,7 +44,7 @@ export interface CommissionsDashboard {
  */
 export const getEmployeeCommissionBridge = createServerFn({ method: 'GET' })
   .handler(async () => {
-    await requireRole({ data: { roles: ['ADMIN'] } })
+    await requirePermission({ data: { permission: 'employees:read' } })
 
     // Get all employees with a userId
     const allEmployees = await db
@@ -106,7 +106,7 @@ const dateRangeSchema = z.object({
 export const getTrainerCommissionsForPeriod = createServerFn({ method: 'GET' })
   .validator((data: unknown) => dateRangeSchema.parse(data))
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN'] } })
+    await requirePermission({ data: { permission: 'employees:read' } })
 
     const periodStart = new Date(data.periodStart)
     const periodEnd = new Date(data.periodEnd)
@@ -200,9 +200,8 @@ export const createCommissionBonuses = createServerFn({ method: 'POST' })
     }).parse(data),
   )
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'employees:write' } })
 
-    const periodStart = new Date(data.periodStart)
     const periodEnd = new Date(data.periodEnd)
 
     // Get commissions for all employee-trainers
@@ -258,7 +257,7 @@ export const createCommissionBonuses = createServerFn({ method: 'POST' })
 
 export const getCommissionsDashboard = createServerFn({ method: 'GET' })
   .handler(async () => {
-    await requireRole({ data: { roles: ['ADMIN'] } })
+    await requirePermission({ data: { permission: 'employees:read' } })
 
     // Get all commission bonuses
     const allCommissionBonuses = await db
@@ -300,10 +299,7 @@ const periodSchema = z.object({
 export const getCommissionSummary = createServerFn({ method: 'GET' })
   .validator((data: unknown) => periodSchema.parse(data))
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN'] } })
-
-    const periodStart = new Date(data.periodStart)
-    const periodEnd = new Date(data.periodEnd)
+    await requirePermission({ data: { permission: 'employees:read' } })
 
     // Get commissions for period
     const commissions = await getTrainerCommissionsForPeriod({

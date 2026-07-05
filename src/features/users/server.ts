@@ -2,9 +2,10 @@ import { createServerFn } from '@tanstack/react-start'
 import { getRequest } from '@tanstack/react-start/server'
 import { db } from '#/shared/db/index.ts'
 import { users, sessions } from '#/shared/db/schema/auth.ts'
+import { employees } from '#/shared/db/schema/employees.ts'
 import { auditLogs } from '#/shared/db/schema/audit-logs.ts'
 import { eq, desc, and, ne } from 'drizzle-orm'
-import { requireRole } from '#/shared/lib/server-utils.ts'
+import { requirePermission } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { auth } from '#/shared/lib/auth.ts'
@@ -12,14 +13,18 @@ import { z } from 'zod'
 import { optionalString } from '#/shared/lib/schemas.ts'
 
 export const getUsers = createServerFn({ method: 'GET' }).handler(async () => {
-  await requireRole({ data: { roles: ['ADMIN'] } })
-  return await db.select().from(users).orderBy(desc(users.createdAt))
+  await requirePermission({ data: { permission: 'users:read' } })
+  // Only return users who have a linked employee (system access = staff)
+  const allUsers = await db.select().from(users).orderBy(desc(users.createdAt))
+  const empLinks = await db.select({ userId: employees.userId }).from(employees)
+  const staffUserIds = new Set(empLinks.filter((e) => e.userId).map((e) => e.userId!))
+  return allUsers.filter((u) => staffUserIds.has(u.id))
 })
 
 export const getUserById = createServerFn({ method: 'GET' })
   .validator((userId) => z.string().parse(userId))
   .handler(async ({ data: userId }) => {
-    await requireRole({ data: { roles: ['ADMIN'] } })
+    await requirePermission({ data: { permission: 'users:read' } })
 
     const userResults = await db
       .select()
@@ -53,13 +58,13 @@ export const getUserById = createServerFn({ method: 'GET' })
 
 const updateUserRoleSchema = z.object({
   userId: z.string(),
-  role: z.enum(['ADMIN', 'RECEPTIONIST', 'TRAINER']),
+  role: z.string().min(1),
 })
 
 export const updateUserRole = createServerFn({ method: 'POST' })
   .validator((data) => updateUserRoleSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'users:write' } })
     const [user] = await db
       .update(users)
       .set({ role: data.role, updatedAt: new Date() })
@@ -85,13 +90,13 @@ const createStaffUserSchema = z.object({
     .or(z.literal('')),
   address: optionalString,
   email: z.string().email('Email inválido'),
-  role: z.enum(['ADMIN', 'RECEPTIONIST', 'TRAINER']),
+  role: z.string().min(1),
 })
 
 export const createStaffUser = createServerFn({ method: 'POST' })
   .validator((data) => createStaffUserSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'users:write' } })
     const request = getRequest()
 
     // Verificar si el email ya existe
@@ -155,7 +160,7 @@ const updateUserSchema = z.object({
   userId: z.string(),
   name: z.string().min(1, 'El nombre es obligatorio'),
   email: z.string().email('Email inválido'),
-  role: z.enum(['ADMIN', 'RECEPTIONIST', 'TRAINER']),
+  role: z.string().min(1),
   documentNumber: z
     .string()
     .regex(/^\d+$/, 'El CI debe contener solo números')
@@ -172,7 +177,7 @@ const updateUserSchema = z.object({
 export const updateUser = createServerFn({ method: 'POST' })
   .validator((data) => updateUserSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'users:write' } })
 
     const emailLower = data.email.trim().toLowerCase()
     // Verificar si el email ya está en uso por otro usuario
@@ -229,7 +234,7 @@ const resetPasswordSchema = z.object({
 export const resetUserPassword = createServerFn({ method: 'POST' })
   .validator((data) => resetPasswordSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'users:write' } })
     const request = getRequest()
 
     const userResults = await db
@@ -261,7 +266,7 @@ export const resetUserPassword = createServerFn({ method: 'POST' })
 export const revokeSession = createServerFn({ method: 'POST' })
   .validator((data) => revokeSessionSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'users:write' } })
 
     const deletedResults = await db
       .delete(sessions)
@@ -283,7 +288,7 @@ export const revokeSession = createServerFn({ method: 'POST' })
 export const deleteUser = createServerFn({ method: 'POST' })
   .validator((userId) => z.string().parse(userId))
   .handler(async ({ data: userId }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'users:write' } })
 
     await db.delete(users).where(eq(users.id, userId))
 

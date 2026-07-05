@@ -3,7 +3,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Star, TrendingUp, Plus, X, Trash2, User } from 'lucide-react'
 import { Button } from '#/shared/components/ui/button'
-import { Input } from '#/shared/components/ui/input'
 import { Textarea } from '#/shared/components/ui/textarea'
 import { LoadingButton } from '#/shared/components/ui/loading-button'
 import { createPerformance, getEmployeePerformances, deletePerformance } from '#/features/employees/performance-server.ts'
@@ -11,14 +10,6 @@ import { formatDate } from '#/shared/lib/formatters.ts'
 
 interface PerformanceSectionProps {
   employeeId: string
-}
-
-const RATING_LABELS: Record<number, string> = {
-  1: 'Muy bajo',
-  2: 'Bajo',
-  3: 'Aceptable',
-  4: 'Bueno',
-  5: 'Excelente',
 }
 
 const FIELDS = [
@@ -142,7 +133,7 @@ export function PerformanceSection({ employeeId }: PerformanceSectionProps) {
 
           <div className="space-y-2">
             <label className="text-[10px] font-bold uppercase text-muted-foreground">Fortalezas</label>
-            <Textarea value={form.strengths} onChange={(e) => setForm((p) => ({ ...p, strengths: e.target.value }))} rows={2} className="rounded-xl text-xs" placeholder="¿Qué hace bien el empleado?" />
+            <Textarea value={form.strengths} onChange={(e) => setForm((p) => ({ ...p, strengths: e.target.value }))} rows={2} className="rounded-xl text-xs"               placeholder="¿Qué hace bien este miembro del personal?" />
           </div>
           <div className="space-y-2">
             <label className="text-[10px] font-bold uppercase text-muted-foreground">Áreas de mejora</label>
@@ -190,7 +181,7 @@ export function PerformanceSection({ employeeId }: PerformanceSectionProps) {
                 {FIELDS.map(({ key, label }) => (
                   <div key={key} className="text-center">
                     <p className="text-[8px] text-muted-foreground uppercase">{label.slice(0, 4)}</p>
-                    <p className="text-xs font-bold">{ev[key as keyof typeof ev] ?? '-'}</p>
+                    <p className="text-xs font-bold">{String(ev[key as keyof typeof ev] ?? '-')}</p>
                   </div>
                 ))}
               </div>

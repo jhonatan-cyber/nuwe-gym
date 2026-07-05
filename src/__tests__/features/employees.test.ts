@@ -91,7 +91,7 @@ describe('Employees CRUD', () => {
   it('should query employees filtered by branch', async () => {
     const { employees: empsList } = await seedMultipleEmployees(3)
     const found = await db.query.employees.findMany({
-      where: eq(employees.branchId, empsList[0].branchId),
+      where: eq(employees.branchId, empsList[0].branchId!),
     })
     expect(found.length).toBeGreaterThanOrEqual(3)
     found.forEach((e) => expect(e.branchId).toBe(empsList[0].branchId))
@@ -639,8 +639,8 @@ describe('Payroll', () => {
         deductionsTotal: deductionAmount.toString(),
         netSalary: (baseSalary + bonusAmount - deductionAmount).toString(),
         status: 'PENDING',
-        bonuses: [{ type: 'BONUS', amount: bonusAmount, reason: 'Performance' }],
-        deductions: [{ type: 'TAX', amount: deductionAmount, reason: 'ISR' }],
+        bonuses: [{ type: 'BONUS', amount: bonusAmount.toString(), reason: 'Performance' }],
+        deductions: [{ type: 'TAX', amount: deductionAmount.toString(), reason: 'ISR' }],
       })
       .returning()
 
@@ -708,7 +708,7 @@ describe('Payroll', () => {
       deductionsTotal: '0',
       netSalary: '15500.00',
       status: 'PENDING',
-      bonuses: [{ type: 'BONUS', amount: 500, reason: 'Extra' }],
+      bonuses: [{ type: 'BONUS', amount: '500', reason: 'Extra' }],
       deductions: [],
     })
 
@@ -976,7 +976,6 @@ describe('Cross-Entity Relationships', () => {
         date: new Date(),
         clockIn: new Date(),
         status: 'PRESENT',
-        createdByUserId: TEST_USER_ID,
       })
       .returning()
 

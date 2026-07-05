@@ -4,13 +4,13 @@ import { eq } from 'drizzle-orm'
 import { optionalString, timeString } from '#/shared/lib/schemas.ts'
 import { db } from '#/shared/db/index.ts'
 import { settings } from '#/shared/db/schema/settings.ts'
-import { requireRole } from '#/shared/lib/server-utils.ts'
+import { requirePermission } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 
 export const getSettings = createServerFn({ method: 'GET' }).handler(
   async () => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'settings:read' } })
 
     const rows = await db.select().from(settings).limit(1)
     return rows[0] ?? null
@@ -66,7 +66,7 @@ const updateSettingsSchema = z.object({
 export const updateSettings = createServerFn({ method: 'POST' })
   .validator((data: unknown) => updateSettingsSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'settings:write' } })
 
     const existing = await db
       .select({ id: settings.id })

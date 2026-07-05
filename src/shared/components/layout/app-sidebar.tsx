@@ -31,8 +31,6 @@ import {
   WalletCards,
 } from 'lucide-react'
 import { Link, useMatches } from '@tanstack/react-router'
-import type { UserRole } from '#/shared/lib/permissions.ts'
-import { hasPermission } from '#/shared/lib/permissions.ts'
 import {
   Tooltip,
   TooltipTrigger,
@@ -44,7 +42,7 @@ interface NavItem {
   title: string
   url: string
   icon: React.ComponentType<{ className?: string }>
-  permission?: Parameters<typeof hasPermission>[1]
+  permission?: string
   dividerAfter?: boolean
 }
 
@@ -247,11 +245,9 @@ const navItems: NavItem[] = [
 ]
 
 export function AppSidebar({
-  role,
   isOpen,
   onClose,
 }: {
-  role: UserRole
   isOpen?: boolean
   onClose?: () => void
 }) {
@@ -259,13 +255,8 @@ export function AppSidebar({
   const currentPath = matches[matches.length - 1]?.fullPath ?? ''
 
   const visibleItems = useMemo(
-    () =>
-      role === 'ADMIN'
-        ? navItems
-        : navItems.filter(
-            (item) => !item.permission || hasPermission(role, item.permission),
-          ),
-    [role],
+    () => navItems,
+    [],
   )
 
   return (

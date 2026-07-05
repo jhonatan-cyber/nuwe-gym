@@ -54,7 +54,8 @@ interface PurchaseFormItem {
 
 export function PurchasesPage() {
   const queryClient = useQueryClient()
-  const { userRole } = authedRoute.useRouteContext()
+  const { session } = authedRoute.useRouteContext()
+  const userRole = session.user.role
   const isAdmin = userRole === 'ADMIN'
   const { branchId } = useCurrentBranch()
 
@@ -63,7 +64,7 @@ export function PurchasesPage() {
   const [purchaseNumber, setPurchaseNumber] = useState('')
   const [notes, setNotes] = useState('')
   const [formItems, setFormItems] = useState<PurchaseFormItem[]>([
-    { productId: '', quantity: 1, unitCost: '0.00' },
+    { productId: '', quantity: 1, unitCost: '0.00', batchNumber: '' },
   ])
 
   const { data: purchasesList = [], isLoading: isLoadingPurchases } = useQuery({

@@ -1,8 +1,7 @@
 import { createServerFn } from '@tanstack/react-start'
 import { auth } from '#/shared/lib/auth.ts'
-import type { UserRole } from '#/shared/lib/permissions.ts'
 import type { Permission } from '#/shared/lib/permissions.ts'
-import { hasPermission } from '#/shared/lib/permissions.ts'
+import { hasPermissionFromDB, getRolePermissionsFromDB } from '#/shared/lib/permissions.ts'
 
 export const getSession = createServerFn({ method: 'GET' }).handler(
   async () => {
@@ -14,27 +13,23 @@ export const getSession = createServerFn({ method: 'GET' }).handler(
 )
 
 export const requireRole = createServerFn({ method: 'GET' })
-  .validator((data: { roles: UserRole[] }) => data)
+  .validator((data: { roles: string[] }) => data)
   .handler(async ({ data }) => {
     const { getRequest } = await import('@tanstack/react-start/server')
     const request = getRequest()
     const session = await auth.api.getSession({ headers: request.headers })
     if (!session) throw new Error('Unauthorized')
-    const roleMap: Record<string, UserRole> = {
-      admin: 'ADMIN',
-      user: 'TRAINER',
-    }
-    const rawRole = session.user.role
-    const normalizedRole: UserRole = roleMap[rawRole] ?? rawRole
-    if (!data.roles.includes(normalizedRole)) {
+    // Role comes directly from auth — no mapping needed
+    const userRole = session.user.role
+    if (!data.roles.includes(userRole)) {
       throw new Error('Forbidden')
     }
-    return { ...session, user: { ...session.user, role: normalizedRole } }
+    return session
   })
 
 /**
  * Verify the authenticated user has a specific permission.
- * Uses the granular permissions defined in permissions.ts.
+ * Uses DB-backed permissions from role_permissions table.
  */
 export const requirePermission = createServerFn({ method: 'GET' })
   .validator((data: { permission: Permission }) => data)
@@ -43,14 +38,22 @@ export const requirePermission = createServerFn({ method: 'GET' })
     const request = getRequest()
     const session = await auth.api.getSession({ headers: request.headers })
     if (!session) throw new Error('Unauthorized')
-    const roleMap: Record<string, UserRole> = {
-      admin: 'ADMIN',
-      user: 'TRAINER',
-    }
-    const rawRole = session.user.role
-    const normalizedRole: UserRole = roleMap[rawRole] ?? rawRole
-    if (!hasPermission(normalizedRole, data.permission)) {
+    const userRole = session.user.role
+    if (!(await hasPermissionFromDB(userRole, data.permission))) {
       throw new Error('Forbidden')
     }
-    return { ...session, user: { ...session.user, role: normalizedRole } }
+    return session
   })
+
+/**
+ * Get all permissions for the current user's role.
+ */
+export const getUserPermissions = createServerFn({ method: 'GET' }).handler(
+  async () => {
+    const { getRequest } = await import('@tanstack/react-start/server')
+    const request = getRequest()
+    const session = await auth.api.getSession({ headers: request.headers })
+    if (!session) throw new Error('Unauthorized')
+    return getRolePermissionsFromDB(session.user.role)
+  },
+)

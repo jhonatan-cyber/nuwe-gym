@@ -3,7 +3,7 @@ import { db } from '#/shared/db/index.ts'
 import { nutritionPlans } from '#/shared/db/schema/nutrition-plans.ts'
 import { weightHistory } from '#/shared/db/schema/weight-history.ts'
 import { eq, desc, and } from 'drizzle-orm'
-import { requireRole } from '#/shared/lib/server-utils.ts'
+import { requirePermission } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { z } from 'zod'
@@ -53,7 +53,7 @@ const generateNutritionPlanSchema = z.object({
 export const getWeightHistory = createServerFn({ method: 'GET' })
   .validator(z.object({ memberId: uuidField }))
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'TRAINER', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'nutrition:read' } })
     return await db.query.weightHistory.findMany({
       where: eq(weightHistory.memberId, data.memberId),
       orderBy: [desc(weightHistory.recordedAt)],
@@ -64,7 +64,7 @@ export const getWeightHistory = createServerFn({ method: 'GET' })
 export const addWeightEntry = createServerFn({ method: 'POST' })
   .validator((data) => weightEntrySchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN', 'TRAINER', 'RECEPTIONIST'] } })
+    const session = await requirePermission({ data: { permission: 'nutrition:write' } })
 
     const [entry] = await db
       .insert(weightHistory)
@@ -94,7 +94,7 @@ export const addWeightEntry = createServerFn({ method: 'POST' })
 export const deleteWeightEntry = createServerFn({ method: 'POST' })
   .validator(z.object({ id: uuidField }))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN', 'TRAINER'] } })
+    const session = await requirePermission({ data: { permission: 'nutrition:write' } })
     const [entry] = await db
       .delete(weightHistory)
       .where(eq(weightHistory.id, data.id))
@@ -114,7 +114,7 @@ export const deleteWeightEntry = createServerFn({ method: 'POST' })
 export const getNutritionPlans = createServerFn({ method: 'GET' })
   .validator(z.object({ memberId: uuidField }))
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'TRAINER', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'nutrition:read' } })
     return await db.query.nutritionPlans.findMany({
       where: eq(nutritionPlans.memberId, data.memberId),
       orderBy: [desc(nutritionPlans.createdAt)],
@@ -125,7 +125,7 @@ export const getNutritionPlans = createServerFn({ method: 'GET' })
 export const createNutritionPlan = createServerFn({ method: 'POST' })
   .validator((data) => nutritionPlanSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN', 'TRAINER'] } })
+    const session = await requirePermission({ data: { permission: 'nutrition:write' } })
 
     // Desactivar planes anteriores
     await db
@@ -170,7 +170,7 @@ export const createNutritionPlan = createServerFn({ method: 'POST' })
 export const deleteNutritionPlan = createServerFn({ method: 'POST' })
   .validator(z.object({ id: uuidField }))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN', 'TRAINER'] } })
+    const session = await requirePermission({ data: { permission: 'nutrition:write' } })
     const [plan] = await db
       .delete(nutritionPlans)
       .where(eq(nutritionPlans.id, data.id))
@@ -190,7 +190,7 @@ export const deleteNutritionPlan = createServerFn({ method: 'POST' })
 export const generateAINutritionPlan = createServerFn({ method: 'POST' })
   .validator((data) => generateNutritionPlanSchema.parse(data))
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'TRAINER'] } })
+    await requirePermission({ data: { permission: 'nutrition:write' } })
 
     const imc = data.weightKg / Math.pow(data.heightCm / 100, 2)
     const imcStatus =

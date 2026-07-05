@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { ChevronRight, Plus, List, CalendarDays } from 'lucide-react'
 import { ModuleLayout } from '#/shared/components/layout/module-layout.tsx'
 import {
@@ -7,9 +8,24 @@ import {
 import { useTrainersPage } from '#/features/trainers/hooks/use-trainers-page.ts'
 import { TrainerMyMembers } from '#/features/trainers/components/trainer-my-members.tsx'
 import { TrainerList, TrainerStats, TrainerFilterBar } from '#/features/trainers/components/trainer-list.tsx'
-import { TrainerForm, TrainerFormSidebar } from '#/features/trainers/components/trainer-form.tsx'
-import { TrainerCalendarView } from '#/features/trainers/components/trainer-calendar.tsx'
 import type { ViewMode } from '#/features/trainers/types.ts'
+
+// ── Lazy-loaded views ──
+const TrainerFormLazy = lazy(() =>
+  import('#/features/trainers/components/trainer-form').then((m) => ({
+    default: m.TrainerForm,
+  })),
+)
+const TrainerFormSidebarLazy = lazy(() =>
+  import('#/features/trainers/components/trainer-form').then((m) => ({
+    default: m.TrainerFormSidebar,
+  })),
+)
+const TrainerCalendarViewLazy = lazy(() =>
+  import('#/features/trainers/components/trainer-calendar').then((m) => ({
+    default: m.TrainerCalendarView,
+  })),
+)
 
 interface TrainersPageProps {
   userRole: string
@@ -112,7 +128,9 @@ export function TrainersPage({ userRole }: TrainersPageProps) {
           </ToggleGroup>
 
           {isFormView ? (
-            <TrainerFormSidebar />
+            <Suspense fallback={null}>
+              <TrainerFormSidebarLazy />
+            </Suspense>
           ) : isCalendarView ? null : (
             <>
               <TrainerStats
@@ -128,26 +146,30 @@ export function TrainersPage({ userRole }: TrainersPageProps) {
     >
       {isFormView ? (
         <div className="flex-1 flex justify-center items-start pt-5">
-          <TrainerForm
-            editingTrainer={editingTrainer}
-            userId={userId}
-            onUserIdChange={setUserId}
-            specialty={specialty}
-            onSpecialtyChange={setSpecialty}
-            bio={bio}
-            onBioChange={setBio}
-            commissionRate={commissionRate}
-            onCommissionRateChange={setCommissionRate}
-            selectedUser={selectedUser}
-            trainerUsers={trainerUsers}
-            isCreating={isCreating}
-            isUpdating={isUpdating}
-            onSubmit={handleFormSubmit}
-            onCancel={handleBackToList}
-          />
+          <Suspense fallback={<div className="flex-1 flex justify-center items-start pt-5"><div className="w-full max-w-lg bg-card/60 animate-pulse rounded-4xl h-[580px]" /></div>}>
+            <TrainerFormLazy
+              editingTrainer={editingTrainer}
+              userId={userId}
+              onUserIdChange={setUserId}
+              specialty={specialty}
+              onSpecialtyChange={setSpecialty}
+              bio={bio}
+              onBioChange={setBio}
+              commissionRate={commissionRate}
+              onCommissionRateChange={setCommissionRate}
+              selectedUser={selectedUser}
+              trainerUsers={trainerUsers}
+              isCreating={isCreating}
+              isUpdating={isUpdating}
+              onSubmit={handleFormSubmit}
+              onCancel={handleBackToList}
+            />
+          </Suspense>
         </div>
       ) : isCalendarView ? (
-        <TrainerCalendarView userRole={userRole} />
+        <Suspense fallback={<div className="flex-1 flex items-center justify-center"><div className="size-8 rounded-full bg-muted animate-pulse" /></div>}>
+          <TrainerCalendarViewLazy userRole={userRole} />
+        </Suspense>
       ) : (
         <TrainerList
           filteredTrainers={filteredTrainers}

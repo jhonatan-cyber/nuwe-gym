@@ -2,7 +2,7 @@ import { createServerFn } from '@tanstack/react-start'
 import { db } from '#/shared/db/index.ts'
 import { cashMovements, cashRegisterSessions } from '#/shared/db/schema/cash-register.ts'
 import { eq, and } from 'drizzle-orm'
-import { requireRole } from '#/shared/lib/server-utils.ts'
+import { requirePermission } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import {
@@ -19,21 +19,21 @@ import * as repo from './cash-register.repository.ts'
 export const getCurrentCashSession = createServerFn({ method: 'GET' })
   .validator((data) => getCurrentCashSessionSchema.parse(data))
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'cash:read' } })
     return (await repo.findOpenSession(data.branchId)) || null
   })
 
 export const getAllOpenCashSessions = createServerFn({ method: 'GET' })
   .handler(async () => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'cash:read' } })
     return await repo.findAllOpenSessions()
   })
 
 export const openCashSession = createServerFn({ method: 'POST' })
   .validator((data) => openCashSessionSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({
-      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
+    const session = await requirePermission({
+      data: { permission: 'cash:write' },
     })
 
     const existing = await repo.findOpenSession(data.branchId)
@@ -61,8 +61,8 @@ export const openCashSession = createServerFn({ method: 'POST' })
 export const closeCashSession = createServerFn({ method: 'POST' })
   .validator((data) => closeCashSessionSchema.parse(data))
   .handler(async ({ data }) => {
-    const userSession = await requireRole({
-      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
+    const userSession = await requirePermission({
+      data: { permission: 'cash:write' },
     })
 
     const closedSession = await db.transaction(async (tx) => {
@@ -125,8 +125,8 @@ export const closeCashSession = createServerFn({ method: 'POST' })
 export const createManualMovement = createServerFn({ method: 'POST' })
   .validator((data) => createManualMovementSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({
-      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
+    const session = await requirePermission({
+      data: { permission: 'cash:write' },
     })
 
     const movement = await db.transaction(async (tx) => {
@@ -168,7 +168,7 @@ export const createManualMovement = createServerFn({ method: 'POST' })
 export const getCashSessionDetails = createServerFn({ method: 'GET' })
   .validator((data) => getCashSessionDetailsSchema.parse(data))
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'cash:read' } })
     const [session, movements] = await Promise.all([
       repo.findSessionById(data.sessionId),
       repo.findMovementsBySession(data.sessionId),
@@ -179,14 +179,14 @@ export const getCashSessionDetails = createServerFn({ method: 'GET' })
 export const getCashSessionsList = createServerFn({ method: 'GET' })
   .validator((data) => getCashSessionsListSchema.parse(data))
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN'] } })
+    await requirePermission({ data: { permission: 'cash:read' } })
     return repo.findAllSessions(data.branchId)
   })
 
 export const deleteCashSession = createServerFn({ method: 'POST' })
   .validator((data) => deleteCashSessionSchema.parse(data))
   .handler(async ({ data }) => {
-    const user = await requireRole({ data: { roles: ['ADMIN'] } })
+    const user = await requirePermission({ data: { permission: 'cash:write' } })
 
     const session = await repo.findSessionById(data.sessionId)
     if (!session) throw new Error('Sesión no encontrada')

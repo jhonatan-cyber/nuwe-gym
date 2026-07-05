@@ -131,9 +131,6 @@ export function QuickActionsGrid({ totalMembers }: QuickActionsGridProps) {
               <path d="M12 14s1.5 2 4 2" />
             </svg>
           </div>
-          <span className="text-[10px] font-bold dark:text-indigo-300/70 text-indigo-900/60 dark:bg-white/10 bg-white/50 backdrop-blur-md dark:border-white/10 border-white/60 border px-2.5 py-1 rounded-full">
-            TRAINIX
-          </span>
         </div>
         <div className="z-10">
           <div className="text-xl font-black dark:text-white text-indigo-950 tracking-tight leading-tight">

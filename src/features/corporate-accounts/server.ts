@@ -5,7 +5,7 @@ import { members } from '#/shared/db/schema/members.ts'
 import { subscriptions } from '#/shared/db/schema/subscriptions.ts'
 import { membershipPayments } from '#/shared/db/schema/membership-payments.ts'
 import { eq, desc, and, inArray, count, sum } from 'drizzle-orm'
-import { requireRole } from '#/shared/lib/server-utils.ts'
+import { requirePermission } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { z } from 'zod'
@@ -15,7 +15,7 @@ import { uuidField, requiredString, optionalString } from '#/shared/lib/schemas.
 
 export const getCorporateAccounts = createServerFn({ method: 'GET' })
   .handler(async () => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'members:read' } })
     const accounts = await db
       .select()
       .from(corporateAccounts)
@@ -59,7 +59,7 @@ export const getCorporateAccounts = createServerFn({ method: 'GET' })
 export const getCorporateAccountById = createServerFn({ method: 'GET' })
   .validator((id) => uuidField.parse(id))
   .handler(async ({ data: id }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'members:read' } })
     const [account] = await db
       .select()
       .from(corporateAccounts)
@@ -98,7 +98,7 @@ const createCorporateAccountSchema = z.object({
 export const createCorporateAccount = createServerFn({ method: 'POST' })
   .validator((data) => createCorporateAccountSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'members:write' } })
     const [account] = await db
       .insert(corporateAccounts)
       .values({
@@ -139,7 +139,7 @@ const updateCorporateAccountSchema = z.object({
 export const updateCorporateAccount = createServerFn({ method: 'POST' })
   .validator((data) => updateCorporateAccountSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'members:write' } })
     const [account] = await db
       .update(corporateAccounts)
       .set({
@@ -170,7 +170,7 @@ export const updateCorporateAccount = createServerFn({ method: 'POST' })
 export const deleteCorporateAccount = createServerFn({ method: 'POST' })
   .validator((data) => z.object({ id: uuidField }).parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'members:write' } })
 
     // Unlink members first
     await db
@@ -198,7 +198,7 @@ export const deleteCorporateAccount = createServerFn({ method: 'POST' })
 export const getCorporateBillingReport = createServerFn({ method: 'GET' })
   .validator((data) => z.object({ corporateAccountId: uuidField }).parse(data))
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'members:read' } })
 
     const accountMembers = await db
       .select({ id: members.id, fullName: members.fullName, documentNumber: members.documentNumber })

@@ -5,13 +5,10 @@ import { Toaster } from '#/shared/components/ui/sonner.tsx'
 import { AppSidebar } from './app-sidebar.tsx'
 import { AppHeader } from './app-header.tsx'
 import { PageTransition } from '#/shared/components/page-transition.tsx'
-import type { UserRole } from '#/shared/lib/permissions.ts'
-
 interface AppLayoutProps {
   userId: string
   userName: string
   userEmail: string
-  userRole: UserRole
   userImage?: string | null
 }
 
@@ -19,7 +16,6 @@ export function AppLayout({
   userId,
   userName,
   userEmail,
-  userRole,
   userImage,
 }: AppLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -74,7 +70,6 @@ export function AppLayout({
       </button>
 
       <AppSidebar
-        role={userRole}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
       />
@@ -84,7 +79,6 @@ export function AppLayout({
           userId={userId}
           userName={userName}
           userEmail={userEmail}
-          userRole={userRole}
           userImage={userImage}
         />
 

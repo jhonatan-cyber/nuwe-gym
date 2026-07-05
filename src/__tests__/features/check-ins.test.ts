@@ -1,14 +1,10 @@
 import { describe, it, expect, beforeAll } from 'vitest'
-import { db } from '#/shared/db/index.ts'
-import { members } from '#/shared/db/schema/members.ts'
-import { eq } from 'drizzle-orm'
 import {
   createMember,
   createPackage,
   createSubscription,
   createBranch,
   cleanDatabase,
-  createTestUser,
 } from '../factories.ts'
 import { validateCheckIn } from '#/features/check-ins/server.ts'
 

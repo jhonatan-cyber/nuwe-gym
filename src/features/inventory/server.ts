@@ -7,7 +7,7 @@ import { productCategories } from '#/shared/db/schema/product-categories.ts'
 import { desc, eq, and, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { branchIdField, uuidField, optionalString } from '#/shared/lib/schemas.ts'
-import { requireRole } from '#/shared/lib/server-utils.ts'
+import { requirePermission } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 
@@ -16,7 +16,7 @@ export const getInventoryMovements = createServerFn({ method: 'GET' })
     z.object({ branchId: branchIdField }).optional(),
   )
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'inventory:read' } })
 
     const branchId = data?.branchId
     if (!branchId) {
@@ -58,7 +58,7 @@ export const getStockSnapshots = createServerFn({ method: 'GET' })
     branchId: branchIdField,
   }))
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'inventory:read' } })
 
     const cutoffDate = new Date()
     cutoffDate.setDate(cutoffDate.getDate() - data.daysBack)
@@ -124,7 +124,7 @@ export const getStockSnapshots = createServerFn({ method: 'GET' })
 export const generateCategoryDescription = createServerFn({ method: 'POST' })
   .validator(z.object({ name: z.string() }))
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'inventory:write' } })
     const { generateDescriptionForCategory } = await import('#/shared/lib/ai.ts')
     return await generateDescriptionForCategory(data.name)
   })
@@ -140,8 +140,8 @@ const transferStockSchema = z.object({
 export const transferStock = createServerFn({ method: 'POST' })
   .validator((data) => transferStockSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({
-      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
+    const session = await requirePermission({
+      data: { permission: 'inventory:write' },
     })
 
     if (data.sourceBranchId === data.destBranchId) {

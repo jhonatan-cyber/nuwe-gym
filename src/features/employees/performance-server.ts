@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { eq, desc } from 'drizzle-orm'
 import { db } from '#/shared/db/index.ts'
 import { employeePerformance } from '#/shared/db/schema/employee-performance.ts'
-import { requireRole } from '#/shared/lib/server-utils.ts'
+import { requirePermission } from '#/shared/lib/server-utils.ts'
 import { uuidField, optionalString } from '#/shared/lib/schemas.ts'
 
 const createSchema = z.object({
@@ -25,7 +25,7 @@ export type CreatePerformanceData = z.infer<typeof createSchema>
 export const createPerformance = createServerFn({ method: 'POST' })
   .validator((data) => createSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'employees:write' } })
 
     const [evalRecord] = await db
       .insert(employeePerformance)
@@ -41,7 +41,7 @@ export const createPerformance = createServerFn({ method: 'POST' })
 export const getEmployeePerformances = createServerFn({ method: 'GET' })
   .validator((data) => z.object({ employeeId: uuidField }).parse(data))
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN'] } })
+    await requirePermission({ data: { permission: 'employees:read' } })
 
     return await db.query.employeePerformance.findMany({
       where: eq(employeePerformance.employeeId, data.employeeId),
@@ -53,7 +53,7 @@ export const getEmployeePerformances = createServerFn({ method: 'GET' })
 export const deletePerformance = createServerFn({ method: 'POST' })
   .validator((data) => z.object({ id: uuidField }).parse(data))
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN'] } })
+    await requirePermission({ data: { permission: 'employees:write' } })
     await db.delete(employeePerformance).where(eq(employeePerformance.id, data.id))
     return { success: true }
   })

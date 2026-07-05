@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { ChevronRight, Package, Plus, Search } from 'lucide-react'
 import { ModuleLayout } from '#/shared/components/layout/module-layout.tsx'
 import {
@@ -25,10 +26,24 @@ import { useInventory } from './hooks/use-inventory.ts'
 import { CategoryCard } from './components/category-card.tsx'
 import { ProductPanel } from './components/product-panel.tsx'
 import { KardexTable } from './components/kardex-table.tsx'
-import { StockAdjustDialog } from './components/stock-adjust-dialog.tsx'
-import { StockTransferDialog } from './components/stock-transfer-dialog.tsx'
-import { CategoryDialogs } from './components/category-dialogs.tsx'
 import { ProductFormFields } from './components/product-form.tsx'
+
+// ── Lazy-loaded dialogs ──
+const StockAdjustDialogLazy = lazy(() =>
+  import('./components/stock-adjust-dialog').then((m) => ({
+    default: m.StockAdjustDialog,
+  })),
+)
+const StockTransferDialogLazy = lazy(() =>
+  import('./components/stock-transfer-dialog').then((m) => ({
+    default: m.StockTransferDialog,
+  })),
+)
+const CategoryDialogsLazy = lazy(() =>
+  import('./components/category-dialogs').then((m) => ({
+    default: m.CategoryDialogs,
+  })),
+)
 
 export function InventoryPage() {
   const inv = useInventory()
@@ -236,40 +251,46 @@ export function InventoryPage() {
         </DialogContent>
       </Dialog>
 
-      <StockAdjustDialog
-        isOpen={inv.isAdjustModalOpen}
-        onOpenChange={(open) => {
-          inv.setIsAdjustModalOpen(open)
-          if (!open) inv.setSelectedProduct(null)
-        }}
-        productName={inv.selectedProduct?.name || ''}
-        isPending={inv.isAdjustingStock}
-        onSubmit={inv.handleAdjustSubmit}
-      />
+      <Suspense fallback={null}>
+        <StockAdjustDialogLazy
+          isOpen={inv.isAdjustModalOpen}
+          onOpenChange={(open) => {
+            inv.setIsAdjustModalOpen(open)
+            if (!open) inv.setSelectedProduct(null)
+          }}
+          productName={inv.selectedProduct?.name || ''}
+          isPending={inv.isAdjustingStock}
+          onSubmit={inv.handleAdjustSubmit}
+        />
+      </Suspense>
 
-      <StockTransferDialog
-        isOpen={inv.isTransferModalOpen}
-        onOpenChange={(open) => {
-          inv.setIsTransferModalOpen(open)
-          if (!open) inv.setSelectedProduct(null)
-        }}
-        productName={inv.selectedProduct?.name || ''}
-        isPending={inv.isTransferringStock}
-        onSubmit={inv.handleTransferSubmit}
-      />
+      <Suspense fallback={null}>
+        <StockTransferDialogLazy
+          isOpen={inv.isTransferModalOpen}
+          onOpenChange={(open) => {
+            inv.setIsTransferModalOpen(open)
+            if (!open) inv.setSelectedProduct(null)
+          }}
+          productName={inv.selectedProduct?.name || ''}
+          isPending={inv.isTransferringStock}
+          onSubmit={inv.handleTransferSubmit}
+        />
+      </Suspense>
 
-      <CategoryDialogs
-        isModalOpen={inv.isCategoryModalOpen}
-        editingCategory={inv.editingCategory}
-        isPendingCreate={inv.isCreatingCategory}
-        isPendingUpdate={inv.isUpdatingCategory}
-        categoryToDelete={inv.categoryToDelete}
-        isPendingDelete={inv.isDeletingCategory}
-        onSubmit={inv.handleCategorySubmit}
-        onConfirmDelete={inv.deleteCategory}
-        onClose={inv.closeCategoryModal}
-        onCloseDelete={() => inv.setCategoryToDelete(null)}
-      />
+      <Suspense fallback={null}>
+        <CategoryDialogsLazy
+          isModalOpen={inv.isCategoryModalOpen}
+          editingCategory={inv.editingCategory}
+          isPendingCreate={inv.isCreatingCategory}
+          isPendingUpdate={inv.isUpdatingCategory}
+          categoryToDelete={inv.categoryToDelete}
+          isPendingDelete={inv.isDeletingCategory}
+          onSubmit={inv.handleCategorySubmit}
+          onConfirmDelete={inv.deleteCategory}
+          onClose={inv.closeCategoryModal}
+          onCloseDelete={() => inv.setCategoryToDelete(null)}
+        />
+      </Suspense>
     </TooltipProvider>
   )
 }

@@ -3,14 +3,14 @@ import { z } from 'zod'
 import { eq, and, desc, sql } from 'drizzle-orm'
 import { db } from '#/shared/db/index.ts'
 import { branches, userBranches } from '#/shared/db/schema/branches.ts'
-import { requireRole } from '#/shared/lib/server-utils.ts'
+import { requirePermission } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { optionalString, requiredString, timeString, uuidField } from '#/shared/lib/schemas.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 
 export const getBranches = createServerFn({ method: 'GET' }).handler(
   async () => {
-    await requireRole({ data: { roles: ['ADMIN'] } })
+    await requirePermission({ data: { permission: 'branches:read' } })
     return await db.select().from(branches).orderBy(desc(branches.createdAt))
   },
 )
@@ -38,7 +38,7 @@ const createBranchSchema = z.object({
 export const createBranch = createServerFn({ method: 'POST' })
   .validator((data) => createBranchSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'branches:write' } })
     const [branch] = await db.insert(branches).values(data).returning()
     createAuditLog({
       ...getAuditContext(session),
@@ -64,7 +64,7 @@ const updateBranchSchema = z.object({
 export const updateBranch = createServerFn({ method: 'POST' })
   .validator((data) => updateBranchSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'branches:write' } })
     const [branch] = await db
       .update(branches)
       .set({ ...data, updatedAt: new Date() })
@@ -82,9 +82,7 @@ export const updateBranch = createServerFn({ method: 'POST' })
 
 export const getUserBranches = createServerFn({ method: 'GET' }).handler(
   async () => {
-    const session = await requireRole({
-      data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] },
-    })
+    const session = await requirePermission({ data: { permission: 'branches:read' } })
 
     // ADMIN ve todas las sucursales activas; los demás solo las asignadas
     if (session.user.role === 'ADMIN') {
@@ -128,7 +126,7 @@ export const getUserBranches = createServerFn({ method: 'GET' }).handler(
 export const deleteBranch = createServerFn({ method: 'POST' })
   .validator((data) => z.object({ id: uuidField }).parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'branches:write' } })
 
     // Check if branch has users assigned
     const usersWithBranch = await db
@@ -162,9 +160,7 @@ export const setDefaultBranch = createServerFn({ method: 'POST' })
     z.object({ branchId: uuidField }).parse(data),
   )
   .handler(async ({ data }) => {
-    const session = await requireRole({
-      data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] },
-    })
+    const session = await requirePermission({ data: { permission: 'branches:write' } })
 
     await db
       .update(userBranches)
@@ -194,9 +190,7 @@ export const setDefaultBranch = createServerFn({ method: 'POST' })
 
 export const getSessionBranch = createServerFn({ method: 'GET' }).handler(
   async () => {
-    const session = await requireRole({
-      data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] },
-    })
+    const session = await requirePermission({ data: { permission: 'branches:read' } })
 
     const result = await db
       .select({

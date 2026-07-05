@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react'
+import { useState, useCallback, useRef, useEffect, lazy, Suspense } from 'react'
 import { ChevronRight, ChevronLeft, CreditCard, List, Plus } from 'lucide-react'
 import { Button } from '#/shared/components/ui/button'
 import {
@@ -18,11 +18,21 @@ import {
   ToggleGroupItem,
 } from '#/shared/components/ui/toggle-group'
 import { SubscriptionCard } from '#/features/subscriptions/components/subscription-card.tsx'
-import { SubscriptionForm } from '#/features/subscriptions/components/subscription-form.tsx'
-import { SubscriptionDetailDialog } from '#/features/subscriptions/components/subscription-detail-dialog.tsx'
 import { useSubscriptionsPage } from '#/features/subscriptions/hooks/use-subscriptions-page.ts'
 import { useCurrentBranch } from '#/shared/hooks/use-current-branch.ts'
 import type { Subscription } from '#/features/subscriptions/types.ts'
+
+// ── Lazy-loaded components ──
+const SubscriptionFormLazy = lazy(() =>
+  import('#/features/subscriptions/components/subscription-form').then(
+    (m) => ({ default: m.SubscriptionForm }),
+  ),
+)
+const SubscriptionDetailDialogLazy = lazy(() =>
+  import('#/features/subscriptions/components/subscription-detail-dialog').then(
+    (m) => ({ default: m.SubscriptionDetailDialog }),
+  ),
+)
 
 interface SubscriptionsPageProps {
   userRole: string
@@ -77,7 +87,11 @@ export function SubscriptionsPage({ userRole }: SubscriptionsPageProps) {
   }, [])
 
   if (activeView === 'form') {
-    return <SubscriptionForm onBack={handleBackToList} />
+    return (
+      <Suspense fallback={<LoadingSpinner />}>
+        <SubscriptionFormLazy onBack={handleBackToList} />
+      </Suspense>
+    )
   }
 
   return (
@@ -112,13 +126,15 @@ export function SubscriptionsPage({ userRole }: SubscriptionsPageProps) {
             <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">
               Metricas
             </p>
-            <div className="grid grid-cols-1 gap-3">
-              <StatCard
-                label="Total Suscripciones"
-                value={totalSubscriptions}
-                icon={CreditCard}
-                variant="default"
-              />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="col-span-2">
+                <StatCard
+                  label="Total Suscripciones"
+                  value={totalSubscriptions}
+                  icon={CreditCard}
+                  variant="default"
+                />
+              </div>
               <StatCard
                 label="Activas"
                 value={activeSubscriptions}
@@ -270,11 +286,13 @@ export function SubscriptionsPage({ userRole }: SubscriptionsPageProps) {
         )}
       </div>
 
-      <SubscriptionDetailDialog
-        subscription={selectedSub}
-        open={!!selectedSub}
-        onOpenChange={(open) => !open && setSelectedSub(null)}
-      />
+      <Suspense fallback={null}>
+        <SubscriptionDetailDialogLazy
+          subscription={selectedSub}
+          open={!!selectedSub}
+          onOpenChange={(open) => !open && setSelectedSub(null)}
+        />
+      </Suspense>
     </ModuleLayout>
   )
 }

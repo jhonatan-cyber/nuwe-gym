@@ -38,11 +38,4 @@ export const POSITIONS = [
   'Otro',
 ] as const
 
-export const DEPARTMENTS = [
-  'Administración',
-  'Entrenamiento',
-  'Recepcion',
-  'Limpieza y Mantenimiento',
-  'Marketing y Ventas',
-  'Gerencia',
-] as const
+export const DEPARTMENTS: readonly string[] = [] as const

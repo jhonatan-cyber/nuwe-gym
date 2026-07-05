@@ -4,7 +4,7 @@ import { memberEvaluations } from '#/shared/db/schema/member-evaluations.ts'
 import { desc, eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { uuidField, optionalString } from '#/shared/lib/schemas.ts'
-import { requireRole } from '#/shared/lib/server-utils.ts'
+import { requirePermission } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 
@@ -33,8 +33,8 @@ export type CreateEvaluationData = z.infer<typeof createEvaluationSchema>
 export const createEvaluation = createServerFn({ method: 'POST' })
   .validator((data) => createEvaluationSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({
-      data: { roles: ['ADMIN', 'TRAINER'] },
+    const session = await requirePermission({
+      data: { permission: 'members:write' },
     })
 
     const [evaluation] = await db
@@ -75,7 +75,7 @@ export const createEvaluation = createServerFn({ method: 'POST' })
 export const getMemberEvaluations = createServerFn({ method: 'GET' })
   .validator((memberId) => uuidField.parse(memberId))
   .handler(async ({ data: memberId }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'TRAINER', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'members:read' } })
 
     return await db.query.memberEvaluations.findMany({
       where: eq(memberEvaluations.memberId, memberId),
@@ -87,7 +87,7 @@ export const getMemberEvaluations = createServerFn({ method: 'GET' })
 export const deleteEvaluation = createServerFn({ method: 'POST' })
   .validator((id) => uuidField.parse(id))
   .handler(async ({ data: id }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'members:write' } })
 
     await db.delete(memberEvaluations).where(eq(memberEvaluations.id, id))
 

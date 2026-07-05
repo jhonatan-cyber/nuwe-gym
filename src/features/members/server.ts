@@ -1,5 +1,5 @@
 import { createServerFn } from '@tanstack/react-start'
-import { requireRole } from '#/shared/lib/server-utils.ts'
+import { requirePermission } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { db } from '#/shared/db/index.ts'
@@ -33,7 +33,7 @@ const getMemberByDocumentSchema = z.object({
 export const getMemberByDocumentNumber = createServerFn({ method: 'GET' })
   .validator((data) => getMemberByDocumentSchema.parse(data))
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
+    await requirePermission({ data: { permission: 'members:read' } })
     const [member] = await db
       .select({ id: members.id, fullName: members.fullName, documentNumber: members.documentNumber })
       .from(members)
@@ -45,23 +45,21 @@ export const getMemberByDocumentNumber = createServerFn({ method: 'GET' })
 export const getMembers = createServerFn({ method: 'GET' })
   .validator((data) => getMembersSchema.parse(data))
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
+    await requirePermission({ data: { permission: 'members:read' } })
     return findMembers(data)
   })
 
 export const getMemberById = createServerFn({ method: 'GET' })
   .validator((id) => uuidField.parse(id))
   .handler(async ({ data: id }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
+    await requirePermission({ data: { permission: 'members:read' } })
     return findMemberById(id)
   })
 
 export const createMember = createServerFn({ method: 'POST' })
   .validator((data) => createMemberSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({
-      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
-    })
+    const session = await requirePermission({ data: { permission: 'members:write' } })
 
     const insertData = {
       ...data,
@@ -95,9 +93,7 @@ export const createMember = createServerFn({ method: 'POST' })
 export const updateMember = createServerFn({ method: 'POST' })
   .validator((data) => updateMemberSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({
-      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
-    })
+    const session = await requirePermission({ data: { permission: 'members:write' } })
 
     const member = await updateMemberById({
       id: data.id,
@@ -132,9 +128,7 @@ export const updateMember = createServerFn({ method: 'POST' })
 export const toggleMemberStatus = createServerFn({ method: 'POST' })
   .validator((data) => toggleMemberStatusSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({
-      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
-    })
+    const session = await requirePermission({ data: { permission: 'members:write' } })
 
     const [member] = await db
       .update(members)
@@ -158,9 +152,7 @@ export const toggleMemberStatus = createServerFn({ method: 'POST' })
 export const deleteMember = createServerFn({ method: 'POST' })
   .validator((data) => deleteMemberSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({
-      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
-    })
+    const session = await requirePermission({ data: { permission: 'members:write' } })
 
     const member = await hardDeleteMember(data.memberId)
 
@@ -178,9 +170,7 @@ export const deleteMember = createServerFn({ method: 'POST' })
 export const uploadMemberPhoto = createServerFn({ method: 'POST' })
   .validator((data) => uploadPhotoSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({
-      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
-    })
+    const session = await requirePermission({ data: { permission: 'members:write' } })
 
     const member = await updateMemberPhoto(data.memberId, data.photoBase64)
 

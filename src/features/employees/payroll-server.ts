@@ -5,7 +5,7 @@ import { db } from '#/shared/db/index.ts'
 import { employees } from '#/shared/db/schema/employees.ts'
 import { payroll } from '#/shared/db/schema/payroll.ts'
 import { employeeBonuses } from '#/shared/db/schema/employee-bonuses.ts'
-import { requireRole } from '#/shared/lib/server-utils.ts'
+import { requirePermission } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { uuidField, optionalString } from '#/shared/lib/schemas.ts'
@@ -17,7 +17,7 @@ export const getPayrollRecords = createServerFn({ method: 'GET' })
     z.object({ employeeId: optionalString.default(''), status: optionalString.default('') }).parse(data),
   )
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN'] } })
+    await requirePermission({ data: { permission: 'employees:read' } })
 
     const conditions = []
     if (data.employeeId) conditions.push(eq(payroll.employeeId, data.employeeId))
@@ -42,7 +42,7 @@ const generatePayrollSchema = z.object({
 export const generatePayroll = createServerFn({ method: 'POST' })
   .validator((data: unknown) => generatePayrollSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'employees:write' } })
 
     const periodStart = new Date(data.periodStart)
     const periodEnd = new Date(data.periodEnd)
@@ -151,8 +151,8 @@ export const generatePayroll = createServerFn({ method: 'POST' })
         bonusesTotal: String(totalBonuses),
         deductionsTotal: String(deductionsTotal),
         netSalary: String(netSalary),
-        bonuses: JSON.stringify(allBonusItems),
-        deductions: JSON.stringify([]),
+        bonuses: allBonusItems,
+        deductions: [],
         status: 'PENDING',
       })
 
@@ -186,7 +186,7 @@ const markPayrollPaidSchema = z.object({
 export const markPayrollPaid = createServerFn({ method: 'POST' })
   .validator((data: unknown) => markPayrollPaidSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'employees:write' } })
 
     const [record] = await db
       .update(payroll)
@@ -214,7 +214,7 @@ export const markPayrollPaid = createServerFn({ method: 'POST' })
 // ── Get payroll stats ──
 
 export const getPayrollStats = createServerFn({ method: 'GET' }).handler(async () => {
-  await requireRole({ data: { roles: ['ADMIN'] } })
+  await requirePermission({ data: { permission: 'employees:read' } })
 
   const all = await db.select().from(payroll)
   const pending = all.filter((r) => r.status === 'PENDING')

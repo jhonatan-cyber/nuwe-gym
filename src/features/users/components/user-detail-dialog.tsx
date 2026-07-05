@@ -23,12 +23,12 @@ import { Button } from '#/shared/components/ui/button'
 import {
   Dialog,
   DialogContent,
+  DialogTitle,
 } from '#/shared/components/ui/dialog'
 import { Badge } from '#/shared/components/ui/badge'
 import { ConfirmDialog } from '#/shared/components/ui/confirm-dialog'
 import { cn } from '#/shared/lib/utils.ts'
 import { formatDate, formatDateTime, formatRelativeTime } from '#/shared/lib/formatters.ts'
-import { ROLE_LABELS } from '#/features/users/types.ts'
 import { useUserDetailDialog } from '#/features/users/hooks/use-user-detail-dialog.ts'
 import { ResetPasswordDialog } from '#/features/users/components/reset-password-dialog.tsx'
 
@@ -98,6 +98,7 @@ export function UserDetailDialog({
       }}
     >
       <DialogContent className="max-w-2xl max-h-[88vh] flex flex-col p-0 gap-0 overflow-hidden">
+        <DialogTitle className="sr-only">Detalle de usuario</DialogTitle>
         {isLoading ? (
           <div className="py-16 flex items-center justify-center gap-2 text-muted-foreground">
             <RefreshCw className="size-4 animate-spin text-primary" />
@@ -131,8 +132,7 @@ export function UserDetailDialog({
                         'bg-foreground/10 text-foreground border-foreground/20',
                       )}
                     >
-                      {ROLE_LABELS[user.role as keyof typeof ROLE_LABELS] ||
-                        user.role}
+                      {user.role}
                     </Badge>
                   </div>
                   <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
@@ -179,10 +179,7 @@ export function UserDetailDialog({
                   <DataRow
                     icon={Shield}
                     label="Rol"
-                    value={
-                      ROLE_LABELS[user.role as keyof typeof ROLE_LABELS] ||
-                      user.role
-                    }
+                    value={user.role}
                   />
                   <DataRow
                     icon={Calendar}

@@ -3,7 +3,7 @@ import { db } from '#/shared/db/index.ts'
 import { suppliers } from '#/shared/db/schema/suppliers.ts'
 import { purchases } from '#/shared/db/schema/purchases.ts'
 import { eq, desc } from 'drizzle-orm'
-import { requireRole } from '#/shared/lib/server-utils.ts'
+import { requirePermission } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { z } from 'zod'
@@ -11,7 +11,7 @@ import { uuidField, requiredString, optionalString } from '#/shared/lib/schemas.
 
 export const getSuppliers = createServerFn({ method: 'GET' }).handler(
   async () => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'suppliers:read' } })
     return await db
       .select()
       .from(suppliers)
@@ -22,7 +22,7 @@ export const getSuppliers = createServerFn({ method: 'GET' }).handler(
 export const getSupplierById = createServerFn({ method: 'GET' })
   .validator((id) => uuidField.parse(id))
   .handler(async ({ data: id }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'suppliers:read' } })
     const result = await db
       .select()
       .from(suppliers)
@@ -42,7 +42,7 @@ const createSupplierSchema = z.object({
 export const createSupplier = createServerFn({ method: 'POST' })
   .validator((data) => createSupplierSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    const session = await requirePermission({ data: { permission: 'suppliers:write' } })
     const [supplier] = await db.insert(suppliers).values(data).returning()
     createAuditLog({
       ...getAuditContext(session),
@@ -67,7 +67,7 @@ const updateSupplierSchema = z.object({
 export const updateSupplier = createServerFn({ method: 'POST' })
   .validator((data) => updateSupplierSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    const session = await requirePermission({ data: { permission: 'suppliers:write' } })
     const [supplier] = await db
       .update(suppliers)
       .set({ ...data, updatedAt: new Date() })
@@ -86,7 +86,7 @@ export const updateSupplier = createServerFn({ method: 'POST' })
 export const deleteSupplier = createServerFn({ method: 'POST' })
   .validator((data) => z.object({ id: uuidField, name: requiredString }).parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'suppliers:write' } })
 
     const [deleted] = await db
       .delete(suppliers)
@@ -107,7 +107,7 @@ export const deleteSupplier = createServerFn({ method: 'POST' })
 export const getSupplierPurchases = createServerFn({ method: 'GET' })
   .validator((id) => uuidField.parse(id))
   .handler(async ({ data: supplierId }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'suppliers:read' } })
 
     const purchaseList = await db.query.purchases.findMany({
       where: eq(purchases.supplierId, supplierId),

@@ -3,12 +3,12 @@ import { z } from 'zod'
 import { db } from '#/shared/db/index.ts'
 import { userDevices } from '#/shared/db/schema/user-devices.ts'
 import { eq, desc, and } from 'drizzle-orm'
-import { requireRole } from '#/shared/lib/server-utils.ts'
+import { requirePermission } from '#/shared/lib/server-utils.ts'
 
 export const getUserDevices = createServerFn({ method: 'GET' }).handler(
   async () => {
-    const session = await requireRole({
-      data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] },
+    const session = await requirePermission({
+      data: { permission: 'users:read' },
     })
     return await db
       .select()
@@ -26,8 +26,8 @@ const trustDeviceSchema = z.object({
 export const toggleTrustDevice = createServerFn({ method: 'POST' })
   .validator((data) => trustDeviceSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({
-      data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] },
+    const session = await requirePermission({
+      data: { permission: 'users:write' },
     })
     const [device] = await db
       .update(userDevices)
@@ -49,8 +49,8 @@ const removeDeviceSchema = z.object({
 export const removeDevice = createServerFn({ method: 'POST' })
   .validator((data) => removeDeviceSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({
-      data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] },
+    const session = await requirePermission({
+      data: { permission: 'users:write' },
     })
     await db
       .delete(userDevices)

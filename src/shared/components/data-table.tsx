@@ -50,6 +50,8 @@ interface DataTableProps<T> {
   loadingMessage?: string
   keyExtractor: (item: T) => string | number
   skeletonRows?: number
+  title?: string
+  description?: string
   // Pagination props
   currentPage?: number
   pageSize?: number
@@ -70,6 +72,8 @@ export function DataTable<T>({
   loadingMessage = 'Cargando...',
   keyExtractor,
   skeletonRows = 3,
+  title,
+  description,
   currentPage,
   pageSize,
   totalPages,
@@ -167,28 +171,34 @@ export function DataTable<T>({
               key={currentPage ?? 1}
               style={{ animation: `fadeSlideIn 0.3s ease-out` }}
             >
-              {/* Page size selector at the top inside the table */}
-              {currentPage !== undefined && pageSize !== undefined && totalFiltered !== undefined && onPageSizeChange !== undefined && (
-                <div className="flex justify-end items-center px-4 pt-3 pb-1">
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <span>Por página:</span>
-                    <Select
-                      value={String(pageSize)}
-                      onValueChange={(val) => {
-                        onPageSizeChange(Number(val))
-                      }}
-                    >
-                      <SelectTrigger className="h-7 w-[70px] text-xs rounded-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="5">5</SelectItem>
-                        <SelectItem value="10">10</SelectItem>
-                        <SelectItem value="20">20</SelectItem>
-                        <SelectItem value="50">50</SelectItem>
-                      </SelectContent>
-                    </Select>
+              {/* Header / Page size selector at the top inside the table */}
+              {(title || description || (currentPage !== undefined && pageSize !== undefined && totalFiltered !== undefined && onPageSizeChange !== undefined)) && (
+                <div className="flex justify-between items-center px-5 py-3 border-b border-border/5 bg-muted/5">
+                  <div>
+                    {title && <h3 className="text-sm font-black text-foreground">{title}</h3>}
+                    {description && <p className="text-[10px] font-bold text-muted-foreground">{description}</p>}
                   </div>
+                  {currentPage !== undefined && pageSize !== undefined && totalFiltered !== undefined && onPageSizeChange !== undefined && (
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <span>Por página:</span>
+                      <Select
+                        value={String(pageSize)}
+                        onValueChange={(val) => {
+                          onPageSizeChange(Number(val))
+                        }}
+                      >
+                        <SelectTrigger className="h-7 w-[70px] text-xs rounded-full bg-background border-border/10">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="5">5</SelectItem>
+                          <SelectItem value="10">10</SelectItem>
+                          <SelectItem value="20">20</SelectItem>
+                          <SelectItem value="50">50</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                 </div>
               )}
               <Table>

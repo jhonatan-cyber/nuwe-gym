@@ -1,19 +1,18 @@
 import { createServerFn } from '@tanstack/react-start'
 import { db } from '#/shared/db/index.ts'
 import { familyGroups, familyMembers } from '#/shared/db/schema/family-groups.ts'
-import { members } from '#/shared/db/schema/members.ts'
 import { eq, desc, and } from 'drizzle-orm'
-import { requireRole } from '#/shared/lib/server-utils.ts'
+import { requirePermission } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { z } from 'zod'
-import { uuidField, requiredString, optionalString } from '#/shared/lib/schemas.ts'
+import { uuidField, optionalString } from '#/shared/lib/schemas.ts'
 
 // ── CRUD ──
 
 export const getFamilyGroups = createServerFn({ method: 'GET' })
   .handler(async () => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'members:read' } })
     const groups = await db.query.familyGroups.findMany({
       with: {
         primaryMember: { columns: { id: true, fullName: true, documentNumber: true } },
@@ -31,7 +30,7 @@ export const getFamilyGroups = createServerFn({ method: 'GET' })
 export const getFamilyGroupById = createServerFn({ method: 'GET' })
   .validator((id) => uuidField.parse(id))
   .handler(async ({ data: id }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'members:read' } })
     const [group] = await db.query.familyGroups.findMany({
       where: eq(familyGroups.id, id),
       with: {
@@ -50,7 +49,7 @@ export const getFamilyGroupById = createServerFn({ method: 'GET' })
 export const getFamilyGroupByMember = createServerFn({ method: 'GET' })
   .validator((data) => z.object({ memberId: uuidField }).parse(data))
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
+    await requirePermission({ data: { permission: 'members:read' } })
     // Check if member is a primary member
     const [asPrimary] = await db.query.familyGroups.findMany({
       where: eq(familyGroups.primaryMemberId, data.memberId),
@@ -96,7 +95,7 @@ const createFamilyGroupSchema = z.object({
 export const createFamilyGroup = createServerFn({ method: 'POST' })
   .validator((data) => createFamilyGroupSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'members:write' } })
     const [group] = await db.insert(familyGroups).values({
       name: data.name ?? null,
       primaryMemberId: data.primaryMemberId,
@@ -124,7 +123,7 @@ const updateFamilyGroupSchema = z.object({
 export const updateFamilyGroup = createServerFn({ method: 'POST' })
   .validator((data) => updateFamilyGroupSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'members:write' } })
     const [group] = await db.update(familyGroups).set({
       name: data.name ?? undefined,
       discountPercent: data.discountPercent,
@@ -145,7 +144,7 @@ export const updateFamilyGroup = createServerFn({ method: 'POST' })
 export const deleteFamilyGroup = createServerFn({ method: 'POST' })
   .validator((data) => z.object({ id: uuidField }).parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'members:write' } })
     const [deleted] = await db.delete(familyGroups).where(eq(familyGroups.id, data.id)).returning()
     createAuditLog({
       ...getAuditContext(session),
@@ -168,7 +167,7 @@ const addFamilyMemberSchema = z.object({
 export const addFamilyMember = createServerFn({ method: 'POST' })
   .validator((data) => addFamilyMemberSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'members:write' } })
 
     // Check member isn't already in a different family group
     const existing = await db.query.familyMembers.findFirst({
@@ -195,7 +194,7 @@ export const addFamilyMember = createServerFn({ method: 'POST' })
 export const removeFamilyMember = createServerFn({ method: 'POST' })
   .validator((data) => z.object({ id: uuidField }).parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'members:write' } })
     const [deleted] = await db.delete(familyMembers).where(eq(familyMembers.id, data.id)).returning()
     createAuditLog({
       ...getAuditContext(session),

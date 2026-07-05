@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { eq, desc } from 'drizzle-orm'
 import { db } from '#/shared/db/index.ts'
 import { employeeBonuses } from '#/shared/db/schema/employee-bonuses.ts'
-import { requireRole } from '#/shared/lib/server-utils.ts'
+import { requirePermission } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { uuidField, optionalString } from '#/shared/lib/schemas.ts'
@@ -15,7 +15,7 @@ export const getBonuses = createServerFn({ method: 'GET' })
     z.object({ employeeId: optionalString.default('') }).parse(data),
   )
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN'] } })
+    await requirePermission({ data: { permission: 'employees:read' } })
     const conditions = data.employeeId
       ? eq(employeeBonuses.employeeId, data.employeeId)
       : undefined
@@ -40,7 +40,7 @@ const createBonusSchema = z.object({
 export const createBonus = createServerFn({ method: 'POST' })
   .validator((data: unknown) => createBonusSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'employees:write' } })
 
     const [bonus] = await db
       .insert(employeeBonuses)
@@ -70,7 +70,7 @@ export const createBonus = createServerFn({ method: 'POST' })
 export const deleteBonus = createServerFn({ method: 'POST' })
   .validator((data: unknown) => z.object({ id: uuidField }).parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'employees:write' } })
     const [bonus] = await db
       .delete(employeeBonuses)
       .where(eq(employeeBonuses.id, data.id))

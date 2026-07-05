@@ -7,14 +7,14 @@ import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { users, sessions } from '#/shared/db/schema/auth.ts'
 import { auditLogs } from '#/shared/db/schema/audit-logs.ts'
 import { eq, and, desc } from 'drizzle-orm'
-import { requireRole } from '#/shared/lib/server-utils.ts'
+import { requirePermission } from '#/shared/lib/server-utils.ts'
 import { z } from 'zod'
 import { optionalString } from '#/shared/lib/schemas.ts'
 
 export const getProfile = createServerFn({ method: 'GET' }).handler(
   async () => {
-    const session = await requireRole({
-      data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] },
+    const session = await requirePermission({
+      data: { permission: 'users:read' },
     })
     return session.user
   },
@@ -31,8 +31,8 @@ const updateProfileSchema = z.object({
 export const updateProfile = createServerFn({ method: 'POST' })
   .validator((data) => updateProfileSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({
-      data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] },
+    const session = await requirePermission({
+      data: { permission: 'users:write' },
     })
 
     await db
@@ -65,8 +65,8 @@ const changePasswordSchema = z
 export const changePassword = createServerFn({ method: 'POST' })
   .validator((data) => changePasswordSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({
-      data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] },
+    const session = await requirePermission({
+      data: { permission: 'users:write' },
     })
     const request = getRequest()
 
@@ -90,8 +90,8 @@ export const changePassword = createServerFn({ method: 'POST' })
 
 export const getProfileFullData = createServerFn({ method: 'GET' }).handler(
   async () => {
-    const session = await requireRole({
-      data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] },
+    const session = await requirePermission({
+      data: { permission: 'users:read' },
     })
     const userId = session.user.id
 
@@ -137,8 +137,8 @@ const updateProfileInfoSchema = z.object({
 export const updateProfileInfo = createServerFn({ method: 'POST' })
   .validator((data) => updateProfileInfoSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({
-      data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] },
+    const session = await requirePermission({
+      data: { permission: 'users:write' },
     })
 
     await db
@@ -168,8 +168,8 @@ const revokeMySessionSchema = z.object({
 export const revokeMySession = createServerFn({ method: 'POST' })
   .validator((data) => revokeMySessionSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({
-      data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] },
+    const session = await requirePermission({
+      data: { permission: 'users:write' },
     })
 
     const deletedResults = await db

@@ -3,7 +3,7 @@ import pg from 'pg'
 import { writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
-config({ path: ['.env.local', '.env'] })
+config({ path: ['.env'] })
 
 const url = process.env.DATABASE_URL
 if (!url) {

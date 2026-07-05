@@ -6,7 +6,6 @@ import {
   Dumbbell,
   Star,
   Quote,
-  Clock,
   DoorOpen,
   MapPin,
   Calendar,
@@ -18,7 +17,6 @@ import {
 import { cn } from '#/shared/lib/utils.ts'
 
 const SECTION_INTERVAL = 10000
-const PHRASE_INTERVAL = 15000
 const CURSOR_HIDE_DELAY = 3000
 
 type SectionId = 'ranking' | 'classes' | 'promos' | 'phrase' | 'stats' | 'gallery'

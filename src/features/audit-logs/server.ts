@@ -4,7 +4,7 @@ import { optionalDateString, optionalString, uuidField } from '#/shared/lib/sche
 import { and, desc, gte, eq, count, SQL } from 'drizzle-orm'
 import { db } from '#/shared/db/index.ts'
 import { auditLogs } from '#/shared/db/schema/audit-logs.ts'
-import { requireRole, getSession } from '#/shared/lib/server-utils.ts'
+import { requirePermission, getSession } from '#/shared/lib/server-utils.ts'
 
 export interface AuditLogRow {
   id: string
@@ -40,7 +40,7 @@ function serializeRow(row: typeof auditLogs.$inferSelect): AuditLogRow {
 export const getAuditLogs = createServerFn({ method: 'GET' })
   .validator((data: unknown) => getAuditLogsSchema.parse(data))
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN'] } })
+    await requirePermission({ data: { permission: 'audit:read' } })
 
     const conditions: SQL[] = []
     if (data.action)
@@ -88,7 +88,7 @@ export const getAuditLogs = createServerFn({ method: 'GET' })
 export const getAuditLog = createServerFn({ method: 'GET' })
   .validator((id: unknown) => uuidField.parse(id))
   .handler(async ({ data: id }) => {
-    await requireRole({ data: { roles: ['ADMIN'] } })
+    await requirePermission({ data: { permission: 'audit:read' } })
 
     const result = await db
       .select()
@@ -103,7 +103,7 @@ export const getAuditLog = createServerFn({ method: 'GET' })
 
 export const getAuditStats = createServerFn({ method: 'GET' }).handler(
   async () => {
-    await requireRole({ data: { roles: ['ADMIN'] } })
+    await requirePermission({ data: { permission: 'audit:read' } })
 
     const thirtyDaysAgo = new Date()
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)

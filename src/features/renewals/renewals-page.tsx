@@ -20,6 +20,7 @@ export function RenewalsPage() {
     isCashRegisterOpen,
     packages,
     memberSearchResults,
+    allSearchResults,
     searchingMembers,
     renewalHistory,
     loadingHistory,
@@ -55,6 +56,7 @@ export function RenewalsPage() {
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           memberSearchResults={memberSearchResults}
+          allSearchResults={allSearchResults}
           searchingMembers={searchingMembers}
           selectedMember={selectedMember}
           onSelectMember={handleSelectMember}

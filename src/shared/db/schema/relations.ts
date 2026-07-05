@@ -1,6 +1,8 @@
 import { relations } from 'drizzle-orm'
 import { users, sessions, accounts } from './auth.ts'
 import { roles } from './roles.ts'
+import { permissions, rolePermissions } from './permissions.ts'
+import { departments } from './departments.ts'
 import { members } from './members.ts'
 import { subscriptions } from './subscriptions.ts'
 import { membershipPayments } from './membership-payments.ts'
@@ -64,6 +66,20 @@ export const usersRelations = relations(users, ({ many, one }) => ({
 
 export const rolesRelations = relations(roles, ({ many }) => ({
   users: many(users),
+  rolePermissions: many(rolePermissions),
+}))
+
+export const permissionsRelations = relations(permissions, ({ many }) => ({
+  rolePermissions: many(rolePermissions),
+}))
+
+export const rolePermissionsRelations = relations(rolePermissions, ({ one }) => ({
+  role: one(roles, { fields: [rolePermissions.roleName], references: [roles.name] }),
+  permission: one(permissions, { fields: [rolePermissions.permissionName], references: [permissions.name] }),
+}))
+
+export const departmentsRelations = relations(departments, ({ many }) => ({
+  employees: many(employees),
 }))
 
 export const sessionsRelations = relations(sessions, ({ one }) => ({
@@ -341,6 +357,7 @@ export const branchesRelations = relations(branches, ({ many }) => ({
   userBranches: many(userBranches),
   members: many(members),
   productStock: many(productStock),
+  employees: many(employees),
 }))
 
 export const userBranchesRelations = relations(userBranches, ({ one }) => ({
@@ -587,6 +604,8 @@ export const memberPaymentMethodsRelations = relations(memberPaymentMethods, ({ 
 export const employeesRelations = relations(employees, ({ many, one }) => ({
   user: one(users, { fields: [employees.userId], references: [users.id] }),
   branch: one(branches, { fields: [employees.branchId], references: [branches.id] }),
+  role: one(roles, { fields: [employees.roleId], references: [roles.name] }),
+  department: one(departments, { fields: [employees.departmentId], references: [departments.id] }),
   schedules: many(employeeSchedules),
   attendance: many(employeeAttendance),
   vacations: many(employeeVacations),

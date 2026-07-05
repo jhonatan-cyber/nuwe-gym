@@ -17,11 +17,10 @@ import {
   inArray,
   count as drizzleCount,
 } from 'drizzle-orm'
-import { requireRole } from '#/shared/lib/server-utils.ts'
+import { requirePermission } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { classSchedules, classBookings } from '#/shared/db/schema/classes.ts'
-import { checkIns } from '#/shared/db/schema/check-ins.ts'
 import { sendEmail, expirationEmailHtml, expiredEmailHtml, birthdayEmailHtml, classReminderEmailHtml, inactiveEmailHtml } from '#/shared/lib/email.ts'
 import { sendWhatsAppTemplate, sendSMS, templateVars_expiration, templateVars_expired, templateVars_birthday, templateVars_inactive } from '#/shared/lib/twilio.ts'
 import { pushSubscriptions } from '#/shared/db/schema/push-subscriptions.ts'
@@ -37,7 +36,7 @@ export const getNotifications = createServerFn({ method: 'GET' })
       .parse(data),
   )
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
+    await requirePermission({ data: { permission: 'notifications:read' } })
     const { page, pageSize } = data
     const offset = (page - 1) * pageSize
 
@@ -60,7 +59,7 @@ export const getNotifications = createServerFn({ method: 'GET' })
 
 export const getUnreadCount = createServerFn({ method: 'GET' }).handler(
   async () => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
+    await requirePermission({ data: { permission: 'notifications:read' } })
     const result = await db
       .select({ count: drizzleCount() })
       .from(notifications)
@@ -74,9 +73,7 @@ const markAsReadSchema = z.object({ id: uuidField })
 export const markAsRead = createServerFn({ method: 'POST' })
   .validator((data) => markAsReadSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({
-      data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] },
-    })
+    const session = await requirePermission({ data: { permission: 'notifications:write' } })
     await db
       .update(notifications)
       .set({ isRead: true })
@@ -94,7 +91,7 @@ export const markAsRead = createServerFn({ method: 'POST' })
 export const markAllAsRead = createServerFn({ method: 'POST' })
   .validator(() => ({}))
   .handler(async () => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'notifications:write' } })
     await db
       .update(notifications)
       .set({ isRead: true })
@@ -117,7 +114,7 @@ const subscribePushSchema = z.object({
 export const subscribePush = createServerFn({ method: 'POST' })
   .validator((data: unknown) => subscribePushSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
+    const session = await requirePermission({ data: { permission: 'notifications:write' } })
     // ponytail: upsert by endpoint — one sub per device per user
     const existing = await db
       .select({ id: pushSubscriptions.id })
@@ -141,7 +138,7 @@ const unsubscribePushSchema = z.object({ endpoint: z.string() })
 export const unsubscribePush = createServerFn({ method: 'POST' })
   .validator((data: unknown) => unsubscribePushSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
+    const session = await requirePermission({ data: { permission: 'notifications:write' } })
     await db
       .delete(pushSubscriptions)
       .where(and(eq(pushSubscriptions.userId, session.user.id), eq(pushSubscriptions.endpoint, data.endpoint)))
@@ -157,7 +154,7 @@ const EXPIRATION_TIERS = [
 export const generateNotifications = createServerFn({ method: 'POST' })
   .validator(() => ({}))
   .handler(async () => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'notifications:write' } })
 
     const gymSettings = await db.query.settings.findFirst()
     const reminderDays = gymSettings?.membershipReminderDays ?? 7
@@ -331,7 +328,7 @@ export const generateNotifications = createServerFn({ method: 'POST' })
           sql`EXTRACT(MONTH FROM ${members.birthDate}) = EXTRACT(MONTH FROM CURRENT_DATE)`,
           sql`EXTRACT(DAY FROM ${members.birthDate}) = EXTRACT(DAY FROM CURRENT_DATE)`,
           sql`${members.birthDate} IS NOT NULL`,
-          eq(members.isActive, true),
+          eq(members.status, 'ACTIVE'),
         ),
       )
 

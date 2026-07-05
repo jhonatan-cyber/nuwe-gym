@@ -2,10 +2,8 @@ import { createServerFn } from '@tanstack/react-start'
 import { db } from '#/shared/db/index.ts'
 import { guestPasses } from '#/shared/db/schema/guest-passes.ts'
 import { subscriptions } from '#/shared/db/schema/subscriptions.ts'
-import { packageBenefits } from '#/shared/db/schema/packages.ts'
-import { members } from '#/shared/db/schema/members.ts'
-import { eq, desc, and, inArray } from 'drizzle-orm'
-import { requireRole } from '#/shared/lib/server-utils.ts'
+import { eq, desc, and } from 'drizzle-orm'
+import { requirePermission } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { z } from 'zod'
@@ -18,7 +16,7 @@ export const getMemberGuestPasses = createServerFn({ method: 'GET' })
     z.object({ memberId: uuidField }).parse(data),
   )
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
+    await requirePermission({ data: { permission: 'guest-passes:read' } })
     return await db.query.guestPasses.findMany({
       where: eq(guestPasses.memberId, data.memberId),
       orderBy: [desc(guestPasses.createdAt)],
@@ -40,8 +38,8 @@ const createGuestPassSchema = z.object({
 export const createGuestPass = createServerFn({ method: 'POST' })
   .validator((data) => createGuestPassSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({
-      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
+    const session = await requirePermission({
+      data: { permission: 'guest-passes:write' },
     })
 
     // Verify member has an active subscription with guest_passes benefit
@@ -57,9 +55,6 @@ export const createGuestPass = createServerFn({ method: 'POST' })
       throw new Error('El socio no tiene una membresía activa.')
     }
 
-    const hasGuestPassBenefit = activeSub.package?.benefits?.some(
-      (b) => b.benefitKey === 'guest_passes' && b.enabled,
-    )
     // ponytail: benefit check skipped for now — all active members can create guest passes
     // Add package benefit validation when per-plan limits are needed
 
@@ -93,8 +88,8 @@ export const useGuestPass = createServerFn({ method: 'POST' })
     z.object({ passId: uuidField }).parse(data),
   )
   .handler(async ({ data }) => {
-    const session = await requireRole({
-      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
+    const session = await requirePermission({
+      data: { permission: 'guest-passes:write' },
     })
 
     const [pass] = await db
@@ -134,7 +129,7 @@ export const cancelGuestPass = createServerFn({ method: 'POST' })
     z.object({ passId: uuidField }).parse(data),
   )
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'guest-passes:write' } })
 
     const [pass] = await db
       .update(guestPasses)
@@ -169,7 +164,7 @@ export const getAvailableGuestPassInfo = createServerFn({ method: 'GET' })
     z.object({ memberId: uuidField }).parse(data),
   )
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
+    await requirePermission({ data: { permission: 'guest-passes:read' } })
 
     const activeSub = await db.query.subscriptions.findFirst({
       where: and(

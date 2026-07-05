@@ -1,5 +1,5 @@
 import { createServerFn } from '@tanstack/react-start'
-import { requireRole } from '#/shared/lib/server-utils.ts'
+import { requirePermission } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { createPackageSchema, updatePackageSchema, deletePackageSchema } from './packages.schema.ts'
@@ -18,9 +18,7 @@ export const createPackage = createServerFn({ method: 'POST' })
   .handler(async ({ data }) => {
     console.log('[packages] createPackage input:', JSON.stringify(data, null, 2))
 
-    const session = await requireRole({
-      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
-    })
+    const session = await requirePermission({ data: { permission: 'plans:write' } })
 
     console.log('[packages] insertando package...')
     const pkg = await repo.insert(data)
@@ -53,9 +51,7 @@ export const updatePackage = createServerFn({ method: 'POST' })
   .handler(async ({ data }) => {
     console.log('[packages] updatePackage input:', JSON.stringify({ id: data.id, name: data.name }, null, 2))
 
-    const session = await requireRole({
-      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
-    })
+    const session = await requirePermission({ data: { permission: 'plans:write' } })
 
     console.log('[packages] actualizando package...')
     const pkg = await repo.update(data.id, data)
@@ -80,9 +76,7 @@ export const updatePackage = createServerFn({ method: 'POST' })
 export const deletePackage = createServerFn({ method: 'POST' })
   .validator((data) => deletePackageSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({
-      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
-    })
+    const session = await requirePermission({ data: { permission: 'plans:write' } })
 
     const hasSubs = await repo.hasSubscriptions(data.id)
     if (hasSubs) {

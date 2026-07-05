@@ -39,7 +39,7 @@ export function EmployeeDetailDialog({ employeeId, open, onOpenChange }: Employe
   const infoRows = employee
     ? [
         { icon: Briefcase, label: 'Cargo', value: employee.position },
-        { icon: Building2, label: 'Departamento', value: employee.department || '—' },
+        { icon: Building2, label: 'Departamento', value: employee.department?.name || '—' },
         { icon: DollarSign, label: 'Salario', value: employee.baseSalary && Number(employee.baseSalary) > 0 ? `$${Number(employee.baseSalary).toLocaleString()}` : '—' },
         { icon: Banknote, label: 'Frecuencia', value: employee.paymentFrequency === 'MONTHLY' ? 'Mensual' : employee.paymentFrequency === 'BIWEEKLY' ? 'Quincenal' : 'Semanal' },
         { icon: CalendarDays, label: 'Ingreso', value: formatDate(new Date(employee.hireDate)) },
@@ -78,7 +78,7 @@ export function EmployeeDetailDialog({ employeeId, open, onOpenChange }: Employe
             <Skeleton className="h-9 w-full rounded-2xl" />
           </div>
         ) : !employee ? (
-          <p className="text-sm text-muted-foreground text-center py-8">Empleado no encontrado.</p>
+          <p className="text-sm text-muted-foreground text-center py-8">Personal no encontrado.</p>
         ) : (
           <div className="space-y-6">
             <ToggleGroup type="single" value={activeTab} onValueChange={(v) => v && setActiveTab(v as Tab)}>

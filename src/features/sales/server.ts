@@ -11,7 +11,7 @@ import {
 import { onPurchase } from '#/features/loyalty/server.ts'
 import { autoIssueInvoice } from '#/features/invoices/server.ts'
 import { eq, desc, inArray, gte, lte, count, sum, sql, and } from 'drizzle-orm'
-import { requireRole } from '#/shared/lib/server-utils.ts'
+import { requirePermission } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { z } from 'zod'
@@ -359,7 +359,7 @@ const getDailySalesSummarySchema = z.object({
 export const getDailySalesSummary = createServerFn({ method: 'GET' })
   .validator((data) => getDailySalesSummarySchema.parse(data))
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'sales:read' } })
 
     const ranges = getDateRanges()
     const { todayStart, todayEnd, thirtyDaysAgo } = ranges
@@ -399,7 +399,7 @@ const getRecentSalesSchema = z.object({
 export const getRecentSales = createServerFn({ method: 'GET' })
   .validator((data) => getRecentSalesSchema.parse(data))
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'sales:read' } })
     return await db.query.sales.findMany({
       where: data.branchId
         ? eq(sales.branchId, data.branchId)
@@ -425,7 +425,7 @@ const getSaleStatsSchema = z.object({
 export const getSaleStats = createServerFn({ method: 'GET' })
   .validator((data) => getSaleStatsSchema.parse(data))
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'sales:read' } })
 
     const today = new Date()
     today.setHours(0, 0, 0, 0)
@@ -474,8 +474,8 @@ const createSaleSchema = z.object({
 export const createSale = createServerFn({ method: 'POST' })
   .validator((data) => createSaleSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({
-      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
+    const session = await requirePermission({
+      data: { permission: 'sales:write' },
     })
 
     const sale = await db.transaction(async (tx) => {

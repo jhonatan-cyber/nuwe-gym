@@ -1,109 +1,36 @@
-import { useState, useEffect } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { toast } from 'sonner'
-import {
-  ChevronRight,
-  Plus,
-  Users,
-  UserCheck,
-  UserX,
-  TimerOff,
-  Briefcase,
-  DollarSign,
-  Phone,
-  FileText,
-  AlertCircle,
-  Eye,
-  Pencil,
-  Trash2,
-  Shield,
-  ShieldAlert,
-  ShieldCheck,
-  UsersRound,
-} from 'lucide-react'
+import { useEffect } from 'react'
+import { ChevronRight, ChevronLeft, Plus, Users, UserCheck, UserX, TimerOff, Shield, ShieldAlert, ShieldCheck } from 'lucide-react'
 import { ModuleLayout } from '#/shared/components/layout/module-layout.tsx'
-import { Route as authedRoute } from '#/routes/_authed.tsx'
 import { ToggleGroup, ToggleGroupItem } from '#/shared/components/ui/toggle-group'
-import { TooltipProvider } from '#/shared/components/ui/tooltip'
-import { FilterBar } from '#/shared/components/ui/filter-bar'
-import { ConfirmDialog } from '#/shared/components/ui/confirm-dialog'
-
-import { UserDetailDialog } from '#/features/users/components/user-detail-dialog.tsx'
-import { UserCreationWizard } from '#/features/users/components/user-creation-wizard.tsx'
-import { RolesView } from '#/features/users/components/roles-view.tsx'
-import { UserEditDialog } from '#/features/users/components/user-edit-dialog.tsx'
-import { useUsersPage } from '#/features/users/hooks/use-users-page.ts'
-import { useUserColumns } from '#/features/users/hooks/use-user-columns.tsx'
-import { UserCard, UserCardSkeleton } from '#/features/users/components/user-card.tsx'
-import type { StaffUser } from '#/features/users/types.ts'
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from '#/shared/components/ui/card'
+import { Card, CardContent } from '#/shared/components/ui/card'
 import { Button } from '#/shared/components/ui/button'
-import { LoadingButton } from '#/shared/components/ui/loading-button'
-import { Input } from '#/shared/components/ui/input'
-import { Label } from '#/shared/components/ui/label'
-import { Separator } from '#/shared/components/ui/separator'
+import { Skeleton } from '#/shared/components/ui/skeleton'
+import { cn } from '#/shared/lib/utils.ts'
+import { DataTable } from '#/shared/components/data-table.tsx'
+import { SearchInput } from '#/shared/components/search-input.tsx'
+import { EmployeeDetailDialog } from './components/employee-detail-dialog.tsx'
+import { EmployeeForm } from './components/employee-form.tsx'
+import { useEmployeesPage } from './hooks/use-employees-page.ts'
+import { useEmployeeColumns } from './hooks/use-employee-columns.tsx'
+import type { Employee } from './types.ts'
+import { RolesView } from '#/features/users/components/roles-view.tsx'
+import { useUserColumns } from '#/features/users/hooks/use-user-columns.tsx'
+import { StatCard } from '#/shared/components/ui/stat-card'
+import { FilterBar } from '#/shared/components/ui/filter-bar'
+import { TooltipProvider } from '#/shared/components/ui/tooltip'
+import type { StaffUser } from '#/features/users/types.ts'
+import { UserCard, UserCardSkeleton } from '#/features/users/components/user-card.tsx'
+import { UserDetailDialog } from '#/features/users/components/user-detail-dialog.tsx'
+import { UserEditDialog } from '#/features/users/components/user-edit-dialog.tsx'
+import { ConfirmDialog } from '#/shared/components/ui/confirm-dialog'
+import { useUsersPage } from '#/features/users/hooks/use-users-page.ts'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '#/shared/components/ui/select'
-import { Badge } from '#/shared/components/ui/badge'
-import { Skeleton } from '#/shared/components/ui/skeleton'
-import { cn } from '#/shared/lib/utils.ts'
-import { DataTable } from '#/shared/components/data-table.tsx'
-import { SearchInput } from '#/shared/components/search-input.tsx'
-import { EmployeeDetailDialog } from './components/employee-detail-dialog.tsx'
-import {
-  getEmployees,
-  getEmployee,
-  createEmployee,
-  updateEmployee,
-  deleteEmployee,
-  getEmployeeStats,
-} from './server.ts'
-import {
-  EMPLOYEE_STATUS_LABELS,
-  EMPLOYEE_STATUS_COLORS,
-  POSITIONS,
-  DEPARTMENTS,
-} from './types.ts'
-import type { Employee } from './types.ts'
-
-// ── Stat card ──
-
-function StatCard({
-  icon: Icon,
-  label,
-  value,
-  color,
-}: {
-  icon: React.ComponentType<{ className?: string }>
-  label: string
-  value: number
-  color: string
-}) {
-  return (
-    <Card className={cn('rounded-2xl border-border/10 shadow-sm bg-card overflow-hidden relative', color)}>
-      <CardContent className="p-4 flex items-center gap-3">
-        <div className="size-10 rounded-xl bg-background/50 flex items-center justify-center shrink-0">
-          <Icon className="size-5 text-foreground/70" />
-        </div>
-        <div>
-          <p className="text-2xl font-black">{value}</p>
-          <p className="text-xs font-semibold text-muted-foreground">{label}</p>
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
+} from '#/shared/components/ui/select.tsx'
 
 // ── Empty state ──
 
@@ -113,487 +40,57 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
       <div className="size-20 rounded-full bg-muted/30 flex items-center justify-center mb-4">
         <Users className="size-10 text-muted-foreground/40" />
       </div>
-      <h3 className="text-lg font-bold mb-1">No hay empleados registrados</h3>
+      <h3 className="text-lg font-bold mb-1">No hay personal registrado</h3>
       <p className="text-sm text-muted-foreground mb-6 max-w-xs">
-        Agregá tu primer empleado para empezar a gestionar el equipo del gimnasio.
+        Agregá tu primer miembro del equipo para empezar a gestionar el
+        personal del gimnasio.
       </p>
-      <Button
-        onClick={onAdd}
-        className="rounded-full font-bold"
-      >
+      <Button onClick={onAdd} className="rounded-full font-bold">
         <Plus className="size-4 mr-1.5" />
-        Agregar Empleado
+        Agregar Personal
       </Button>
     </div>
   )
 }
 
-// ── Employee form (create / edit) ──
+// ── Users tab ──
 
-interface EmployeeFormData {
-  fullName: string
-  email: string
-  phone: string
-  documentNumber: string
-  position: string
-  department: string
-  status: 'ACTIVE' | 'INACTIVE' | 'ON_LEAVE' | 'TERMINATED'
-  hireDate: string
-  baseSalary: string
-  paymentFrequency: 'MONTHLY' | 'BIWEEKLY' | 'WEEKLY'
-  bankName: string
-  bankAccountNumber: string
-  emergencyContactName: string
-  emergencyContactPhone: string
-  emergencyContactRelation: string
-  notes: string
+interface UsersTabContentProps {
+  currentUserId: string
+  usersPage: ReturnType<typeof useUsersPage>
 }
 
-const defaultForm: EmployeeFormData = {
-  fullName: '',
-  email: '',
-  phone: '',
-  documentNumber: '',
-  position: '',
-  department: '',
-  status: 'ACTIVE',
-  hireDate: new Date().toISOString().split('T')[0],
-  baseSalary: '0',
-  paymentFrequency: 'MONTHLY',
-  bankName: '',
-  bankAccountNumber: '',
-  emergencyContactName: '',
-  emergencyContactPhone: '',
-  emergencyContactRelation: '',
-  notes: '',
-}
-
-function EmployeeForm({
-  onClose,
-  employeeId,
-}: {
-  onClose: () => void
-  employeeId: string | null
-}) {
-  const queryClient = useQueryClient()
-  const isEditing = !!employeeId
-  const [form, setForm] = useState<EmployeeFormData>(defaultForm)
-  const [loadingEmployee, setLoadingEmployee] = useState(false)
-
-  useEffect(() => {
-    if (employeeId) {
-      setLoadingEmployee(true)
-      getEmployee({ data: { id: employeeId } })
-        .then((emp) => {
-          if (emp) {
-            setForm({
-              fullName: emp.fullName,
-              email: emp.email ?? '',
-              phone: emp.phone ?? '',
-              documentNumber: emp.documentNumber ?? '',
-              position: emp.position,
-              department: emp.department ?? '',
-              status: emp.status as EmployeeFormData['status'],
-              hireDate: new Date(emp.hireDate).toISOString().split('T')[0],
-              baseSalary: emp.baseSalary ?? '0',
-              paymentFrequency: (emp.paymentFrequency as EmployeeFormData['paymentFrequency']) ?? 'MONTHLY',
-              bankName: emp.bankName ?? '',
-              bankAccountNumber: emp.bankAccountNumber ?? '',
-              emergencyContactName: emp.emergencyContactName ?? '',
-              emergencyContactPhone: emp.emergencyContactPhone ?? '',
-              emergencyContactRelation: emp.emergencyContactRelation ?? '',
-              notes: emp.notes ?? '',
-            })
-          }
-        })
-        .finally(() => setLoadingEmployee(false))
-    } else {
-      setForm(defaultForm)
-    }
-  }, [employeeId])
-
-  const createMutation = useMutation({
-    mutationFn: createEmployee,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['employees'] })
-      toast.success('Empleado creado con éxito')
-      onClose()
-    },
-    onError: (err: Error) => toast.error(err.message),
-  })
-
-  const updateMutation = useMutation({
-    mutationFn: updateEmployee,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['employees'] })
-      toast.success('Empleado actualizado con éxito')
-      onClose()
-    },
-    onError: (err: Error) => toast.error(err.message),
-  })
-
-  function handleChange(field: keyof EmployeeFormData, value: string) {
-    setForm((prev) => ({ ...prev, [field]: value }))
-  }
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!form.fullName.trim()) {
-      toast.error('El nombre completo es obligatorio')
-      return
-    }
-    if (!form.position) {
-      toast.error('El cargo es obligatorio')
-      return
-    }
-    if (isEditing) {
-      updateMutation.mutate({ data: { ...form, id: employeeId } })
-    } else {
-      createMutation.mutate({ data: form })
-    }
-  }
-
-  const isPending = createMutation.isPending || updateMutation.isPending
-
-  return (
-    <Card className="rounded-[2rem] border-border/10 shadow-xl bg-card overflow-hidden relative transition-all duration-200 animate-in fade-in duration-300">
-      <div className="absolute -top-12 -left-12 size-36 bg-primary/5 rounded-full blur-2xl pointer-events-none" />
-      <CardHeader className="relative z-10 flex flex-row items-center justify-between">
-        <div>
-          <CardTitle className="text-xl font-black">
-            {isEditing ? 'Editar Empleado' : 'Nuevo Empleado'}
-          </CardTitle>
-          <CardDescription>
-            {isEditing
-              ? 'Actualizá los datos del empleado'
-              : 'Completá los datos para registrar un nuevo empleado'}
-          </CardDescription>
-        </div>
-      </CardHeader>
-      <CardContent className="relative z-10 p-6">
-        {loadingEmployee ? (
-          <div className="space-y-4">
-            <Skeleton className="h-9 w-full rounded-2xl" />
-            <Skeleton className="h-9 w-full rounded-2xl" />
-            <Skeleton className="h-9 w-full rounded-2xl" />
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Información personal */}
-            <div className="space-y-3">
-              <span className="text-xs font-black uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                <Users className="size-3.5" /> Información Personal
-              </span>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Field label="Nombre completo" required>
-                  <Input
-                    value={form.fullName}
-                    onChange={(e) => handleChange('fullName', e.target.value)}
-                    placeholder="Juan Pérez"
-                    className="rounded-2xl border-border/10"
-                  />
-                </Field>
-                <Field label="Documento">
-                  <Input
-                    value={form.documentNumber}
-                    onChange={(e) => handleChange('documentNumber', e.target.value)}
-                    placeholder="12345678"
-                    className="rounded-2xl border-border/10"
-                  />
-                </Field>
-                <Field label="Email">
-                  <Input
-                    type="email"
-                    value={form.email}
-                    onChange={(e) => handleChange('email', e.target.value)}
-                    placeholder="juan@gimnasio.com"
-                    className="rounded-2xl border-border/10"
-                  />
-                </Field>
-                <Field label="Teléfono">
-                  <Input
-                    value={form.phone}
-                    onChange={(e) => handleChange('phone', e.target.value)}
-                    placeholder="+54 11 1234-5678"
-                    className="rounded-2xl border-border/10"
-                  />
-                </Field>
-              </div>
-            </div>
-
-            <Separator className="border-border/5" />
-
-            {/* Datos laborales */}
-            <div className="space-y-3">
-              <span className="text-xs font-black uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                <Briefcase className="size-3.5" /> Datos Laborales
-              </span>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Field label="Cargo" required>
-                  <Select
-                    value={form.position}
-                    onValueChange={(v) => handleChange('position', v)}
-                  >
-                    <SelectTrigger className="rounded-2xl border-border/10">
-                      <SelectValue placeholder="Seleccionar cargo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {POSITIONS.map((p) => (
-                        <SelectItem key={p} value={p}>{p}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </Field>
-                <Field label="Departamento">
-                  <Select
-                    value={form.department}
-                    onValueChange={(v) => handleChange('department', v)}
-                  >
-                    <SelectTrigger className="rounded-2xl border-border/10">
-                      <SelectValue placeholder="Seleccionar departamento" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {DEPARTMENTS.map((d) => (
-                        <SelectItem key={d} value={d}>{d}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </Field>
-                <Field label="Estado">
-                  <Select
-                    value={form.status}
-                    onValueChange={(v) => handleChange('status', v)}
-                  >
-                    <SelectTrigger className="rounded-2xl border-border/10">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ACTIVE">Activo</SelectItem>
-                      <SelectItem value="ON_LEAVE">De licencia</SelectItem>
-                      <SelectItem value="INACTIVE">Inactivo</SelectItem>
-                      <SelectItem value="TERMINATED">Desvinculado</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </Field>
-                <Field label="Fecha de ingreso" required>
-                  <Input
-                    type="date"
-                    value={form.hireDate}
-                    onChange={(e) => handleChange('hireDate', e.target.value)}
-                    className="rounded-2xl border-border/10"
-                  />
-                </Field>
-              </div>
-            </div>
-
-            <Separator className="border-border/5" />
-
-            {/* Salario */}
-            <div className="space-y-3">
-              <span className="text-xs font-black uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                <DollarSign className="size-3.5" /> Salario
-              </span>
-              <div className="grid gap-3 sm:grid-cols-3">
-                <Field label="Salario base">
-                  <Input
-                    type="number"
-                    min="0"
-                    value={form.baseSalary}
-                    onChange={(e) => handleChange('baseSalary', e.target.value)}
-                    placeholder="0"
-                    className="rounded-2xl border-border/10"
-                  />
-                </Field>
-                <Field label="Frecuencia de pago">
-                  <Select
-                    value={form.paymentFrequency}
-                    onValueChange={(v) => handleChange('paymentFrequency', v)}
-                  >
-                    <SelectTrigger className="rounded-2xl border-border/10">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="MONTHLY">Mensual</SelectItem>
-                      <SelectItem value="BIWEEKLY">Quincenal</SelectItem>
-                      <SelectItem value="WEEKLY">Semanal</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </Field>
-                <Field label="Banco">
-                  <Input
-                    value={form.bankName}
-                    onChange={(e) => handleChange('bankName', e.target.value)}
-                    placeholder="Nombre del banco"
-                    className="rounded-2xl border-border/10"
-                  />
-                </Field>
-                <Field label="Cuenta bancaria">
-                  <Input
-                    value={form.bankAccountNumber}
-                    onChange={(e) => handleChange('bankAccountNumber', e.target.value)}
-                    placeholder="Número de cuenta"
-                    className="rounded-2xl border-border/10"
-                  />
-                </Field>
-              </div>
-            </div>
-
-            <Separator className="border-border/5" />
-
-            {/* Contacto de emergencia */}
-            <div className="space-y-3">
-              <span className="text-xs font-black uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                <Phone className="size-3.5" /> Contacto de Emergencia
-              </span>
-              <div className="grid gap-3 sm:grid-cols-3">
-                <Field label="Nombre">
-                  <Input
-                    value={form.emergencyContactName}
-                    onChange={(e) => handleChange('emergencyContactName', e.target.value)}
-                    placeholder="Contacto"
-                    className="rounded-2xl border-border/10"
-                  />
-                </Field>
-                <Field label="Teléfono">
-                  <Input
-                    value={form.emergencyContactPhone}
-                    onChange={(e) => handleChange('emergencyContactPhone', e.target.value)}
-                    placeholder="+54 11 1234-5678"
-                    className="rounded-2xl border-border/10"
-                  />
-                </Field>
-                <Field label="Parentesco">
-                  <Input
-                    value={form.emergencyContactRelation}
-                    onChange={(e) => handleChange('emergencyContactRelation', e.target.value)}
-                    placeholder="Familiar, amigo..."
-                    className="rounded-2xl border-border/10"
-                  />
-                </Field>
-              </div>
-            </div>
-
-            <Separator className="border-border/5" />
-
-            {/* Notas */}
-            <div className="space-y-3">
-              <span className="text-xs font-black uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                <FileText className="size-3.5" /> Notas
-              </span>
-              <textarea
-                value={form.notes}
-                onChange={(e) => handleChange('notes', e.target.value)}
-                placeholder="Observaciones adicionales..."
-                rows={3}
-                className="w-full rounded-2xl border border-border/10 bg-background/50 px-3 py-2 text-sm resize-y"
-              />
-            </div>
-
-            <div className="flex justify-end gap-3 pt-2">
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={onClose}
-                className="rounded-full font-semibold"
-              >
-                Cancelar
-              </Button>
-              <LoadingButton
-                type="submit"
-                isLoading={isPending}
-                className="rounded-full font-bold px-6"
-              >
-                {isEditing ? 'Guardar cambios' : 'Crear empleado'}
-              </LoadingButton>
-            </div>
-          </form>
-        )}
-      </CardContent>
-    </Card>
-  )
-}
-
-function Field({
-  label,
-  required,
-  children,
-}: {
-  label: string
-  required?: boolean
-  children: React.ReactNode
-}) {
-  return (
-    <div className="space-y-1">
-      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-        {label}
-        {required && <span className="text-destructive ml-0.5">*</span>}
-      </Label>
-      {children}
-    </div>
-  )
-}
-
-// ── Main page ──
-
-export function EmployeesPage() {
-  const { session } = authedRoute.useRouteContext()
-  const currentUserId = session.user.id
-  const queryClient = useQueryClient()
-
-  const [activeTab, setActiveTab] = useState<'employees' | 'users' | 'roles'>('employees')
-  const [activeSubView, setActiveSubView] = useState<'list' | 'create' | 'edit'>('list')
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [detailId, setDetailId] = useState<string | null>(null)
-  const [search, setSearch] = useState('')
-
-  const { data: stats } = useQuery({
-    queryKey: ['employeeStats'],
-    queryFn: getEmployeeStats,
-  })
-
-  const { data: employeesList, isLoading, error } = useQuery({
-    queryKey: ['employees'],
-    queryFn: getEmployees,
-  })
-
-  const deleteMutation = useMutation({
-    mutationFn: deleteEmployee,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['employees'] })
-      toast.success('Empleado eliminado')
-    },
-    onError: (err: Error) => toast.error(err.message),
-  })
-
+function UsersTabContent({ currentUserId, usersPage }: UsersTabContentProps) {
   const {
-    activeView: userActiveView,
-    search: userSearch,
-    setSearch: setUserSearch,
-    roleFilter,
-    setRoleFilter,
     editingUser,
     setEditingUser,
     viewUserId,
     setViewUserId,
     deletingUserId,
     setDeletingUserId,
-    isLoading: isUsersLoading,
+    isLoading,
     paginatedUsers,
-    totalFiltered: userTotalFiltered,
-    totalUsers,
-    adminCount,
-    receptionistCount,
-    trainerCount,
-    currentPage: userCurrentPage,
-    setCurrentPage: setUserCurrentPage,
-    pageSize: userPageSize,
-    setPageSize: setUserPageSize,
-    totalPages: userTotalPages,
-    handleOpenCreate: handleOpenCreateUser,
-    handleCloseCreate: handleCloseCreateUser,
+    totalFiltered,
+    currentPage,
+    setCurrentPage,
+    pageSize,
+    setPageSize,
+    totalPages,
     handleDeleteUser,
     handleConfirmDeleteUser,
-  } = useUsersPage(currentUserId)
+  } = usersPage
+
+  useEffect(() => {
+    const handleResize = () => {
+      const isMobile = window.innerWidth < 1536
+      if (isMobile && pageSize % 2 !== 0) {
+        setPageSize(pageSize + 1)
+      }
+    }
+    handleResize()
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [pageSize, setPageSize])
 
   const columns = useUserColumns({
     currentUserId,
@@ -602,116 +99,222 @@ export function EmployeesPage() {
     setEditingUser,
   })
 
-  const filtered = employeesList?.filter(
-    (e) =>
-      !search ||
-      e.fullName.toLowerCase().includes(search.toLowerCase()) ||
-      e.employeeCode.toLowerCase().includes(search.toLowerCase()) ||
-      e.position.toLowerCase().includes(search.toLowerCase()),
-  )
-
-  function handleAdd() {
-    setEditingId(null)
-    setActiveSubView('create')
-  }
-
-  function handleEdit(id: string) {
-    setEditingId(id)
-    setActiveSubView('edit')
-  }
-
-  function handleDelete(id: string, name: string) {
-    if (window.confirm(`¿Eliminar a ${name}? Esta acción no se puede deshacer.`)) {
-      deleteMutation.mutate({ data: { id } })
-    }
-  }
-
-  const employeeColumns = [
-    {
-      key: 'employeeCode',
-      label: 'Código',
-      render: (emp: Employee) => (
-        <span className="font-mono text-xs text-muted-foreground">{emp.employeeCode}</span>
-      ),
-    },
-    {
-      key: 'fullName',
-      label: 'Nombre',
-      render: (emp: Employee) => <span className="font-semibold">{emp.fullName}</span>,
-    },
-    {
-      key: 'position',
-      label: 'Cargo',
-      render: (emp: Employee) => emp.position,
-    },
-    {
-      key: 'department',
-      label: 'Departamento',
-      render: (emp: Employee) => emp.department || '—',
-    },
-    {
-      key: 'status',
-      label: 'Estado',
-      render: (emp: Employee) => (
-        <Badge
-          variant="outline"
-          className={cn(
-            'text-[10px] font-bold uppercase tracking-wider px-2 py-0.5',
-            EMPLOYEE_STATUS_COLORS[emp.status as keyof typeof EMPLOYEE_STATUS_COLORS],
-          )}
-        >
-          {EMPLOYEE_STATUS_LABELS[emp.status as keyof typeof EMPLOYEE_STATUS_LABELS]}
-        </Badge>
-      ),
-    },
-    {
-      key: 'baseSalary',
-      label: 'Salario',
-      render: (emp: Employee) => (
-        <span className="font-mono text-xs">
-          {emp.baseSalary && Number(emp.baseSalary) > 0 ? `$${Number(emp.baseSalary).toLocaleString()}` : '—'}
-        </span>
-      ),
-    },
-    {
-      key: 'phone',
-      label: 'Teléfono',
-      render: (emp: Employee) => emp.phone || '—',
-    },
-    {
-      key: 'actions',
-      label: 'Acciones',
-      className: 'text-right',
-      render: (emp: Employee) => (
-        <div className="flex justify-end gap-1">
-          <Button
-            size="icon"
-            variant="ghost"
-            className="size-8 rounded-full"
-            onClick={() => setDetailId(emp.id)}
-          >
-            <Eye className="size-4" />
-          </Button>
-          <Button
-            size="icon"
-            variant="ghost"
-            className="size-8 rounded-full"
-            onClick={() => handleEdit(emp.id)}
-          >
-            <Pencil className="size-4" />
-          </Button>
-          <Button
-            size="icon"
-            variant="ghost"
-            className="size-8 rounded-full text-destructive hover:text-destructive hover:bg-destructive/10"
-            onClick={() => handleDelete(emp.id, emp.fullName)}
-          >
-            <Trash2 className="size-4" />
-          </Button>
+  return (
+    <>
+      <TooltipProvider delayDuration={200}>
+        {/* Vista Desktop (Tabla) */}
+        <div className="hidden 2xl:block">
+          <DataTable
+            columns={columns}
+            data={paginatedUsers}
+            isLoading={isLoading}
+            loadingMessage="Cargando usuarios..."
+            emptyMessage="No se encontraron usuarios."
+            keyExtractor={(user: StaffUser) => user.id}
+            skeletonRows={5}
+            currentPage={currentPage}
+            pageSize={pageSize}
+            totalPages={totalPages}
+            totalFiltered={totalFiltered}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={setPageSize}
+          />
         </div>
-      ),
-    },
-  ]
+
+        {/* Vista Mobile (Cards) */}
+        <div className="block 2xl:hidden space-y-4">
+          {isLoading ? (
+            <div className="space-y-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <UserCardSkeleton key={i} index={i} />
+              ))}
+            </div>
+          ) : paginatedUsers.length === 0 ? (
+            <div className="rounded-[2rem] border border-border/10 bg-card p-8 text-center text-muted-foreground shadow-md">
+              No se encontraron usuarios.
+            </div>
+          ) : (
+            <>
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-6 py-4 rounded-[2rem] border bg-card border-border/10 shadow-md relative overflow-hidden">
+                <div className="absolute -top-12 -left-12 size-24 bg-primary/5 rounded-full blur-xl pointer-events-none" />
+                <div className="absolute -bottom-10 -right-10 size-20 bg-pink-500/5 rounded-full blur-xl pointer-events-none" />
+                <span className="text-xs text-muted-foreground font-semibold relative z-10 text-center sm:text-left">
+                  Mostrando{' '}
+                  {totalFiltered === 0 ? 0 : (currentPage - 1) * pageSize + 1}{' '}
+                  a {Math.min(currentPage * pageSize, totalFiltered)} de{' '}
+                  {totalFiltered} usuarios
+                </span>
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground relative z-10">
+                  <span>Por pág:</span>
+                  <Select
+                    value={String(pageSize)}
+                    onValueChange={(val) => setPageSize(Number(val))}
+                  >
+                    <SelectTrigger className="h-8 w-[70px] text-xs rounded-full bg-background border-border/10 shadow-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[6, 10, 20, 50].map((size) => (
+                        <SelectItem key={size} value={String(size)}>
+                          {size}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {paginatedUsers.map((user: StaffUser) => (
+                  <UserCard
+                    key={user.id}
+                    user={user}
+                    currentUserId={currentUserId}
+                    setViewUserId={setViewUserId}
+                    setEditingUser={setEditingUser}
+                    handleDeleteUser={handleDeleteUser}
+                  />
+                ))}
+              </div>
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-1 py-3 border-t dark:border-white/5 border-black/5 bg-muted/10 rounded-2xl mt-4">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="size-8 rounded-full animate-none"
+                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronLeft className="size-4" />
+                  </Button>
+                  {Array.from({ length: totalPages }).map((_, idx) => {
+                    const pageNum = idx + 1
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={currentPage === pageNum ? 'default' : 'outline'}
+                        size="sm"
+                        className="size-8 text-xs font-bold rounded-full animate-none"
+                        onClick={() => setCurrentPage(pageNum)}
+                      >
+                        {pageNum}
+                      </Button>
+                    )
+                  })}
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="size-8 rounded-full animate-none"
+                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                    disabled={currentPage === totalPages || totalPages === 0}
+                  >
+                    <ChevronRight className="size-4" />
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </TooltipProvider>
+
+      {/* Edit User Dialog */}
+      <UserEditDialog
+        user={editingUser}
+        currentUserId={currentUserId}
+        open={editingUser !== null}
+        onOpenChange={(open) => {
+          if (!open) setEditingUser(null)
+        }}
+      />
+
+      {/* Delete Confirmation */}
+      <ConfirmDialog
+        open={deletingUserId !== null}
+        onOpenChange={() => setDeletingUserId(null)}
+        title="Eliminar Usuario"
+        description="¿Estás seguro de que deseas eliminar este usuario?"
+        confirmText="Eliminar"
+        variant="destructive"
+        onConfirm={handleConfirmDeleteUser}
+      />
+
+      {/* User Detail Dialog */}
+      <UserDetailDialog
+        userId={viewUserId}
+        onOpenChange={(open) => {
+          if (!open) setViewUserId(null)
+        }}
+      />
+    </>
+  )
+}
+
+// ── Roles tab ──
+
+interface RolesTabContentProps {
+  usersList: StaffUser[]
+}
+
+function RolesTabContent({ usersList }: RolesTabContentProps) {
+  const adminCount = usersList.filter((u) => u.role === 'ADMIN').length
+  const receptionistCount = usersList.filter((u) => u.role === 'RECEPTIONIST').length
+  const trainerCount = usersList.filter((u) => u.role === 'TRAINER').length
+
+  return (
+    <Card className="rounded-[2rem] border-border/10 shadow-xl bg-card overflow-hidden relative">
+      <div className="absolute -top-12 -left-12 size-36 bg-primary/5 rounded-full blur-2xl pointer-events-none" />
+      <div className="relative z-10 p-6">
+        <RolesView
+          adminCount={adminCount}
+          receptionistCount={receptionistCount}
+          trainerCount={trainerCount}
+        />
+      </div>
+    </Card>
+  )
+}
+
+// ── Main page ──
+
+interface EmployeesPageProps {
+  currentUserId: string
+}
+
+export function EmployeesPage({ currentUserId }: EmployeesPageProps) {
+  const {
+    activeTab,
+    setActiveTab,
+    activeSubView,
+    setActiveSubView,
+    editingId,
+    setEditingId,
+    detailId,
+    setDetailId,
+    search,
+    setSearch,
+    currentPage,
+    setCurrentPage,
+    pageSize,
+    setPageSize,
+    stats,
+    employeesList,
+    isLoading,
+    error,
+    totalFiltered,
+    totalPages,
+    paginatedEmployees,
+    handleAdd,
+    handleEdit,
+    handleDelete,
+  } = useEmployeesPage()
+
+  const columns = useEmployeeColumns({
+    onDetail: setDetailId,
+    onEdit: handleEdit,
+    onDelete: handleDelete,
+  })
+
+  // Users page state (shared between left panel and content)
+  const usersPage = useUsersPage(currentUserId)
 
   if (error) {
     return (
@@ -727,9 +330,8 @@ export function EmployeesPage() {
       >
         <Card className="rounded-[2rem] border-border/10 bg-card">
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <AlertCircle className="size-12 text-destructive mb-4" />
             <p className="text-lg font-medium text-destructive">
-              Error al cargar empleados
+              Error al cargar personal
             </p>
             <p className="text-sm text-muted-foreground">{error.message}</p>
           </CardContent>
@@ -746,51 +348,41 @@ export function EmployeesPage() {
           <ChevronRight className="size-3 text-muted-foreground/50" />
           <span className="text-muted-foreground">Personal</span>
           <ChevronRight className="size-3 text-muted-foreground/50" />
-          {activeTab === 'employees' ? (
+          <span
+            className={cn(
+              'text-foreground',
+              activeSubView === 'list' && activeTab === 'employees' && 'font-semibold',
+            )}
+          >
+            {activeTab === 'employees' ? 'Personal' : activeTab === 'users' ? 'Usuarios' : 'Roles'}
+          </span>
+          {activeTab === 'employees' && activeSubView === 'create' && (
             <>
-              <span className={cn('text-foreground', activeSubView === 'list' && 'font-semibold')}>Empleados</span>
-              {activeSubView === 'create' && (
-                <>
-                  <ChevronRight className="size-3 text-muted-foreground/50" />
-                  <span className="text-foreground font-semibold">Nuevo</span>
-                </>
-              )}
-              {activeSubView === 'edit' && (
-                <>
-                  <ChevronRight className="size-3 text-muted-foreground/50" />
-                  <span className="text-foreground font-semibold">Editar</span>
-                </>
-              )}
+              <ChevronRight className="size-3 text-muted-foreground/50" />
+              <span className="text-foreground font-semibold">Nuevo</span>
             </>
-          ) : activeTab === 'users' ? (
+          )}
+          {activeTab === 'employees' && activeSubView === 'edit' && (
             <>
-              <span className={cn('text-foreground', userActiveView === 'list' && 'font-semibold')}>Usuarios</span>
-              {userActiveView === 'create' && (
-                <>
-                  <ChevronRight className="size-3 text-muted-foreground/50" />
-                  <span className="text-foreground font-semibold">Nuevo</span>
-                </>
-              )}
+              <ChevronRight className="size-3 text-muted-foreground/50" />
+              <span className="text-foreground font-semibold">Editar</span>
             </>
-          ) : (
-            <span className="text-foreground font-semibold">Roles</span>
           )}
         </div>
       }
       title={
-        activeTab === 'roles'
-          ? 'Roles y Permisos'
-          : activeTab === 'users' && userActiveView === 'create'
+        activeTab === 'employees'
+          ? activeSubView === 'create'
             ? 'Nuevo Personal'
-            : activeTab === 'employees' && activeSubView === 'create'
-              ? 'Nuevo Empleado'
-              : activeTab === 'employees' && activeSubView === 'edit'
-                ? 'Editar Empleado'
-                : 'Personal (Staff)'
+            : activeSubView === 'edit'
+              ? 'Editar Personal'
+              : 'Personal (Staff)'
+          : activeTab === 'users'
+            ? 'Usuarios'
+            : 'Roles y Permisos'
       }
       leftPanel={
         <div className="flex flex-col gap-6 z-10 w-full">
-          {/* Toggle de secciones */}
           <div className="space-y-3">
             <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">
               Sección
@@ -804,75 +396,82 @@ export function EmployeesPage() {
                   setActiveSubView('list')
                 }
               }}
-              className="w-full justify-start border border-border/10 rounded-2xl p-1 bg-muted/20"
             >
-              <ToggleGroupItem value="employees" className="flex-1 rounded-xl text-xs font-bold gap-1.5 data-[state=on]:bg-background">
-                <Briefcase className="size-3.5" /> Empleados
+              <ToggleGroupItem value="employees">
+                <Users className="size-3.5" /> Personal
               </ToggleGroupItem>
-              <ToggleGroupItem value="users" className="flex-1 rounded-xl text-xs font-bold gap-1.5 data-[state=on]:bg-background">
-                <UsersRound className="size-3.5" /> Usuarios
+              <ToggleGroupItem value="users">
+                <Users className="size-3.5" /> Usuarios
               </ToggleGroupItem>
-              <ToggleGroupItem value="roles" className="flex-1 rounded-xl text-xs font-bold gap-1.5 data-[state=on]:bg-background">
+              <ToggleGroupItem value="roles">
                 <Shield className="size-3.5" /> Roles
               </ToggleGroupItem>
             </ToggleGroup>
           </div>
 
-          {/* Panel de Empleados */}
           {activeTab === 'employees' && activeSubView === 'list' && (
             <>
-              <div className="space-y-3">
+              <div className="space-y-3 pt-4 border-t border-border/5">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">
                   Acciones
                 </p>
                 <Button
                   onClick={handleAdd}
-                  className="w-full justify-start gap-2.5 px-4 py-2.5 rounded-2xl font-semibold text-sm bg-primary text-primary-foreground hover:bg-primary/95"
+                  className="w-full justify-center gap-2.5 px-4 py-2.5 rounded-2xl font-semibold text-sm bg-primary text-primary-foreground hover:bg-primary/95"
                 >
                   <Plus className="size-4 shrink-0" />
-                  Agregar Empleado
+                  Agregar Personal
                 </Button>
               </div>
-
+              <div className="space-y-3">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">
+                  Buscador
+                </p>
+                <SearchInput
+                  placeholder="Buscar personal..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
               <div className="space-y-3 pt-4 border-t border-border/5">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">
                   Resumen
                 </p>
-                <div className="space-y-2">
-                  <StatCard icon={Users} label="Total" value={stats?.total ?? 0} color="" />
-                  <StatCard icon={UserCheck} label="Activos" value={stats?.active ?? 0} color="" />
-                  <StatCard icon={TimerOff} label="De licencia" value={stats?.onLeave ?? 0} color="" />
-                  <StatCard icon={UserX} label="Inactivos" value={(stats?.inactive ?? 0) + (stats?.terminated ?? 0)} color="" />
+                <div className="grid grid-cols-2 gap-2">
+                  <StatCard
+                    icon={Users}
+                    label="Total"
+                    value={stats?.total ?? 0}
+                  />
+                  <StatCard
+                    icon={UserCheck}
+                    label="Activos"
+                    value={stats?.active ?? 0}
+                  />
+                  <StatCard
+                    icon={TimerOff}
+                    label="De licencia"
+                    value={stats?.onLeave ?? 0}
+                  />
+                  <StatCard
+                    icon={UserX}
+                    label="Inactivos"
+                    value={(stats?.inactive ?? 0) + (stats?.terminated ?? 0)}
+                  />
                 </div>
               </div>
             </>
           )}
 
-          {/* Panel de Usuarios */}
-          {activeTab === 'users' && userActiveView !== 'create' && (
+          {activeTab === 'users' && (
             <>
               <div className="space-y-3">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">
-                  Acciones
-                </p>
-                <Button
-                  onClick={handleOpenCreateUser}
-                  className="w-full justify-start gap-2.5 px-4 py-2.5 rounded-2xl font-semibold text-sm bg-primary text-primary-foreground hover:bg-primary/95"
-                >
-                  <Plus className="size-4 shrink-0" />
-                  Nuevo Usuario
-                </Button>
-              </div>
-              <div className="space-y-3 pt-4 border-t border-border/5">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">
-                  Filtros
-                </p>
                 <FilterBar
-                  search={userSearch}
-                  onSearchChange={setUserSearch}
-                  searchPlaceholder="Buscar usuario..."
-                  filterValue={roleFilter}
-                  onFilterChange={setRoleFilter}
+                  search={usersPage.search}
+                  onSearchChange={usersPage.setSearch}
+                  searchPlaceholder="Buscar por nombre, email o CI..."
+                  filterValue={usersPage.roleFilter}
+                  onFilterChange={usersPage.setRoleFilter}
                   filterOptions={[
                     { value: 'ALL', label: 'Todos los Roles' },
                     { value: 'ADMIN', label: 'Administradores' },
@@ -884,29 +483,52 @@ export function EmployeesPage() {
               </div>
               <div className="space-y-3 pt-4 border-t border-border/5">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">
-                  Métricas
+                  Info
                 </p>
-                <div className="space-y-2">
-                  <StatCard icon={Users} label="Total" value={totalUsers} color="" />
-                  <StatCard icon={ShieldAlert} label="Admins" value={adminCount} color="" />
-                  <StatCard icon={ShieldCheck} label="Recepcionistas" value={receptionistCount} color="" />
-                  <StatCard icon={Shield} label="Entrenadores" value={trainerCount} color="" />
-                </div>
+                <p className="text-xs text-muted-foreground px-1 leading-relaxed">
+                  Gestión de usuarios staff: administradores, recepcionistas y entrenadores.
+                </p>
               </div>
             </>
           )}
 
-          {/* Panel de Roles */}
           {activeTab === 'roles' && (
-            <div className="space-y-3">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">
-                Roles del Sistema
-              </p>
-              <p className="text-xs text-muted-foreground px-1 leading-relaxed">
-                El sistema cuenta con 3 roles predefinidos. Hacé clic en cada
-                uno para ver sus permisos.
-              </p>
-            </div>
+            <>
+              <div className="space-y-3 pt-4 border-t border-border/5">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">
+                  Roles del Sistema
+                </p>
+                <p className="text-xs text-muted-foreground px-1 leading-relaxed">
+                  El sistema cuenta con 3 roles predefinidos. Hacé clic en cada
+                  uno para ver sus permisos.
+                </p>
+              </div>
+              <div className="space-y-3 pt-4 border-t border-border/5">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">
+                  Distribución
+                </p>
+                <div className="grid grid-cols-1 gap-3">
+                  <StatCard
+                    label="Administradores"
+                    value={usersPage.usersList.filter((u) => u.role === 'ADMIN').length}
+                    icon={ShieldAlert}
+                    variant="default"
+                  />
+                  <StatCard
+                    label="Recepcionistas"
+                    value={usersPage.usersList.filter((u) => u.role === 'RECEPTIONIST').length}
+                    icon={ShieldCheck}
+                    variant="default"
+                  />
+                  <StatCard
+                    label="Entrenadores"
+                    value={usersPage.usersList.filter((u) => u.role === 'TRAINER').length}
+                    icon={Shield}
+                    variant="default"
+                  />
+                </div>
+              </div>
+            </>
           )}
 
           <div className="space-y-3 pt-4 border-t border-border/5">
@@ -914,172 +536,55 @@ export function EmployeesPage() {
               Ayuda
             </p>
             <p className="text-xs text-muted-foreground px-1 leading-relaxed">
-              {activeTab === 'employees'
-                ? 'Gestioná el personal del gimnasio: altas, bajas, datos laborales y bancarios.'
-                : activeTab === 'users'
-                  ? 'Gestioná las credenciales de acceso de recepción, entrenadores y administradores.'
-                  : 'Consultá la distribución de permisos y funcionalidades según el rol asignado.'}
+              Gestioná el personal del gimnasio: altas, bajas, datos laborales y
+              bancarios.
             </p>
           </div>
         </div>
       }
     >
-      {activeTab === 'employees' ? (
-        activeSubView === 'create' || activeSubView === 'edit' ? (
-          <EmployeeForm
-            employeeId={editingId}
-            onClose={() => {
-              setActiveSubView('list')
-              setEditingId(null)
-            }}
-          />
-        ) : isLoading ? (
-          <Card className="rounded-[2rem] border-border/10 shadow-xl bg-card p-6">
-            <div className="space-y-4 animate-pulse">
-              <Skeleton className="h-5 w-48 rounded-lg" />
-              <Skeleton className="h-9 w-full rounded-2xl" />
-              <Skeleton className="h-9 w-full rounded-2xl" />
-            </div>
-          </Card>
-        ) : !employeesList || employeesList.length === 0 ? (
-          <EmptyState onAdd={handleAdd} />
-        ) : (
-          <Card className="rounded-[2rem] border-border/10 shadow-xl bg-card overflow-hidden relative transition-all duration-200">
-            <div className="absolute -top-12 -left-12 size-36 bg-primary/5 rounded-full blur-2xl pointer-events-none" />
-            <CardHeader className="relative z-10 flex flex-row items-center justify-between">
-              <div>
-                <CardTitle className="text-xl font-black">
-                  Listado de Empleados
-                </CardTitle>
-                <CardDescription>
-                  {filtered?.length ?? 0} empleado{(filtered?.length ?? 0) !== 1 ? 's' : ''}
-                  {search ? ` coinciden con "${search}"` : ''}
-                </CardDescription>
-              </div>
-              <div className="flex items-center gap-2">
-                <SearchInput
-                  placeholder="Buscar empleado..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-                <Button
-                  onClick={handleAdd}
-                  className="rounded-full font-bold h-9"
-                >
-                  <Plus className="size-4 mr-1" />
-                  Nuevo
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="relative z-10 p-0">
-              <DataTable
-                data={filtered ?? []}
-                columns={employeeColumns}
-                keyExtractor={(emp: Employee) => emp.id}
-              />
-            </CardContent>
-          </Card>
-        )
-      ) : activeTab === 'users' ? (
-        userActiveView === 'create' ? (
-          <UserCreationWizard onClose={handleCloseCreateUser} />
-        ) : (
-          <TooltipProvider delayDuration={200}>
-            {/* Vista Desktop (Tabla) */}
-            <div className="hidden 2xl:block">
-              <Card className="rounded-[2rem] border-border/10 shadow-xl bg-card overflow-hidden relative p-0">
-                <DataTable
-                  columns={columns}
-                  data={paginatedUsers}
-                  isLoading={isUsersLoading}
-                  loadingMessage="Cargando usuarios..."
-                  emptyMessage="No se encontraron usuarios."
-                  keyExtractor={(user: StaffUser) => user.id}
-                  currentPage={userCurrentPage}
-                  pageSize={userPageSize}
-                  totalPages={userTotalPages}
-                  totalFiltered={userTotalFiltered}
-                  onPageChange={setUserCurrentPage}
-                  onPageSizeChange={setUserPageSize}
-                />
-              </Card>
-            </div>
-
-            {/* Vista Mobile (Cards) */}
-            <div className="block 2xl:hidden space-y-4">
-              {isUsersLoading ? (
-                <div className="space-y-4">
-                  {Array.from({ length: 3 }).map((_, i) => (
-                    <UserCardSkeleton key={i} index={i} />
-                  ))}
-                </div>
-              ) : paginatedUsers.length === 0 ? (
-                <div className="rounded-[2rem] border border-border/10 bg-card p-8 text-center text-muted-foreground shadow-md">
-                  No se encontraron usuarios.
-                </div>
-              ) : (
-                <>
-                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-6 py-4 rounded-[2rem] border bg-card border-border/10 shadow-md relative overflow-hidden">
-                    <div className="absolute -top-12 -left-12 size-24 bg-primary/5 rounded-full blur-xl pointer-events-none" />
-                    <span className="text-xs text-muted-foreground font-semibold relative z-10 text-center sm:text-left">
-                      Mostrando {userTotalFiltered === 0 ? 0 : (userCurrentPage - 1) * userPageSize + 1} a {Math.min(userCurrentPage * userPageSize, userTotalFiltered)} de {userTotalFiltered} usuarios
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {paginatedUsers.map((user) => (
-                      <UserCard
-                        key={user.id}
-                        user={user}
-                        currentUserId={currentUserId}
-                        setEditingUser={setEditingUser}
-                        setViewUserId={setViewUserId}
-                        handleDeleteUser={handleDeleteUser}
-                      />
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-          </TooltipProvider>
-        )
+      {activeTab === 'users' ? (
+        <UsersTabContent currentUserId={currentUserId} usersPage={usersPage} />
+      ) : activeTab === 'roles' ? (
+        <RolesTabContent usersList={usersPage.usersList} />
+      ) : activeSubView === 'create' || activeSubView === 'edit' ? (
+        <EmployeeForm
+          employeeId={editingId}
+          onClose={() => {
+            setActiveSubView('list')
+            setEditingId(null)
+          }}
+        />
+      ) : isLoading ? (
+        <div className="space-y-4 animate-pulse">
+          <Skeleton className="h-5 w-48 rounded-lg" />
+          <Skeleton className="h-9 w-full rounded-2xl" />
+          <Skeleton className="h-9 w-full rounded-2xl" />
+        </div>
+      ) : !employeesList || employeesList.length === 0 ? (
+        <EmptyState onAdd={handleAdd} />
       ) : (
-        <RolesView
-          adminCount={adminCount}
-          receptionistCount={receptionistCount}
-          trainerCount={trainerCount}
+        <DataTable
+          title="Listado de Personal"
+          description={`${totalFiltered} persona${totalFiltered !== 1 ? 's' : ''}`}
+          data={paginatedEmployees}
+          columns={columns}
+          keyExtractor={(emp: Employee) => emp.id}
+          currentPage={currentPage}
+          pageSize={pageSize}
+          totalPages={totalPages}
+          totalFiltered={totalFiltered}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
         />
       )}
 
       <EmployeeDetailDialog
         employeeId={detailId}
         open={detailId !== null}
-        onOpenChange={(v) => { if (!v) setDetailId(null) }}
-      />
-
-      <UserDetailDialog
-        userId={viewUserId}
-        onOpenChange={(open) => {
-          if (!open) setViewUserId(null)
+        onOpenChange={(v) => {
+          if (!v) setDetailId(null)
         }}
-      />
-
-      {editingUser && (
-        <UserEditDialog
-          user={editingUser}
-          currentUserId={currentUserId}
-          open={editingUser !== null}
-          onOpenChange={(open) => {
-            if (!open) setEditingUser(null)
-          }}
-        />
-      )}
-
-      <ConfirmDialog
-        open={deletingUserId !== null}
-        onOpenChange={(open) => { if (!open) setDeletingUserId(null) }}
-        title="¿Eliminar Usuario?"
-        description="Esta acción deshabilitará el acceso de este usuario al sistema. Las sesiones activas se cerrarán."
-        onConfirm={handleConfirmDeleteUser}
       />
     </ModuleLayout>
   )

@@ -34,7 +34,8 @@ const EMPTY_FORM: ProductFormValues = {
 
 export function useInventory() {
   const queryClient = useQueryClient()
-  const { userRole } = authedRoute.useRouteContext()
+  const { session } = authedRoute.useRouteContext()
+  const userRole = session.user.role
   const isAdmin = userRole === 'ADMIN'
   const { branchId } = useCurrentBranch()
 

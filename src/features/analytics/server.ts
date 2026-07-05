@@ -1,5 +1,5 @@
 import { createServerFn } from '@tanstack/react-start'
-import { requireRole } from '#/shared/lib/server-utils.ts'
+import { requirePermission } from '#/shared/lib/server-utils.ts'
 import { z } from 'zod'
 import { requiredString, uuidField } from '#/shared/lib/schemas.ts'
 import { computeChurnRisk, computeAllChurnRisks, generateChurnReengagementMessage } from './churn.ts'
@@ -17,7 +17,7 @@ import { executeNaturalQuery } from './query.ts'
 export const getMemberChurnRisk = createServerFn({ method: 'GET' })
   .validator((data: unknown) => z.object({ memberId: uuidField }).parse(data))
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'reports:read' } })
     return computeChurnRisk(data.memberId)
   })
 
@@ -26,7 +26,7 @@ export const getChurnRisks = createServerFn({ method: 'GET' })
     z.object({ limit: z.number().min(1).max(100).default(20) }).parse(data),
   )
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'reports:read' } })
     return computeAllChurnRisks(data.limit)
   })
 
@@ -34,7 +34,7 @@ export const getChurnRisks = createServerFn({ method: 'GET' })
 
 export const getInsights = createServerFn({ method: 'GET' }).handler(
   async () => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
+    await requirePermission({ data: { permission: 'reports:read' } })
     return detectInsights()
   },
 )
@@ -51,7 +51,7 @@ export const getRecommendations = createServerFn({ method: 'GET' })
       .parse(data),
   )
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'reports:read' } })
     return getProductRecommendations(data.productId, data.limit)
   })
 
@@ -65,7 +65,7 @@ export const getMemberRecommendations = createServerFn({ method: 'GET' })
       .parse(data),
   )
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'reports:read' } })
     return getMemberBasedRecommendations(data.memberId, data.limit)
   })
 
@@ -76,7 +76,7 @@ export const getAttendanceForecast = createServerFn({ method: 'GET' })
     z.object({ days: z.number().min(1).max(30).default(7) }).parse(data),
   )
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
+    await requirePermission({ data: { permission: 'reports:read' } })
     return predictAttendance(data.days)
   })
 
@@ -84,7 +84,7 @@ export const getAttendanceForecast = createServerFn({ method: 'GET' })
 
 export const getReorderSuggestionsFn = createServerFn({ method: 'GET' }).handler(
   async () => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'reports:read' } })
     return getReorderSuggestions()
   },
 )
@@ -96,7 +96,7 @@ export const askAnalytics = createServerFn({ method: 'GET' })
     z.object({ query: requiredString }).parse(data),
   )
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] } })
+    await requirePermission({ data: { permission: 'reports:read' } })
     return executeNaturalQuery(data.query)
   })
 
@@ -110,13 +110,13 @@ export const getAIRecommendations = createServerFn({ method: 'GET' })
       .parse(data),
   )
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'reports:read' } })
     return getAIRecommendationsForMember(data.memberId, data.limit)
   })
 
 export const getAIChurnMessage = createServerFn({ method: 'GET' })
   .validator((data: unknown) => z.object({ memberId: uuidField }).parse(data))
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'reports:read' } })
     return generateChurnReengagementMessage(data.memberId)
   })

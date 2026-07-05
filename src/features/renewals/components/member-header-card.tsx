@@ -1,8 +1,12 @@
 import { getInitials } from '../utils.ts'
-import type { MemberWithSubscriptions } from '../types.ts'
 
 interface MemberHeaderCardProps {
-  member: MemberWithSubscriptions
+  member: {
+    fullName: string
+    photoUrl?: string | null
+    documentNumber?: string | null
+    phone?: string | null
+  }
   extraInfo?: string
 }
 

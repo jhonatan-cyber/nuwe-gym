@@ -2,20 +2,9 @@ import { useQuery } from '@tanstack/react-query'
 import { Users, ArrowUp, ArrowDown } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useState, useEffect, useMemo } from 'react'
-import {
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip as RechartsTooltip,
-  ResponsiveContainer,
-  Legend,
-} from 'recharts'
 import { getMembershipTrends } from '#/features/dashboard/server.ts'
 import { cn } from '#/shared/lib/utils.ts'
+import { LazyRecharts } from '#/shared/components/lazy-recharts'
 
 export function MembershipTrendsChart() {
   const { data, isLoading } = useQuery({
@@ -95,48 +84,52 @@ export function MembershipTrendsChart() {
         )}
       </div>
 
-      <div className="h-[220px] w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} margin={{ top: 8, right: 8, left: -22, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke={themeColors.grid} vertical={false} />
-            <XAxis dataKey="month" stroke={themeColors.text} fontSize={9} tickLine={false} axisLine={false} />
-            <YAxis stroke={themeColors.text} fontSize={9} tickLine={false} axisLine={false} />
-            <RechartsTooltip
-              contentStyle={{
-                backgroundColor: themeColors.tooltipBg,
-                border: themeColors.tooltipBorder,
-                borderRadius: '14px',
-                fontSize: 11,
-              }}
-              labelStyle={{ color: themeColors.tooltipLabel, fontWeight: 'bold' }}
-              cursor={{ fill: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)' }}
-            />
-            <Legend
-              iconType="circle"
-              iconSize={7}
-              wrapperStyle={{ fontSize: 9, paddingTop: 8 }}
-            />
-            <Bar dataKey="newMembers" name="Nuevas" stackId="a" fill="#22c55e" radius={[0, 0, 0, 0]} />
-            <Bar dataKey="expired" name="Vencidas" stackId="a" fill="#ef4444" radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
+      <LazyRecharts height={220}>
+        {(R) => (
+          <R.ResponsiveContainer width="100%" height="100%">
+            <R.BarChart data={data} margin={{ top: 8, right: 8, left: -22, bottom: 0 }}>
+              <R.CartesianGrid strokeDasharray="3 3" stroke={themeColors.grid} vertical={false} />
+              <R.XAxis dataKey="month" stroke={themeColors.text} fontSize={9} tickLine={false} axisLine={false} />
+              <R.YAxis stroke={themeColors.text} fontSize={9} tickLine={false} axisLine={false} />
+              <R.Tooltip
+                contentStyle={{
+                  backgroundColor: themeColors.tooltipBg,
+                  border: themeColors.tooltipBorder,
+                  borderRadius: '14px',
+                  fontSize: 11,
+                }}
+                labelStyle={{ color: themeColors.tooltipLabel, fontWeight: 'bold' }}
+                cursor={{ fill: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)' }}
+              />
+              <R.Legend
+                iconType="circle"
+                iconSize={7}
+                wrapperStyle={{ fontSize: 9, paddingTop: 8 }}
+              />
+              <R.Bar dataKey="newMembers" name="Nuevas" stackId="a" fill="#22c55e" radius={[0, 0, 0, 0]} />
+              <R.Bar dataKey="expired" name="Vencidas" stackId="a" fill="#ef4444" radius={[4, 4, 0, 0]} />
+            </R.BarChart>
+          </R.ResponsiveContainer>
+        )}
+      </LazyRecharts>
 
       {/* Mini line chart overlay for active trend */}
-      <div className="h-[60px] w-full -mt-2">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data} margin={{ top: 0, right: 8, left: -22, bottom: 0 }}>
-            <Line
-              type="monotone"
-              dataKey="active"
-              stroke="#3b82f6"
-              strokeWidth={2}
-              dot={false}
-              isAnimationActive={true}
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
+      <LazyRecharts height={60} className="-mt-2">
+        {(R) => (
+          <R.ResponsiveContainer width="100%" height="100%">
+            <R.LineChart data={data} margin={{ top: 0, right: 8, left: -22, bottom: 0 }}>
+              <R.Line
+                type="monotone"
+                dataKey="active"
+                stroke="#3b82f6"
+                strokeWidth={2}
+                dot={false}
+                isAnimationActive={true}
+              />
+            </R.LineChart>
+          </R.ResponsiveContainer>
+        )}
+      </LazyRecharts>
     </div>
   )
 }

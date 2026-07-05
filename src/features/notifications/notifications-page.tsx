@@ -49,7 +49,8 @@ const NOTIFICATION_LABELS: Record<string, string> = {
 
 export function NotificationsPage() {
   const queryClient = useQueryClient()
-  const { userRole } = authedRoute.useRouteContext()
+  const { session } = authedRoute.useRouteContext()
+  const userRole = session.user.role
   const isAdmin = userRole === 'ADMIN'
 
   const { data, isLoading } = useQuery({

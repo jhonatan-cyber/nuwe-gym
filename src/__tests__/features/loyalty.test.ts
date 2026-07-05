@@ -64,10 +64,10 @@ describe('Points', () => {
   it('should earn points and update balance', async () => {
     const member = await createMember()
 
-    const balance1 = await earnPoints(member.id, 50, 'BONUS', null, 'Test bonus')
+    const balance1 = await earnPoints(member.id, 50, 'BONUS', undefined, 'Test bonus')
     expect(balance1).toBe(50)
 
-    const balance2 = await earnPoints(member.id, 30, 'BONUS', null, 'Another bonus')
+    const balance2 = await earnPoints(member.id, 30, 'BONUS', undefined, 'Another bonus')
     expect(balance2).toBe(80)
 
     // Verify history
@@ -87,15 +87,15 @@ describe('Points', () => {
   it('should start with zero balance for new member', async () => {
     const member = await createMember()
 
-    const balance = await earnPoints(member.id, 10, 'CHECK_IN', null, 'First check-in')
+    const balance = await earnPoints(member.id, 10, 'CHECK_IN', undefined, 'First check-in')
     expect(balance).toBe(10)
   })
 
   it('should handle negative points (redemption)', async () => {
     const member = await createMember()
-    await earnPoints(member.id, 100, 'BONUS', null, 'Initial')
+    await earnPoints(member.id, 100, 'BONUS', undefined, 'Initial')
 
-    const balance = await earnPoints(member.id, -30, 'REDEEM', null, 'Redeemed item')
+    const balance = await earnPoints(member.id, -30, 'REDEEM', undefined, 'Redeemed item')
     expect(balance).toBe(70)
   })
 })

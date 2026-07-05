@@ -1,20 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-  LineChart,
-  Line,
-  PieChart,
-  Pie,
-  Cell,
-} from 'recharts'
-import {
   Card,
   CardContent,
   CardHeader,
@@ -58,6 +43,7 @@ import {
 } from '#/features/reports/server.ts'
 import { formatCurrency } from '#/shared/lib/formatters.ts'
 import { CopilotSummary } from './components/copilot-summary.tsx'
+import { LazyRecharts } from '#/shared/components/lazy-recharts'
 
 type Tab = 'financial' | 'attendance' | 'sales' | 'members' | 'commissions' | 'profitability' | 'crossbranch'
 type Preset = 'today' | 'week' | 'month' | 'year' | 'custom'
@@ -343,49 +329,51 @@ function FinancialReport({
           <CardTitle>Ingresos vs Egresos</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-[350px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data.chartData}>
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  className="stroke-border"
-                />
-                <XAxis
-                  dataKey="date"
-                  tickFormatter={formatDateLabel}
-                  className="text-xs text-muted-foreground"
-                />
-                <YAxis className="text-xs text-muted-foreground" />
-                <Tooltip
-                  contentStyle={{
-                    borderRadius: '8px',
-                    border: '1px solid hsl(var(--border))',
-                  }}
-                  labelFormatter={(l) => formatDateLabel(l)}
-                  formatter={(value) => formatCurrency(Number(value ?? 0))}
-                />
-                <Legend />
-                <Bar
-                  dataKey="membershipIncome"
-                  name="Membresías"
-                  fill="#6366f1"
-                  radius={[4, 4, 0, 0]}
-                />
-                <Bar
-                  dataKey="posIncome"
-                  name="POS"
-                  fill="#22c55e"
-                  radius={[4, 4, 0, 0]}
-                />
-                <Bar
-                  dataKey="expenses"
-                  name="Egresos"
-                  fill="#ef4444"
-                  radius={[4, 4, 0, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          <LazyRecharts height={350}>
+            {(R) => (
+              <R.ResponsiveContainer width="100%" height="100%">
+                <R.BarChart data={data.chartData}>
+                  <R.CartesianGrid
+                    strokeDasharray="3 3"
+                    className="stroke-border"
+                  />
+                  <R.XAxis
+                    dataKey="date"
+                    tickFormatter={formatDateLabel}
+                    className="text-xs text-muted-foreground"
+                  />
+                  <R.YAxis className="text-xs text-muted-foreground" />
+                  <R.Tooltip
+                    contentStyle={{
+                      borderRadius: '8px',
+                      border: '1px solid hsl(var(--border))',
+                    }}
+                    labelFormatter={(l: any) => formatDateLabel(l)}
+                    formatter={(value: any) => formatCurrency(value)}
+                  />
+                  <R.Legend />
+                  <R.Bar
+                    dataKey="membershipIncome"
+                    name="Membresías"
+                    fill="#6366f1"
+                    radius={[4, 4, 0, 0]}
+                  />
+                  <R.Bar
+                    dataKey="posIncome"
+                    name="POS"
+                    fill="#22c55e"
+                    radius={[4, 4, 0, 0]}
+                  />
+                  <R.Bar
+                    dataKey="expenses"
+                    name="Egresos"
+                    fill="#ef4444"
+                    radius={[4, 4, 0, 0]}
+                  />
+                </R.BarChart>
+              </R.ResponsiveContainer>
+            )}
+          </LazyRecharts>
         </CardContent>
       </Card>
     </div>
@@ -429,41 +417,43 @@ function AttendanceReport({
           <CardTitle>Check-ins por Día</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-[350px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={data.chartData}>
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  className="stroke-border"
-                />
-                <XAxis
-                  dataKey="date"
-                  tickFormatter={formatDateLabel}
-                  className="text-xs text-muted-foreground"
-                />
-                <YAxis
-                  className="text-xs text-muted-foreground"
-                  allowDecimals={false}
-                />
-                <Tooltip
-                  contentStyle={{
-                    borderRadius: '8px',
-                    border: '1px solid hsl(var(--border))',
-                  }}
-                  labelFormatter={(l) => formatDateLabel(l)}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="count"
-                  name="Check-ins"
-                  stroke="#6366f1"
-                  strokeWidth={2}
-                  dot={{ fill: '#6366f1', r: 4 }}
-                  activeDot={{ r: 6 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+          <LazyRecharts height={350}>
+            {(R) => (
+              <R.ResponsiveContainer width="100%" height="100%">
+                <R.LineChart data={data.chartData}>
+                  <R.CartesianGrid
+                    strokeDasharray="3 3"
+                    className="stroke-border"
+                  />
+                  <R.XAxis
+                    dataKey="date"
+                    tickFormatter={formatDateLabel}
+                    className="text-xs text-muted-foreground"
+                  />
+                  <R.YAxis
+                    className="text-xs text-muted-foreground"
+                    allowDecimals={false}
+                  />
+                  <R.Tooltip
+                    contentStyle={{
+                      borderRadius: '8px',
+                      border: '1px solid hsl(var(--border))',
+                    }}
+                    labelFormatter={(l: any) => formatDateLabel(l)}
+                  />
+                  <R.Line
+                    type="monotone"
+                    dataKey="count"
+                    name="Check-ins"
+                    stroke="#6366f1"
+                    strokeWidth={2}
+                    dot={{ fill: '#6366f1', r: 4 }}
+                    activeDot={{ r: 6 }}
+                  />
+                </R.LineChart>
+              </R.ResponsiveContainer>
+            )}
+          </LazyRecharts>
         </CardContent>
       </Card>
     </div>
@@ -526,7 +516,7 @@ function SalesReport({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {data.chartData.map((row) => (
+                {data.chartData.map((row: any) => (
                   <TableRow key={row.name}>
                     <TableCell className="font-medium">{row.name}</TableCell>
                     <TableCell className="text-right">{row.quantity}</TableCell>
@@ -545,33 +535,35 @@ function SalesReport({
             <CardTitle>Top 5 Productos</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={topProducts}
-                    dataKey="total"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={100}
-                    label={({ name, percent }) =>
-                      `${name} (${((percent ?? 0) * 100).toFixed(0)}%)`
-                    }
-                  >
-                    {topProducts.map((_, i) => (
-                      <Cell
-                        key={i}
-                        fill={CHART_COLORS[i % CHART_COLORS.length]}
-                      />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    formatter={(value) => formatCurrency(Number(value ?? 0))}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
+            <LazyRecharts height={300}>
+              {(R) => (
+                <R.ResponsiveContainer width="100%" height="100%">
+                  <R.PieChart>
+                    <R.Pie
+                      data={topProducts}
+                      dataKey="total"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={100}
+                      label={({ name, percent }: any) =>
+                        `${name} (${((percent ?? 0) * 100).toFixed(0)}%)`
+                      }
+                    >
+                      {topProducts.map((_: any, i: number) => (
+                        <R.Cell
+                          key={i}
+                          fill={CHART_COLORS[i % CHART_COLORS.length]}
+                        />
+                      ))}
+                    </R.Pie>
+                    <R.Tooltip
+                      formatter={(value: any) => formatCurrency(value)}
+                    />
+                  </R.PieChart>
+                </R.ResponsiveContainer>
+              )}
+            </LazyRecharts>
           </CardContent>
         </Card>
       </div>
@@ -629,27 +621,29 @@ function MembersReport({
             <CardTitle>Estado de Socios</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={statusData}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={100}
-                    label={({ name, value }) => `${name}: ${value}`}
-                  >
-                    {statusData.map((entry) => (
-                      <Cell key={entry.name} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
+            <LazyRecharts height={300}>
+              {(R) => (
+                <R.ResponsiveContainer width="100%" height="100%">
+                  <R.PieChart>
+                    <R.Pie
+                      data={statusData}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={100}
+                      label={({ name, value }: any) => `${name}: ${value}`}
+                    >
+                      {statusData.map((entry) => (
+                        <R.Cell key={entry.name} fill={entry.color} />
+                      ))}
+                    </R.Pie>
+                    <R.Tooltip />
+                    <R.Legend />
+                  </R.PieChart>
+                </R.ResponsiveContainer>
+              )}
+            </LazyRecharts>
           </CardContent>
         </Card>
 
@@ -888,7 +882,7 @@ function CrossBranchReport({ startDate, endDate }: { startDate: string; endDate:
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {branches.map((b) => (
+                {branches.map((b: any) => (
                   <TableRow key={b.branchId} className="hover:bg-muted/50 transition-colors">
                     <TableCell className="font-medium">{b.branchName}</TableCell>
                     <TableCell className="text-right">{b.activeMembers}</TableCell>
@@ -935,31 +929,33 @@ function CrossBranchReport({ startDate, endDate }: { startDate: string; endDate:
             <CardTitle className="text-base">Ingresos vs Egresos por Sucursal</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[350px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={branches}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                  <XAxis dataKey="branchName" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => formatCurrency(v)} />
-                  <Tooltip
-                    contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border))' }}
-                    formatter={(value: number) => formatCurrency(value)}
-                  />
-                  <Legend />
-                  <Bar dataKey="membershipIncome" name="Membresías" fill="#6366f1" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="posIncome" name="POS" fill="#22c55e" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="expenses" name="Egresos" fill="#ef4444" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="netBalance" name="Balance Neto" fill="#f59e0b" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            <LazyRecharts height={350}>
+              {(R) => (
+                <R.ResponsiveContainer width="100%" height="100%">
+                  <R.BarChart data={branches}>
+                    <R.CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                    <R.XAxis dataKey="branchName" tick={{ fontSize: 11 }} />
+                    <R.YAxis tick={{ fontSize: 11 }} tickFormatter={(v: any) => formatCurrency(v)} />
+                    <R.Tooltip
+                      contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border))' }}
+                      formatter={(value: any) => formatCurrency(value)}
+                    />
+                    <R.Legend />
+                    <R.Bar dataKey="membershipIncome" name="Membresías" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                    <R.Bar dataKey="posIncome" name="POS" fill="#22c55e" radius={[4, 4, 0, 0]} />
+                    <R.Bar dataKey="expenses" name="Egresos" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                    <R.Bar dataKey="netBalance" name="Balance Neto" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                  </R.BarChart>
+                </R.ResponsiveContainer>
+              )}
+            </LazyRecharts>
           </CardContent>
         </Card>
       )}
 
       {/* Branch metrics cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {branches.map((b) => (
+        {branches.map((b: any) => (
           <Card key={b.branchId} className="transition-all duration-200 hover:shadow-md">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
@@ -1039,20 +1035,22 @@ function ProfitabilityReport({ startDate, endDate }: { startDate: string; endDat
         <Card>
           <CardHeader><CardTitle>Ingresos vs Egresos vs Utilidad</CardTitle></CardHeader>
           <CardContent>
-            <div className="h-[320px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                  <XAxis dataKey="date" tickFormatter={(d) => new Date(d).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })} tick={{ fontSize: 10 }} />
-                  <YAxis tick={{ fontSize: 10 }} />
-                  <Tooltip contentStyle={{ borderRadius: '8px' }} formatter={(v) => formatCurrency(Number(v ?? 0))} />
-                  <Legend />
-                  <Bar dataKey="income" name="Ingresos" fill="#22c55e" radius={[3, 3, 0, 0]} />
-                  <Bar dataKey="expenses" name="Egresos" fill="#ef4444" radius={[3, 3, 0, 0]} />
-                  <Bar dataKey="profit" name="Utilidad" fill="#6366f1" radius={[3, 3, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            <LazyRecharts height={320}>
+              {(R) => (
+                <R.ResponsiveContainer width="100%" height="100%">
+                  <R.BarChart data={chartData}>
+                    <R.CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                    <R.XAxis dataKey="date" tickFormatter={(d: string) => new Date(d).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })} tick={{ fontSize: 10 }} />
+                    <R.YAxis tick={{ fontSize: 10 }} />
+                    <R.Tooltip contentStyle={{ borderRadius: '8px' }} formatter={(v: any) => formatCurrency(v)} />
+                    <R.Legend />
+                    <R.Bar dataKey="income" name="Ingresos" fill="#22c55e" radius={[3, 3, 0, 0]} />
+                    <R.Bar dataKey="expenses" name="Egresos" fill="#ef4444" radius={[3, 3, 0, 0]} />
+                    <R.Bar dataKey="profit" name="Utilidad" fill="#6366f1" radius={[3, 3, 0, 0]} />
+                  </R.BarChart>
+                </R.ResponsiveContainer>
+              )}
+            </LazyRecharts>
           </CardContent>
         </Card>
       )}

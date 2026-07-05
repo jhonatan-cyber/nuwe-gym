@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
@@ -12,8 +12,7 @@ import {
   Gift,
   CreditCard,
   Monitor,
-  Trash2,
-  Plus,
+  Megaphone,
 } from 'lucide-react'
 import {
   Card,
@@ -28,12 +27,21 @@ import { Input } from '#/shared/components/ui/input'
 import { Label } from '#/shared/components/ui/label'
 import { Skeleton } from '#/shared/components/ui/skeleton'
 import { Separator } from '#/shared/components/ui/separator'
-import { CouponManager } from '#/features/loyalty/components/coupon-manager.tsx'
-import { PromotionsManager } from '#/features/promotions/components/promotions-manager.tsx'
-import { TvMediaManager } from '#/features/tv-screen/tv-media-manager.tsx'
 import { getSettings, updateSettings } from '#/features/settings/server.ts'
 import { ModuleLayout } from '#/shared/components/layout/module-layout.tsx'
 import { cn } from '#/shared/lib/utils.ts'
+
+// ── Lazy-loaded tab content ──
+const CouponManagerLazy = lazy(() =>
+  import('#/features/loyalty/components/coupon-manager').then((m) => ({
+    default: m.CouponManager,
+  })),
+)
+const TvMediaManagerLazy = lazy(() =>
+  import('#/features/tv-screen/tv-media-manager').then((m) => ({
+    default: m.TvMediaManager,
+  })),
+)
 
 type TabId = 'general' | 'billing' | 'notifications' | 'hours' | 'coupons' | 'promotions' | 'payments' | 'tv'
 
@@ -779,7 +787,9 @@ export function SettingsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 relative z-10">
-              <CouponManager />
+              <Suspense fallback={<div className="h-32 flex items-center justify-center"><div className="size-6 rounded-full border-2 border-primary/30 border-t-primary animate-spin" /></div>}>
+                <CouponManagerLazy />
+              </Suspense>
             </CardContent>
           </Card>
         )}
@@ -795,7 +805,9 @@ export function SettingsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 relative z-10">
-              <TvMediaManager />
+              <Suspense fallback={<div className="h-32 flex items-center justify-center"><div className="size-6 rounded-full border-2 border-primary/30 border-t-primary animate-spin" /></div>}>
+                <TvMediaManagerLazy />
+              </Suspense>
             </CardContent>
           </Card>
         )}

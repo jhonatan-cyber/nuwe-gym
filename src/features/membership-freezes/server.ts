@@ -13,7 +13,7 @@ async function getBranchMemberIds(branchId: string): Promise<string[]> {
   return rows.map((r) => r.id)
 }
 
-import { requireRole } from '#/shared/lib/server-utils.ts'
+import { requirePermission } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { z } from 'zod'
@@ -24,7 +24,7 @@ export const getFreezes = createServerFn({ method: 'GET' })
     z.object({ branchId: branchIdField }).optional(),
   )
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'membership-freezes:read' } })
     const memberIds = data?.branchId ? await getBranchMemberIds(data.branchId) : undefined
     if (data?.branchId && memberIds!.length === 0) return []
     return await db.query.membershipFreezes.findMany({
@@ -47,7 +47,7 @@ export const getMemberFreezes = createServerFn({ method: 'GET' })
     z.object({ memberId: uuidField }).parse(data),
   )
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'membership-freezes:read' } })
 
     return await db.query.membershipFreezes.findMany({
       where: eq(membershipFreezes.memberId, data.memberId),
@@ -74,8 +74,8 @@ export type CreateFreezeData = z.infer<typeof createFreezeSchema>
 export const createFreeze = createServerFn({ method: 'POST' })
   .validator((data) => createFreezeSchema.parse(data))
   .handler(async ({ data }) => {
-    const session = await requireRole({
-      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
+    const session = await requirePermission({
+      data: { permission: 'membership-freezes:write' },
     })
     const userId = session.user.id
 
@@ -154,7 +154,7 @@ export const resumeSubscription = createServerFn({ method: 'POST' })
     z.object({ freezeId: uuidField }).parse(data),
   )
   .handler(async ({ data }) => {
-    const session = await requireRole({ data: { roles: ['ADMIN'] } })
+    const session = await requirePermission({ data: { permission: 'membership-freezes:write' } })
 
     const freeze = await db.query.membershipFreezes.findFirst({
       where: eq(membershipFreezes.id, data.freezeId),
@@ -209,7 +209,7 @@ export const resumeSubscription = createServerFn({ method: 'POST' })
 
 export const getFreezeRules = createServerFn({ method: 'GET' }).handler(
   async () => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'membership-freezes:read' } })
 
     return {
       maxFreezeDays: 90,
@@ -223,7 +223,7 @@ export const getFrozenSubscriptions = createServerFn({ method: 'GET' })
     z.object({ branchId: branchIdField }).optional(),
   )
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'membership-freezes:read' } })
 
     const memberIds = data?.branchId ? await getBranchMemberIds(data.branchId) : undefined
     if (data?.branchId && memberIds!.length === 0) return []

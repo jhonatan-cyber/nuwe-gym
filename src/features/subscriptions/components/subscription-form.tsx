@@ -22,7 +22,7 @@ import {
   ToggleGroupItem,
 } from '#/shared/components/ui/toggle-group'
 import { formatCurrency, formatDate } from '#/shared/lib/formatters.ts'
-import { PAYMENT_METHOD_LABELS } from '#/shared/lib/subscription-utils.ts'
+import { PAYMENT_METHOD_LABELS, getActiveSubscription, isExpired } from '#/shared/lib/subscription-utils.ts'
 import type { PaymentMethod } from '#/shared/lib/subscription-utils.ts'
 import { useSubscriptionForm } from '#/features/subscriptions/hooks/use-subscription-form.ts'
 
@@ -160,30 +160,65 @@ export function SubscriptionForm({ onBack }: SubscriptionFormProps) {
                         No se encontraron socios
                       </div>
                     ) : (
-                      filteredMembers.map((m) => (
-                        <button
-                          key={m.id}
-                          type="button"
-                          className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-xs font-semibold hover:bg-accent hover:text-accent-foreground transition-colors"
-                          onClick={() => {
-                            setFormData({ ...formData, memberId: m.id })
-                            setMemberSearch(m.fullName)
-                            setIsMemberDropdownOpen(false)
-                          }}
-                        >
-                          <div>
-                            <p className="font-bold">{m.fullName}</p>
-                            <p className="text-[10px] text-muted-foreground mt-0.5">
-                              CI: {m.documentNumber}
-                            </p>
-                          </div>
-                          {formData.memberId === m.id && (
-                            <Badge className="bg-emerald-500/15 text-emerald-600 hover:bg-emerald-500/15 border-none text-[9px] font-bold uppercase">
-                              Seleccionado
-                            </Badge>
-                          )}
-                        </button>
-                      ))
+                      filteredMembers.map((m) => {
+                        const isSelected = formData.memberId === m.id
+                        const sub = getActiveSubscription(m)
+                        const expired = sub && isExpired(sub.endDate)
+                        const hasActiveSub = sub && sub.status === 'ACTIVE' && !expired
+
+                        let statusBadge = (
+                          <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground border border-border/10">
+                            Sin plan
+                          </span>
+                        )
+                        if (m.status === 'INACTIVE') {
+                          statusBadge = (
+                            <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-secondary text-secondary-foreground border border-border/10">
+                              Inactivo
+                            </span>
+                          )
+                        } else if (hasActiveSub) {
+                          statusBadge = (
+                            <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                              Activo
+                            </span>
+                          )
+                        } else if (expired) {
+                          statusBadge = (
+                            <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-red-500/10 text-red-500 border border-red-500/20">
+                              Vencido
+                            </span>
+                          )
+                        }
+
+                        return (
+                          <button
+                            key={m.id}
+                            type="button"
+                            className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-xs font-semibold hover:bg-accent hover:text-accent-foreground transition-colors"
+                            onClick={() => {
+                              setFormData({ ...formData, memberId: m.id })
+                              setMemberSearch(m.fullName)
+                              setIsMemberDropdownOpen(false)
+                            }}
+                          >
+                            <div>
+                              <p className="font-bold">{m.fullName}</p>
+                              <p className="text-[10px] text-muted-foreground mt-0.5">
+                                CI: {m.documentNumber}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              {statusBadge}
+                              {isSelected && (
+                                <Badge className="bg-emerald-500/15 text-emerald-600 hover:bg-emerald-500/15 border-none text-[9px] font-bold uppercase">
+                                  Seleccionado
+                                </Badge>
+                              )}
+                            </div>
+                          </button>
+                        )
+                      })
                     )}
                   </div>
                 </>

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Smartphone, Monitor, Laptop, Tablet, ShieldCheck, ShieldX, Trash2, Activity } from 'lucide-react'
+import { Smartphone, Monitor, Tablet, ShieldCheck, ShieldX, Trash2, Activity } from 'lucide-react'
 import { toast } from 'sonner'
 import { getUserDevices, toggleTrustDevice, removeDevice } from '#/features/users/device-server.ts'
 import { Button } from '#/shared/components/ui/button'

@@ -100,179 +100,245 @@ const AuthedTrainersRoute = AuthedTrainersRouteImport.update({
   id: '/trainers',
   path: '/trainers',
   getParentRoute: () => AuthedRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/_authed/trainers.lazy').then((d) => d.Route),
+)
 const AuthedSuppliersRoute = AuthedSuppliersRouteImport.update({
   id: '/suppliers',
   path: '/suppliers',
   getParentRoute: () => AuthedRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/_authed/suppliers.lazy').then((d) => d.Route),
+)
 const AuthedSubscriptionsRoute = AuthedSubscriptionsRouteImport.update({
   id: '/subscriptions',
   path: '/subscriptions',
   getParentRoute: () => AuthedRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/_authed/subscriptions.lazy').then((d) => d.Route),
+)
 const AuthedSettingsRoute = AuthedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
   getParentRoute: () => AuthedRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/_authed/settings.lazy').then((d) => d.Route),
+)
 const AuthedSalesRoute = AuthedSalesRouteImport.update({
   id: '/sales',
   path: '/sales',
   getParentRoute: () => AuthedRoute,
-} as any)
+} as any).lazy(() => import('./routes/_authed/sales.lazy').then((d) => d.Route))
 const AuthedReportsRoute = AuthedReportsRouteImport.update({
   id: '/reports',
   path: '/reports',
   getParentRoute: () => AuthedRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/_authed/reports.lazy').then((d) => d.Route),
+)
 const AuthedRenewalsRoute = AuthedRenewalsRouteImport.update({
   id: '/renewals',
   path: '/renewals',
   getParentRoute: () => AuthedRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/_authed/renewals.lazy').then((d) => d.Route),
+)
 const AuthedQrCodesRoute = AuthedQrCodesRouteImport.update({
   id: '/qr-codes',
   path: '/qr-codes',
   getParentRoute: () => AuthedRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/_authed/qr-codes.lazy').then((d) => d.Route),
+)
 const AuthedPurchasesRoute = AuthedPurchasesRouteImport.update({
   id: '/purchases',
   path: '/purchases',
   getParentRoute: () => AuthedRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/_authed/purchases.lazy').then((d) => d.Route),
+)
 const AuthedProfileRoute = AuthedProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
   getParentRoute: () => AuthedRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/_authed/profile.lazy').then((d) => d.Route),
+)
 const AuthedProductsRoute = AuthedProductsRouteImport.update({
   id: '/products',
   path: '/products',
   getParentRoute: () => AuthedRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/_authed/products.lazy').then((d) => d.Route),
+)
 const AuthedProductCategoriesRoute = AuthedProductCategoriesRouteImport.update({
   id: '/product-categories',
   path: '/product-categories',
   getParentRoute: () => AuthedRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/_authed/product-categories.lazy').then((d) => d.Route),
+)
 const AuthedPosRoute = AuthedPosRouteImport.update({
   id: '/pos',
   path: '/pos',
   getParentRoute: () => AuthedRoute,
-} as any)
+} as any).lazy(() => import('./routes/_authed/pos.lazy').then((d) => d.Route))
 const AuthedPayrollRoute = AuthedPayrollRouteImport.update({
   id: '/payroll',
   path: '/payroll',
   getParentRoute: () => AuthedRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/_authed/payroll.lazy').then((d) => d.Route),
+)
 const AuthedPackagesRoute = AuthedPackagesRouteImport.update({
   id: '/packages',
   path: '/packages',
   getParentRoute: () => AuthedRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/_authed/packages.lazy').then((d) => d.Route),
+)
 const AuthedNutritionRoute = AuthedNutritionRouteImport.update({
   id: '/nutrition',
   path: '/nutrition',
   getParentRoute: () => AuthedRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/_authed/nutrition.lazy').then((d) => d.Route),
+)
 const AuthedNotificationsRoute = AuthedNotificationsRouteImport.update({
   id: '/notifications',
   path: '/notifications',
   getParentRoute: () => AuthedRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/_authed/notifications.lazy').then((d) => d.Route),
+)
 const AuthedMembershipPaymentsRoute =
   AuthedMembershipPaymentsRouteImport.update({
     id: '/membership-payments',
     path: '/membership-payments',
     getParentRoute: () => AuthedRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authed/membership-payments.lazy').then((d) => d.Route),
+  )
 const AuthedMembershipFreezesRoute = AuthedMembershipFreezesRouteImport.update({
   id: '/membership-freezes',
   path: '/membership-freezes',
   getParentRoute: () => AuthedRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/_authed/membership-freezes.lazy').then((d) => d.Route),
+)
 const AuthedMembersRoute = AuthedMembersRouteImport.update({
   id: '/members',
   path: '/members',
   getParentRoute: () => AuthedRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/_authed/members.lazy').then((d) => d.Route),
+)
 const AuthedInvoicesRoute = AuthedInvoicesRouteImport.update({
   id: '/invoices',
   path: '/invoices',
   getParentRoute: () => AuthedRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/_authed/invoices.lazy').then((d) => d.Route),
+)
 const AuthedInventoryRoute = AuthedInventoryRouteImport.update({
   id: '/inventory',
   path: '/inventory',
   getParentRoute: () => AuthedRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/_authed/inventory.lazy').then((d) => d.Route),
+)
 const AuthedExportRoute = AuthedExportRouteImport.update({
   id: '/export',
   path: '/export',
   getParentRoute: () => AuthedRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/_authed/export.lazy').then((d) => d.Route),
+)
 const AuthedEmployeesRoute = AuthedEmployeesRouteImport.update({
   id: '/employees',
   path: '/employees',
   getParentRoute: () => AuthedRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/_authed/employees.lazy').then((d) => d.Route),
+)
 const AuthedEmployeeVacationsRoute = AuthedEmployeeVacationsRouteImport.update({
   id: '/employee-vacations',
   path: '/employee-vacations',
   getParentRoute: () => AuthedRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/_authed/employee-vacations.lazy').then((d) => d.Route),
+)
 const AuthedEmployeeSchedulesRoute = AuthedEmployeeSchedulesRouteImport.update({
   id: '/employee-schedules',
   path: '/employee-schedules',
   getParentRoute: () => AuthedRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/_authed/employee-schedules.lazy').then((d) => d.Route),
+)
 const AuthedEmployeeAttendanceRoute =
   AuthedEmployeeAttendanceRouteImport.update({
     id: '/employee-attendance',
     path: '/employee-attendance',
     getParentRoute: () => AuthedRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authed/employee-attendance.lazy').then((d) => d.Route),
+  )
 const AuthedDashboardRoute = AuthedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
   getParentRoute: () => AuthedRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/_authed/dashboard.lazy').then((d) => d.Route),
+)
 const AuthedCorporateAccountsRoute = AuthedCorporateAccountsRouteImport.update({
   id: '/corporate-accounts',
   path: '/corporate-accounts',
   getParentRoute: () => AuthedRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/_authed/corporate-accounts.lazy').then((d) => d.Route),
+)
 const AuthedClassesRoute = AuthedClassesRouteImport.update({
   id: '/classes',
   path: '/classes',
   getParentRoute: () => AuthedRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/_authed/classes.lazy').then((d) => d.Route),
+)
 const AuthedCheckInsRoute = AuthedCheckInsRouteImport.update({
   id: '/check-ins',
   path: '/check-ins',
   getParentRoute: () => AuthedRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/_authed/check-ins.lazy').then((d) => d.Route),
+)
 const AuthedCashRegisterRoute = AuthedCashRegisterRouteImport.update({
   id: '/cash-register',
   path: '/cash-register',
   getParentRoute: () => AuthedRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/_authed/cash-register.lazy').then((d) => d.Route),
+)
 const AuthedBranchesRoute = AuthedBranchesRouteImport.update({
   id: '/branches',
   path: '/branches',
   getParentRoute: () => AuthedRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/_authed/branches.lazy').then((d) => d.Route),
+)
 const AuthedBackupRoute = AuthedBackupRouteImport.update({
   id: '/backup',
   path: '/backup',
   getParentRoute: () => AuthedRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/_authed/backup.lazy').then((d) => d.Route),
+)
 const AuthedAuditLogsRoute = AuthedAuditLogsRouteImport.update({
   id: '/audit-logs',
   path: '/audit-logs',
   getParentRoute: () => AuthedRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/_authed/audit-logs.lazy').then((d) => d.Route),
+)
 const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
   id: '/api/stripe/webhook',
   path: '/api/stripe/webhook',
@@ -292,7 +358,9 @@ const AuthedAdminUsersRoute = AuthedAdminUsersRouteImport.update({
   id: '/admin/users',
   path: '/admin/users',
   getParentRoute: () => AuthedRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/_authed/admin/users.lazy').then((d) => d.Route),
+)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute

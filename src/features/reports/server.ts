@@ -4,7 +4,7 @@ import { dateString } from '#/shared/lib/schemas.ts'
 import { getGroq, GROQ_MODEL } from '#/shared/lib/ai.ts'
 import { db } from '#/shared/db/index.ts'
 import { count, sum, eq, and, gte, lte, sql, inArray } from 'drizzle-orm'
-import { requireRole } from '#/shared/lib/server-utils.ts'
+import { requirePermission } from '#/shared/lib/server-utils.ts'
 import { members } from '#/shared/db/schema/members.ts'
 import { checkIns } from '#/shared/db/schema/check-ins.ts'
 import { sales, saleItems } from '#/shared/db/schema/sales.ts'
@@ -20,8 +20,8 @@ const dateRangeSchema = z.object({
 export const getFinancialReport = createServerFn({ method: 'GET' })
   .validator((data: unknown) => dateRangeSchema.parse(data))
   .handler(async ({ data }) => {
-    await requireRole({
-      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
+    await requirePermission({
+      data: { permission: 'reports:read' },
     })
 
     const startDate = new Date(data.startDate)
@@ -125,8 +125,8 @@ export const getFinancialReport = createServerFn({ method: 'GET' })
 export const getAttendanceReport = createServerFn({ method: 'GET' })
   .validator((data: unknown) => dateRangeSchema.parse(data))
   .handler(async ({ data }) => {
-    await requireRole({
-      data: { roles: ['ADMIN', 'RECEPTIONIST', 'TRAINER'] },
+    await requirePermission({
+      data: { permission: 'reports:read' },
     })
 
     const startDate = new Date(data.startDate)
@@ -164,8 +164,8 @@ export const getAttendanceReport = createServerFn({ method: 'GET' })
 export const getSalesReport = createServerFn({ method: 'GET' })
   .validator((data: unknown) => dateRangeSchema.parse(data))
   .handler(async ({ data }) => {
-    await requireRole({
-      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
+    await requirePermission({
+      data: { permission: 'reports:read' },
     })
 
     const startDate = new Date(data.startDate)
@@ -224,8 +224,8 @@ export const getSalesReport = createServerFn({ method: 'GET' })
 export const getMembersReport = createServerFn({ method: 'GET' })
   .validator((data: unknown) => dateRangeSchema.parse(data))
   .handler(async ({ data }) => {
-    await requireRole({
-      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
+    await requirePermission({
+      data: { permission: 'reports:read' },
     })
 
     const startDate = new Date(data.startDate)
@@ -273,8 +273,8 @@ export const getMembersReport = createServerFn({ method: 'GET' })
 export const getAICopilotSummary = createServerFn({ method: 'GET' })
   .validator((data: unknown) => dateRangeSchema.parse(data))
   .handler(async ({ data }) => {
-    await requireRole({
-      data: { roles: ['ADMIN', 'RECEPTIONIST'] },
+    await requirePermission({
+      data: { permission: 'reports:read' },
     })
 
     // 1. Obtener todos los reportes del mismo rango de fechas
@@ -333,7 +333,7 @@ ${JSON.stringify(summaryData, null, 2)}`
 export const getCommissionsReport = createServerFn({ method: 'GET' })
   .validator((data: unknown) => dateRangeSchema.parse(data))
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN'] } })
+    await requirePermission({ data: { permission: 'reports:read' } })
 
     const { trainerProfiles } = await import('#/shared/db/schema/trainers.ts')
     const { users } = await import('#/shared/db/schema/auth.ts')
@@ -425,7 +425,7 @@ export const getCommissionsReport = createServerFn({ method: 'GET' })
 export const getCrossBranchReport = createServerFn({ method: 'GET' })
   .validator((data: unknown) => dateRangeSchema.parse(data))
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN', 'RECEPTIONIST'] } })
+    await requirePermission({ data: { permission: 'reports:read' } })
 
     const startDate = new Date(data.startDate)
     const endDate = new Date(data.endDate)
@@ -592,7 +592,7 @@ export const getCrossBranchReport = createServerFn({ method: 'GET' })
 export const getProfitabilityReport = createServerFn({ method: 'GET' })
   .validator((data: unknown) => dateRangeSchema.parse(data))
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN'] } })
+    await requirePermission({ data: { permission: 'reports:read' } })
 
     const startDate = new Date(data.startDate)
     const endDate = new Date(data.endDate)

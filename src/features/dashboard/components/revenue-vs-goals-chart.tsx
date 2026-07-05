@@ -2,18 +2,8 @@ import { useQuery } from '@tanstack/react-query'
 import { TrendingUp, DollarSign } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useState, useEffect, useMemo } from 'react'
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip as RechartsTooltip,
-  ResponsiveContainer,
-  ReferenceLine,
-  Legend,
-} from 'recharts'
 import { getRevenueTrends } from '#/features/dashboard/server.ts'
+import { LazyRecharts } from '#/shared/components/lazy-recharts'
 
 export function RevenueVsGoalsChart() {
   const { data, isLoading } = useQuery({
@@ -97,40 +87,48 @@ export function RevenueVsGoalsChart() {
         </div>
       </div>
 
-      <div className="h-[220px] w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} margin={{ top: 8, right: 8, left: -22, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke={themeColors.grid} vertical={false} />
-            <XAxis dataKey="month" stroke={themeColors.text} fontSize={9} tickLine={false} axisLine={false} />
-            <YAxis stroke={themeColors.text} fontSize={9} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v}`} />
-            <RechartsTooltip
-              contentStyle={{
-                backgroundColor: themeColors.tooltipBg,
-                border: themeColors.tooltipBorder,
-                borderRadius: '14px',
-                fontSize: 11,
-              }}
-              labelStyle={{ color: themeColors.tooltipLabel, fontWeight: 'bold' }}
-              formatter={(value: number, name: string) => [`$${value.toLocaleString('es-BO')}`, name === 'membershipIncome' ? 'Membresías' : name === 'posIncome' ? 'POS' : name === 'goal' ? 'Meta' : name]}
-              cursor={{ fill: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)' }}
-            />
-            <Legend
-              iconType="circle"
-              iconSize={7}
-              wrapperStyle={{ fontSize: 9, paddingTop: 8 }}
-            />
-            <ReferenceLine
-              y={data[data.length - 1]?.goal ?? 0}
-              stroke={isDark ? '#fbbf24' : '#f59e0b'}
-              strokeDasharray="6 3"
-              strokeWidth={2}
-              label={{ value: 'Meta', position: 'right', fontSize: 9, fill: isDark ? '#fbbf24' : '#f59e0b' }}
-            />
-            <Bar dataKey="membershipIncome" name="Membresías" stackId="a" fill="#3b82f6" radius={[0, 0, 0, 0]} />
-            <Bar dataKey="posIncome" name="POS" stackId="a" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
+      <LazyRecharts height={220}>
+        {(R) => (
+          <R.ResponsiveContainer width="100%" height="100%">
+            <R.BarChart data={data} margin={{ top: 8, right: 8, left: -22, bottom: 0 }}>
+              <R.CartesianGrid strokeDasharray="3 3" stroke={themeColors.grid} vertical={false} />
+              <R.XAxis dataKey="month" stroke={themeColors.text} fontSize={9} tickLine={false} axisLine={false} />
+              <R.YAxis stroke={themeColors.text} fontSize={9} tickLine={false} axisLine={false} tickFormatter={(v: number) => `$${v}`} />
+              <R.Tooltip
+                contentStyle={{
+                  backgroundColor: themeColors.tooltipBg,
+                  border: themeColors.tooltipBorder,
+                  borderRadius: '14px',
+                  fontSize: 11,
+                }}
+                labelStyle={{ color: themeColors.tooltipLabel, fontWeight: 'bold' }}
+                formatter={(value: any, name: string | number | undefined) => {
+                  const numValue = typeof value === 'number' ? value : Number(value) || 0
+                  return [
+                    `$${numValue.toLocaleString('es-BO')}`,
+                    name === 'membershipIncome' ? 'Membresías' : name === 'posIncome' ? 'POS' : name === 'goal' ? 'Meta' : String(name ?? '')
+                  ]
+                }}
+                cursor={{ fill: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)' }}
+              />
+              <R.Legend
+                iconType="circle"
+                iconSize={7}
+                wrapperStyle={{ fontSize: 9, paddingTop: 8 }}
+              />
+              <R.ReferenceLine
+                y={data[data.length - 1]?.goal ?? 0}
+                stroke={isDark ? '#fbbf24' : '#f59e0b'}
+                strokeDasharray="6 3"
+                strokeWidth={2}
+                label={{ value: 'Meta', position: 'right', fontSize: 9, fill: isDark ? '#fbbf24' : '#f59e0b' }}
+              />
+              <R.Bar dataKey="membershipIncome" name="Membresías" stackId="a" fill="#3b82f6" radius={[0, 0, 0, 0]} />
+              <R.Bar dataKey="posIncome" name="POS" stackId="a" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+            </R.BarChart>
+          </R.ResponsiveContainer>
+        )}
+      </LazyRecharts>
     </div>
   )
 }

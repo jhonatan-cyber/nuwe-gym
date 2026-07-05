@@ -27,8 +27,6 @@ export function BranchesSection({ memberId }: BranchesSectionProps) {
     enabled: !!memberId,
   })
 
-  const assignedBranchIds = new Set(memberBranchesData.map((mb: any) => mb.branch.id))
-
   const [selected, setSelected] = useState<Set<string>>(new Set())
 
   const startEditing = () => {

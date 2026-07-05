@@ -1,16 +1,7 @@
 import { useMemo, useEffect, useState } from 'react'
 import { TrendingUp } from 'lucide-react'
 import { useTheme } from 'next-themes'
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip as RechartsTooltip,
-  Legend,
-  ResponsiveContainer,
-} from 'recharts'
+import { LazyRecharts } from '#/shared/components/lazy-recharts'
 
 interface HourlyCheckIn {
   hour: string
@@ -80,67 +71,69 @@ export function HourlyAttendanceChart({
         </div>
       </div>
 
-      <div className="h-[240px] w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            data={hourlyCheckIns}
-            margin={{ top: 8, right: 8, left: -22, bottom: 0 }}
-          >
-            <CartesianGrid
-              strokeDasharray="3 3"
-              stroke={themeColors.gridColor}
-              vertical={false}
-            />
-            <XAxis
-              dataKey="hour"
-              stroke={themeColors.textColor}
-              fontSize={9}
-              tickLine={false}
-              axisLine={false}
-            />
-            <YAxis
-              stroke={themeColors.textColor}
-              fontSize={9}
-              tickLine={false}
-              axisLine={false}
-            />
-            <RechartsTooltip
-              contentStyle={{
-                backgroundColor: themeColors.tooltipBg,
-                border: themeColors.tooltipBorder,
-                borderRadius: '14px',
-                fontSize: 11,
-              }}
-              labelStyle={{
-                color: themeColors.tooltipLabelColor,
-                fontWeight: 'bold',
-              }}
-              cursor={{
-                fill: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)',
-              }}
-            />
-            <Legend
-              iconType="circle"
-              iconSize={7}
-              wrapperStyle={{ fontSize: 9, paddingTop: 8 }}
-            />
-            <Bar
-              dataKey="18-25"
-              stackId="a"
-              fill="#06b6d4"
-              radius={[0, 0, 0, 0]}
-            />
-            <Bar dataKey="26-35" stackId="a" fill="#3b82f6" />
-            <Bar dataKey="36-45" stackId="a" fill="#6366f1" />
-            <Bar
-              dataKey="46+"
-              stackId="a"
-              fill="#d946ef"
-              radius={[4, 4, 0, 0]}
-            />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
+      <LazyRecharts height={240}>
+        {(R) => (
+          <R.ResponsiveContainer width="100%" height="100%">
+            <R.BarChart
+              data={hourlyCheckIns}
+              margin={{ top: 8, right: 8, left: -22, bottom: 0 }}
+            >
+              <R.CartesianGrid
+                strokeDasharray="3 3"
+                stroke={themeColors.gridColor}
+                vertical={false}
+              />
+              <R.XAxis
+                dataKey="hour"
+                stroke={themeColors.textColor}
+                fontSize={9}
+                tickLine={false}
+                axisLine={false}
+              />
+              <R.YAxis
+                stroke={themeColors.textColor}
+                fontSize={9}
+                tickLine={false}
+                axisLine={false}
+              />
+              <R.Tooltip
+                contentStyle={{
+                  backgroundColor: themeColors.tooltipBg,
+                  border: themeColors.tooltipBorder,
+                  borderRadius: '14px',
+                  fontSize: 11,
+                }}
+                labelStyle={{
+                  color: themeColors.tooltipLabelColor,
+                  fontWeight: 'bold',
+                }}
+                cursor={{
+                  fill: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)',
+                }}
+              />
+              <R.Legend
+                iconType="circle"
+                iconSize={7}
+                wrapperStyle={{ fontSize: 9, paddingTop: 8 }}
+              />
+              <R.Bar
+                dataKey="18-25"
+                stackId="a"
+                fill="#06b6d4"
+                radius={[0, 0, 0, 0]}
+              />
+              <R.Bar dataKey="26-35" stackId="a" fill="#3b82f6" />
+              <R.Bar dataKey="36-45" stackId="a" fill="#6366f1" />
+              <R.Bar
+                dataKey="46+"
+                stackId="a"
+                fill="#d946ef"
+                radius={[4, 4, 0, 0]}
+              />
+            </R.BarChart>
+          </R.ResponsiveContainer>
+        )}
+      </LazyRecharts>
     </div>
   )
 }

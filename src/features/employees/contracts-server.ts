@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { eq, desc } from 'drizzle-orm'
 import { db } from '#/shared/db/index.ts'
 import { employeeContracts } from '#/shared/db/schema/employee-contracts.ts'
-import { requireRole } from '#/shared/lib/server-utils.ts'
+import { requirePermission } from '#/shared/lib/server-utils.ts'
 import { uuidField, optionalString, requiredString } from '#/shared/lib/schemas.ts'
 
 const createSchema = z.object({
@@ -24,7 +24,7 @@ export type CreateContractData = z.infer<typeof createSchema>
 export const createContract = createServerFn({ method: 'POST' })
   .validator((data) => createSchema.parse(data))
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN'] } })
+    await requirePermission({ data: { permission: 'employees:write' } })
 
     const [contract] = await db
       .insert(employeeContracts)
@@ -48,7 +48,7 @@ export const createContract = createServerFn({ method: 'POST' })
 export const getEmployeeContracts = createServerFn({ method: 'GET' })
   .validator((data) => z.object({ employeeId: uuidField }).parse(data))
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN'] } })
+    await requirePermission({ data: { permission: 'employees:read' } })
 
     return await db.query.employeeContracts.findMany({
       where: eq(employeeContracts.employeeId, data.employeeId),
@@ -59,7 +59,7 @@ export const getEmployeeContracts = createServerFn({ method: 'GET' })
 export const deleteContract = createServerFn({ method: 'POST' })
   .validator((data) => z.object({ id: uuidField }).parse(data))
   .handler(async ({ data }) => {
-    await requireRole({ data: { roles: ['ADMIN'] } })
+    await requirePermission({ data: { permission: 'employees:write' } })
     await db.delete(employeeContracts).where(eq(employeeContracts.id, data.id))
     return { success: true }
   })

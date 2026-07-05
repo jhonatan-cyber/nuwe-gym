@@ -14,7 +14,7 @@ const intents: QueryIntent[] = [
   {
     name: 'total_members',
     patterns: [
-      /cuantos? (socios?|miembros?|miembras?) (nuevos?|registrados?|activos?)/i,
+      /cuant[oa]s? (socios?|miembros?|miembras?) (nuevos?|registrados?|activos?)?/i,
       /cuantos? socios? hay/i,
       /total (de )?socios?/i,
     ],
@@ -57,7 +57,7 @@ const intents: QueryIntent[] = [
     name: 'top_product',
     patterns: [
       /producto mas vendido/i,
-      /cual es el producto (mas |que )?se vende (mas )?/i,
+      /cual es el producto (que )?(mas )?se vende( mas)?/i,
       /top producto/i,
       /que (es )?lo (que )?mas se vende/i,
     ],
@@ -121,7 +121,7 @@ const intents: QueryIntent[] = [
   {
     name: 'expiring_subscriptions',
     patterns: [
-      /suscripciones? (que |por )?vencer/i,
+      /suscripciones? (que |por )?vencen?/i,
       /vencimientos? (proximos?|next 7 dias)/i,
       /cuantas? suscripciones? vencen/i,
     ],

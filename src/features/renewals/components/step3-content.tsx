@@ -72,52 +72,48 @@ export function Step3Content({
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-4 gap-2.5">
           {PAYMENT_METHODS.map((pm) => {
             const Icon = pm.icon
             const isSelected = formData.paymentMethod === pm.value
             return (
-              <div
+              <button
                 key={pm.value}
+                type="button"
                 onClick={() =>
                   setFormData({ ...formData, paymentMethod: pm.value })
                 }
-                className={`p-4 rounded-2xl border transition-all duration-300 cursor-pointer select-none flex flex-col justify-between h-28 group relative ${
+                className={`py-3.5 px-2 rounded-[1.25rem] border transition-all duration-300 cursor-pointer select-none flex flex-col items-center justify-center gap-2 focus:outline-none w-full relative group ${
                   isSelected
-                    ? 'bg-primary/5 border-primary shadow-sm'
-                    : 'bg-muted/40 border-border/10 hover:bg-muted hover:border-border/20'
+                    ? 'bg-primary/5 border-primary shadow-sm text-primary'
+                    : 'bg-muted/40 border-border/10 hover:bg-muted text-muted-foreground hover:text-foreground'
                 }`}
               >
-                <div className="flex items-center justify-between">
-                  <div
-                    className={`size-10 rounded-xl flex items-center justify-center transition-colors ${
-                      isSelected
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted-foreground/10 text-muted-foreground group-hover:bg-muted-foreground/20'
-                    }`}
-                  >
-                    <Icon className="size-5" />
+                <div
+                  className={`size-9 rounded-xl flex items-center justify-center transition-all duration-300 ${
+                    isSelected
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-muted-foreground/10 group-hover:scale-110'
+                  }`}
+                >
+                  <Icon className="size-4.5" />
+                </div>
+                <span className="font-bold text-[10px] text-center leading-none">
+                  {pm.label}
+                </span>
+                {isSelected && (
+                  <div className="absolute top-1.5 right-1.5 size-3.5 rounded-full bg-primary flex items-center justify-center shadow-sm animate-in zoom-in-50 duration-200">
+                    <Check className="size-2 text-primary-foreground stroke-[3px]" />
                   </div>
-                  {isSelected && (
-                    <div className="size-4.5 rounded-full bg-primary flex items-center justify-center">
-                      <Check className="size-2.5 text-primary-foreground stroke-[3px]" />
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <p className="font-bold text-xs leading-none">{pm.label}</p>
-                  <p className="text-[9px] text-muted-foreground font-semibold mt-1">
-                    {pm.description}
-                  </p>
-                </div>
-              </div>
+                )}
+              </button>
             )
           })}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="grid gap-1.5">
-            <Label htmlFor="amount" className="text-xs font-bold">
+            <Label htmlFor="amount" className="text-xs font-bold px-1">
               Monto <span className="text-destructive">*</span>
             </Label>
             <Input
@@ -130,11 +126,11 @@ export function Step3Content({
               onChange={(e) =>
                 setFormData({ ...formData, amount: e.target.value })
               }
-              className="h-10 rounded-xl"
+              className="h-10 rounded-full px-4 bg-background dark:bg-input/30 border-border/10 focus-visible:ring-ring/30 focus-visible:border-ring"
             />
           </div>
           <div className="grid gap-1.5">
-            <Label htmlFor="notes" className="text-xs font-bold">
+            <Label htmlFor="notes" className="text-xs font-bold px-1">
               Notas (opcional)
             </Label>
             <Input
@@ -144,7 +140,7 @@ export function Step3Content({
                 setFormData({ ...formData, notes: e.target.value })
               }
               placeholder="Notas de renovación..."
-              className="h-10 rounded-xl"
+              className="h-10 rounded-full px-4 bg-background dark:bg-input/30 border-border/10 focus-visible:ring-ring/30 focus-visible:border-ring"
             />
           </div>
         </div>
