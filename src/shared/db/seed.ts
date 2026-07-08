@@ -27,6 +27,8 @@ import { employeeBonuses } from './schema/employee-bonuses.ts'
 import { employeeVacations } from './schema/employee-vacations.ts'
 import { employeeDocuments } from './schema/employee-documents.ts'
 import { employeePerformance } from './schema/employee-performance.ts'
+import { weightHistory } from './schema/weight-history.ts'
+import { nutritionPlans } from './schema/nutrition-plans.ts'
 
 config({ path: ['.env'] })
 
@@ -749,6 +751,59 @@ async function seed() {
     docCount++
   }
   console.log(`✅ ${docCount} documentos cargados`)
+
+  // ─── Nutrition and Weight History ────────────────────────────
+  console.log('\n🥗 Creando datos de nutrición y peso...')
+  const weightData = [
+    { weightKg: '80.50', heightCm: '178.0', bodyFat: '22.40', muscle: '36.20', notes: 'Registro inicial' },
+    { weightKg: '79.20', heightCm: '178.0', bodyFat: '21.10', muscle: '36.80', notes: 'Primer mes de progreso' },
+    { weightKg: '77.80', heightCm: '178.0', bodyFat: '19.80', muscle: '37.10', notes: 'Fuerza aumentando' },
+    { weightKg: '76.50', heightCm: '178.0', bodyFat: '18.50', muscle: '37.50', notes: 'Objetivo de definición alcanzado' },
+  ]
+
+  let nutritionCount = 0
+  for (let i = 0; i < Math.min(memberIds.length, 5); i++) {
+    const memberId = memberIds[i]
+    for (let j = 0; j < weightData.length; j++) {
+      const recordedDate = new Date(now)
+      recordedDate.setDate(recordedDate.getDate() - (3 - j) * 30)
+      
+      const modifier = (i % 3) * 3 - 3 // -3, 0, or 3
+      const weight = (Number(weightData[j].weightKg) + modifier).toFixed(2)
+      const fat = (Number(weightData[j].bodyFat) + (i % 2 === 0 ? -1.5 : 1.5)).toFixed(2)
+      
+      await db.insert(weightHistory).values({
+        memberId,
+        weightKg: weight,
+        heightCm: (175 + i).toString(),
+        bodyFatPercent: fat,
+        muscleMassKg: (Number(weightData[j].muscle) + (modifier / 2)).toFixed(2),
+        notes: weightData[j].notes,
+        recordedByUserId: adminId,
+        recordedAt: recordedDate,
+        createdAt: recordedDate,
+      })
+    }
+
+    await db.insert(nutritionPlans).values({
+      memberId,
+      title: i % 2 === 0 ? 'Déficit Calórico Semanal' : 'Hipertrofia Limpia',
+      goal: i % 2 === 0 ? 'Pérdida de peso' : 'Ganancia muscular',
+      targetCalories: i % 2 === 0 ? 1800 : 2800,
+      proteinGrams: i % 2 === 0 ? '145.0' : '170.0',
+      carbsGrams: i % 2 === 0 ? '160.0' : '350.0',
+      fatGrams: i % 2 === 0 ? '55.0' : '75.0',
+      mealsPerDay: i % 2 === 0 ? 4 : 5,
+      planContent: i % 2 === 0 
+        ? `Resumen: 1800 kcal/día | P: 145g | C: 160g | G: 55g\nComida 1 (Desayuno): 3 huevos revueltos con espinaca + 1 tostada integral + café negro.\nComida 2 (Almuerzo): 150g pechuga de pollo grillada + 100g arroz integral + ensalada verde con 1 cda de aceite de oliva.\nComida 3 (Merienda): 1 scoop whey protein en agua + 1 manzana + 15 almendras.\nComida 4 (Cena): 150g filete de merluza al horno + 150g calabaza asada + brócoli al vapor.`
+        : `Resumen: 2800 kcal/día | P: 170g | C: 350g | G: 75g\nComida 1 (Desayuno): Licuado de 1 banana, 80g avena, 1 scoop whey protein, 300ml leche descremada y 2 cdas de mantequilla de maní.\nComida 2 (Almuerzo): 200g carne magra picada + 150g arroz blanco + 1/2 palta + tomate.\nComida 3 (Merienda): 2 sandwich de pan blanco con jamón cocido y queso magro + 1 yogurt natural.\nComida 4 (Post-entrenamiento): 1 scoop whey protein + 40g maltodextrina o 1 banana grande.\nComida 5 (Cena): 200g pechuga de pollo + 250g papa asada + vegetales salteados.`,
+      isAiGenerated: false,
+      isActive: true,
+      createdByUserId: adminId,
+    })
+    nutritionCount++
+  }
+  console.log(`✅ Datos de peso y planes nutricionales creados para ${nutritionCount} socios`)
 
   console.log('\n🎉 Seed completado!')
   console.log('\n📋 Credenciales:')
