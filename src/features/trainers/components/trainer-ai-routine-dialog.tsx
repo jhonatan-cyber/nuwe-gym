@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   Dialog,
   DialogContent,
@@ -20,23 +21,34 @@ import {
 } from '#/shared/components/ui/select.tsx'
 import { toast } from 'sonner'
 import { Dumbbell, Sparkles, Copy, Save, Loader2, Check } from 'lucide-react'
-import { generateAIRoutine } from '../server.ts'
+import { generateAIRoutine, createTrainerObservation } from '../server.ts'
 import type { RoutineProposal } from '../routine-generator.ts'
 
 interface TrainerAIRoutineDialogProps {
   member: {
     id: string
     fullName: string
+    birthDate?: string | Date | null
+    gender?: string | null
   }
 }
 
 export function TrainerAIRoutineDialog({ member }: TrainerAIRoutineDialogProps) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
+  const queryClient = useQueryClient()
   
-  // Parámetros de entrada
-  const [age, setAge] = useState(25)
-  const [gender, setGender] = useState('Macho')
+  // Parámetros de entrada inicializados dinámicamente según la ficha del socio
+  const [age, setAge] = useState(() => {
+    if (!member.birthDate) return 25
+    const birthYear = new Date(member.birthDate).getFullYear()
+    return new Date().getFullYear() - birthYear
+  })
+  const [gender, setGender] = useState(() => {
+    if (member.gender === 'MALE') return 'Masculino'
+    if (member.gender === 'FEMALE') return 'Femenino'
+    return 'Otro'
+  })
   const [objectives, setObjectives] = useState('Ganancia de masa muscular / Hipertrofia')
   const [experienceLevel, setExperienceLevel] = useState('Intermedio')
   const [weeklyDays, setWeeklyDays] = useState(3)
@@ -45,6 +57,21 @@ export function TrainerAIRoutineDialog({ member }: TrainerAIRoutineDialogProps) 
   // Rutina generada
   const [routine, setRoutine] = useState<RoutineProposal | null>(null)
   const [copied, setCopied] = useState(false)
+
+  const saveMutation = useMutation({
+    mutationFn: createTrainerObservation,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['trainer-observations', member.id],
+      })
+      toast.success(`Rutina de ${member.fullName} guardada con éxito en su ficha virtual.`)
+      setOpen(false)
+    },
+    onError: (err) => {
+      console.error(err)
+      toast.error('Error al guardar la rutina en la ficha del socio.')
+    },
+  })
 
   const handleGenerate = async () => {
     setLoading(true)
@@ -94,8 +121,28 @@ export function TrainerAIRoutineDialog({ member }: TrainerAIRoutineDialogProps) 
   }
 
   const handleSave = () => {
-    toast.success(`Rutina de ${member.fullName} guardada con éxito en su ficha virtual.`)
-    setOpen(false)
+    if (!routine) return
+    
+    let text = `🏋️‍♂️ PLAN DE ENTRENAMIENTO PERSONALIZADO: ${routine.title}\n`
+    text += `👤 Socio: ${member.fullName}\n`
+    text += `📝 Recomendaciones: ${routine.notes}\n\n`
+    
+    routine.days.forEach((day) => {
+      text += `📅 ${day.dayName}\n`
+      day.exercises.forEach((ex) => {
+        text += `- ${ex.name}: ${ex.sets}x${ex.reps} (Descanso: ${ex.rest})${ex.notes ? ` [Nota: ${ex.notes}]` : ''}\n`
+      })
+      text += '\n'
+    })
+
+    text += `⚠️ Nota: Este plan fue generado por IA y debe ser supervisado por tu entrenador.`
+
+    saveMutation.mutate({
+      data: {
+        memberId: member.id,
+        note: text,
+      },
+    })
   }
 
   return (
@@ -361,9 +408,9 @@ export function TrainerAIRoutineDialog({ member }: TrainerAIRoutineDialogProps) 
                   <Copy className="w-4 h-4" />
                   <span>Copiar Rutina</span>
                 </Button>
-                <Button onClick={handleSave} className="bg-green-600 hover:bg-green-700 text-white rounded-lg flex items-center gap-1.5 shadow-md active:scale-95 transition-all">
-                  <Save className="w-4 h-4" />
-                  <span>Guardar y Asignar</span>
+                <Button onClick={handleSave} disabled={saveMutation.isPending} className="bg-green-600 hover:bg-green-700 text-white rounded-lg flex items-center gap-1.5 shadow-md active:scale-95 transition-all">
+                  {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                  <span>{saveMutation.isPending ? 'Guardando...' : 'Guardar y Asignar'}</span>
                 </Button>
               </div>
             </div>
