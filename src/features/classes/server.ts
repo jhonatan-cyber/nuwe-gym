@@ -6,7 +6,8 @@ import {
   classBookings,
 } from '#/shared/db/schema/classes.ts'
 import { classWaitlist } from '#/shared/db/schema/class-waitlist.ts'
-import { eq, desc, and, inArray, sql, SQL, asc } from 'drizzle-orm'
+import { eq, desc, and, inArray, sql, asc } from 'drizzle-orm'
+import type { SQL } from 'drizzle-orm'
 import { requirePermission } from '#/shared/lib/server-utils.ts'
 import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
@@ -381,7 +382,9 @@ export const cancelBooking = createServerFn({ method: 'POST' })
     // Intentar promover al primero de la lista de espera
     await promoteFromWaitlist({
       data: { classScheduleId: booking.classScheduleId },
-    }).catch(() => {/* no-op si falla la promoción */})
+    }).catch((err) => {
+      console.error('Error al promover miembro de lista de espera:', err)
+    })
 
     return booking
   })

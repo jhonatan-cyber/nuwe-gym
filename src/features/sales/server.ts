@@ -528,7 +528,7 @@ export const createSale = createServerFn({ method: 'POST' })
           ? await tx
               .select()
               .from(products)
-              .where(inArray(products.id, productIds as string[]))
+              .where(inArray(products.id, productIds))
           : []
       const productMap = new Map(productsFound.map((p) => [p.id, p]))
 
@@ -542,7 +542,7 @@ export const createSale = createServerFn({ method: 'POST' })
           .where(
             and(
               eq(productStock.branchId, branchId),
-              inArray(productStock.productId, productIds as string[]),
+              inArray(productStock.productId, productIds),
             ),
           )
         stockCache = new Map(existingStocks.map((s) => [s.productId, s]))
@@ -640,7 +640,9 @@ export const createSale = createServerFn({ method: 'POST' })
 
     // Fidelización: puntos + retos + badges por compra
     if (sale.memberId) {
-      await onPurchase(sale.memberId, sale.id, Number(sale.total)).catch(() => {})
+      await onPurchase(sale.memberId, sale.id, Number(sale.total)).catch((err) =>
+        console.error('Error al procesar fidelización de compra:', err),
+      )
     }
 
     // Auto-generate invoice

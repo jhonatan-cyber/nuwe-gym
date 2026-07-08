@@ -311,11 +311,11 @@ export const generateNotifications = createServerFn({ method: 'POST' })
           contentSid: gymSettings?.waTemplateInactiveSid ?? '',
           variables: templateVars_inactive(m.fullName, 30, gymSettings?.gymName ?? 'Mi Gimnasio'),
           fallbackBody: `💪 ¡Te extrañamos, ${m.fullName}! Hace 30 días que no venís al gimnasio. Tu membresía sigue activa, pasate cuando quieras.`,
-        }).catch(() => {})
+        }).catch((err) => console.error('Error al enviar WhatsApp de inactividad:', err))
         await sendSMS({
           to: m.phone,
           body: `Te extrañamos, ${m.fullName}! Hace 30 días que no venís al gym. Tu membresía sigue activa.`,
-        }).catch(() => {})
+        }).catch((err) => console.error('Error al enviar SMS de inactividad:', err))
       }
     }
 
@@ -347,11 +347,11 @@ export const generateNotifications = createServerFn({ method: 'POST' })
           contentSid: gymSettings?.waTemplateBirthdaySid ?? '',
           variables: templateVars_birthday(m.fullName, gymSettings?.gymName ?? 'Mi Gimnasio'),
           fallbackBody: `🎂 ¡Feliz cumpleaños, ${m.fullName}! Todo el equipo del gimnasio te desea un día increíble. Vení a celebrar con nosotros 🎉`,
-        }).catch(() => {})
+        }).catch((err) => console.error('Error al enviar WhatsApp de cumpleaños:', err))
         await sendSMS({
           to: m.phone,
           body: `Feliz cumpleaños, ${m.fullName}! Te esperamos en el gym para celebrar 🎉`,
-        }).catch(() => {})
+        }).catch((err) => console.error('Error al enviar SMS de cumpleaños:', err))
       }
     }
 
@@ -416,11 +416,11 @@ export const generateNotifications = createServerFn({ method: 'POST' })
           contentSid: gymSettings?.waTemplateExpirationSid ?? '',
           variables: templateVars_expiration(sub.member.fullName, daysUntilExpiry, new Date(sub.endDate).toLocaleDateString('es-AR'), gymSettings?.gymName ?? 'Mi Gimnasio'),
           fallbackBody: `⚠️ ${sub.member.fullName}, tu membresía del gimnasio vence mañana. Acercate a recepción para renovarla.`,
-        }).catch(() => {})
+        }).catch((err) => console.error('Error al enviar WhatsApp de vencimiento de membresía:', err))
         await sendSMS({
           to: sub.member.phone,
           body: `⚠️ ${sub.member.fullName}, tu membresía del gym vence mañana. Renová en recepción.`,
-        }).catch(() => {})
+        }).catch((err) => console.error('Error al enviar SMS de vencimiento de membresía:', err))
       }
     }
 
@@ -449,11 +449,11 @@ export const generateNotifications = createServerFn({ method: 'POST' })
           contentSid: gymSettings?.waTemplateExpiredSid ?? '',
           variables: templateVars_expired(sub.member.fullName, daysOverdue, gymSettings?.gymName ?? 'Mi Gimnasio'),
           fallbackBody: `🚨 ${sub.member.fullName}, tu membresía expiró hace ${daysOverdue} día${daysOverdue !== 1 ? 's' : ''}. ¡Renová hoy para no perder el acceso!`,
-        }).catch(() => {})
+        }).catch((err) => console.error('Error al enviar WhatsApp de membresía expirada:', err))
         await sendSMS({
           to: sub.member.phone,
           body: `🚨 ${sub.member.fullName}, tu membresía expiró hace ${daysOverdue} día${daysOverdue !== 1 ? 's' : ''}. Renová en recepción.`,
-        }).catch(() => {})
+        }).catch((err) => console.error('Error al enviar SMS de membresía expirada:', err))
       }
     }
 

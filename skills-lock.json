@@ -31,6 +31,12 @@
       "skillPath": ".claude-plugin/plugins/tech-drizzle/skills/tech-drizzle/SKILL.md",
       "computedHash": "19c2ce7314dc50c57c995d5f6e6ebf71e41a6bc3b3e6cfb8f62337dca5bbe5f3"
     },
+    "thermo-nuclear-code-quality-review": {
+      "source": "cursor/plugins",
+      "sourceType": "github",
+      "skillPath": "cursor-team-kit/skills/thermo-nuclear-code-quality-review/SKILL.md",
+      "computedHash": "1be9e8126d5b4bd3000f1e654622faf1493c7df204f9460ba0c1e41e7227497f"
+    },
     "typescript-best-practices": {
       "source": "0xbigboss/claude-code",
       "sourceType": "github",

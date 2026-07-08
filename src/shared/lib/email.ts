@@ -19,8 +19,8 @@ export async function sendEmail({
     const from = row[0]?.emailFrom || 'notificaciones@gimnasio.com'
     const resend = new Resend(apiKey)
 
-    const { error } = await resend.emails.send({ from, to, subject, html })
-    if (error) return { success: false, error: error.message }
+    const response = await resend.emails.send({ from, to, subject, html })
+    if (!response.id) return { success: false, error: 'No se pudo enviar el correo' }
 
     return { success: true }
   } catch (err) {

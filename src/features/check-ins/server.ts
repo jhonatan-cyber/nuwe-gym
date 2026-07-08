@@ -193,7 +193,9 @@ export const createCheckIn = createServerFn({ method: 'POST' })
     })
 
     // Fidelización: puntos + retos + badges + bono referido
-    await onCheckIn(data.memberId, checkIn.id).catch(() => {})
+    await onCheckIn(data.memberId, checkIn.id).catch((err) =>
+      console.error('Error al procesar fidelización de check-in:', err),
+    )
 
     return checkIn
   })
