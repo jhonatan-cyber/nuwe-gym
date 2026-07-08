@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
@@ -109,7 +109,7 @@ export function NutritionPage({ userRole: _userRole }: NutritionPageProps) {
         <WeightTab memberId={selectedMemberId} />
       )}
       {tab === 'plans' && selectedMemberId && selectedMember && (
-        <PlansTab member={selectedMember} />
+        <PlansTab key={selectedMember.id} member={selectedMember} />
       )}
     </ModuleLayout>
   )
@@ -385,13 +385,41 @@ function PlansTab({ member }: { member: any }) {
   const [aiDialogOpen, setAiDialogOpen] = useState(false)
   const [aiResult, setAiResult] = useState<{ content: string; imc: number; imcStatus: string } | null>(null)
   const [aiForm, setAiForm] = useState({
-    goal: 'Pérdida de peso', restrictions: '', mealsPerDay: '4', budget: '',
+    goal: 'Pérdida de peso',
+    restrictions: '',
+    mealsPerDay: '4',
+    budget: '',
+    weightKg: '',
+    heightCm: '',
   })
 
   const { data: plans = [], isLoading } = useQuery({
     queryKey: ['nutrition-plans', member.id],
     queryFn: () => getNutritionPlans({ data: { memberId: member.id } }),
   })
+
+  const { data: weightEntries = [] } = useQuery({
+    queryKey: ['weight-history', member.id],
+    queryFn: () => getWeightHistory({ data: { memberId: member.id } }),
+  })
+
+  const latestEntry = weightEntries[0]
+
+  useEffect(() => {
+    if (latestEntry) {
+      setAiForm((prev) => ({
+        ...prev,
+        weightKg: prev.weightKg || Number(latestEntry.weightKg).toString(),
+        heightCm: prev.heightCm || (latestEntry.heightCm?.toString() ?? '170'),
+      }))
+    } else {
+      setAiForm((prev) => ({
+        ...prev,
+        weightKg: prev.weightKg || '70',
+        heightCm: prev.heightCm || '170',
+      }))
+    }
+  }, [latestEntry])
 
   const deleteMutation = useMutation({
     mutationFn: deleteNutritionPlan,
@@ -420,6 +448,10 @@ function PlansTab({ member }: { member: any }) {
       toast.error('El socio necesita fecha de nacimiento y género para generar un plan con IA')
       return
     }
+    if (!aiForm.weightKg || !aiForm.heightCm) {
+      toast.error('El peso y la altura son obligatorios')
+      return
+    }
     const age = new Date().getFullYear() - new Date(member.birthDate).getFullYear()
     setGenerating(true)
     try {
@@ -429,8 +461,8 @@ function PlansTab({ member }: { member: any }) {
           memberName: member.fullName,
           age,
           gender: member.gender,
-          weightKg: 70, // placeholder - ideally from latest weight entry
-          heightCm: 170,
+          weightKg: Number(aiForm.weightKg),
+          heightCm: Number(aiForm.heightCm),
           goal: aiForm.goal,
           restrictions: aiForm.restrictions || undefined,
           mealsPerDay: Number(aiForm.mealsPerDay),
@@ -532,6 +564,16 @@ function PlansTab({ member }: { member: any }) {
                 <label className="text-xs font-bold">Comidas por día</label>
                 <Input type="number" min="1" max="8" value={aiForm.mealsPerDay}
                   onChange={(e) => setAiForm(p => ({...p, mealsPerDay: e.target.value}))} className="rounded-xl" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold">Peso actual (kg) *</label>
+                <Input type="number" step="0.1" min="1" value={aiForm.weightKg}
+                  onChange={(e) => setAiForm(p => ({...p, weightKg: e.target.value}))} className="rounded-xl" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold">Altura (cm) *</label>
+                <Input type="number" step="0.5" min="50" value={aiForm.heightCm}
+                  onChange={(e) => setAiForm(p => ({...p, heightCm: e.target.value}))} className="rounded-xl" />
               </div>
             </div>
             <div className="space-y-1">
