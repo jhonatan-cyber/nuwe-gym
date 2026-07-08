@@ -13,6 +13,7 @@ import { members } from './schema/members.ts'
 import { subscriptions } from './schema/subscriptions.ts'
 import { membershipPayments } from './schema/membership-payments.ts'
 import { trainerProfiles, trainerAssignments, trainerAvailability } from './schema/trainers.ts'
+import { classes, classSchedules, classBookings } from './schema/classes.ts'
 import { productCategories } from './schema/product-categories.ts'
 import { products } from './schema/products.ts'
 import { productStock } from './schema/product-stock.ts'
@@ -85,7 +86,7 @@ async function seed() {
     { name: 'ADMIN', label: 'Administrador' },
     { name: 'RECEPTIONIST', label: 'Recepcionista' },
     { name: 'TRAINER', label: 'Entrenador' },
-  ])
+  ]).onConflictDoNothing()
   console.log('✅ Roles creados')
 
   // 2. Permissions
@@ -145,7 +146,7 @@ async function seed() {
     { name: 'employees:read', label: 'Ver empleados', module: 'employees' },
     { name: 'employees:write', label: 'Crear/editar empleados', module: 'employees' },
   ]
-  await db.insert(permissions).values(allPermissions)
+  await db.insert(permissions).values(allPermissions).onConflictDoNothing()
   console.log(`✅ ${allPermissions.length} permisos creados`)
 
   // 3. Role ↔ Permissions
@@ -169,7 +170,7 @@ async function seed() {
       'nutrition:read', 'nutrition:write',
     ] as const).map((name) => ({ roleName: 'TRAINER' as const, permissionName: name })),
   ]
-  await db.insert(rolePermissions).values(rolePerms)
+  await db.insert(rolePermissions).values(rolePerms).onConflictDoNothing()
   console.log('✅ Role ↔ Permissions asignados')
 
   // 4. Departments
@@ -410,6 +411,107 @@ async function seed() {
     })
   }
   console.log(`✅ ${trainerIds.length} trainers + disponibilidad + asignaciones`)
+
+  // ─── Classes ──────────────────────────────────────────────────
+  console.log('\n📅 Creando clases...')
+  const classData = [
+    { name: 'Spinning', description: 'Clase de ciclismo indoor de alta intensidad', category: 'Cardio', color: '#ef4444', capacity: 25 },
+    { name: 'Yoga', description: 'Clase de yoga para relajación y flexibilidad', category: 'Mente-Cuerpo', color: '#8b5cf6', capacity: 20 },
+    { name: 'CrossFit', description: 'Entrenamiento funcional de alta intensidad', category: 'Funcional', color: '#f59e0b', capacity: 15 },
+    { name: 'Pilates', description: 'Clase de pilates para fortalecimiento del core', category: 'Mente-Cuerpo', color: '#10b981', capacity: 18 },
+    { name: 'Zumba', description: 'Clase de baile fitness con ritmos latinos', category: 'Baile', color: '#ec4899', capacity: 30 },
+    { name: 'Boxeo', description: 'Clase de boxeo para kondicionamiento físico', category: 'Combate', color: '#06b6d4', capacity: 12 },
+    { name: 'Funcional', description: 'Entrenamiento funcional para todo el cuerpo', category: 'Funcional', color: '#f97316', capacity: 20 },
+    { name: 'Aeróbicos', description: 'Clase de aeróbicos para mejorar resistencia', category: 'Cardio', color: '#3b82f6', capacity: 25 },
+  ]
+
+  const classIds: string[] = []
+  for (const c of classData) {
+    const [cls] = await db.insert(classes).values({
+      name: c.name,
+      description: c.description,
+      category: c.category,
+      color: c.color,
+      capacity: c.capacity,
+      branchId: branchIds[0], // Primera sucursal
+    }).returning()
+    classIds.push(cls.id)
+  }
+
+  // Agregar algunas clases a la segunda sucursal
+  for (let i = 0; i < 4; i++) {
+    await db.insert(classes).values({
+      name: classData[i].name,
+      description: classData[i].description,
+      category: classData[i].category,
+      color: classData[i].color,
+      capacity: classData[i].capacity,
+      branchId: branchIds[1],
+    })
+  }
+
+  // Horarios para las clases
+  const scheduleData = [
+    // Spinning (classIds[0])
+    { classIdx: 0, dayOfWeek: 1, startTime: '08:00', endTime: '09:00', room: 'Sala Ciclismo', trainerIdx: 0 },
+    { classIdx: 0, dayOfWeek: 3, startTime: '08:00', endTime: '09:00', room: 'Sala Ciclismo', trainerIdx: 0 },
+    { classIdx: 0, dayOfWeek: 5, startTime: '18:00', endTime: '19:00', room: 'Sala Ciclismo', trainerIdx: 0 },
+    // Yoga (classIds[1])
+    { classIdx: 1, dayOfWeek: 2, startTime: '10:00', endTime: '11:00', room: 'Sala Zen', trainerIdx: 2 },
+    { classIdx: 1, dayOfWeek: 4, startTime: '10:00', endTime: '11:00', room: 'Sala Zen', trainerIdx: 2 },
+    { classIdx: 1, dayOfWeek: 6, startTime: '09:00', endTime: '10:00', room: 'Sala Zen', trainerIdx: 2 },
+    // CrossFit (classIds[2])
+    { classIdx: 2, dayOfWeek: 1, startTime: '07:00', endTime: '08:00', room: 'Box', trainerIdx: 1 },
+    { classIdx: 2, dayOfWeek: 3, startTime: '07:00', endTime: '08:00', room: 'Box', trainerIdx: 1 },
+    { classIdx: 2, dayOfWeek: 5, startTime: '07:00', endTime: '08:00', room: 'Box', trainerIdx: 1 },
+    // Pilates (classIds[3])
+    { classIdx: 3, dayOfWeek: 2, startTime: '09:00', endTime: '10:00', room: 'Sala Zen', trainerIdx: 2 },
+    { classIdx: 3, dayOfWeek: 4, startTime: '09:00', endTime: '10:00', room: 'Sala Zen', trainerIdx: 2 },
+    // Zumba (classIds[4])
+    { classIdx: 4, dayOfWeek: 1, startTime: '18:00', endTime: '19:00', room: 'Sala Grupal', trainerIdx: 1 },
+    { classIdx: 4, dayOfWeek: 3, startTime: '18:00', endTime: '19:00', room: 'Sala Grupal', trainerIdx: 1 },
+    { classIdx: 4, dayOfWeek: 5, startTime: '17:00', endTime: '18:00', room: 'Sala Grupal', trainerIdx: 1 },
+    // Boxeo (classIds[5])
+    { classIdx: 5, dayOfWeek: 2, startTime: '19:00', endTime: '20:00', room: 'Sala Boxeo', trainerIdx: 0 },
+    { classIdx: 5, dayOfWeek: 4, startTime: '19:00', endTime: '20:00', room: 'Sala Boxeo', trainerIdx: 0 },
+    // Funcional (classIds[6])
+    { classIdx: 6, dayOfWeek: 1, startTime: '17:00', endTime: '18:00', room: 'Sala Funcional', trainerIdx: 0 },
+    { classIdx: 6, dayOfWeek: 3, startTime: '17:00', endTime: '18:00', room: 'Sala Funcional', trainerIdx: 0 },
+    { classIdx: 6, dayOfWeek: 5, startTime: '08:00', endTime: '09:00', room: 'Sala Funcional', trainerIdx: 0 },
+    // Aeróbicos (classIds[7])
+    { classIdx: 7, dayOfWeek: 2, startTime: '18:00', endTime: '19:00', room: 'Sala Grupal', trainerIdx: 1 },
+    { classIdx: 7, dayOfWeek: 4, startTime: '18:00', endTime: '19:00', room: 'Sala Grupal', trainerIdx: 1 },
+  ]
+
+  const scheduleIds: string[] = []
+  for (const s of scheduleData) {
+    const [sched] = await db.insert(classSchedules).values({
+      classId: classIds[s.classIdx],
+      dayOfWeek: s.dayOfWeek,
+      startTime: s.startTime,
+      endTime: s.endTime,
+      room: s.room,
+      trainerId: trainerIds[s.trainerIdx],
+    }).returning()
+    scheduleIds.push(sched.id)
+  }
+  console.log(`✅ ${classIds.length} clases + ${scheduleIds.length} horarios creados`)
+
+  // Reservas de ejemplo
+  console.log('\n📋 Creando reservas de ejemplo...')
+  const bookingStatuses = ['CONFIRMED', 'CONFIRMED', 'CONFIRMED', 'ATTENDED', 'CANCELLED'] as const
+  let bookingCount = 0
+  for (let i = 0; i < Math.min(scheduleIds.length, 12); i++) {
+    const memberId = memberIds[i % memberIds.length]
+    const status = bookingStatuses[i % bookingStatuses.length]
+    await db.insert(classBookings).values({
+      classScheduleId: scheduleIds[i],
+      memberId,
+      status,
+    })
+    bookingCount++
+  }
+  console.log(`✅ ${bookingCount} reservas creadas`)
 
   // ─── Employees ────────────────────────────────────────────────
   console.log('\n👔 Creando empleados...')

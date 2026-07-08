@@ -9,12 +9,14 @@ import {
 } from 'drizzle-orm/pg-core'
 import { bookingStatusEnum } from './enums.ts'
 import { members } from './members.ts'
+import { trainerProfiles } from './trainers.ts'
 
 export const classes = pgTable('classes', {
   id: uuid('id').defaultRandom().primaryKey(),
   branchId: uuid('branch_id'),
   name: text('name').notNull(),
   description: text('description'),
+  category: text('category'),
   color: text('color').notNull().default('#3b82f6'),
   capacity: integer('capacity').notNull().default(20),
   createdAt: timestamp('created_at').notNull().defaultNow(),
@@ -35,6 +37,9 @@ export const classSchedules = pgTable(
     startTime: text('start_time').notNull(),
     endTime: text('end_time').notNull(),
     room: text('room'),
+    trainerId: uuid('trainer_id').references(() => trainerProfiles.id, {
+      onDelete: 'set null',
+    }),
     isActive: boolean('is_active').notNull().default(true),
   },
   (table) => [index('class_schedules_class_id_idx').on(table.classId)],

@@ -12,16 +12,57 @@ import { createAuditLog } from '#/shared/lib/audit.ts'
 import { getAuditContext } from '#/shared/lib/audit-context.ts'
 import { z } from 'zod'
 import { branchIdField, dayOfWeek, optionalString, positiveIntMin1, requiredString, timeString, uuidField } from '#/shared/lib/schemas.ts'
+import { subscriptions } from '#/shared/db/schema/subscriptions.ts'
+import { packageBenefits } from '#/shared/db/schema/packages.ts'
 
 export const getClasses = createServerFn({ method: 'GET' })
   .validator(
-    z.object({ branchId: z.string().uuid().optional() }).optional(),
+    z.object({
+      branchId: z.string().uuid().optional(),
+      trainerId: z.string().uuid().optional(),
+    }).optional(),
   )
   .handler(async ({ data }) => {
     await requirePermission({ data: { permission: 'classes:read' } })
+
+    // Si se filtra por trainerId, buscar clases que tengan horarios con ese trainer
+    if (data?.trainerId) {
+      const scheduleRows = await db
+        .select({ classId: classSchedules.classId })
+        .from(classSchedules)
+        .where(
+          and(
+            eq(classSchedules.trainerId, data.trainerId),
+            eq(classSchedules.isActive, true),
+          ),
+        )
+      const classIds = [...new Set(scheduleRows.map((r) => r.classId))]
+      if (classIds.length === 0) return []
+      return await db.query.classes.findMany({
+        where: and(
+          data?.branchId ? eq(classes.branchId, data.branchId) : undefined,
+          inArray(classes.id, classIds),
+        ),
+        with: {
+          schedules: {
+            with: {
+              trainer: { with: { user: true } },
+            },
+          },
+        },
+        orderBy: [desc(classes.createdAt)],
+      })
+    }
+
     return await db.query.classes.findMany({
       where: data?.branchId ? eq(classes.branchId, data.branchId) : undefined,
-      with: { schedules: true },
+      with: {
+        schedules: {
+          with: {
+            trainer: { with: { user: true } },
+          },
+        },
+      },
       orderBy: [desc(classes.createdAt)],
     })
   })
@@ -32,13 +73,22 @@ export const getClass = createServerFn({ method: 'GET' })
     await requirePermission({ data: { permission: 'classes:read' } })
     return await db.query.classes.findFirst({
       where: eq(classes.id, data.id),
-      with: { schedules: true },
+      with: {
+        schedules: {
+          with: {
+            trainer: {
+              with: { user: true },
+            },
+          },
+        },
+      },
     })
   })
 
 const createClassSchema = z.object({
   name: requiredString,
   description: optionalString,
+  category: optionalString,
   color: optionalString,
   capacity: positiveIntMin1,
   branchId: branchIdField,
@@ -55,6 +105,7 @@ export const createClass = createServerFn({ method: 'POST' })
       .values({
         name: data.name,
         description: data.description,
+        category: data.category,
         color: data.color,
         capacity: data.capacity,
         branchId: data.branchId ?? null,
@@ -74,6 +125,7 @@ const updateClassSchema = z.object({
   id: uuidField,
   name: requiredString,
   description: optionalString,
+  category: optionalString,
   color: optionalString,
   capacity: positiveIntMin1,
 })
@@ -89,6 +141,7 @@ export const updateClass = createServerFn({ method: 'POST' })
       .set({
         name: data.name,
         description: data.description,
+        category: data.category,
         color: data.color,
         capacity: data.capacity,
         updatedAt: new Date(),
@@ -128,6 +181,7 @@ const addScheduleSchema = z.object({
   startTime: timeString,
   endTime: timeString,
   room: optionalString,
+  trainerId: z.string().uuid().optional(),
 })
 
 export const addSchedule = createServerFn({ method: 'POST' })
@@ -144,6 +198,7 @@ export const addSchedule = createServerFn({ method: 'POST' })
         startTime: data.startTime,
         endTime: data.endTime,
         room: data.room,
+        trainerId: data.trainerId ?? null,
       })
       .returning()
     createAuditLog({
@@ -213,7 +268,12 @@ export const getBookings = createServerFn({ method: 'GET' })
       where: conditions.length > 0 ? and(...conditions) : undefined,
       with: {
         schedule: {
-          with: { class: true },
+          with: {
+            class: true,
+            trainer: {
+              with: { user: true },
+            },
+          },
         },
         member: true,
       },
@@ -238,6 +298,31 @@ export const createBooking = createServerFn({ method: 'POST' })
       with: { class: true },
     })
     if (!schedule) throw new Error('Horario no encontrado')
+
+    // Validar que el socio tenga un paquete activo con beneficio 'classes'
+    const activeSubscription = await db.query.subscriptions.findFirst({
+      where: and(
+        eq(subscriptions.memberId, data.memberId),
+        eq(subscriptions.status, 'ACTIVE'),
+      ),
+    })
+    if (!activeSubscription) {
+      throw new Error('El socio no tiene una suscripción activa')
+    }
+    if (activeSubscription.packageId) {
+      const hasClassesBenefit = await db.query.packageBenefits.findFirst({
+        where: and(
+          eq(packageBenefits.packageId, activeSubscription.packageId),
+          eq(packageBenefits.benefitKey, 'classes'),
+          eq(packageBenefits.enabled, true),
+        ),
+      })
+      if (!hasClassesBenefit) {
+        throw new Error(
+          'Tu paquete no incluye clases grupales. Actualizá tu plan para acceder.',
+        )
+      }
+    }
 
     const [{ count }] = await db
       .select({ count: sql<number>`count(*)` })
@@ -326,14 +411,27 @@ export const markAttendance = createServerFn({ method: 'POST' })
 
 export const getWeeklySchedule = createServerFn({ method: 'GET' })
   .validator(
-    z.object({ branchId: z.string().uuid().optional() }).optional(),
+    z.object({
+      branchId: z.string().uuid().optional(),
+      trainerId: z.string().uuid().optional(),
+    }).optional(),
   )
   .handler(async ({ data }) => {
     await requirePermission({ data: { permission: 'classes:read' } })
 
+    const whereConditions = [eq(classSchedules.isActive, true)]
+    if (data?.trainerId) {
+      whereConditions.push(eq(classSchedules.trainerId, data.trainerId))
+    }
+
     const schedules = await db.query.classSchedules.findMany({
-      where: eq(classSchedules.isActive, true),
-      with: { class: true },
+      where: and(...whereConditions),
+      with: {
+        class: true,
+        trainer: {
+          with: { user: true },
+        },
+      },
       orderBy: [classSchedules.dayOfWeek, classSchedules.startTime],
     })
 
@@ -449,7 +547,7 @@ export const promoteFromWaitlist = createServerFn({ method: 'POST' })
       where: eq(classSchedules.id, data.classScheduleId),
       with: { class: true },
     })
-    if (!schedule) return null
+    if (!schedule) throw new Error('Horario no encontrado')
 
     const [{ count }] = await db
       .select({ count: sql<number>`count(*)` })

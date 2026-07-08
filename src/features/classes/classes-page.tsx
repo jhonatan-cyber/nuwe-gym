@@ -25,6 +25,7 @@ import {
   cancelBooking,
   markAttendance,
 } from '#/features/classes/server.ts'
+import { getTrainers } from '#/features/trainers/server.ts'
 import { formatDate, formatDateTime } from '#/shared/lib/formatters.ts'
 import { useCurrentBranch } from '#/shared/hooks/use-current-branch.ts'
 import { cn } from '#/shared/lib/utils.ts'
@@ -70,6 +71,7 @@ import { ConfirmDialog } from '#/shared/components/ui/confirm-dialog'
 
 interface ClassesPageProps {
   userRole: string
+  userId: string
 }
 
 const CLASS_COLORS = [
@@ -81,6 +83,16 @@ const CLASS_COLORS = [
   '#ec4899',
   '#06b6d4',
   '#f97316',
+]
+
+const CLASS_CATEGORIES = [
+  'Cardio',
+  'Fuerza',
+  'Mente-Cuerpo',
+  'Acuático',
+  'Funcional',
+  'Baile',
+  'Combate',
 ]
 
 const DAY_NAMES = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
@@ -116,7 +128,7 @@ const BOOKING_STATUS_LABELS: Record<string, string> = {
 
 type Tab = 'classes' | 'schedule' | 'bookings'
 
-export function ClassesPage({ userRole }: ClassesPageProps) {
+export function ClassesPage({ userRole, userId }: ClassesPageProps) {
   const queryClient = useQueryClient()
   const isReadOnly = userRole === 'TRAINER'
   const isAdmin = userRole === 'ADMIN'
@@ -126,6 +138,7 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
   const [classForm, setClassForm] = useState({
     name: '',
     description: '',
+    category: '',
     color: '#3b82f6',
     capacity: 20,
   })
@@ -139,6 +152,7 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
     startTime: '08:00',
     endTime: '09:00',
     room: '',
+    trainerId: '',
   })
 
   const [bookingDialogOpen, setBookingDialogOpen] = useState(false)
@@ -150,15 +164,38 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const { branchId } = useCurrentBranch()
 
+  const { data: trainersList = [] } = useQuery({
+    queryKey: ['trainers', branchId],
+    queryFn: () => getTrainers({ data: { branchId } }),
+    enabled: !!branchId,
+  })
+
+  // Si el rol es TRAINER, buscar su perfil para filtrar sus clases
+  const currentTrainer =
+    isReadOnly ? trainersList.find((t) => t.userId === userId) : null
+  const currentTrainerId = currentTrainer?.id
+
   const { data: classesList = [], isLoading: classesLoading } = useQuery({
-    queryKey: ['classes', branchId],
-    queryFn: () => getClasses({ data: { branchId } }),
+    queryKey: ['classes', branchId, currentTrainerId],
+    queryFn: () =>
+      getClasses({
+        data: {
+          branchId,
+          trainerId: currentTrainerId,
+        },
+      }),
     enabled: !!branchId,
   })
 
   const { data: weeklySchedule = [] } = useQuery({
-    queryKey: ['weekly-schedule', branchId],
-    queryFn: () => getWeeklySchedule({ data: { branchId } }),
+    queryKey: ['weekly-schedule', branchId, currentTrainerId],
+    queryFn: () =>
+      getWeeklySchedule({
+        data: {
+          branchId,
+          trainerId: currentTrainerId,
+        },
+      }),
     enabled: !!branchId,
   })
 
@@ -234,6 +271,7 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
         startTime: '08:00',
         endTime: '09:00',
         room: '',
+        trainerId: '',
       })
     },
     onError: () => toast.error('Error al agregar horario'),
@@ -275,6 +313,7 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
       setClassForm({
         name: classItem.name,
         description: classItem.description || '',
+        category: classItem.category || '',
         color: classItem.color || '#3b82f6',
         capacity: classItem.capacity,
       })
@@ -283,6 +322,7 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
       setClassForm({
         name: '',
         description: '',
+        category: '',
         color: '#3b82f6',
         capacity: 20,
       })
@@ -321,6 +361,7 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
         startTime: scheduleForm.startTime,
         endTime: scheduleForm.endTime,
         room: scheduleForm.room || undefined,
+        trainerId: scheduleForm.trainerId || undefined,
       },
     })
   }
@@ -606,6 +647,7 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
                   <TableRow>
                     <TableHead>Nombre</TableHead>
                     <TableHead>Descripción</TableHead>
+                    <TableHead>Categoría</TableHead>
                     <TableHead>Capacidad</TableHead>
                     <TableHead>Horarios</TableHead>
                     {!isReadOnly && (
@@ -617,7 +659,7 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
                   {classesLoading ? (
                     Array.from({ length: 3 }).map((_, i) => (
                       <TableRow key={i}>
-                        {Array.from({ length: 5 }).map((_cell, j) => (
+                        {Array.from({ length: 6 }).map((_cell, j) => (
                           <TableCell key={j}>
                             <Skeleton className="h-4 w-full" />
                           </TableCell>
@@ -626,7 +668,7 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
                     ))
                   ) : classesList.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="py-0">
+                      <TableCell colSpan={6} className="py-0">
                         <EmptyState
                           icon={BookOpen}
                           title="Sin clases"
@@ -648,6 +690,13 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
                         </TableCell>
                         <TableCell className="text-muted-foreground max-w-xs truncate">
                           {cls.description || '-'}
+                        </TableCell>
+                        <TableCell>
+                          {cls.category ? (
+                            <Badge variant="secondary">{cls.category}</Badge>
+                          ) : (
+                            '-'
+                          )}
                         </TableCell>
                         <TableCell>{cls.capacity} personas</TableCell>
                         <TableCell>
@@ -772,6 +821,11 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
                             Sala: {schedule.room}
                           </div>
                         )}
+                        {schedule.trainer && (
+                          <div className="opacity-60 truncate">
+                            {schedule.trainer.user.name}
+                          </div>
+                        )}
                       </button>
                     )
                   })}
@@ -792,6 +846,7 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
                     <TableHead>Miembro</TableHead>
                     <TableHead>Clase</TableHead>
                     <TableHead>Horario</TableHead>
+                    <TableHead>Entrenador</TableHead>
                     <TableHead>Fecha</TableHead>
                     <TableHead>Estado</TableHead>
                     {!isReadOnly && (
@@ -802,7 +857,7 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
                 <TableBody>
                   {bookings.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="py-0">
+                      <TableCell colSpan={7} className="py-0">
                         <EmptyState
                           icon={ClipboardList}
                           title="Sin reservas"
@@ -822,6 +877,9 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
                         </TableCell>
                         <TableCell>
                           {`${DAY_LABELS[booking.schedule.dayOfWeek]} ${booking.schedule.startTime} - ${booking.schedule.endTime}`}
+                        </TableCell>
+                        <TableCell>
+                          {booking.schedule.trainer?.user?.name || '-'}
                         </TableCell>
                         <TableCell>{formatDate(booking.bookedAt)}</TableCell>
                         <TableCell>
@@ -911,6 +969,26 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
                   }
                   placeholder="Descripción opcional"
                 />
+              </div>
+              <div className="grid gap-2">
+                <Label>Categoría</Label>
+                <Select
+                  value={classForm.category}
+                  onValueChange={(v) =>
+                    setClassForm({ ...classForm, category: v })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar categoría" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CLASS_CATEGORIES.map((cat) => (
+                      <SelectItem key={cat} value={cat}>
+                        {cat}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="grid gap-2">
                 <Label>Color</Label>
@@ -1025,6 +1103,11 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
                                 Sala: {sched.room}
                               </p>
                             )}
+                            {sched.trainer && (
+                              <p className="text-xs text-muted-foreground">
+                                Prof: {sched.trainer.user.name}
+                              </p>
+                            )}
                           </div>
                         </div>
                         <Button
@@ -1074,6 +1157,26 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
                         }
                         placeholder="Ej: Sala A"
                       />
+                    </div>
+                    <div className="grid gap-1.5">
+                      <Label className="text-xs">Entrenador (opcional)</Label>
+                      <Select
+                        value={scheduleForm.trainerId}
+                        onValueChange={(v) =>
+                          setScheduleForm({ ...scheduleForm, trainerId: v })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Sin asignar" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {trainersList.map((trainer) => (
+                            <SelectItem key={trainer.id} value={trainer.id}>
+                              {trainer.user.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div className="grid gap-1.5">
                       <Label className="text-xs">Inicio</Label>
@@ -1129,6 +1232,9 @@ export function ClassesPage({ userRole }: ClassesPageProps) {
                 </DialogTitle>
                 <DialogDescription>
                   {`${DAY_LABELS[selectedScheduleForBookings.dayOfWeek]} ${selectedScheduleForBookings.startTime} - ${selectedScheduleForBookings.endTime}`}
+                  {selectedScheduleForBookings.trainer && (
+                    <> — Prof. {selectedScheduleForBookings.trainer.user.name}</>
+                  )}
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-2 max-h-80 overflow-y-auto">

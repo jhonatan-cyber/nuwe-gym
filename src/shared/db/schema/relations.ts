@@ -280,6 +280,10 @@ export const classSchedulesRelations = relations(
       fields: [classSchedules.classId],
       references: [classes.id],
     }),
+    trainer: one(trainerProfiles, {
+      fields: [classSchedules.trainerId],
+      references: [trainerProfiles.id],
+    }),
     bookings: many(classBookings),
     waitlist: many(classWaitlist),
   }),
@@ -305,6 +309,7 @@ export const trainerProfilesRelations = relations(
     }),
     assignments: many(trainerAssignments),
     availability: many(trainerAvailability),
+    classSchedules: many(classSchedules),
   }),
 )
 

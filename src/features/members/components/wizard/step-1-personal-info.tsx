@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 import { Link } from '@tanstack/react-router'
-import { User, Camera, Phone, AlertTriangle, FileText } from 'lucide-react'
+import { User, Camera, Phone, AlertTriangle, FileText, Gift } from 'lucide-react'
 import { capitalizeWords } from '#/shared/lib/formatters.ts'
 import { Button } from '#/shared/components/ui/button'
 import { Input } from '#/shared/components/ui/input'
@@ -23,6 +23,7 @@ export interface PersonalInfoState {
   photoBase64: string | null
   physicalRestrictions: string
   medicalNotes: string
+  referredBy: string
 }
 
 interface Step1Props {
@@ -282,6 +283,24 @@ export function Step1PersonalInfo({
                 </>
               )}
             </Button>
+          </div>
+        </div>
+
+        <div className="grid gap-1.5">
+          <Label className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
+            <Gift className="size-3" />
+            Código de Referido (Opcional)
+          </Label>
+          <div className="relative">
+            <Gift className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
+            <Input
+              placeholder="Ej: JUAN-A1B2"
+              value={state.referredBy}
+              onChange={(e) =>
+                onChange({ ...state, referredBy: e.target.value.toUpperCase() })
+              }
+              className="pl-8 text-sm"
+            />
           </div>
         </div>
 

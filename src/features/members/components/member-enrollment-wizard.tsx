@@ -75,6 +75,7 @@ export function MemberEnrollmentWizard({
     photoBase64: null,
     physicalRestrictions: '',
     medicalNotes: '',
+    referredBy: '',
   })
   const [selectedPackageId, setSelectedPackageId] = useState<string | null>(
     null,
@@ -189,6 +190,7 @@ export function MemberEnrollmentWizard({
           branchId,
           physicalRestrictions: personalInfo.physicalRestrictions || undefined,
           medicalNotes: personalInfo.medicalNotes || undefined,
+          referredBy: personalInfo.referredBy.trim() || undefined,
         },
       })
 
@@ -306,6 +308,7 @@ export function MemberEnrollmentWizard({
       photoBase64: null,
       physicalRestrictions: '',
       medicalNotes: '',
+      referredBy: '',
     })
     setSelectedPackageId(null)
     setPaymentMethod('CASH')

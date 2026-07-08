@@ -3,7 +3,9 @@ import { ClassesPage } from '#/features/classes/classes-page.tsx'
 
 function ClassesRoute() {
   const { session } = Route.useRouteContext()
-  return <ClassesPage userRole={session.user.role} />
+  return (
+    <ClassesPage userRole={session.user.role} userId={session.user.id} />
+  )
 }
 
 export const Route = createLazyFileRoute('/_authed/classes')({
